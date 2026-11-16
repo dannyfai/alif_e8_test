@@ -1,0 +1,1015 @@
+===== E8 HE / U85 TARGET ACCESS AUDIT =====
+Mon Nov 16 05:36:46 PM HKT 2026
+
+===== WEST WORKSPACE =====
+/home/user/sdk-alif
+alif
+
+===== SOURCE REVISIONS =====
+--- /home/user/sdk-alif/zephyr ---
+v2.4.0-rc1-40-gf7f3f548f35-dirty
+## HEAD (no branch)
+ M modules/tflite-micro/CMakeLists.txt
+?? modules/tflite-micro/CMakeLists.txt.bak_topk_int8
+--- /home/user/sdk-alif/modules/hal/ethos_u ---
+db2caeb
+## HEAD (no branch)
+--- /home/user/sdk-alif/modules/hal/alif ---
+v2.4.0-rc1-7-g541ae1d
+## HEAD (no branch)
+--- /home/user/sdk-alif/modules/alif-mlek ---
+24.05-981-gd7d06cd6-dirty
+## HEAD (no branch)
+ M source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+ M source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp
+?? source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc.bak_topk_resolver
+?? source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp.bak_topk_resolver
+--- /home/user/sdk-alif/optional/modules/lib/tflite-micro ---
+8d404de7-dirty
+## HEAD (no branch)
+ M tensorflow/lite/micro/kernels/micro_ops.h
+ M tensorflow/lite/micro/micro_mutable_op_resolver.h
+?? tensorflow/lite/micro/kernels/micro_ops.h.bak_topk_int8
+?? tensorflow/lite/micro/kernels/topk_int8.cc
+?? tensorflow/lite/micro/kernels/topk_int8.h
+?? tensorflow/lite/micro/micro_mutable_op_resolver.h.bak_topk_int8
+
+===== LOCAL E8 BOARD FILES =====
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_he_defconfig
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_he.dts
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_he.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_hp_defconfig
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_hp.dts
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_hp.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss_defconfig
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he_defconfig
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he.dts
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp_defconfig
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.dts
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/board.cmake
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/board.yml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/doc/index.rst
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/dts/bindings/mipi-lvds-mux.yaml
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/Kconfig.alif_e8_dk
+
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_hp.yaml:5:identifier: alif_e8_dk/ae402fa0e5597xx0/rtss_hp
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.yaml:5:identifier: alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.yaml:5:identifier: alif_e8_dk_ae822fa0e5597xx0_apss
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he.yaml:5:identifier: alif_e8_dk/ae822fa0e5597xx0/rtss_he
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae402fa0e5597xx0_rtss_he.yaml:5:identifier: alif_e8_dk/ae402fa0e5597xx0/rtss_he
+
+===== U85 DEVICE TREE DECLARATION AND OVERRIDES =====
+--- SEARCH ROOT: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk ---
+--- SEARCH ROOT: /home/user/sdk-alif/zephyr/dts/arm/alif/ensemble ---
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-39-		reg = <0x02400000 DT_SIZE_K(4096)>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-40-		zephyr,memory-region = "SRAM1";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-41-		zephyr,memory-attr = <DT_MEM_ARM_MPU_RAM>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-42-	};
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-43-
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi:44:	ethosu1: ethosu85@49042000 {
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-45-		compatible = "arm,ethos-u";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-46-		reg = <0x49042000 0x1000>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-47-		interrupts = <366 3>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-48-		interrupt-parent = <&nvic>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-49-		secure-enable;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-50-		privilege-enable;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi:51:		clocks = <&clockctrl ALIF_ETHOS_U85_CLK>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-52-		status = "disabled";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-53-	};
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-54-
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-55-	gpio16: gpio@4300a000 {
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-56-		compatible = "snps,designware-gpio";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-57-		reg = <0x4300A000 0x1000>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-58-		ngpios = <8>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-59-		interrupts = <476 ALIF_DEFAULT_IRQ_PRIORITY>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-60-		pinctrl-0 = < &pinctrl_gpio16 >;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-61-		pinctrl-names = "default";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-62-		gpio-controller;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-63-		#gpio-cells = <2>;
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-64-		status = "disabled";
+/home/user/sdk-alif/zephyr/dts/arm/alif/ensemble/common/e4_e6_e8.dtsi-65-	};
+--- SEARCH ROOT: /home/user/sdk-alif/zephyr/soc/alif/ensemble ---
+--- SEARCH ROOT: /home/user/sdk-alif/beeinventor/test_heatstroke ---
+
+===== U85 DRIVER KCONFIG =====
+--- /home/user/sdk-alif/zephyr/modules/hal_ethos_u/Kconfig ---
+# SPDX-FileCopyrightText: <text>Copyright 2021-2022, 2024 Arm Limited and/or its
+# affiliates <open-source-office@arm.com></text>
+# SPDX-License-Identifier: Apache-2.0
+
+config ARM_ETHOS_U
+	bool "Ethos-U core driver"
+	default n
+	depends on MULTITHREADING
+	help
+	  This option enables the Arm Ethos-U core driver.
+
+if ARM_ETHOS_U
+menu "Arm Ethos-U NPU configuration"
+choice  ARM_ETHOS_U_NPU_CONFIG
+	prompt "Arm Ethos-U NPU configuration"
+	default ARM_ETHOS_U55_128
+config ARM_ETHOS_U55_64
+	bool "using Ethos-U55 with 64 macs"
+config ARM_ETHOS_U55_128
+	bool "using Ethos-U55 with 128 macs"
+config ARM_ETHOS_U55_256
+	bool "using Ethos-U55 with 256 macs"
+config ARM_ETHOS_U65_128
+	bool "using Ethos-U65 with 128 macs"
+config ARM_ETHOS_U65_256
+	bool "using Ethos-U65 with 256 macs"
+config ARM_ETHOS_U65_512
+	bool "using Ethos-U65 with 512 macs"
+config ARM_ETHOS_U85_128
+	bool "using Ethos-U85 with 128 macs"
+config ARM_ETHOS_U85_256
+	bool "using Ethos-U85 with 256 macs"
+config ARM_ETHOS_U85_512
+	bool "using Ethos-U85 with 512 macs"
+config ARM_ETHOS_U85_1024
+	bool "using Ethos-U85 with 1024 macs"
+config ARM_ETHOS_U85_2048
+	bool "using Ethos-U85 with 2048 macs"
+endchoice
+endmenu
+
+config ARM_ETHOS_U_NPU_NAME
+	string
+	default "ethos-u55-64" if ARM_ETHOS_U55_64
+	default "ethos-u55-128" if ARM_ETHOS_U55_128
+	default "ethos-u55-256" if ARM_ETHOS_U55_256
+	default "ethos-u65-128" if ARM_ETHOS_U65_128
+	default "ethos-u65-256" if ARM_ETHOS_U65_256
+	default "ethos-u65-512" if ARM_ETHOS_U65_512
+	default "ethos-u85-128" if ARM_ETHOS_U85_128
+	default "ethos-u85-256" if ARM_ETHOS_U85_256
+	default "ethos-u85-512" if ARM_ETHOS_U85_512
+	default "ethos-u85-1024" if ARM_ETHOS_U85_1024
+	default "ethos-u85-2048" if ARM_ETHOS_U85_2048
+	help
+		Name of the used Arm NPU
+
+choice "ARM_ETHOS_U_LOG_LEVEL_CHOICE"
+	prompt "Max compiled-in log level for arm_ethos_u"
+	default ARM_ETHOS_U_LOG_LEVEL_WRN
+	depends on STDOUT_CONSOLE
+
+config ARM_ETHOS_U_LOG_LEVEL_NONE
+	bool "None"
+
+config ARM_ETHOS_U_LOG_LEVEL_ERR
+	bool "Error"
+
+config ARM_ETHOS_U_LOG_LEVEL_WRN
+	bool "Warning"
+
+config ARM_ETHOS_U_LOG_LEVEL_INF
+	bool "Info"
+
+config ARM_ETHOS_U_LOG_LEVEL_DBG
+	bool "Debug"
+
+config ARM_ETHOS_U_LOG_LEVEL_DEFAULT
+	bool "Default"
+
+endchoice
+
+config ARM_ETHOS_U_LOG_LEVEL
+	int
+	depends on STDOUT_CONSOLE
+	default 0 if ARM_ETHOS_U_LOG_LEVEL_NONE
+	default 1 if ARM_ETHOS_U_LOG_LEVEL_ERR
+	default 2 if ARM_ETHOS_U_LOG_LEVEL_WRN
+	default 3 if ARM_ETHOS_U_LOG_LEVEL_INF
+	default 4 if ARM_ETHOS_U_LOG_LEVEL_DBG
+
+endif
+
+===== U85 DRIVER INTERRUPT AND INITIALIZATION REFERENCES =====
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-31-
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-32-/*****************************************************************************
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-33- * Defines
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-34- *****************************************************************************/
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:35:#ifdef ETHOSU85
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-36-#define ETHOSU_PMU_NCOUNTERS 8
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-37-#else
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-38-#define ETHOSU_PMU_NCOUNTERS 4
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-39-#endif
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-40-
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-41-#define ETHOSU_PMU_CNT1_Msk (1UL << 0)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-42-#define ETHOSU_PMU_CNT2_Msk (1UL << 1)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-43-#define ETHOSU_PMU_CNT3_Msk (1UL << 2)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-44-#define ETHOSU_PMU_CNT4_Msk (1UL << 3)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:45:#ifdef ETHOSU85
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-46-#define ETHOSU_PMU_CNT5_Msk (1UL << 4)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-47-#define ETHOSU_PMU_CNT6_Msk (1UL << 5)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-48-#define ETHOSU_PMU_CNT7_Msk (1UL << 6)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-49-#define ETHOSU_PMU_CNT8_Msk (1UL << 7)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-50-#endif
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-51-
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-52-#define ETHOSU_PMU_CCNT_Msk (1UL << 31)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-53-
+--
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-139-    ETHOSU_PMU_ECC_SB1,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-140-
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-141-    ETHOSU_PMU_SENTINEL // End-marker (not event)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-142-};
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:143:#elif defined(ETHOSU85)
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-144-enum ethosu_pmu_event_type
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-145-{
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-146-    ETHOSU_PMU_NO_EVENT = 0,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-147-    ETHOSU_PMU_CYCLE,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-148-    ETHOSU_PMU_NPU_IDLE,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-149-    ETHOSU_PMU_CC_STALLED_ON_BLOCKDEP,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-150-    ETHOSU_PMU_NPU_ACTIVE,
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h-151-    ETHOSU_PMU_MAC_ACTIVE,
+--
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-112- * Interrupt handler to be called on IRQ from Ethos-U
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-113- *
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-114- * @param drv       Pointer to driver handle
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-115- */
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:116:void ethosu_irq_handler(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-117-
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-118-/**
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-119- * Flush/clean the data cache by address and size.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-120- * NOTE: It is not recommended to implement this, but let the application code
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-121- *       make sure that any data needed by the NPU is flushed before invoking
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-122- *       an inference.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-123- *
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h-124- * Addresses passed to this function must be 32 byte aligned.
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-16- */
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-17-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-18-// clang-format off
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-19-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h:20:#ifndef ETHOSU85_INTERFACE_H
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h:21:#define ETHOSU85_INTERFACE_H
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-22-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-23-#ifdef __KERNEL__
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-24-#include <linux/types.h>
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-25-#else
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-26-#include <stdint.h>
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-27-#endif
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-28-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h-29-#if !defined(__cplusplus) || __cplusplus < 201402L
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-84-        return NPU_REGIONCFG_7;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-85-    }
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-86-}
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-87-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c:88:bool ethosu_dev_init(struct ethosu_device *dev, void *base_address, uint32_t secure_enable, uint32_t privilege_enable)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-89-{
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-90-    dev->reg        = (volatile struct NPU_REG *)base_address;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-91-    dev->secure     = secure_enable;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-92-    dev->privileged = privilege_enable;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-93-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-94-    if (dev->reg->CONFIG.product != ETHOSU_PRODUCT_U85)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-95-    {
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-96-        LOG_ERR("Failed to initialize device. Driver has not been compiled for this product");
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-179-            dev->reg->QREAD.word,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-180-            dev->reg->STATUS.cmd_end_reached);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-181-}
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-182-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c:183:bool ethosu_dev_handle_interrupt(struct ethosu_device *dev)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-184-{
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-185-    struct cmd_r cmd;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-186-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-187-    // Clear interrupt
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-188-    cmd.word           = dev->reg->CMD.word & NPU_CMD_PWR_CLK_MASK;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-189-    cmd.clear_irq      = 1;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-190-    dev->reg->CMD.word = cmd.word;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c-191-
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-36-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-37-/**
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-38- * Initialize the device.
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-39- */
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h:40:bool ethosu_dev_init(struct ethosu_device *dev, void *base_address, uint32_t secure_enable, uint32_t privilege_enable);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-41-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-42-/**
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-43- * Initialize AXI settings for device.
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-44- */
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-45-enum ethosu_error_codes ethosu_dev_axi_init(struct ethosu_device *dev);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-46-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-47-/**
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-48- * Execute a given command stream on NPU.
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-69-/**
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-70- *  Interrupt handler on device layer
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-71- * \return                     true if NPU status is OK, otherwise false
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-72- */
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h:73:bool ethosu_dev_handle_interrupt(struct ethosu_device *dev);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-74-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-75-/**
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-76- * Get hardware information from NPU
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-77- * \param[out] hwinfo          Pointer to the hardware info struct to be filled in.
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-78- */
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-79-void ethosu_dev_get_hw_info(struct ethosu_device *dev, struct ethosu_hw_info *hwinfo);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-80-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h-81-/**
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-94-        return NPU_REGIONCFG_7;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-95-    }
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-96-}
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-97-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:98:bool ethosu_dev_init(struct ethosu_device *dev, void *base_address, uint32_t secure_enable, uint32_t privilege_enable)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-99-{
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-100-    dev->reg        = (volatile struct NPU_REG *)base_address;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-101-    dev->secure     = secure_enable;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-102-    dev->privileged = privilege_enable;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-103-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-104-#ifdef ETHOSU55
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-105-    if (dev->reg->CONFIG.product != ETHOSU_PRODUCT_U55)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-106-#else
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-204-            dev->reg->QREAD.word,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-205-            dev->reg->STATUS.cmd_end_reached);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-206-}
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-207-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:208:bool ethosu_dev_handle_interrupt(struct ethosu_device *dev)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-209-{
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-210-    struct cmd_r cmd;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-211-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-212-    // Clear interrupt
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-213-    cmd.word           = dev->reg->CMD.word & NPU_CMD_PWR_CLK_MASK;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-214-    cmd.clear_irq      = 1;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-215-    dev->reg->CMD.word = cmd.word;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c-216-
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-26-#if defined(ETHOSU55)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-27-#include "ethosu_config_u55.h"
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-28-#elif defined(ETHOSU65)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-29-#include "ethosu_config_u65.h"
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:30:#elif defined(ETHOSU85)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-31-#include "ethosu_config_u85.h"
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-32-#else
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-33-#error Missing device type macro
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-34-#endif
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-35-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-36-#include <assert.h>
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-37-#include <cmsis_compiler.h>
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-38-#include <inttypes.h>
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-379-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-380-/******************************************************************************
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-381- * Weak functions - Interrupt handler
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-382- ******************************************************************************/
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:383:void __attribute__((weak)) ethosu_irq_handler(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-384-{
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-385-    // Prevent race condition where interrupt triggered after a timeout waiting
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-386-    // for semaphore, but before NPU is reset.
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-387-    if (drv->job.result == ETHOSU_JOB_RESULT_TIMEOUT)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-388-    {
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-389-        return;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-390-    }
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-391-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-392-    drv->job.state  = ETHOSU_JOB_DONE;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:393:    drv->job.result = ethosu_dev_handle_interrupt(&drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-394-    ethosu_semaphore_give(drv->semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-395-}
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-396-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-397-/******************************************************************************
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-398- * Functions API
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-399- ******************************************************************************/
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-400-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-401-void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask)
+--
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-447-    // base pointer where Vela for TFLM is placing the scratch buffer (tensor arena)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-448-    ethosu_set_basep_cache_mask(drv, (1 << SCRATCH_BASE_ADDR_INDEX), (1 << SCRATCH_BASE_ADDR_INDEX));
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-449-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-450-    // Initialize the device and set requested security state and privilege mode
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:451:    if (!ethosu_dev_init(&drv->dev, base_address, secure_enable, privilege_enable))
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-452-    {
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-453-        LOG_ERR("Failed to initialize Ethos-U device");
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-454-        return -1;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-455-    }
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-456-
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-457-    drv->semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-458-    if (!drv->semaphore)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c-459-    {
+--
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-17-namespace {
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-18-
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-19-#if defined(ETHOSU55) || defined(ETHOSU65)
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-20-const uint32_t ethosu_pmuCountersUsed = 4;
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp:21:#elif defined(ETHOSU85)
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-22-const uint32_t ethosu_pmuCountersUsed = 7;
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-23-#else
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-24-#error No NPU target defined
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-25-#endif
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-26-
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-27-uint32_t ethosu_delegation_count = 0;
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-28-uint64_t ethosu_ArmCycleCountStart = 0;
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-29-uint64_t ethosu_ArmBackendExecuteCycleCountStart = 0;
+--
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-58-  ETHOSU_PMU_CNTR_Enable(
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-59-      drv,
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-60-      ETHOSU_PMU_CNT1_Msk | ETHOSU_PMU_CNT2_Msk | ETHOSU_PMU_CNT3_Msk |
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-61-          ETHOSU_PMU_CNT4_Msk);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp:62:#elif defined(ETHOSU85)
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-63-  ETHOSU_PMU_Set_EVTYPER(drv, 0, ETHOSU_PMU_SRAM_RD_DATA_BEAT_RECEIVED);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-64-  ETHOSU_PMU_Set_EVTYPER(drv, 1, ETHOSU_PMU_SRAM_WR_DATA_BEAT_WRITTEN);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-65-  ETHOSU_PMU_Set_EVTYPER(drv, 2, ETHOSU_PMU_EXT_RD_DATA_BEAT_RECEIVED);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-66-  ETHOSU_PMU_Set_EVTYPER(drv, 3, ETHOSU_PMU_EXT_WR_DATA_BEAT_WRITTEN);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-67-  ETHOSU_PMU_Set_EVTYPER(drv, 4, ETHOSU_PMU_NPU_IDLE);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-68-  ETHOSU_PMU_Set_EVTYPER(drv, 5, ETHOSU_PMU_MAC_ACTIVE);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-69-  ETHOSU_PMU_Set_EVTYPER(drv, 6, ETHOSU_PMU_WD_ACTIVE);
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-70-  // Enable the 7 counters
+--
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-213-#if defined(ETHOSU55) || defined(ETHOSU65)
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-214-  ET_LOG(
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-215-      Info,
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-216-      "Ethos-U PMU Events:[ETHOSU_PMU_AXI0_RD_DATA_BEAT_RECEIVED, ETHOSU_PMU_AXI1_RD_DATA_BEAT_RECEIVED, ETHOSU_PMU_AXI0_WR_DATA_BEAT_WRITTEN, ETHOSU_PMU_NPU_IDLE]");
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp:217:#elif defined(ETHOSU85)
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-218-  ET_LOG(
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-219-      Info,
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-220-      "Ethos-U PMU Events:[ETHOSU_PMU_SRAM_RD_DATA_BEAT_RECEIVED, ETHOSU_PMU_SRAM_WR_DATA_BEAT_WRITTEN, ETHOSU_PMU_EXT_RD_DATA_BEAT_RECEIVED, ETHOSU_PMU_EXT_WR_DATA_BEAT_WRITTEN, ETHOSU_PMU_NPU_IDLE, ETHOSU_PMU_MAC_ACTIVE, ETHOSU_PMU_WD_ACTIVE]");
+/home/user/sdk-alif/modules/lib/executorch/examples/arm/executor_runner/arm_perf_monitor.cpp-221-#else
+
+===== HE / HP MEMORY LINKER CONFIGURATION =====
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-40-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-41-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-42-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld:43:  SRAM  (rwx) : ORIGIN = 0x30000000, LENGTH = 0x00680000 // Combined SRAM0+1 view from custom system package
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-44-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-45-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-46-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-47-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-48-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-49-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-50-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-51-{
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-146-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-147-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-148-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld:149:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-150-  .data.sram.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-151-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-152-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-153-  } > SRAM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-154-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-155-  .bss.sram (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-156-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld-157-    * (.bss.large_ram)                     /* Large LVGL buffers */
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-38-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-39-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-40-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:41:  SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-42-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-43-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-44-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-45-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-46-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-47-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-48-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-49-  .startup.at_mram : ALIGN(16)
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-142-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-143-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-144-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:145:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-146-  .data.sram0.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-147-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-148-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:149:  } > SRAM0 AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-150-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-151-  .bss.sram0 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-152-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-153-    * (.bss.large_ram)                     /* Large LVGL buffers */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-154-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-155-    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-156-    * (.bss.lcd_image_buf)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-157-    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:158:  } > SRAM0
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-159-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-160-  .bss.itcm (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-161-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-162-  } > ITCM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-163-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-164-  .nonsecure0_region (NOLOAD) :
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-165-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld-166-    . = ALIGN(TGU_BLOCK_SIZE);
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-40-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-41-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-42-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:43:  SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:44:  SRAM1 (rwx) : ORIGIN = 0x08000000, LENGTH = 0x00280000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-45-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-46-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-47-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-48-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-49-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-50-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-51-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-52-{
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-148-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-149-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-150-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:151:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-152-  .data.sram0.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-153-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-154-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:155:  } > SRAM0 AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-156-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-157-  .bss.sram0 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-158-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-159-    * (.bss.large_ram)                     /* Large LVGL buffers */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-160-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-161-    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-162-    * (.bss.lcd_image_buf)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:163:  } > SRAM0
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-164-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-165-  .bss.sram1 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-166-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-167-    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:168:  } > SRAM1
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-169-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-170-  .bss.itcm (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-171-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-172-  } > ITCM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-173-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-174-  .nonsecure0_region (NOLOAD) :
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-175-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld-176-    . = ALIGN(TGU_BLOCK_SIZE);
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-38-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-39-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-40-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:41:  SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:42:  SRAM1 (rwx) : ORIGIN = 0x08000000, LENGTH = 0x00280000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-43-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-44-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-45-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-46-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-47-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-48-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-49-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-50-{
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-113-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-114-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-115-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:116:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-117-  .data.sram0.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-118-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-119-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:120:  } > SRAM0 AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-121-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-122-  .bss.sram0 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-123-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-124-    * (.bss.large_ram)                     /* Large LVGL buffers */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-125-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-126-    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-127-    * (.bss.lcd_image_buf)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:128:  } > SRAM0
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-129-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-130-  .bss.sram1 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-131-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-132-    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:133:  } > SRAM1
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-134-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-135-  .bss.itcm (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-136-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-137-  } > ITCM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-138-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-139-  .bss (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-140-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld-141-    __bss_start__ = .;
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-40-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-41-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-42-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00100000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld:43:  SRAM  (rwx) : ORIGIN = 0x30000000, LENGTH = 0x00680000 // Combined SRAM0+1 view from custom system package
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-44-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-45-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-46-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-47-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-48-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-49-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-50-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-51-{
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-153-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-154-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-155-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld:156:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-157-  .data.sram.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-158-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-159-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-160-  } > SRAM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-161-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-162-  .bss.sram (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-163-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld-164-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-38-{
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-39-  ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-40-  DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00100000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:41:  SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:42:  SRAM1 (rwx) : ORIGIN = 0x08000000, LENGTH = 0x00280000
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-43-  MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-44-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-45-}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-46-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-47-ENTRY(Reset_Handler)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-48-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-49-SECTIONS
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-50-{
+--
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-113-    KEEP(*(.jcr*))
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-114-  } > DTCM AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-115-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:116:  /* Place non-zero code/data here if required in SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-117-  .data.sram0.at_mram : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-118-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-119-    * (ifm)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:120:  } > SRAM0 AT> MRAM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-121-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-122-  .bss.sram0 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-123-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-124-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-125-    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-126-    * (.bss.lcd_image_buf)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:127:  } > SRAM0
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-128-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-129-  .bss.sram1 (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-130-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-131-    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:132:  } > SRAM1
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-133-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-134-  .bss.itcm (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-135-  {
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-136-  } > ITCM
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-137-
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-138-  .bss (NOLOAD) : ALIGN(8)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld-139-  {
+
+===== ALIF MLEK E8 U85 BUILD AND VELA INSTRUCTIONS =====
+245-    cd build_alif_kws
+246-    ```
+247-
+248-**Using ARM Clang Toolchain**
+249-
+250-2. Configure the build using CMake.
+251-    ```
+252-    cmake -DTARGET_PLATFORM=alif \
+253:    -DTARGET_SUBSYSTEM=RTSS-HE \
+254-    -DTARGET_BOARD=AppKit-e7 \
+255-    -DCMAKE_TOOLCHAIN_FILE=scripts/cmake/toolchains/bare-metal-armclang.cmake \
+256-    -DGLCD_UI=OFF \
+257-    -DLINKER_SCRIPT_NAME=RTSS-HE-TCM \
+258-    -DCMAKE_BUILD_TYPE=Release \
+259-    -DMLEK_LOG_LEVEL=MLEK_LOG_LEVEL_DEBUG \
+260-    -DUSE_CASE_BUILD=alif_kws ..
+261-    ```
+262-
+263-3. Build the Project using Make
+264-    ```
+265-    make mlek_alif_kws -j4
+266-    ```
+267-4. The output should be in `bin/mlek_alif_kws.axf`
+268-
+269-*NOTE: The debug console for this use-case will be UART2, and the jumper on the AI/ML AppKit needs to be set accordingly as noted in the Gen 2 AI/ML AppKit Quick Start Guide.*
+--
+284-    cd build_alif_img_class
+285-    ```
+286-
+287-2. Configure the build using CMake
+288-
+289-    **Using ARM Clang Toolchain with TFLM framework**
+290-    ```
+291-    cmake -DTARGET_PLATFORM=alif \
+292:    -DTARGET_SUBSYSTEM=RTSS-HP \
+293-    -DTARGET_BOARD=AppKit-e7 \
+294-    -DCMAKE_TOOLCHAIN_FILE=scripts/cmake/toolchains/bare-metal-armclang.cmake \
+295-    -DCONSOLE_UART=4 \
+296-    -DCMAKE_BUILD_TYPE=Release \
+297-    -DMLEK_LOG_LEVEL=MLEK_LOG_LEVEL_DEBUG \
+298-    -DUSE_CASE_BUILD=alif_img_class ..
+299-    ```
+300-
+301-    **Using ARM GNU Toolchain with ExecuTorch framework**
+302-    (DevKit-E8 with Ethos-U85)
+303-    ```
+304-    cmake -DTARGET_PLATFORM=alif \
+305:    -DTARGET_SUBSYSTEM=RTSS-HP \
+306-    -DTARGET_BOARD=DevKit-e8 \
+307-    -DCMAKE_TOOLCHAIN_FILE=scripts/cmake/toolchains/bare-metal-gcc.cmake \
+308-    -DCONSOLE_UART=4 \
+309-    -DCMAKE_BUILD_TYPE=Release \
+310-    -DMLEK_LOG_LEVEL=MLEK_LOG_LEVEL_DEBUG \
+311-    -DUSE_CASE_BUILD=alif_img_class \
+312:    -DETHOS_U_NPU_ID=U85 -DML_FRAMEWORK=ExecuTorch ..
+313-    ```
+314-
+315-These cmake options permit the default use of LCD and SRAM, which is okay since the HE image has them disabled. The `CONSOLE_UART=4` option avoids the HE image’s use of UART and could be omitted to run standalone HP applications.
+316-
+317-3. Build the Project using Make.
+318-    ```
+319-    make mlek_alif_img_class -j4
+320-    ```
+321-4. The output should be produced in `bin/mlek_alif_img_class.axf`
+322-
+323-**Using GNU GCC Toolchain**
+324-
+325-5. Replace `bare-metal-armclang.cmake` to `bare-metal-gcc.cmake` in step 2 above.
+326-
+327-### Building the Generic Inference Runner use-case for M55-HP core.
+328-
+--
+377-   ```
+378-
+379-4. Configure the build using `CMake`
+380-    ```
+381-    cmake .. \
+382-      -Dinference_runner_MODEL_TFLITE_PATH=<path_to_model>/models/har_int8_vela_H256.tflite
+383-      -DUSE_CASE_BUILD=inference_runner \
+384-      -DTARGET_PLATFORM=alif \
+385:      -DTARGET_SUBSYSTEM=RTSS-HP \
+386-      -DTARGET_BOARD=AppKit-e7 \
+387-      -DLINKER_SCRIPT_NAME=RTSS-HP-infrun \
+388-      -DCMAKE_TOOLCHAIN_FILE=scripts/cmake/toolchains/bare-metal-armclang.cmake \
+389-      -DCMAKE_BUILD_TYPE=Release \
+390-      -DMLEK_LOG_LEVEL=MLEK_LOG_LEVEL_DEBUG \
+391-      -DGLCD_UI=NO \
+392-    ```
+393-
+394-5. Build the project using `Make`
+395-    ```
+396-    make -j4
+397-    ```
+398-
+399-6. Open Tera-Term or any other serial port console app. Connect to UART4 (for M55-HP) or UART2 (for M55-HE). Configure serial port settings to 115200, 8N1.
+400-
+401-7. Reset the board and review the output on the serial console.
+--
+690-  .bss.ext_ram (NOLOAD) : ALIGN(8)
+691-  {
+692-    * (.bss.NoInit.activation_buf_sram) /* Shared_Sram mode */
+693-    * (.bss.NoInit.activation_buf_dram) /* Dedicated_Sram mode */
+694-  } > OSPI_RAM
+695-
+696-```
+697-
+698:When the model execution needs external RAM it should be noted the default Ethos-U memory mode (Shared SRAM) is not optimal. In this case the performance can benefit from using part of SRAM as Ethos-U cache while the bulk of RAM allocation is kept in external RAM (`-DETHOS_U_NPU_ID=U85 -DETHOS_U_NPU_MEMORY_MODE=Dedicated_Sram`).
+699-
+700-**Note:** For this configuration to work it is not enough to just rebuild with the above CMAKE parameters. The model needs to be compiled/optimized for this memory and system configuration using Vela.
+701-
+702-For example:
+703-```
+704-source resources_downloaded/env/bin/activate
+705:vela --output-dir vela_output --accelerator-config ethos-u85-256 --optimise Performance --config scripts/vela/ensemble_vela.ini --system-config Ethos_U85_SRAM_OSPI --memory-mode Dedicated_Sram model.tflite
+706-
+707-mkdir build
+708-cd build
+709:cmake -DTARGET_PLATFORM=alif -DTARGET_SUBSYSTEM=RTSS-HP -DCONSOLE_UART=4 -DCMAKE_TOOLCHAIN_FILE=scripts/cmake/toolchains/bare-metal-gcc.cmake -DCMAKE_BUILD_TYPE=Release -DMLEK_LOG_LEVEL=MLEK_LOG_LEVEL_INFO -DTARGET_BOARD=DevKit-e8 -DETHOS_U_NPU_ID=U85 -DETHOS_U_NPU_MEMORY_MODE=Dedicated_Sram -DOSPI_RAM_SUPPORT=ON -Duse_case_MODEL_PATH=vela_output/model_vela.tflite ..
+710-```
+711-
+712-
+713-## Further information
+714-
+715-Beyond the demo build described above, many other use cases and options of the upstream Arm ML Embedded Evaluation kit should work on Alif hardware.<br>
+716-One easy alternative build is to replace the image-classification use-case on the M55-HP core with
+717-object-detection (face-detection).
+718-
+719-
+720-### Tested use cases
+721-
+722-Of the original ARM use cases the following are known to work:
+723-- kws
+724-- img_class
+725-- object_detection
+
+===== ALIF ENSEMBLE VELA CONFIGURATION =====
+[System_Config.RTSS_HP_SRAM_MRAM]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=0.762
+Sram_burst_length=8
+Sram_read_latency=29
+Sram_write_latency=29
+OffChipFlash_clock_scale=0.121
+OffChipFlash_burst_length=16
+OffChipFlash_read_latency=60
+OffChipFlash_write_latency=60
+
+[System_Config.RTSS_HP_SRAM_OSPI]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=0.762
+Sram_burst_length=8
+Sram_read_latency=29
+Sram_write_latency=29
+OffChipFlash_clock_scale=0.052
+OffChipFlash_burst_length=16
+OffChipFlash_read_latency=108
+OffChipFlash_write_latency=108
+
+[System_Config.RTSS_HE_SRAM_MRAM]
+core_clock=160e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=1.0
+Sram_burst_length=8
+Sram_read_latency=13
+Sram_write_latency=13
+OffChipFlash_clock_scale=0.303
+OffChipFlash_burst_length=16
+OffChipFlash_read_latency=24
+OffChipFlash_write_latency=24
+
+[System_Config.RTSS_HP_SRAM_Only]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OnChipFlash
+Sram_clock_scale=1.0
+Sram_burst_length=8
+Sram_read_latency=29
+Sram_write_latency=29
+OnChipFlash_clock_scale=1.0
+OnChipFlash_burst_length=8
+OnChipFlash_read_latency=29
+OnChipFlash_write_latency=29
+
+[System_Config.RTSS_HE_SRAM_Only]
+core_clock=160e6
+axi0_port=Sram
+axi1_port=OnChipFlash
+Sram_clock_scale=1.0
+Sram_burst_length=8
+Sram_read_latency=13
+Sram_write_latency=13
+OnChipFlash_clock_scale=1.0
+OnChipFlash_burst_length=8
+OnChipFlash_read_latency=13
+OnChipFlash_write_latency=13
+
+[System_Config.RTSS_HP_DTCM_Only]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OnChipFlash
+Sram_clock_scale=0.889
+Sram_burst_length=32
+Sram_read_latency=5
+Sram_write_latency=5
+OnChipFlash_clock_scale=0.889
+OnChipFlash_burst_length=32
+OnChipFlash_read_latency=5
+OnChipFlash_write_latency=5
+
+[System_Config.RTSS_HE_DTCM_Only]
+core_clock=160e6
+axi0_port=Sram
+axi1_port=OnChipFlash
+Sram_clock_scale=0.889
+Sram_burst_length=32
+Sram_read_latency=5
+Sram_write_latency=5
+OnChipFlash_clock_scale=0.889
+OnChipFlash_burst_length=32
+OnChipFlash_read_latency=5
+OnChipFlash_write_latency=5
+
+[System_Config.RTSS_HP_DTCM_MRAM]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=0.889
+Sram_burst_length=32
+Sram_read_latency=5
+Sram_write_latency=5
+OffChipFlash_clock_scale=0.118
+OffChipFlash_burst_length=64
+OffChipFlash_read_latency=60
+OffChipFlash_write_latency=60
+
+[System_Config.RTSS_HP_DTCM_Modem]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=0.889
+Sram_burst_length=32
+Sram_read_latency=5
+Sram_write_latency=5
+OffChipFlash_clock_scale=0.200
+OffChipFlash_burst_length=64
+OffChipFlash_read_latency=53
+OffChipFlash_write_latency=53
+
+[System_Config.RTSS_HP_DTCM_SRAM]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=Dram
+Sram_clock_scale=1.0
+Sram_burst_length=16
+Sram_read_latency=5
+Sram_write_latency=5
+Dram_clock_scale=0.762
+Dram_burst_length=32
+Dram_read_latency=29
+Dram_write_latency=29
+
+[System_Config.Ethos_U85_SRAM_Only]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OnChipFlash
+Sram_clock_scale=1.0
+Sram_ports_used=2
+Sram_burst_length=32
+Sram_read_latency=2
+Sram_write_latency=2
+Sram_max_reads=2
+Sram_max_writes=2
+OnChipFlash_clock_scale=1.0
+OnChipFlash_ports_used=2
+OnChipFlash_burst_length=32
+OnChipFlash_read_latency=2
+OnChipFlash_write_latency=2
+OnChipFlash_max_reads=2
+OnChipFlash_max_writes=2
+
+[System_Config.Ethos_U85_SRAM_MRAM]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=OffChipFlash
+Sram_clock_scale=1.0
+Sram_ports_used=2
+Sram_burst_length=32
+Sram_read_latency=2
+Sram_write_latency=2
+Sram_max_reads=2
+Sram_max_writes=2
+OffChipFlash_clock_scale=0.121
+OffChipFlash_burst_length=256
+OffChipFlash_read_latency=15
+OffChipFlash_write_latency=0
+OffChipFlash_max_reads=1
+OffChipFlash_max_writes=0
+
+[System_Config.Ethos_U85_SRAM_OSPI]
+core_clock=400e6
+axi0_port=Sram
+axi1_port=Dram
+Sram_clock_scale=1.0
+Sram_ports_used=2
+Sram_burst_length=32
+Sram_read_latency=2
+Sram_write_latency=2
+Sram_max_reads=2
+Sram_max_writes=2
+Dram_clock_scale=0.052
+Dram_burst_length=16
+Dram_read_latency=54
+Dram_write_latency=54
+Dram_max_reads=2
+Dram_max_writes=2
+
+; -----------------------------------------------------------------------------
+; Memory Mode
+
+[Memory_Mode.Sram_Only]
+const_mem_area=Axi0
+arena_mem_area=Axi0
+cache_mem_area=Axi0
+
+; Shared SRAM: the SRAM is shared between the Ethos-U and the Cortex-M software
+; The non-SRAM memory is assumed to be read-only
+; This is appropriate for the SRAM_MRAM or DTCM_MRAM configs
+[Memory_Mode.Shared_Sram]
+const_mem_area=Axi1
+arena_mem_area=Axi0
+cache_mem_area=Axi0
+
+; DTCM Cache
+; This is appropriate for the DTCM_SRAM configs
+[Memory_Mode.Dtcm_Cache]
+const_mem_area=Axi1
+arena_mem_area=Axi1
+cache_mem_area=Axi0
+
+[Memory_Mode.Dedicated_Sram]
+const_mem_area=Axi1
+arena_mem_area=Axi1
+cache_mem_area=Axi0
+; Arm tend to use 384K. We could use a lot more
+;arena_cache_size=2048576
+arena_cache_size=393216
+
+
+===== PRE-VELA MODEL SHA256 =====
+275f6468499bdf146d6f1889d01d866a80277416e6f686e5be9f1fa07184408f  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp.tflite
+f76150bcfef7b5fb0378eff51196045d8139c7ba805b5af9192afd178702389d  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp_ethosu_aligned16_20261111.tflite
+
+===== AUDIT COMPLETE =====
