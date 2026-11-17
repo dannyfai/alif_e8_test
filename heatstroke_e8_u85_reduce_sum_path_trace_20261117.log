@@ -1,0 +1,831 @@
+===== E8 U85 REDUCE-SUM PATH TRACE =====
+Tue Nov 17 10:13:14 AM HKT 2026
+
+275f6468499bdf146d6f1889d01d866a80277416e6f686e5be9f1fa07184408f  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp.tflite
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881595.054397   29130 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881595.054562   29130 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881595.844356   29130 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881595.844601   29130 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== GRAPH SIZE =====
+Tensors: 915
+Operators: 574
+
+===== OPERATORS #18 TO #70 =====
+
+NODE #18: GREATER
+  INPUTS:
+    tensor[169] convert_element_type_default_DequantizeLinear_Output: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.003921568859368563], zero=[-128]
+      producer: (10, 'QUANTIZE')
+       constant_data=empty
+    tensor[133] val_0_DequantizeLinear_Output_duplicated_1: shape=(), dtype=INT8, quant=scale=[0.0019607844296842813], zero=[-128]
+      producer: None
+       constant_data=[127]
+  OUTPUTS:
+    tensor[177] gt_1: shape=(1, 900, 6), dtype=BOOL, quant=none
+      consumers: [(19, 'LOGICAL_NOT'), (20, 'SELECT_V2'), (98, 'SELECT_V2'), (227, 'SELECT_V2'), (276, 'SELECT_V2')]
+
+NODE #19: LOGICAL_NOT
+  INPUTS:
+    tensor[177] gt_1: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (18, 'GREATER')
+       constant_data=empty
+  OUTPUTS:
+    tensor[178] bitwise_not: shape=(1, 900, 6), dtype=BOOL, quant=none
+      consumers: [(21, 'CAST'), (22, 'CAST'), (23, 'LOGICAL_NOT')]
+
+NODE #20: SELECT_V2
+  INPUTS:
+    tensor[177] gt_1: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (18, 'GREATER')
+       constant_data=empty
+    tensor[624] zeros_like_3_DequantizeLinear_Output0: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.033166781067848206], zero=[-18]
+      producer: None
+       constant_data=[238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238, 238]
+    tensor[159] x_values_DequantizeLinear_Output_5: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.033166781067848206], zero=[-18]
+      producer: (5, 'QUANTIZE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[179] where_4_DequantizeLinear_Output: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.033166781067848206], zero=[-18]
+      consumers: [(279, 'CONCATENATION')]
+
+NODE #21: CAST
+  INPUTS:
+    tensor[178] bitwise_not: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (19, 'LOGICAL_NOT')
+       constant_data=empty
+  OUTPUTS:
+    tensor[180] _to_copy_3: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(25, 'QUANTIZE')]
+
+NODE #22: CAST
+  INPUTS:
+    tensor[178] bitwise_not: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (19, 'LOGICAL_NOT')
+       constant_data=empty
+  OUTPUTS:
+    tensor[181] convert_element_type_default_1: shape=(1, 900, 6), dtype=INT64, quant=none
+      consumers: [(26, 'SUM')]
+
+NODE #23: LOGICAL_NOT
+  INPUTS:
+    tensor[178] bitwise_not: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (19, 'LOGICAL_NOT')
+       constant_data=empty
+  OUTPUTS:
+    tensor[182] bitwise_not_1: shape=(1, 900, 6), dtype=BOOL, quant=none
+      consumers: [(27, 'CAST')]
+
+NODE #24: RESHAPE
+  INPUTS:
+    tensor[170] linear_DequantizeLinear_Output: shape=(1, 900), dtype=INT8, quant=scale=[0.0008827518904581666], zero=[15]
+      producer: (11, 'FULLY_CONNECTED')
+       constant_data=empty
+  OUTPUTS:
+    tensor[183] view_DequantizeLinear_Output: shape=(1, 900, 1), dtype=INT8, quant=scale=[0.0008827518904581666], zero=[15]
+      consumers: [(38, 'QUANTIZE')]
+
+NODE #25: QUANTIZE
+  INPUTS:
+    tensor[180] _to_copy_3: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (21, 'CAST')
+       constant_data=empty
+  OUTPUTS:
+    tensor[184] _to_copy_3_QuantizeLinear_Output_1: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.003921568859368563], zero=[-128]
+      consumers: [(28, 'DEQUANTIZE'), (29, 'DEQUANTIZE')]
+
+NODE #26: SUM
+  INPUTS:
+    tensor[181] convert_element_type_default_1: shape=(1, 900, 6), dtype=INT64, quant=none
+      producer: (22, 'CAST')
+       constant_data=empty
+    tensor[625] axes: shape=(1,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0]
+  OUTPUTS:
+    tensor[185] sum_1: shape=(1, 6), dtype=INT64, quant=none
+      consumers: [(30, 'GREATER'), (31, 'MAXIMUM')]
+
+NODE #27: CAST
+  INPUTS:
+    tensor[182] bitwise_not_1: shape=(1, 900, 6), dtype=BOOL, quant=none
+      producer: (23, 'LOGICAL_NOT')
+       constant_data=empty
+  OUTPUTS:
+    tensor[186] _to_copy: shape=(1, 900, 6), dtype=INT64, quant=none
+      consumers: [(32, 'MUL')]
+
+NODE #28: DEQUANTIZE
+  INPUTS:
+    tensor[184] _to_copy_3_QuantizeLinear_Output_1: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.003921568859368563], zero=[-128]
+      producer: (25, 'QUANTIZE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[187] _to_copy_3_DequantizeLinear_Output_1: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(33, 'SUM')]
+
+NODE #29: DEQUANTIZE
+  INPUTS:
+    tensor[184] _to_copy_3_QuantizeLinear_Output_1: shape=(1, 900, 6), dtype=INT8, quant=scale=[0.003921568859368563], zero=[-128]
+      producer: (25, 'QUANTIZE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[188] _to_copy_3_DequantizeLinear_Output_2: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(34, 'MUL')]
+
+NODE #30: GREATER
+  INPUTS:
+    tensor[185] sum_1: shape=(1, 6), dtype=INT64, quant=none
+      producer: (26, 'SUM')
+       constant_data=empty
+    tensor[33] val_1: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[0, 0, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[189] gt_2: shape=(1, 6), dtype=BOOL, quant=none
+      consumers: [(35, 'RESHAPE')]
+
+NODE #31: MAXIMUM
+  INPUTS:
+    tensor[185] sum_1: shape=(1, 6), dtype=INT64, quant=none
+      producer: (26, 'SUM')
+       constant_data=empty
+    tensor[28] val_39: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[190] clamp: shape=(1, 6), dtype=INT64, quant=none
+      consumers: [(36, 'RESHAPE')]
+
+NODE #32: MUL
+  INPUTS:
+    tensor[186] _to_copy: shape=(1, 900, 6), dtype=INT64, quant=none
+      producer: (27, 'CAST')
+       constant_data=empty
+    tensor[34] val_19: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[132, 3, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[191] mul: shape=(1, 900, 6), dtype=INT64, quant=none
+      consumers: [(37, 'ADD')]
+
+NODE #33: SUM
+  INPUTS:
+    tensor[187] _to_copy_3_DequantizeLinear_Output_1: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (28, 'DEQUANTIZE')
+       constant_data=empty
+    tensor[626] axes0: shape=(1,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0]
+  OUTPUTS:
+    tensor[192] sum_2: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      consumers: [(47, 'MAXIMUM')]
+
+NODE #34: MUL
+  INPUTS:
+    tensor[2] x_values: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: None
+       constant_data=empty
+    tensor[188] _to_copy_3_DequantizeLinear_Output_2: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (29, 'DEQUANTIZE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[193] mul_3: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(48, 'SUM')]
+
+NODE #35: RESHAPE
+  INPUTS:
+    tensor[189] gt_2: shape=(1, 6), dtype=BOOL, quant=none
+      producer: (30, 'GREATER')
+       constant_data=empty
+  OUTPUTS:
+    tensor[194] unsqueeze_2: shape=(1, 1, 6), dtype=BOOL, quant=none
+      consumers: [(193, 'SELECT_V2')]
+
+NODE #36: RESHAPE
+  INPUTS:
+    tensor[190] clamp: shape=(1, 6), dtype=INT64, quant=none
+      producer: (31, 'MAXIMUM')
+       constant_data=empty
+  OUTPUTS:
+    tensor[195] unsqueeze: shape=(1, 1, 6), dtype=INT64, quant=none
+      consumers: [(40, 'MUL'), (41, 'MUL')]
+
+NODE #37: ADD
+  INPUTS:
+    tensor[26] expand: shape=(1, 900, 6), dtype=INT64, quant=none
+      producer: None
+       constant_data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    tensor[191] mul: shape=(1, 900, 6), dtype=INT64, quant=none
+      producer: (32, 'MUL')
+       constant_data=empty
+  OUTPUTS:
+    tensor[196] add: shape=(1, 900, 6), dtype=INT64, quant=none
+      consumers: [(42, 'CAST')]
+
+NODE #38: QUANTIZE
+  INPUTS:
+    tensor[183] view_DequantizeLinear_Output: shape=(1, 900, 1), dtype=INT8, quant=scale=[0.0008827518904581666], zero=[15]
+      producer: (24, 'RESHAPE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[627] view_DequantizeLinear_Output0: shape=(1, 900, 1), dtype=INT8, quant=scale=[0.003921568859368563], zero=[0]
+      consumers: [(39, 'CONCATENATION')]
+
+NODE #39: CONCATENATION
+  INPUTS:
+    tensor[158] x_mark_DequantizeLinear_Output: shape=(1, 900, 3), dtype=INT8, quant=scale=[0.003921568859368563], zero=[0]
+      producer: (4, 'QUANTIZE')
+       constant_data=empty
+    tensor[627] view_DequantizeLinear_Output0: shape=(1, 900, 1), dtype=INT8, quant=scale=[0.003921568859368563], zero=[0]
+      producer: (38, 'QUANTIZE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[197] cat_DequantizeLinear_Output: shape=(1, 900, 4), dtype=INT8, quant=scale=[0.003921568859368563], zero=[0]
+      consumers: [(280, 'QUANTIZE')]
+
+NODE #40: MUL
+  INPUTS:
+    tensor[31] convert_element_type_default_3: shape=(1, 1800, 1), dtype=INT64, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0]
+    tensor[195] unsqueeze: shape=(1, 1, 6), dtype=INT64, quant=none
+      producer: (36, 'RESHAPE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[198] mul_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(43, 'ADD')]
+
+NODE #41: MUL
+  INPUTS:
+    tensor[30] convert_element_type_default_2: shape=(1, 1800, 1), dtype=INT64, quant=none
+      producer: None
+       constant_data=[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+    tensor[195] unsqueeze: shape=(1, 1, 6), dtype=INT64, quant=none
+      producer: (36, 'RESHAPE')
+       constant_data=empty
+  OUTPUTS:
+    tensor[199] mul_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(44, 'CAST'), (45, 'FLOOR_MOD')]
+
+NODE #42: CAST
+  INPUTS:
+    tensor[196] add: shape=(1, 900, 6), dtype=INT64, quant=none
+      producer: (37, 'ADD')
+       constant_data=empty
+  OUTPUTS:
+    tensor[200] topk_input_float32: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(46, 'NEG')]
+
+NODE #43: ADD
+  INPUTS:
+    tensor[198] mul_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (40, 'MUL')
+       constant_data=empty
+    tensor[35] val_46: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[8, 7, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[201] add_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(49, 'SUB')]
+
+NODE #44: CAST
+  INPUTS:
+    tensor[199] mul_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (41, 'MUL')
+       constant_data=empty
+  OUTPUTS:
+    tensor[202] node_Div_64_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(50, 'DIV'), (51, 'SIGN')]
+
+NODE #45: FLOOR_MOD
+  INPUTS:
+    tensor[199] mul_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (41, 'MUL')
+       constant_data=empty
+    tensor[35] val_46: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[8, 7, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[203] val_60: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(52, 'CAST')]
+
+NODE #46: NEG
+  INPUTS:
+    tensor[200] topk_input_float32: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (42, 'CAST')
+       constant_data=empty
+  OUTPUTS:
+    tensor[204] topk_negated_input: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      consumers: [(53, 'QUANTIZE')]
+
+NODE #47: MAXIMUM
+  INPUTS:
+    tensor[192] sum_2: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      producer: (33, 'SUM')
+       constant_data=empty
+    tensor[111] preprocess_clip_min_fp32: shape=(), dtype=FLOAT32, quant=none
+      producer: None
+       constant_data=[0, 0, 128, 63]
+  OUTPUTS:
+    tensor[205] clamp_2: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      consumers: [(65, 'DIV')]
+
+NODE #48: SUM
+  INPUTS:
+    tensor[193] mul_3: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (34, 'MUL')
+       constant_data=empty
+    tensor[628] axes1: shape=(1,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0]
+  OUTPUTS:
+    tensor[206] sum_3: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      consumers: [(65, 'DIV')]
+
+NODE #49: SUB
+  INPUTS:
+    tensor[201] add_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (43, 'ADD')
+       constant_data=empty
+    tensor[28] val_39: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[207] sub: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(54, 'CAST'), (55, 'FLOOR_MOD')]
+
+NODE #50: DIV
+  INPUTS:
+    tensor[202] node_Div_64_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (44, 'CAST')
+       constant_data=empty
+    tensor[43] node_Div_73_input_1_int32: shape=(), dtype=INT32, quant=none
+      producer: None
+       constant_data=[8, 7, 0, 0]
+  OUTPUTS:
+    tensor[208] node_Div_64_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(56, 'CAST')]
+
+NODE #51: SIGN
+  INPUTS:
+    tensor[202] node_Div_64_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (44, 'CAST')
+       constant_data=empty
+  OUTPUTS:
+    tensor[209] node_Sign_56_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(57, 'CAST')]
+
+NODE #52: CAST
+  INPUTS:
+    tensor[203] val_60: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (45, 'FLOOR_MOD')
+       constant_data=empty
+  OUTPUTS:
+    tensor[210] val_61: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(70, 'LOGICAL_AND')]
+
+NODE #53: QUANTIZE
+  INPUTS:
+    tensor[204] topk_negated_input: shape=(1, 900, 6), dtype=FLOAT32, quant=none
+      producer: (46, 'NEG')
+       constant_data=empty
+  OUTPUTS:
+    tensor[211] topk_negated_input_DequantizeLinear_Output: shape=(1, 900, 6), dtype=INT8, quant=scale=[7.054902076721191], zero=[127]
+      consumers: [(62, 'TRANSPOSE')]
+
+NODE #54: CAST
+  INPUTS:
+    tensor[207] sub: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (49, 'SUB')
+       constant_data=empty
+  OUTPUTS:
+    tensor[212] node_Div_73_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(58, 'DIV'), (59, 'SIGN')]
+
+NODE #55: FLOOR_MOD
+  INPUTS:
+    tensor[207] sub: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (49, 'SUB')
+       constant_data=empty
+    tensor[35] val_46: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[8, 7, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[213] val_69: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(60, 'CAST')]
+
+NODE #56: CAST
+  INPUTS:
+    tensor[208] node_Div_64_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (50, 'DIV')
+       constant_data=empty
+  OUTPUTS:
+    tensor[214] val_64: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(82, 'SUB')]
+
+NODE #57: CAST
+  INPUTS:
+    tensor[209] node_Sign_56_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (51, 'SIGN')
+       constant_data=empty
+  OUTPUTS:
+    tensor[215] val_56: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(61, 'EQUAL')]
+
+NODE #58: DIV
+  INPUTS:
+    tensor[212] node_Div_73_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (54, 'CAST')
+       constant_data=empty
+    tensor[43] node_Div_73_input_1_int32: shape=(), dtype=INT32, quant=none
+      producer: None
+       constant_data=[8, 7, 0, 0]
+  OUTPUTS:
+    tensor[216] node_Div_73_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(66, 'CAST')]
+
+NODE #59: SIGN
+  INPUTS:
+    tensor[212] node_Div_73_input_0_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (54, 'CAST')
+       constant_data=empty
+  OUTPUTS:
+    tensor[217] node_Sign_65_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      consumers: [(67, 'CAST')]
+
+NODE #60: CAST
+  INPUTS:
+    tensor[213] val_69: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (55, 'FLOOR_MOD')
+       constant_data=empty
+  OUTPUTS:
+    tensor[218] val_70: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(81, 'LOGICAL_AND')]
+
+NODE #61: EQUAL
+  INPUTS:
+    tensor[215] val_56: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (57, 'CAST')
+       constant_data=empty
+    tensor[28] val_39: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[219] val_58: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(68, 'LOGICAL_NOT')]
+
+NODE #62: TRANSPOSE
+  INPUTS:
+    tensor[211] topk_negated_input_DequantizeLinear_Output: shape=(1, 900, 6), dtype=INT8, quant=scale=[7.054902076721191], zero=[127]
+      producer: (53, 'QUANTIZE')
+       constant_data=empty
+    tensor[631] perm: shape=(3,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0]
+  OUTPUTS:
+    tensor[630] topk_negated_input_DequantizeLinear_Output_transposed_: shape=(1, 6, 900), dtype=INT8, quant=scale=[7.054902076721191], zero=[127]
+      consumers: [(63, 'TOPK_V2')]
+
+NODE #63: TOPK_V2
+  INPUTS:
+    tensor[630] topk_negated_input_DequantizeLinear_Output_transposed_: shape=(1, 6, 900), dtype=INT8, quant=scale=[7.054902076721191], zero=[127]
+      producer: (62, 'TRANSPOSE')
+       constant_data=empty
+    tensor[27] val_36: shape=(1,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[132, 3, 0, 0]
+  OUTPUTS:
+    tensor[632] sort__0_QuantizeLinear_Output0: shape=(1, 6, 900), dtype=INT8, quant=scale=[7.054902076721191], zero=[127]
+      consumers: []
+    tensor[633] getitem_1_casted0: shape=(1, 6, 900), dtype=INT32, quant=none
+      consumers: [(64, 'TRANSPOSE')]
+
+NODE #64: TRANSPOSE
+  INPUTS:
+    tensor[633] getitem_1_casted0: shape=(1, 6, 900), dtype=INT32, quant=none
+      producer: (63, 'TOPK_V2')
+       constant_data=empty
+    tensor[634] perm1: shape=(3,), dtype=INT32, quant=none
+      producer: None
+       constant_data=[0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0]
+  OUTPUTS:
+    tensor[629] getitem_1_casted: shape=(1, 900, 6), dtype=INT32, quant=none
+      consumers: [(71, 'SPLIT_V')]
+
+NODE #65: DIV
+  INPUTS:
+    tensor[206] sum_3: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      producer: (48, 'SUM')
+       constant_data=empty
+    tensor[205] clamp_2: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      producer: (47, 'MAXIMUM')
+       constant_data=empty
+  OUTPUTS:
+    tensor[220] div_1: shape=(1, 1, 6), dtype=FLOAT32, quant=none
+      consumers: [(80, 'BROADCAST_TO')]
+
+NODE #66: CAST
+  INPUTS:
+    tensor[216] node_Div_73_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (58, 'DIV')
+       constant_data=empty
+  OUTPUTS:
+    tensor[221] val_73: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(91, 'SUB')]
+
+NODE #67: CAST
+  INPUTS:
+    tensor[217] node_Sign_65_output_int32: shape=(1, 1800, 6), dtype=INT32, quant=none
+      producer: (59, 'SIGN')
+       constant_data=empty
+  OUTPUTS:
+    tensor[222] val_65: shape=(1, 1800, 6), dtype=INT64, quant=none
+      consumers: [(69, 'EQUAL')]
+
+NODE #68: LOGICAL_NOT
+  INPUTS:
+    tensor[219] val_58: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      producer: (61, 'EQUAL')
+       constant_data=empty
+  OUTPUTS:
+    tensor[223] val_59: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(70, 'LOGICAL_AND')]
+
+NODE #69: EQUAL
+  INPUTS:
+    tensor[222] val_65: shape=(1, 1800, 6), dtype=INT64, quant=none
+      producer: (67, 'CAST')
+       constant_data=empty
+    tensor[28] val_39: shape=(), dtype=INT64, quant=none
+      producer: None
+       constant_data=[1, 0, 0, 0, 0, 0, 0, 0]
+  OUTPUTS:
+    tensor[224] val_67: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(72, 'LOGICAL_NOT')]
+
+NODE #70: LOGICAL_AND
+  INPUTS:
+    tensor[223] val_59: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      producer: (68, 'LOGICAL_NOT')
+       constant_data=empty
+    tensor[210] val_61: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      producer: (52, 'CAST')
+       constant_data=empty
+  OUTPUTS:
+    tensor[225] val_62: shape=(1, 1800, 6), dtype=BOOL, quant=none
+      consumers: [(73, 'CAST')]
+
+===== ALL INT64 TENSORS =====
+tensor[26] expand: shape=(1, 900, 6), dtype=INT64, quant=none
+  producer: None
+  consumers: [(37, 'ADD')]
+tensor[28] val_39: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(31, 'MAXIMUM'), (49, 'SUB'), (61, 'EQUAL'), (69, 'EQUAL'), (114, 'MAXIMUM'), (200, 'GATHER')]
+tensor[30] convert_element_type_default_2: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: None
+  consumers: [(41, 'MUL')]
+tensor[31] convert_element_type_default_3: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: None
+  consumers: [(40, 'MUL')]
+tensor[32] val_115: shape=(3,), dtype=INT64, quant=none
+  producer: None
+  consumers: []
+tensor[33] val_1: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(30, 'GREATER'), (201, 'GATHER')]
+tensor[34] val_19: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(32, 'MUL')]
+tensor[35] val_46: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(43, 'ADD'), (45, 'FLOOR_MOD'), (55, 'FLOOR_MOD')]
+tensor[36] val_89: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(199, 'GATHER')]
+tensor[37] val_90: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(198, 'GATHER')]
+tensor[38] val_91: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(197, 'GATHER')]
+tensor[39] val_92: shape=(), dtype=INT64, quant=none
+  producer: None
+  consumers: [(196, 'GATHER')]
+tensor[40] node_gather_split_sizes: shape=(6,), dtype=INT64, quant=none
+  producer: None
+  consumers: [(8, 'SPLIT_V'), (71, 'SPLIT_V')]
+tensor[41] node_gather_1_split_sizes: shape=(6,), dtype=INT64, quant=none
+  producer: None
+  consumers: [(90, 'SPLIT_V'), (127, 'SPLIT_V')]
+tensor[42] node_gather_2_split_sizes: shape=(6,), dtype=INT64, quant=none
+  producer: None
+  consumers: [(99, 'SPLIT_V'), (126, 'SPLIT_V')]
+tensor[181] convert_element_type_default_1: shape=(1, 900, 6), dtype=INT64, quant=none
+  producer: (22, 'CAST')
+  consumers: [(26, 'SUM')]
+tensor[185] sum_1: shape=(1, 6), dtype=INT64, quant=none
+  producer: (26, 'SUM')
+  consumers: [(30, 'GREATER'), (31, 'MAXIMUM')]
+tensor[186] _to_copy: shape=(1, 900, 6), dtype=INT64, quant=none
+  producer: (27, 'CAST')
+  consumers: [(32, 'MUL')]
+tensor[190] clamp: shape=(1, 6), dtype=INT64, quant=none
+  producer: (31, 'MAXIMUM')
+  consumers: [(36, 'RESHAPE')]
+tensor[191] mul: shape=(1, 900, 6), dtype=INT64, quant=none
+  producer: (32, 'MUL')
+  consumers: [(37, 'ADD')]
+tensor[195] unsqueeze: shape=(1, 1, 6), dtype=INT64, quant=none
+  producer: (36, 'RESHAPE')
+  consumers: [(40, 'MUL'), (41, 'MUL')]
+tensor[196] add: shape=(1, 900, 6), dtype=INT64, quant=none
+  producer: (37, 'ADD')
+  consumers: [(42, 'CAST')]
+tensor[198] mul_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (40, 'MUL')
+  consumers: [(43, 'ADD')]
+tensor[199] mul_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (41, 'MUL')
+  consumers: [(44, 'CAST'), (45, 'FLOOR_MOD')]
+tensor[201] add_2: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (43, 'ADD')
+  consumers: [(49, 'SUB')]
+tensor[203] val_60: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (45, 'FLOOR_MOD')
+  consumers: [(52, 'CAST')]
+tensor[207] sub: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (49, 'SUB')
+  consumers: [(54, 'CAST'), (55, 'FLOOR_MOD')]
+tensor[213] val_69: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (55, 'FLOOR_MOD')
+  consumers: [(60, 'CAST')]
+tensor[214] val_64: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (56, 'CAST')
+  consumers: [(82, 'SUB')]
+tensor[215] val_56: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (57, 'CAST')
+  consumers: [(61, 'EQUAL')]
+tensor[221] val_73: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (66, 'CAST')
+  consumers: [(91, 'SUB')]
+tensor[222] val_65: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (67, 'CAST')
+  consumers: [(69, 'EQUAL')]
+tensor[233] val_63: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (73, 'CAST')
+  consumers: [(82, 'SUB')]
+tensor[242] floor_divide: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (82, 'SUB')
+  consumers: [(90, 'SPLIT_V'), (100, 'SUB')]
+tensor[249] val_72: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (89, 'CAST')
+  consumers: [(91, 'SUB')]
+tensor[250] node_gather_1_index_ch0: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(92, 'RESHAPE')]
+tensor[251] node_gather_1_index_ch1: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(93, 'RESHAPE')]
+tensor[252] node_gather_1_index_ch2: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(94, 'RESHAPE')]
+tensor[253] node_gather_1_index_ch3: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(95, 'RESHAPE')]
+tensor[254] node_gather_1_index_ch4: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(96, 'RESHAPE')]
+tensor[255] node_gather_1_index_ch5: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (90, 'SPLIT_V')
+  consumers: [(97, 'RESHAPE')]
+tensor[256] floor_divide_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (91, 'SUB')
+  consumers: [(99, 'SPLIT_V'), (100, 'SUB')]
+tensor[257] node_gather_1_indices_1d_0: shape=(1800,), dtype=INT64, quant=none
+  producer: (92, 'RESHAPE')
+  consumers: [(153, 'GATHER')]
+tensor[258] node_gather_1_indices_1d_1: shape=(1800,), dtype=INT64, quant=none
+  producer: (93, 'RESHAPE')
+  consumers: [(154, 'GATHER')]
+tensor[259] node_gather_1_indices_1d_2: shape=(1800,), dtype=INT64, quant=none
+  producer: (94, 'RESHAPE')
+  consumers: [(155, 'GATHER')]
+tensor[260] node_gather_1_indices_1d_3: shape=(1800,), dtype=INT64, quant=none
+  producer: (95, 'RESHAPE')
+  consumers: [(156, 'GATHER')]
+tensor[261] node_gather_1_indices_1d_4: shape=(1800,), dtype=INT64, quant=none
+  producer: (96, 'RESHAPE')
+  consumers: [(157, 'GATHER')]
+tensor[262] node_gather_1_indices_1d_5: shape=(1800,), dtype=INT64, quant=none
+  producer: (97, 'RESHAPE')
+  consumers: [(158, 'GATHER')]
+tensor[264] node_gather_2_index_ch0: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(108, 'RESHAPE')]
+tensor[265] node_gather_2_index_ch1: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(109, 'RESHAPE')]
+tensor[266] node_gather_2_index_ch2: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(110, 'RESHAPE')]
+tensor[267] node_gather_2_index_ch3: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(111, 'RESHAPE')]
+tensor[268] node_gather_2_index_ch4: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(112, 'RESHAPE')]
+tensor[269] node_gather_2_index_ch5: shape=(1, 1800, 1), dtype=INT64, quant=none
+  producer: (99, 'SPLIT_V')
+  consumers: [(113, 'RESHAPE')]
+tensor[270] sub_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (100, 'SUB')
+  consumers: [(114, 'MAXIMUM')]
+tensor[278] node_gather_2_indices_1d_0: shape=(1800,), dtype=INT64, quant=none
+  producer: (108, 'RESHAPE')
+  consumers: [(147, 'GATHER')]
+tensor[279] node_gather_2_indices_1d_1: shape=(1800,), dtype=INT64, quant=none
+  producer: (109, 'RESHAPE')
+  consumers: [(148, 'GATHER')]
+tensor[280] node_gather_2_indices_1d_2: shape=(1800,), dtype=INT64, quant=none
+  producer: (110, 'RESHAPE')
+  consumers: [(149, 'GATHER')]
+tensor[281] node_gather_2_indices_1d_3: shape=(1800,), dtype=INT64, quant=none
+  producer: (111, 'RESHAPE')
+  consumers: [(150, 'GATHER')]
+tensor[282] node_gather_2_indices_1d_4: shape=(1800,), dtype=INT64, quant=none
+  producer: (112, 'RESHAPE')
+  consumers: [(151, 'GATHER')]
+tensor[283] node_gather_2_indices_1d_5: shape=(1800,), dtype=INT64, quant=none
+  producer: (113, 'RESHAPE')
+  consumers: [(152, 'GATHER')]
+tensor[284] clamp_1: shape=(1, 1800, 6), dtype=INT64, quant=none
+  producer: (114, 'MAXIMUM')
+  consumers: [(115, 'CAST')]
+tensor[636] x_shape: shape=(3,), dtype=INT64, quant=none
+  producer: None
+  consumers: []
+tensor[637] broadcasted_shape: shape=(3,), dtype=INT64, quant=none
+  producer: None
+  consumers: [(80, 'BROADCAST_TO')]
+
+===== REDUCTION AXIS CONSTANTS =====
+tensor[625] axes: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(26, 'SUM')]
+tensor[626] axes0: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(33, 'SUM')]
+tensor[628] axes1: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(48, 'SUM')]
+tensor[649] axes2: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(145, 'MEAN')]
+tensor[659] axes3: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(184, 'MEAN')]
+tensor[685] axes4: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(245, 'MEAN')]
+tensor[689] axes5: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(252, 'MEAN')]
+tensor[751] axes6: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(310, 'MEAN'), (313, 'MEAN')]
+tensor[761] axes7: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(319, 'MEAN'), (322, 'MEAN')]
+tensor[771] axes8: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(328, 'MEAN'), (331, 'MEAN')]
+tensor[781] axes9: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(337, 'MEAN'), (340, 'MEAN')]
+tensor[791] axes10: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(346, 'MEAN'), (349, 'MEAN')]
+tensor[801] axes11: shape=(1,), dtype=INT32, quant=none
+  constant_data=[2, 0, 0, 0]
+  consumers: [(355, 'MEAN'), (358, 'MEAN')]
+tensor[871] axes12: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(478, 'MEAN'), (481, 'MEAN')]
+tensor[881] axes13: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(491, 'MEAN'), (494, 'MEAN')]
+tensor[894] axes14: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(524, 'MEAN'), (527, 'MEAN')]
+tensor[905] axes15: shape=(1,), dtype=INT32, quant=none
+  constant_data=[1, 0, 0, 0]
+  consumers: [(552, 'MEAN'), (555, 'MEAN')]
+
+===== TRACE COMPLETE =====
+
+PYTHON EXIT CODE: 0
+===== AUDIT COMPLETE =====
