@@ -1,0 +1,711 @@
+===== APPLICATION CMAKE: MODEL SELECTION =====
+# Copyright (C) Alif Semiconductor - All Rights Reserved.
+# Use, distribution and modification of this code is permitted under the
+# terms stated in the Alif Semiconductor Software License Agreement
+#
+# You should have received a copy of the Alif Semiconductor Software
+# License Agreement with this file. If not, please write to:
+# contact@alifsemi.com, or visit: https://alifsemi.com/license
+
+cmake_minimum_required(VERSION 3.20.0)
+
+if(NOT ospi-flash IN_LIST SNIPPET)
+  set(SNIPPET ospi-flash ${SNIPPET} CACHE STRING "" FORCE)
+endif()
+
+# Locate the alif-mlek west module. Its Zephyr port lives in a sub-directory,
+# so the module is not auto-discovered and must be registered explicitly. Ask
+# west for the module path instead of hardcoding the workspace layout.
+execute_process(
+    COMMAND west list --format "{abspath}" alif-mlek
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE MLEK_ROOT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE MLEK_LIST_RESULT
+    ERROR_QUIET
+)
+if (MLEK_LIST_RESULT OR NOT EXISTS ${MLEK_ROOT})
+    message(FATAL_ERROR
+        "alif-mlek module not found. Enable and fetch it first:\n"
+        "  west config manifest.project-filter -- +alif-mlek\n"
+        "  west update\n")
+endif()
+
+# Register the MLEK Zephyr port as an extra Zephyr module
+list(APPEND ZEPHYR_EXTRA_MODULES ${MLEK_ROOT}/source/lib/ports/zephyr)
+
+# ---------------------------------------------------------------------------
+# Ethos-U NPU selection
+# ---------------------------------------------------------------------------
+# When ETHOSU_TARGET_NPU_CONFIG is provided on the command line it is the single
+# source of truth for the NPU. We must act on it BEFORE find_package(Zephyr) so
+# that the matching Kconfig choice (CONFIG_ARM_ETHOS_U<arch>_<macs>) is fed into
+# the build and the Ethos-U driver targets the requested NPU. This overrides the
+# board default (E8 rtss_hp defaults to Ethos-U55 with 256 MACs).
+#
+# The parsed value is also used to pick the correct Vela-compiled model below.
+# Vela config-ID prefix: U55 -> H, U65 -> Y, U85 -> Z (e.g. ethos-u85-256 -> Z256).
+if (DEFINED ETHOSU_TARGET_NPU_CONFIG)
+    string(TOLOWER "${ETHOSU_TARGET_NPU_CONFIG}" _npu_cfg)
+    if (_npu_cfg MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+        set(_npu_arch "${CMAKE_MATCH_1}")
+        set(_npu_macs "${CMAKE_MATCH_2}")
+        if (_npu_arch STREQUAL "u55")
+            set(_npu_prefix "H")
+        elseif (_npu_arch STREQUAL "u65")
+            set(_npu_prefix "Y")
+        elseif (_npu_arch STREQUAL "u85")
+            set(_npu_prefix "Z")
+        else()
+            message(FATAL_ERROR
+                "Unsupported Ethos-U architecture '${_npu_arch}' in "
+                "ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'")
+        endif()
+        set(ETHOS_U_NPU_CONFIG_ID "${_npu_prefix}${_npu_macs}")
+
+        # Feed the matching Kconfig choice into the Zephyr configuration.
+        string(TOUPPER "${_npu_arch}" _npu_arch_uc)
+        set(CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs} y
+            CACHE INTERNAL "Selected Ethos-U NPU configuration" FORCE)
+        message(STATUS
+            "Ethos-U: ETHOSU_TARGET_NPU_CONFIG=${ETHOSU_TARGET_NPU_CONFIG} -> "
+            "CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs}=y, model ID ${ETHOS_U_NPU_CONFIG_ID}")
+    else()
+        message(FATAL_ERROR
+            "Invalid ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'.\n"
+            "Expected format: ethos-u<arch>-<macs>, e.g. ethos-u55-256 or ethos-u85-256")
+    endif()
+endif()
+
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
+project(alif_asr)
+
+# Silence "changed in GCC 7.1" warnigns from C++ headers
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+
+set(PLATFORM_DRIVERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/source/platform/zephyr)
+
+set(ML_FRAMEWORK TensorFlowLiteMicro)
+
+# ---------------------------------------------------------------------------
+# Build-time model and labels generation from MLEK resources
+# ---------------------------------------------------------------------------
+set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded CACHE PATH
+    "Path to MLEK resources (models compiled with Vela)")
+setup_source_generator()
+
+# Source generation output directories
+set(SRC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/src)
+set(INC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+file(MAKE_DIRECTORY ${SRC_GEN_DIR} ${INC_GEN_DIR})
+
+message(STATUS "Using SRC_GEN_DIR:    ${SRC_GEN_DIR}")
+message(STATUS "Using INC_GEN_DIR:    ${INC_GEN_DIR}")
+
+# Determine NPU config ID based on Zephyr Kconfig.
+# If ETHOSU_TARGET_NPU_CONFIG was supplied on the command line, ETHOS_U_NPU_CONFIG_ID
+# has already been computed above. Otherwise fall back to the board Kconfig defaults.
+if (NOT DEFINED ETHOS_U_NPU_CONFIG_ID)
+    if (CONFIG_ARM_ETHOS_U85_256)
+        set(ETHOS_U_NPU_CONFIG_ID "Z256")
+    elseif (CONFIG_ARM_ETHOS_U55_256)
+        set(ETHOS_U_NPU_CONFIG_ID "H256")
+    else()
+        set(ETHOS_U_NPU_CONFIG_ID "H128")
+    endif()
+endif()
+
+# Opt-in experiment. Default remains the production model and kernel.
+option(HEATSTROKE_SINGLE_STEP_EXPERIMENT
+    "Use repaired Vela model and single-step BiLSTM experiment" OFF)
+
+if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+    set(POLYU_MODEL_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_performance/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp_vela.tflite"
+        CACHE FILEPATH "Experimental PolyU heat-stress model" FORCE)
+else()
+    set(POLYU_MODEL_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/../PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite"
+        CACHE FILEPATH "Production PolyU heat-stress model" FORCE)
+endif()
+
+if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+    set(POLYU_MODEL_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp.tflite"
+        CACHE FILEPATH "Fused LayerNorm heat-stress experimental model" FORCE)
+endif()
+
+option(HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT
+    "Use the FlatBuffer with 16-byte-aligned Ethos-U command streams" OFF)
+
+if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+    set(POLYU_MODEL_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp_ethosu_aligned16_20261111.tflite"
+        CACHE FILEPATH "16-byte-aligned Ethos-U heat-stress model" FORCE)
+endif()
+
+if (NOT EXISTS "${POLYU_MODEL_PATH}")
+    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+endif()
+
+if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+    set(POLYU_MODEL_SHA256_EXPECTED
+        "72bf7dba9d0234458108fc413915cdb161050edccf4327dd6cf34597e1cb556a")
+else()
+    set(POLYU_MODEL_SHA256_EXPECTED
+        "b8056848e68ecdb1fc1cd35f65639db6f836b53abf603033f58f90ec7f1003b3")
+endif()
+if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+    set(POLYU_MODEL_SHA256_EXPECTED "06455fa9d1b41e2b920485b9bfd4a1a48d68ae0474d1aa7d9558c0a0afd02125")
+endif()
+
+if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+    set(POLYU_MODEL_SHA256_EXPECTED
+        "f76150bcfef7b5fb0378eff51196045d8139c7ba805b5af9192afd178702389d")
+endif()
+
+file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+if (NOT "${POLYU_MODEL_SHA256_ACTUAL}" STREQUAL "${POLYU_MODEL_SHA256_EXPECTED}")
+    message(FATAL_ERROR
+        "Combined PolyU model SHA256 mismatch. "
+        "Expected ${POLYU_MODEL_SHA256_EXPECTED}, got ${POLYU_MODEL_SHA256_ACTUAL}")
+endif()
+
+message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+message(STATUS "Combined model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+
+# The generator output filename is the complete model filename plus .cc.
+generate_model_code(
+    MODEL_PATH "${POLYU_MODEL_PATH}"
+    DESTINATION "${SRC_GEN_DIR}"
+    NAMESPACE "arm" "app" "polyu_heatstroke")
+
+get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+
+# Application-local includes for the heat-stress TFLM model.
+target_include_directories(app PRIVATE
+
+===== APPLICATION KCONFIG =====
+CONFIG_CPP=y
+CONFIG_STD_CPP17=y
+
+# tflm
+CONFIG_MLEK_EXAMPLES_LIB=y
+CONFIG_TENSORFLOW_LITE_MICRO=y
+CONFIG_ARM_ETHOS_U=y
+
+CONFIG_HEAP_MEM_POOL_SIZE=163840
+CONFIG_LOG=y
+CONFIG_LOG_MODE_IMMEDIATE=y
+CONFIG_REQUIRES_FULL_LIBC=y
+CONFIG_REQUIRES_FULL_LIBCPP=y
+
+# std::exp
+CONFIG_NEWLIB_LIBC=y
+CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=163840
+
+CONFIG_SYS_HEAP_SMALL_ONLY=y
+
+# arm_math.h
+CONFIG_CMSIS_DSP=y
+CONFIG_CMSIS_DSP_TRANSFORM=y
+CONFIG_CMSIS_DSP_FASTMATH=y
+CONFIG_CMSIS_DSP_STATISTICS=y
+CONFIG_CMSIS_DSP_COMPLEXMATH=y
+
+CONFIG_MAIN_STACK_SIZE=4096
+CONFIG_MAIN_THREAD_PRIORITY=3
+CONFIG_ISR_STACK_SIZE=4096
+CONFIG_PRIVILEGED_STACK_SIZE=2048
+CONFIG_IDLE_STACK_SIZE=2048
+
+CONFIG_CONSOLE_SUBSYS=y
+CONFIG_CONSOLE_GETLINE=y
+
+CONFIG_CBPRINTF_FP_SUPPORT=y
+
+# Audio input and output configurations
+CONFIG_AUDIO=y
+
+# I2S and audio codec for audio output
+CONFIG_I2C=y
+CONFIG_WM8904=y
+CONFIG_AUDIO_CODEC=y
+
+
+CONFIG_COUNTER_RTC_SNPS_DW=y
+CONFIG_COUNTER_SNPS_DW=n
+CONFIG_COUNTER_ALIF_UTIMER=n
+
+
+# Power management configurations
+CONFIG_ALIF_POWER_MGR_SHELL=n
+CONFIG_PM=y
+CONFIG_PM_DEVICE=y
+CONFIG_POWER_DOMAIN=y
+CONFIG_COUNTER=y
+CONFIG_PM_S2RAM=y
+CONFIG_PM_SAU_SAVE_RESTORE=y
+
+#########
+CONFIG_ASSERT=y
+CONFIG_SYS_CLOCK_TICKS_PER_SEC=1000
+CONFIG_STDOUT_CONSOLE=y
+CONFIG_PRINTK=y
+CONFIG_POWEROFF=y
+
+# Enable push-to-talk mode for the ASR sample application
+CONFIG_PUSH_TO_TALK=y
+CONFIG_OUTPUT_TO_LINE_OUT=n
+
+CONFIG_GPIO=y
+CONFIG_LPGPIO_M55_IRQ_ENABLED=y
+
+# ASR model is large, so we need to store it in external flash
+CONFIG_MODEL_IN_EXT_FLASH=y
+CONFIG_ALIF_OSPI_FLASH_XIP=y
+CONFIG_OSPI_FLASH_IS25WX=y
+CONFIG_OSPI=y
+CONFIG_OSPI_FLASH=y
+CONFIG_USE_ALIF_HAL_OSPI=y
+
+# ####### Configuration supported with the updated Secure Enclave software
+CONFIG_SE_SERVICE_INIT_PRIORITY=1
+CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0
+CONFIG_GPIO_INIT_PRIORITY=40
+# Copyright (C) Alif Semiconductor - All Rights Reserved.
+# Use, distribution and modification of this code is permitted under the
+# terms stated in the Alif Semiconductor Software License Agreement
+#
+# You should have received a copy of the Alif Semiconductor Software
+# License Agreement with this file. If not, please write to:
+# contact@alifsemi.com, or visit: https://alifsemi.com/license
+
+source "Kconfig.zephyr"
+
+config USE_APP_MENU
+	bool "Use application menu to choose a test case"
+	default false
+
+config ACTIVATION_BUF_SECTION
+	string "Linker section where activation buffer (tensor arena) is placed"
+	default ".bss.activation_buf"
+
+config ACTIVATION_BUF_SZ
+	hex "Tensor arena size"
+	default 0x00091000
+
+config MODEL_IN_EXT_FLASH
+	bool "Put ML model to external flash"
+	select FLASH
+	select ALIF_OSPI_FLASH_XIP
+	help
+		Initialize OSPI controller to XIP mode. Initialize the onboard flash device. Link ML model data to external flash address space.
+		In addition to normal zephyr.bin output, ospi0/1.bin is generated. When enabled, the model memory section is set automatically (See BufAttributes.h)
+
+config MODEL_SECTION
+	string "Linker section where ML model is placed"
+	depends on !MODEL_IN_EXT_FLASH
+	default ".rodata.tflm_model"
+
+config ETHOS_U_AXI0_ONLY
+	bool "Only use AXI0 port on the Ethos"
+	default false
+
+config AUDIO_SAMPLES
+	int "Number of audio samples to store"
+	default 16000
+
+config AUDIO_STRIDE
+	int "Number of audio samples in a single stride"
+	default 8000
+
+config RESULTS_MEMORY
+	int "Number of inference results to keep in memory"
+	default 8
+
+config AUDIO_CHANNELS
+	int "Number of input audio channels"
+	default 2
+
+config SAMPLE_CNT
+	int "Number of samples per slab buffer"
+	default 400
+
+config NUM_BUFFERS
+	int "Number of slab buffers to allocate"
+	default 4
+
+config I2S_GAIN
+	int "Fixed linear again applied to I2S samples (e.g 10 = 20dB gain)"
+	default 20
+
+config THREAD_STACK_SIZE
+	int "Stack size of audio thread"
+	default 1024
+
+config THREAD_PRIORITY
+	int "Priority of audio thread"
+	default 0
+
+config PUSH_TO_TALK
+	bool "Use push to talk power example"
+	default false
+
+config OUTPUT_TO_LINE_OUT
+	depends on I2S
+	bool "Output audio to line out"
+	default false
+
+config LPGPIO_WAKEUP_SOURCE
+	depends on "$(dt_nodelabel_enabled,lpgpio)"
+	int "LPGPIO Wakeup source will be used to wakeup from sleep"
+	range 0 4
+	default 1
+	help
+	  Defines which LPGPIO pin will be used as wakeup source from sleep.
+	  0 - LPGPIO0, 1 - LPGPIO1, ...
+
+config LPGPIO_M55_IRQ_ENABLED
+	depends on "$(dt_nodelabel_enabled,lpgpio)"
+	bool "LPGPIO M55 core IRQ enabled"
+	default y
+	help
+	  Configures LPGPIO to generate interrupt on M55 core when M55 is
+	  running.
+
+choice
+	depends on LPGPIO_M55_IRQ_ENABLED
+	prompt "LPGPIO IRQ edge trigger select"
+	default LPGPIO_M55_IRQ_EDGE_FALLING
+	help
+	  Select which signal edge will trigger the interrupt.
+	config LPGPIO_M55_IRQ_EDGE_RISING
+	bool "Rising edge"
+	config LPGPIO_M55_IRQ_EDGE_FALLING
+	bool "Falling edge"
+	config LPGPIO_M55_IRQ_EDGE_BOTH
+	bool "Rising and falling edges"
+endchoice
+
+===== CURRENT BOARD OVERLAYS =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.conf
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.overlay
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https: //alifsemi.com/license
+ *
+ */
+
+/ {
+	aliases {
+		pdm-audio = &lppdm;
+		spi-flash0 = &ospi_flash;
+		i2s-output = &i2s0;
+		audio-codec = &wm8904;
+	};
+};
+
+&lppdm {
+	status = "okay";
+};
+
+&i2s0 {
+	status = "okay";
+};
+
+/ {
+	ext_flash_xip: memory@b0000000 {
+		compatible = "zephyr,memory-region";
+		reg = <0xb0000000 DT_SIZE_M(64)>;
+		zephyr,memory-region = "OSPI0";
+	};
+};
+
+
+&ospi0 {
+	bus-speed = <80000000>;
+	status = "okay";
+};
+
+&ospi_flash {
+	status = "okay";
+};
+
+&pinctrl_lpgpio {
+	group0 {
+		pinmux = <PIN_P15_0__LPGPIO>,
+			 <PIN_P15_1__LPGPIO>;
+		read-enable = <1>;
+		driver-state-control = <1>;
+		drive-strength = <8>;
+	};
+};
+
+&lpgpio {
+	pinctrl-0 = < &pinctrl_lpgpio >;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+/ {
+	wakeup_pins: wakeup_pins {
+		compatible = "lpgpio-wakeup-pin";
+		lpgpios = <&lpgpio 0 GPIO_ACTIVE_LOW>,
+			  <&lpgpio 1 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&pinctrl_uart2 {
+	group0 {
+		pinmux = <PIN_P5_2__UART2_RX_B>,
+				 <PIN_P5_3__UART2_TX_B>;
+		read-enable = <0x1>;
+		driver-state-control = <1>; /* pull-up: initialize RX active-high */
+	};
+};
+
+&pinctrl_i2s0 {
+	group0 {
+		pinmux = <PIN_P2_4__I2S0_SDI_B>,
+			 <PIN_P2_5__I2S0_SDO_B>,
+			 <PIN_P1_6__I2S0_SCLK_A>,
+			 <PIN_P1_7__I2S0_WS_A>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	wm8904: wm8904@1a {
+		compatible = "cirrus,wm8904";
+		reg = <0x1a>;
+		status = "okay";
+	};
+};
+
+&uart_ahi {
+	status = "disabled";
+};
+
+&uart_hci {
+	status = "disabled";
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+#include "alif_e8_common.overlay"
+/ {
+	aliases {
+		pdm-audio = &pdm;
+		i2s-output = &i2s2;
+	};
+};
+
+&pdm {
+	status = "okay";
+};
+
+&i2s2 {
+	status = "okay";
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+
+/ {
+	aliases {
+		audio-codec = &wm8904;
+		spi-flash0 = &ospi_flash;
+	};
+};
+
+/ {
+	ext_flash_xip: memory@c0000000 {
+		compatible = "zephyr,memory-region";
+		reg = <0xc0000000 DT_SIZE_M(64)>;
+		zephyr,memory-region = "OSPI1";
+	};
+};
+
+&ospi1 {
+	pinctrl-0 = <&pinctrl_flash>;
+	status = "okay";
+};
+
+&ospi_flash {
+	status = "okay";
+};
+
+&pinctrl_lpgpio {
+	group0 {
+		pinmux = <PIN_P15_4__LPGPIO>;
+		read-enable = <1>;
+		driver-state-control = <1>;
+		drive-strength = <8>;
+	};
+};
+
+&lpgpio {
+	pinctrl-0 = < &pinctrl_lpgpio >;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+/ {
+	wakeup_pins: wakeup_pins {
+		compatible = "lpgpio-wakeup-pin";
+		lpgpios = <&lpgpio 4 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&pinctrl {
+	pinctrl_flash:pinctrl_flash {
+		group0 {
+			pinmux = <PIN_P5_5__OSPI1_SCLK_C>,
+				 <PIN_P5_7__OSPI1_SS0_C>;
+			read-enable = <0x0>;
+			drive-strength = <12>;
+			slew-rate = <0x1>;
+		};
+		group1 {
+			pinmux = <PIN_P9_5__OSPI1_D0_C>,
+				 <PIN_P9_6__OSPI1_D1_C>,
+				 <PIN_P9_7__OSPI1_D2_C>,
+				 <PIN_P10_0__OSPI1_D3_C>,
+				 <PIN_P10_1__OSPI1_D4_C>,
+				 <PIN_P10_2__OSPI1_D5_C>,
+				 <PIN_P10_3__OSPI1_D6_C>,
+				 <PIN_P10_4__OSPI1_D7_C>,
+				 <PIN_P10_7__OSPI1_RXDS0_C>;
+			read-enable = <0x1>;
+			drive-strength = <12>;
+			slew-rate = <0x1>;
+		};
+	};
+};
+
+&i2c1 {
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+	wm8904: wm8904@1a {
+		compatible = "cirrus,wm8904";
+		reg = <0x1a>;
+		status = "okay";
+	};
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+#include "alif_e8_common.overlay"
+/ {
+	aliases {
+		pdm-audio = &lppdm;
+		i2s-mic = &i2s4;
+		i2s-output = &i2s3;
+	};
+};
+
+&lppdm {
+	status = "okay";
+};
+
+&i2s4 {
+	status = "okay";
+};
+
+&i2s3 {
+	status = "okay";
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/sleep.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+
+/* RTC is needed for Zephyr kernel to be able track timing after
+ * sleep periods.
+ */
+&rtc0 {
+	prescaler = <1>;
+	status = "okay";
+};
+
+/ {
+	chosen {
+		zephyr,cortex-m-idle-timer = &rtc0;
+	};
+};
+
+&stop_s2ram {
+	min-residency-us = <1000000>; /* 1s */
+	exit-latency-us = <3000>;
+	status = "okay";
+};
+
+
+/* Disable Zephyr handler for these modules. These
+ * will be controlled from application directly
+ */
+&pd_syst {
+	status = "disabled";
+};
+
+&pd_sse700_aon {
+	status = "disabled";
+};
+
+===== HP OVERLAY STATUS =====
+HP overlay does not exist yet.
+
+===== EXISTING HP BUILD DIRECTORIES =====
+
+===== U55-256 VELA MODEL =====
+4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d  /home/user/sdk-alif/beeinventor/test_heatstroke/vela_output_e8_hp_u55_256_v5_2_0_performance/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp_vela.tflite
