@@ -1,0 +1,73 @@
+=== E8 HP U55-256 FINAL BUILD ARTIFACT AUDIT ===
+Build: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+
+=== Firmware artifacts ===
+zephyr.bin  113648 bytes
+zephyr.elf  24861460 bytes
+zephyr.map  2431442 bytes
+
+=== Model artifact ===
+4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+/home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite  11023200 bytes
+
+=== NPU Kconfig ===
+CONFIG_ARM_ETHOS_U=y
+CONFIG_ARM_ETHOS_U55_256=y
+# CONFIG_ARM_ETHOS_U85_128 is not set
+# CONFIG_ARM_ETHOS_U85_256 is not set
+# CONFIG_ARM_ETHOS_U85_512 is not set
+# CONFIG_ARM_ETHOS_U85_1024 is not set
+# CONFIG_ARM_ETHOS_U85_2048 is not set
+
+=== Ethos device-tree nodes ===
+47-			compatible = "arm,armv8.1m-systick";
+48-			reg = < 0xe000e010 0x10 >;
+49-		};
+50:		ethosu0: ethosu55@400e1000 {
+51-			compatible = "arm,ethos-u";
+52-			reg = < 0x400e1000 0x1000 >;
+53-			interrupts = < 0x37 0x0 >;
+54-			interrupt-parent = < &nvic >;
+55-			secure-enable;
+56-			privilege-enable;
+57-			status = "okay";
+58-		};
+59-		clockctrl: clock-controller@1a602000 {
+60-			compatible = "alif,clockctrl";
+61-			reg = < 0x1a602000 0x2c 0x4903f000 0xb0 0x4902f000 0xbc 0x1a604000 0x44 0x1a609000 0x14 0x43007000 0x2c 0x400f0000 0x14 >;
+62-			reg-names = "cgu", "clkctl_per_mst", "clkctl_per_slv", "aon", "vbat", "m55he_cfg", "m55hp_cfg";
+63-			#clock-cells = < 0x1 >;
+64-			status = "okay";
+65-			phandle = < 0x6 >;
+66-		};
+67-		mram_flash: mram_flash@80000000 {
+68-			compatible = "alif,mram-flash-controller";
+--
+2752-			zephyr,memory-region = "SRAM1";
+2753-			zephyr,memory-attr = < 0x100000 >;
+2754-		};
+2755:		ethosu1: ethosu85@49042000 {
+2756-			compatible = "arm,ethos-u";
+2757-			reg = < 0x49042000 0x1000 >;
+2758-			interrupts = < 0x16e 0x3 >;
+2759-			interrupt-parent = < &nvic >;
+2760-			secure-enable;
+2761-			privilege-enable;
+2762-			clocks = < &clockctrl 0x1f8a1 >;
+2763-			status = "disabled";
+2764-		};
+2765-		gpio16: gpio@4300a000 {
+2766-			compatible = "snps,designware-gpio";
+2767-			reg = < 0x4300a000 0x1000 >;
+2768-			ngpios = < 0x8 >;
+2769-			interrupts = < 0x1dc 0x0 >;
+2770-			pinctrl-0 = < &pinctrl_gpio16 >;
+2771-			pinctrl-names = "default";
+2772-			gpio-controller;
+2773-			#gpio-cells = < 0x2 >;
+
+=== Linker map and memory summary ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.map  2431442 bytes
+
+=== ELF file ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, with debug_info, not stripped
