@@ -1,0 +1,494 @@
+=== MLEK TFLM ARENA ALLOCATION TRACE ===
+
+=== TflmModel implementation files ===
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+
+=== TFLM arena and allocation implementation ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/setup/npu_config.py:26:_DEFAULT_SHARED_SRAM_ARENA_SIZE = 2 * 1024 * 1024  # 2 MiB
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/setup/npu_config.py:81:            value = _DEFAULT_SHARED_SRAM_ARENA_SIZE if self.memory_mode == "Shared_Sram" else None
+/home/user/sdk-alif/modules/alif-mlek/docs/sections/memory_considerations.md:82:  parameter called `_DEFAULT_SHARED_SRAM_ARENA_SIZE`:
+/home/user/sdk-alif/modules/alif-mlek/docs/sections/memory_considerations.md:86:  _DEFAULT_SHARED_SRAM_ARENA_SIZE = 2 * 1024 * 1024  # 2 MiB
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/objectpath.pxi:167:    c_path_segments = <_ObjectPath*>python.lxml_malloc(len(path_list), sizeof(_ObjectPath))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/serializer.pxi:691:    c_ns_prefixes = <xmlChar **>python.lxml_malloc(num_ns_prefixes + 1, sizeof(xmlChar*))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/xslt.pxi:651:    params = <const_char**>python.lxml_malloc(parameter_count * 2 + 1, sizeof(const_char*))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/etree.pyx:2835:            self._cached_tags = <qname*>python.lxml_malloc(len(self._py_tags), sizeof(qname))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/parser.pxi:935:                sax = <xmlparser.xmlSAXHandler*> tree.xmlMalloc(sizeof(xmlparser.xmlSAXHandler))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/xmlerror.pxi:757:            c_message = <char*>stdlib.malloc(
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/xmlerror.pxi:768:        c_message = <char*>stdlib.malloc(
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/etree_defs.h:199:#define lxml_malloc(count, item_size) \
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/etree_defs.h:201:     (PyMem_Malloc((count) * item_size)))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/libxml/xmlmemory.h:36: * Signature for a malloc() implementation.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/libxml/xmlmemory.h:182: * Wrapper for the malloc() function used in the XML library.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/libxml/xmlmemory.h:186:#define xmlMalloc(size) xmlMallocLoc((size), __FILE__, __LINE__)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/libxml/xmlmemory.h:191: * Wrapper for the malloc() function used in the XML library for allocation
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/extlibs/zlib.h:149:   routines that use the standard library functions malloc() and free().
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/lxml/includes/tree.pxd:476:    cdef void* xmlMalloc(size_t size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:328:RAIIDataPtr RAII_gpuMalloc(size_t num_bytes) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:342:  AOTI_RUNTIME_CUDA_CHECK(cudaMalloc((void**)&data_ptr, num_bytes));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:350:RAIIDataPtr RAII_gpuMalloc(size_t num_bytes) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:360:RAIIDataPtr RAII_gpuMalloc(size_t num_bytes) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:362:  aoti_torch_mps_malloc(&data_ptr, num_bytes);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:369:RAIIDataPtr RAII_cpuMalloc(size_t num_bytes) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:370:  void* data_ptr = std::malloc(num_bytes);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:605:    constant_blob_ = RAII_gpuMalloc(blob_size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_base.h:607:    constant_blob_ = RAII_cpuMalloc(blob_size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_container.h:712:    return RAII_gpuMalloc(blob_size_);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/model_container.h:714:    return RAII_cpuMalloc(blob_size_);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/sycl_runtime_wrappers.h:49:    char* strLog = (char*)malloc(szLog);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_torch/c/shim_mps.h:65:aoti_torch_mps_malloc(void** buffer, size_t num_bytes);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/cuda/CUDAPluggableAllocator.h:80:  void* malloc(size_t size, c10::DeviceIndex device, cudaStream_t stream);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/xpu/XPUPluggableAllocator.h:32:  void* malloc(size_t size, c10::DeviceIndex device, sycl::queue* stream);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/utils/pythoncapi_compat.h:1377:    PyUnicodeWriter *pub_writer = (PyUnicodeWriter *)PyMem_Malloc(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/utils/pythoncapi_compat.h:2475:    PyBytesWriter *writer = (PyBytesWriter*)PyMem_Malloc(sizeof(PyBytesWriter));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/compiled_autograd.h:736:            (uint8_t*)std::malloc(_specialization_key_storage)) {}
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/caffe2/utils/threadpool/WorkersPool.h:41:    p = _aligned_malloc(sizeof(T), kGEMMLOWPCacheLineSize);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/sleef.h:125:SLEEF_IMPORT void *Sleef_malloc(size_t z);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/mps/MPSAllocator.h:278:  id<MTLBuffer> malloc(size_t size, uint32_t usage);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/CPUFixedAllocator.h:15:static void* cpu_fixed_malloc(void*, ptrdiff_t) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/native/quantized/cpu/QnnpackUtils.h:278:    void* zero_buffer = malloc(zero_size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/fmt/format.h:752:    T* p = static_cast<T*>(malloc(n * sizeof(T)));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/pybind11/detail/class.h:737:        tp_doc = (char *) PyMem_MALLOC(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/pybind11/detail/class.h:739:        tp_doc = (char *) PyObject_MALLOC(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/google/protobuf/message_lite.h:574://   every single malloc() to have a corresponding free(), even for objects
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/c10/cuda/CUDAAllocatorConfig.h:57:  static bool release_lock_on_cudamalloc() {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/c10/core/impl/alloc_cpu.h:20:C10_API void* c10_mi_malloc(size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/c10/core/impl/SizesAndStrides.h:304:    outOfLineStorage_ = static_cast<int64_t*>(malloc(storageBytes(size)));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/cuda/_memory_viz.py:389:                out.write(f"{name} = cudaMalloc({addr}, {Bytes(size)})\n")
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/cuda/memory.py:296:      number of reserved segments from ``cudaMalloc()``.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/cuda/memory.py:346:      number of over-size reserved segments from ``cudaMalloc()``.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/cuda/memory.py:448:       number of reserved segments from ``cudaMalloc()``.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6651:             tracks malloc() et al, by using vg_replace_malloc.c. */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6880:   malloc(), calloc(), realloc(), memalign(), new, new[], free(), delete,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6896:   by a malloc()-like function.  For Memcheck (an illustrative case), this
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/nvshmem/include/host/nvshmem_api.h:82:void *nvshmem_malloc(size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/nvshmem/include/non_abi/device/common/nvshmemi_common_device.cuh:594:             * appropriate due to 256 B alignment of cudaMalloc().
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/nvshmem/include/non_abi/device/common/nvshmemi_common_device.cuh:649:         * appropriate due to 256 B alignment of cudaMalloc().
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cufft/include/cufftw.h:421:_CUFFTAPI(void *) fftw_malloc(size_t n);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cufft/include/cufftw.h:423:_CUFFTAPI(void *) fftwf_malloc(size_t n);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cufft/include/cufftXt.h:137:cufftResult CUFFTAPI cufftXtMalloc(cufftHandle plan,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/nccl/include/nccl.h:130:ncclResult_t  ncclMemAlloc(void** ptr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/nccl/include/nccl.h:131:ncclResult_t pncclMemAlloc(void** ptr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:362:    h_pos_tbl = (unsigned int *)malloc(size1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:363:    h_sh1_tbl = (unsigned int *)malloc(size1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:364:    h_sh2_tbl = (unsigned int *)malloc(size1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:365:    h_param_tbl = (unsigned int *)malloc(size2);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:366:    h_temper_tbl = (unsigned int *)malloc(size2);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:367:    h_single_temper_tbl = (unsigned int *)malloc(size2);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:368:    h_mask = (unsigned int *)malloc(sizeof(unsigned int));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/curand/include/curand_mtgp32_host.h:491:    curandStateMtgp32_t *h_status =(curandStateMtgp32_t *) malloc(sizeof(curandStateMtgp32_t) * n);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:6578: * These resources also include memory allocations by ::cuMemAlloc(), ::cuMemAllocHost(),
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:6914: *   by the ::malloc() and ::free() device system calls. Setting
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:6916: *   that uses the ::malloc() or ::free() device system calls, otherwise
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:6996: *   ::malloc() and ::free() device system calls.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:8816: * is 0, ::cuMemAlloc() returns ::CUDA_ERROR_INVALID_VALUE.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:8842:CUresult CUDAAPI cuMemAlloc(CUdeviceptr *dptr, size_t bytesize);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:8910: * by a previous call to one of the following memory allocation APIs - ::cuMemAlloc(), 
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:8947: * allocation by ::cuMemAlloc() or ::cuMemAllocPitch() that contains the input
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:8985: * pageable memory obtained with functions such as ::malloc(). 
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:9066: * obtained with functions such as ::malloc(). 
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:12896: *          * ::cuMemAlloc()
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:14270: * ::cuMemAlloc() and ::cuMemAllocPitch() will immediately be accessible
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:14368: *      \p ptr must be a pointer to memory obtained from :cuMemAlloc().
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:22491: * If the device memory pointer was returned from ::cuMemAlloc(), the offset
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:25935:    CUresult CUDAAPI cuMemAlloc(CUdeviceptr_v1 *dptr, unsigned int bytesize);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:82:inline __device__  cudaError_t CUDARTAPI cudaMalloc(void **p, size_t s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:112:inline __device__  cudaError_t CUDARTAPI __cudaCDP2Malloc(void **p, size_t s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:225:extern __device__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:266:extern __device__ __cudart_builtin__ cudaError_t CUDARTAPI __cudaCDP2Malloc(void **devPtr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:608:static __inline__ __device__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:610:    return __cudaCDP2Malloc(devPtr, size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_device_runtime_api.h:868:template <typename T> static __inline__ __device__ __cudart_builtin__ cudaError_t cudaMalloc(T **devPtr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:520: * obtained with functions such as ::malloc(). Allocating excessive amounts of
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:831:static __inline__ __host__ cudaError_t cudaMalloc(
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:836:  return ::cudaMalloc((void**)(void*)devPtr, size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:380: *   the ::malloc() and ::free() device system calls. Setting
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:382: *   that uses the ::malloc() or ::free() device system calls - in such case
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:452: *   ::malloc() and ::free() device system calls.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1203: *   by the ::malloc() and ::free() device system calls.  Setting
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1205: *   any kernel that uses the ::malloc() or ::free() device system calls,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1239: *   ::malloc() and ::free() device system calls;
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:2247: * using ::cudaMalloc(), ::cudaMallocPitch() or ::cudaMallocArray()
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5454: * ::cudaMalloc() returns ::cudaErrorMemoryAllocation in case of failure.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5476:extern __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5486: * obtained with functions such as ::malloc(). 
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5615: * ::cudaMalloc(), ::cudaMallocPitch(), ::cudaMallocManaged(), ::cudaMallocAsync(),
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5727: * obtained with functions such as ::malloc(). Allocating excessive amounts of
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:9250: * ::cudaMalloc() and ::cudaMallocPitch() will immediately be accessible 
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_array_interface.py:65:            double *data = (double*)malloc(n_bytes);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_array_interface.py:81:            npy_intp *ss = (npy_intp*)malloc(2*nd*sizeof(npy_intp));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_array_interface.py:90:                malloc(sizeof(PyArrayInterface));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_mem_policy.py:65:            char *buf = (char *)malloc(20);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_mem_policy.py:84:            char *buf = (char *)malloc(20);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/tests/test_mem_policy.py:126:            char *real = (char *)funcs->malloc(sz + 64);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/include/numpy/ndarraytypes.h:375:    ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/tests/src/array_from_pyobj/wrapmodule.c:49:  dims = malloc(rank*sizeof(npy_intp));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/cfuncs.py:456:#define STRINGMALLOC(str,len)\\
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/cfuncs.py:457:    if ((str = (string)malloc(len+1)) == NULL) {\\
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/cfuncs.py:601:  if ((forcombcache.i = (int *)malloc(sizeof(int)*nd))==NULL) return 0;
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/cfuncs.py:602:  if ((forcombcache.i_tr = (int *)malloc(sizeof(int)*nd))==NULL) return 0;
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/cfuncs.py:747:    STRINGMALLOC(*str, *len);  // *str is allocated with size (*len + 1)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/rules.py:608:                              '    if ((#name#_return_value = (string)malloc('
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/f2py/src/fortranobject.c:269:    buf = p = (char *)PyMem_Malloc(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/tensor.py:850:    def is_allocated_in_tensor_arena(self, scratch_tensor_mem_area: MemArea) -> bool:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/tflite_writer.py:168:            if tens.is_allocated_in_tensor_arena(scratch_tensor_mem_area) or tens.mem_type == MemType.Scratch_fast:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py:791:    config += f"arena_size_limit={arena_cache_size}\n"
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/mviewbuf.c:178:    shape_ary = malloc(sizeof(Py_ssize_t) * ndim + 1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/mviewbuf.c:179:    strides_ary = malloc(sizeof(Py_ssize_t) * ndim + 1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/tests/test_nrt.py:241:class TestTracemalloc(unittest.TestCase):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/tests/test_nrt.py:642:    void * data = malloc(10);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/tests/test_lists.py:679:        # Fail in malloc()
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_random.c:134:    keys = (unsigned int *) PyMem_Malloc(nkeys * sizeof(unsigned int));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_random.c:220:    /* In normal conditions, os.urandom() and PyMem_Malloc() shouldn't fail,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/pythoncapi_compat.h:1373:    PyUnicodeWriter *pub_writer = (PyUnicodeWriter *)PyMem_Malloc(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:83:static int checked_PyMem_RawMalloc(void** var, size_t bytes)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:86:    *var = PyMem_RawMalloc(bytes);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:836:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:948:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1030:    if (checked_PyMem_RawMalloc((void**)&rwork, 2*n*base_size))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1034:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1108:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1113:    if (checked_PyMem_RawMalloc((void**)&iwork, base_size * liwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1194:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1200:    if (checked_PyMem_RawMalloc(&rwork, underlying_float_size * lrwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1207:    if (checked_PyMem_RawMalloc((void**)&iwork, base_size * liwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1313:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1316:    if (checked_PyMem_RawMalloc((void**) &iwork, 8 * minmn * sizeof(F_INT)))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1421:    if (checked_PyMem_RawMalloc(&work, complex_base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1437:    if (checked_PyMem_RawMalloc(&rwork,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1443:    if (checked_PyMem_RawMalloc((void **) &iwork,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1553:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1631:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1715:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1719:    if (checked_PyMem_RawMalloc((void **)&iwork, sizeof(F_INT) * iwork_tmp))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1824:    if (checked_PyMem_RawMalloc(&work, base_size * lwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1828:    if (checked_PyMem_RawMalloc((void **)&iwork, sizeof(F_INT) * iwork_tmp))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_lapack.c:1850:    if (checked_PyMem_RawMalloc((void **)&rwork, real_base_size * lrwork))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/devicearray.py:103:                gpu_data = devices.get_context().memalloc(self.alloc_size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/drvapi.py:117:    # CUresult cuMemAlloc(CUdeviceptr *dptr, size_t bytesize);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:714:    def memalloc(self, size):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1051:    def memalloc(self, size):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1054:                return driver.cuMemAlloc(size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1062:                driver.cuMemAlloc(byref(ptr), size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1371:    def memalloc(self, bytesize):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1372:        return self.memory_manager.memalloc(bytesize)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/driver.py:1765:        newmem = context.memalloc(self.size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/cudadrv/ndarray.py:19:    gpu_data = devices.get_context().memalloc(datasize)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_driver.py:86:        memory = self.context.memalloc(sizeof(array))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_driver.py:118:            memory = self.context.memalloc(sizeof(array))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:31:        devmem = self.context.memalloc(1024)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:35:        devmem = self.context.memalloc(1024)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:80:        m = self.context.memalloc(1024)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:123:        devary = self.context.memalloc(sz)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:134:        devary = self.context.memalloc(sz)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:147:        dev1 = self.context.memalloc(sz)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_cuda_memory.py:148:        dev2 = self.context.memalloc(sz)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_emm_plugins.py:32:        def memalloc(self, size):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_emm_plugins.py:119:    def test_memalloc(self):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/tests/cudadrv/test_deallocations.py:179:        mem = ctx.memalloc(32)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/simulator/cudadrv/devices.py:59:    def memalloc(self, sz):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cuda/simulator/cudadrv/devices.py:69:        return self.memalloc(sz)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cext/dictobject.c:535:    NB_DictKeys *dk = malloc(aligned_size(alloc_size));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cext/dictobject.c:567:    d = malloc(sizeof(NB_Dict));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cext/listobject.c:167:    lp = malloc(aligned_size(sizeof(NB_List)));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/cext/listobject.c:180:        items = malloc(aligned_size(lp->item_size * allocated));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/_dynfunc.c:296:    str = PyObject_Malloc(strlen(tmp) + 1);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/core/runtime/nrt.cpp:525:        ptr = allocator->malloc(size, allocator->opaque_data);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/core/runtime/nrt.cpp:528:        ptr = TheMSys.allocator.malloc(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/core/runtime/nrt.cpp:561:void* sample_external_malloc(size_t size, void* opaque_data) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numba/core/runtime/nrt.cpp:563:    return TheMSys.allocator.malloc(size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/include/gtest/internal/gtest-string.h:73:  // memory using malloc().
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/ccuda.cpp:763:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/ccuda.cpp:4303:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/nvrtc.cpp:759:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/nvrtc.cpp:3367:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cuda.cpp:759:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cuda.cpp:3367:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cudart.cpp:759:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cudart.cpp:3367:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/ccudart.cpp:768:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/ccudart.cpp:4546:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cnvrtc.cpp:762:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/cnvrtc.cpp:3115:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvrtc.cpp:762:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvrtc.cpp:4149:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.pyx:271:cdef CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize) except ?CUDA_ERROR_NOT_FOUND nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:773:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:48475:    newargs = (PyObject **)PyMem_Malloc((nargs + (size_t)nkw) * sizeof(args[0]));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:49942:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvvm.cpp:759:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvvm.cpp:3552:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:763:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:7678: * cdef CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize) except ?CUDA_ERROR_NOT_FOUND nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:7705: * cdef CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize) except ?CUDA_ERROR_NOT_FOUND nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:7710:static CUresult __pyx_f_4cuda_8bindings_8cydriver_cuMemAlloc(CUdeviceptr *__pyx_v_dptr, size_t __pyx_v_bytesize) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:7720: * cdef CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize) except ?CUDA_ERROR_NOT_FOUND nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:7732: * cdef CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize) except ?CUDA_ERROR_NOT_FOUND nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cydriver.cpp:26793:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cynvrtc.cpp:762:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cynvrtc.cpp:10935:    newargs = (PyObject **)PyMem_Malloc((nargs + (size_t)nkw) * sizeof(args[0]));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cynvrtc.cpp:12143:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:774:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5162: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5183: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5184: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5188:static cudaError_t __pyx_f_4cuda_8bindings_9_bindings_14cyruntime_ptds__cudaMalloc(void **__pyx_v_devPtr, size_t __pyx_v_size) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5193: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5194: *     return cudaMalloc(devPtr, size)             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5198:  __pyx_r = cudaMalloc(__pyx_v_devPtr, __pyx_v_size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5204: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5205: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5215: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:5236: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.cpp:13140:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cydriver.cpp:766:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cydriver.cpp:100068:    newargs = (PyObject **)PyMem_Malloc((nargs + (size_t)nkw) * sizeof(args[0]));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cydriver.cpp:101276:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.pxd:189:cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.pyx:569:cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.pyx:572:        return ptds._cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.pyx:573:    return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.pxd:192:cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.pyx:284:cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime_ptds.pyx:285:    return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:776:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13005: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13031: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13036:static cudaError_t __pyx_f_4cuda_8bindings_9_bindings_9cyruntime__cudaMalloc(void **__pyx_v_devPtr, size_t __pyx_v_size) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13048: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13051: *         return ptds._cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13057: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13060: *         return ptds._cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13061: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13068: *         return ptds._cudaMalloc(devPtr, size)             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13069: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13072:    __pyx_t_2 = __pyx_f_4cuda_8bindings_9_bindings_14cyruntime_ptds__cudaMalloc(__pyx_v_devPtr, __pyx_v_size); if (unlikely(__pyx_t_2 == ((cudaError_t)cudaErrorCallRequiresNewerDriver) && __Pyx_ErrOccurredWithGIL())) __PYX_ERR(0, 572, __pyx_L1_error)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13077: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13080: *         return ptds._cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13081: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13087: *         return ptds._cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13088: *     return cudaMalloc(devPtr, size)             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13092:  __pyx_r = cudaMalloc(__pyx_v_devPtr, __pyx_v_size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13098: * cdef cudaError_t _cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil:             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13114: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:13181: *     return cudaMalloc(devPtr, size)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/_bindings/cyruntime.cpp:45004:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvjitlink.cpp:760:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvjitlink.cpp:10483:    newargs = (PyObject **)PyMem_Malloc((nargs + (size_t)nkw) * sizeof(args[0]));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvjitlink.cpp:11691:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:19968:    resources also include memory allocations by :py:obj:`~.cuMemAlloc()`,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:20311:      the heap used by the :py:obj:`~.malloc()` and :py:obj:`~.free()`
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:20314:      :py:obj:`~.malloc()` or :py:obj:`~.free()` device system calls,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:20400:      by the :py:obj:`~.malloc()` and :py:obj:`~.free()` device system
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22794:def cuMemAlloc(size_t bytesize):
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22800:    If `bytesize` is 0, :py:obj:`~.cuMemAlloc()` returns
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22821:        err = cydriver.cuMemAlloc(<cydriver.CUdeviceptr*>dptr._pvt_ptr, bytesize)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22898:    APIs - :py:obj:`~.cuMemAlloc()`, :py:obj:`~.cuMemAllocPitch()`,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22942:    allocation by :py:obj:`~.cuMemAlloc()` or :py:obj:`~.cuMemAllocPitch()`
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:22990:    :py:obj:`~.malloc()`.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:23071:    :py:obj:`~.malloc()`.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:23456:    cbData = <cuAsyncCallbackData *>malloc(sizeof(cbData[0]))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:27344:    - :py:obj:`~.cuMemAlloc()`
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:29405:      :py:obj:`~.py`:obj:`~.cuMemAlloc()`. Note that p2pToken and
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:31109:    cbData = <cuStreamCallbackData *>malloc(sizeof(cbData[0]))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:34901:    cbData = <cuHostCallbackData *>malloc(sizeof(cbData[0]))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:41210:    :py:obj:`~.cuMemAlloc()`, the offset is guaranteed to be 0 and NULL may
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/driver.pyx:45819:    cbData = <cuLogsCallbackData *>malloc(sizeof(cbData[0]))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvjitlink.cpp:760:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cynvjitlink.cpp:3632:        entries = (__Pyx_CodeObjectCacheEntry*)PyMem_Malloc(64*sizeof(__Pyx_CodeObjectCacheEntry));
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/cyruntime.pxd:387:cdef cudaError_t cudaMalloc(void** devPtr, size_t size) except ?cudaErrorCallRequiresNewerDriver nogil
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:772:  #define PyObject_Malloc(s)   PyMem_Malloc(s)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:18791:static const char __pyx_k_Set_device_to_be_used_for_GPU_e[] = " Set device to be used for GPU executions.\n\n    Sets `device` as the current device for the calling host thread. Valid\n    device id's are 0 to (:py:obj:`~.cudaGetDeviceCount()` - 1).\n\n    Any device memory subsequently allocated from this host thread using\n    :py:obj:`~.cudaMalloc()`, :py:obj:`~.cudaMallocPitch()` or\n    :py:obj:`~.cudaMallocArray()` will be physically resident on `device`.\n    Any host memory allocated from this host thread using\n    :py:obj:`~.cudaMallocHost()` or :py:obj:`~.cudaHostAlloc()` or\n    :py:obj:`~.cudaHostRegister()` will have its lifetime associated with\n    `device`. Any streams or events created from this host thread will be\n    associated with `device`. Any kernels launched from this host thread\n    using the <<<>>> operator or :py:obj:`~.cudaLaunchKernel()` will be\n    executed on `device`.\n\n    This call may be made from any host thread, to any device, and at any\n    time. This function will do no synchronization with the previous or new\n    device, and should only take significant time when it initializes the\n    runtime's context state. This call will bind the primary context of the\n    specified device to the calling thread and all the subsequent memory\n    allocations, stream and event creations, and kernel launches will be\n    associated with the primary context. This function will also\n    immediately initialize the runtime state on the primary context, and\n    the context will be current on `device` immediately. This function will\n    return an error if the device is in\n    :py:obj:`~.cudaComputeModeExclusiveProcess` and is occupied by another\n    process or if the device is in :py:obj:`~.cudaComputeModeProhibited`.\n\n    It is not required to call :py:obj:`~.cudaInitDevice` before using this\n    function.\n\n    Parameters\n    ----------\n    device : int\n        Device on which the active host thread should execute the device\n        code.\n\n    Returns\n    -------\n    cudaError_t""\n        :py:obj:`~.cudaSuccess`, :py:obj:`~.cudaErrorInvalidDevice`, :py:obj:`~.cudaErrorDeviceUnavailable`,\n\n    See Also\n    --------\n    :py:obj:`~.cudaGetDeviceCount`, :py:obj:`~.cudaGetDevice`, :py:obj:`~.cudaGetDeviceProperties`, :py:obj:`~.cudaChooseDevice`, :py:obj:`~.cudaInitDevice`, :py:obj:`~.cuCtxSetCurrent`\n    ";
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:21684:static PyObject *__pyx_pf_4cuda_8bindings_7runtime_180cudaMalloc(CYTHON_UNUSED PyObject *__pyx_self, size_t __pyx_v_size); /* proto */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:270982:PyDoc_STRVAR(__pyx_doc_4cuda_8bindings_7runtime_4cudaDeviceSetLimit, "cudaDeviceSetLimit(limit: cudaLimit, size_t value)\n\nSet resource limits.\n\nSetting `limit` to `value` is a request by the application to update\nthe current limit maintained by the device. The driver is free to\nmodify the requested value to meet h/w requirements (this could be\nclamping to minimum or maximum values, rounding up to nearest element\nsize, etc). The application can use :py:obj:`~.cudaDeviceGetLimit()` to\nfind out exactly what the limit has been set to.\n\nSetting each :py:obj:`~.cudaLimit` has its own specific restrictions,\nso each is discussed here.\n\n- :py:obj:`~.cudaLimitStackSize` controls the stack size in bytes of\n  each GPU thread.\n\n- :py:obj:`~.cudaLimitPrintfFifoSize` controls the size in bytes of the\n  shared FIFO used by the :py:obj:`~.printf()` device system call.\n  Setting :py:obj:`~.cudaLimitPrintfFifoSize` must not be performed\n  after launching any kernel that uses the :py:obj:`~.printf()` device\n  system call - in such case :py:obj:`~.cudaErrorInvalidValue` will be\n  returned.\n\n- :py:obj:`~.cudaLimitMallocHeapSize` controls the size in bytes of the\n  heap used by the :py:obj:`~.malloc()` and :py:obj:`~.free()` device\n  system calls. Setting :py:obj:`~.cudaLimitMallocHeapSize` must not be\n  performed after launching any kernel that uses the\n  :py:obj:`~.malloc()` or :py:obj:`~.free()` device system calls - in\n  such case :py:obj:`~.cudaErrorInvalidValue` will be returned.\n\n- :py:obj:`~.cudaLimitDevRuntimeSyncDepth` controls the maximum nesting\n  depth of a grid at which a thread can safely call\n  :py:obj:`~.cudaDeviceSynchronize()`. Setting this limit must be\n  performed before any launch of a kernel that uses the device runtime\n  and calls :py:obj:`~.cudaDeviceSynchronize()` above the default sync\n  depth, two levels of grids. Calls to\n  :py:obj:`~.cudaDeviceSynchronize()` will fail with error code\n  :py:obj:`~.cudaErrorSyncDepthExceeded` if the limitation is violated.\n  This limit can be set smaller tha""n the default or up the maximum\n  launch depth of 24. When setting this limit, keep in mind that\n  additional levels of sync depth require the runtime to reserve large\n  amounts of device memory which can no longer be used for user\n  allocations. If these reservations of device memory fail,\n  :py:obj:`~.cudaDeviceSetLimit` will return\n  :py:obj:`~.cudaErrorMemoryAllocation`, and the limit can be reset to\n  a lower value. This limit is only applicable to devices of compute\n  capability < 9.0. Attempting to set this limit on devices of other\n  compute capability will results in error\n  :py:obj:`~.cudaErrorUnsupportedLimit` being returned.\n\n- :py:obj:`~.cudaLimitDevRuntimePendingLaunchCount` controls the\n  maximum number of outstanding device runtime launches that can be\n  made from the current device. A grid is outstanding from the point of\n  launch up until the grid is known to have been completed. Device\n  runtime launches which violate this limitation fail and return\n  :py:obj:`~.cudaErrorLaunchPendingCountExceeded` when\n  :py:obj:`~.cudaGetLastError()` is called after launch. If more\n  pending launches than the default (2048 launches) are needed for a\n  module using the device runtime, this limit can be increased. Keep in\n  mind that being able to sustain additional pending launches will\n  require the runtime to reserve larger amounts of device memory\n  upfront which can no longer be used for allocations. If these\n  reservations fail, :py:obj:`~.cudaDeviceSetLimit` will return\n  :py:obj:`~.cudaErrorMemoryAllocation`, and the limit can be reset to\n  a lower value. This limit is only applicable to devices of compute\n  capability 3.5 and higher. Attempting to set this limit on devices of\n  compute capability less than 3.5 will result in the error\n  :py:obj:`~.cudaErrorUnsupportedLimit` being returned.\n\n- :py:obj:`~.cudaLimitMaxL2FetchGranularity` controls the L2 cache\n  fetch granularity. Values can range from 0B to 128B. This is purel""y a\n  performance hint and it can be ignored or clamped depending on the\n  platform.\n\n- :py:obj:`~.cudaLimitPersistingL2CacheSize` controls size in bytes\n  available for persisting L2 cache. This is purely a performance hint\n  and it can be ignored or clamped depending on the platform.\n\nParameters\n----------\nlimit : :py:obj:`~.cudaLimit`\n    Limit to set\nvalue : size_t\n    Size of limit\n\nReturns\n-------\ncudaError_t\n    :py:obj:`~.cudaSuccess`, :py:obj:`~.cudaErrorUnsupportedLimit`, :py:obj:`~.cudaErrorInvalidValue`, :py:obj:`~.cudaErrorMemoryAllocation`\n\nSee Also\n--------\n:py:obj:`~.cudaDeviceGetLimit`, :py:obj:`~.cuCtxSetLimit`");
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:271217:PyDoc_STRVAR(__pyx_doc_4cuda_8bindings_7runtime_6cudaDeviceGetLimit, "cudaDeviceGetLimit(limit: cudaLimit)\n\nReturn resource limits.\n\nReturns in `*pValue` the current size of `limit`. The following\n:py:obj:`~.cudaLimit` values are supported.\n\n- :py:obj:`~.cudaLimitStackSize` is the stack size in bytes of each GPU\n  thread.\n\n- :py:obj:`~.cudaLimitPrintfFifoSize` is the size in bytes of the\n  shared FIFO used by the :py:obj:`~.printf()` device system call.\n\n- :py:obj:`~.cudaLimitMallocHeapSize` is the size in bytes of the heap\n  used by the :py:obj:`~.malloc()` and :py:obj:`~.free()` device system\n  calls.\n\n- :py:obj:`~.cudaLimitDevRuntimeSyncDepth` is the maximum grid depth at\n  which a thread can isssue the device runtime call\n  :py:obj:`~.cudaDeviceSynchronize()` to wait on child grid launches to\n  complete. This functionality is removed for devices of compute\n  capability >= 9.0, and hence will return error\n  :py:obj:`~.cudaErrorUnsupportedLimit` on such devices.\n\n- :py:obj:`~.cudaLimitDevRuntimePendingLaunchCount` is the maximum\n  number of outstanding device runtime launches.\n\n- :py:obj:`~.cudaLimitMaxL2FetchGranularity` is the L2 cache fetch\n  granularity.\n\n- :py:obj:`~.cudaLimitPersistingL2CacheSize` is the persisting L2 cache\n  size in bytes.\n\nParameters\n----------\nlimit : :py:obj:`~.cudaLimit`\n    Limit to query\n\nReturns\n-------\ncudaError_t\n    :py:obj:`~.cudaSuccess`, :py:obj:`~.cudaErrorUnsupportedLimit`, :py:obj:`~.cudaErrorInvalidValue`\npValue : int\n    Returned size of the limit\n\nSee Also\n--------\n:py:obj:`~.cudaDeviceSetLimit`, :py:obj:`~.cuCtxGetLimit`");
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:275095: *     cbData = <cudaAsyncCallbackData *>malloc(sizeof(cbData[0]))
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:275103: *     cbData = <cudaAsyncCallbackData *>malloc(sizeof(cbData[0]))             # <<<<<<<<<<<<<<
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:275107:  __pyx_v_cbData = ((__pyx_t_4cuda_8bindings_7runtime_cudaAsyncCallbackData *)malloc((sizeof((__pyx_v_cbData[0])))));
+
+=== Application model declaration ===
+#ifndef POLYU_MODEL1_HPP
+#define POLYU_MODEL1_HPP
+
+#include "mlek/fwk/tflm/TflmModel.hpp"
+
+namespace arm::app::asr {
+extern const int g_FrameLength;
+extern const int g_FrameStride;
+extern const float g_ScoreThreshold;
+extern const int g_ctxLen;
+} // namespace arm::app::asr
+
+namespace arm::app::fwk::tflm {
+
+void ResetHeatstrokeOperatorTiming();
+void LogHeatstrokeOperatorTiming();
+
+class PolyUModel1 : public TflmModel {
+
+public:
+    /* Indices for the expected model - based on input and output tensor shapes */
+    static constexpr uint32_t ms_inputRowsIdx  = 1;
+    static constexpr uint32_t ms_inputColsIdx  = 2;
+    static constexpr uint32_t ms_outputRowsIdx = 2;
+    static constexpr uint32_t ms_outputColsIdx = 3;
+
+    /* Model specific constants. */
+    static constexpr uint32_t ms_blankTokenIdx   = 28;
+    static constexpr uint32_t ms_numMfccFeatures = 13;
+
+protected:
+    /** @brief   Gets the reference to op resolver interface class. */
+    const tflite::MicroOpResolver& GetOpResolver() override;
+
+    /** @brief   Adds operations to the op resolver instance. */
+    bool EnlistOperations() override;
+
+private:
+    /* Maximum number of individual operations that can be enlisted. */
+    #if defined(HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+    static constexpr int ms_maxOpCnt = 33;
+#else
+    static constexpr int ms_maxOpCnt = 32;
+#endif
+
+    /* A mutable op resolver instance. */
+    tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+};
+
+} /* namespace arm::app::fwk::tflm */
+
+#endif /* POLYU_MODEL1_HPP */
+
+=== Application model initialization and inference ===
+    const std::vector<size_t>& expectedShape)
+{
+    auto tensor = model.GetInputTensor(index);
+    if (!VerifyOneTensor(name, index, tensor, expectedShape)) {
+        return false;
+    }
+
+    if (tensor->Bytes() != sourceBytes || sourceBits == nullptr) {
+        LOG_ERR("%s[%u] input payload size mismatch",
+                name, static_cast<unsigned int>(index));
+        return false;
+    }
+
+    std::memcpy(tensor->GetData(), sourceBits, sourceBytes);
+    LOG_INF("%s[%u] bound: %u bytes",
+            name,
+            static_cast<unsigned int>(index),
+            static_cast<unsigned int>(sourceBytes));
+    return true;
+}
+
+static float DecodeSmokeReference(const std::uint32_t bits)
+{
+    float value = 0.0F;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+static int SmokeFloatToMicro(const float value)
+{
+    const double scaled = static_cast<double>(value) * 1000000.0;
+    if (scaled > 2147483647.0) {
+        return 2147483647;
+    }
+    if (scaled < -2147483648.0) {
+        return (-2147483647 - 1);
+    }
+    return static_cast<int>(scaled >= 0.0 ? scaled + 0.5 : scaled - 0.5);
+}
+
+static unsigned int SmokeArgMax4(const float* values)
+{
+    unsigned int best = 0U;
+    for (unsigned int i = 1U; i < 4U; ++i) {
+        if (values[i] > values[best]) {
+            best = i;
+        }
+    }
+    return best;
+}
+
+
+static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+{
+    static_assert(sizeof(float) == sizeof(std::uint32_t),
+                  "Smoke test requires 32-bit FP32");
+
+    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+    LOG_INF("Multi-sample vector count: %u",
+            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+
+    const auto& backendData = model.GetBackendData();
+    if (!backendData.m_pInterpreter) {
+        LOG_ERR("TFLM backend interpreter pointer is null");
+        return false;
+    }
+
+    for (std::uint32_t slot = 0U;
+         slot < heatstroke_smoke::kSampleCount; ++slot) {
+        const auto& sample = heatstroke_smoke::kSamples[slot];
+
+        LOG_INF("=== SAMPLE %u / %u ===",
+                static_cast<unsigned int>(slot + 1U),
+                static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+        LOG_INF("Dataset position: %u; sample ID: %u",
+                static_cast<unsigned int>(sample.dataset_position),
+                static_cast<unsigned int>(sample.dataset_sample_id));
+        LOG_INF("Missing positions: %u",
+                static_cast<unsigned int>(sample.missing_count));
+        LOG_INF("Ground-truth labels RPE=%u PSI=%u",
+                static_cast<unsigned int>(sample.rpe_label),
+                static_cast<unsigned int>(sample.psi_label));
+        LOG_INF("Input-vector SHA256: %s", sample.input_sha256);
+
+        const auto resetStatus = backendData.m_pInterpreter->Reset();
+        if (resetStatus != kTfLiteOk) {
+            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+                    static_cast<int>(resetStatus));
+            return false;
+        }
+        LOG_INF("MicroInterpreter::Reset: SUCCESS");
+
+        if (!BindSmokeInputTensor(
+                model, 0U, "x_values", sample.x_values_bits,
+                5400U * sizeof(std::uint32_t),
+                std::vector<size_t>{1U, 900U, 6U})) {
+            return false;
+        }
+        if (!BindSmokeInputTensor(
+                model, 1U, "missing_mask", sample.missing_mask_bits,
+                5400U * sizeof(std::uint32_t),
+                std::vector<size_t>{1U, 900U, 6U})) {
+            return false;
+        }
+        if (!BindSmokeInputTensor(
+                model, 2U, "x_mark", sample.x_mark_bits,
+                2700U * sizeof(std::uint32_t),
+                std::vector<size_t>{1U, 900U, 3U})) {
+            return false;
+        }
+        if (!BindSmokeInputTensor(
+                model, 3U, "worker_features", sample.worker_features_bits,
+                30U * sizeof(std::uint32_t),
+                std::vector<size_t>{1U, 30U})) {
+            return false;
+        }
+
+        arm::app::fwk::tflm::ResetHeatstrokeOperatorTiming();
+        const std::int64_t startMs = k_uptime_get();
+        LOG_INF("HEATSTROKE_DIAG: entering TFLM RunInference()");
+        StartHeatstrokeEthosuMonitor();
+        const bool inferenceOk = model.RunInference();
+        StopHeatstrokeEthosuMonitor();
+        arm::app::fwk::tflm::LogHeatstrokeOperatorTiming();
+
+        if (!inferenceOk) {
+            LOG_ERR("TFLM RunInference() returned false for slot %u",
+                    static_cast<unsigned int>(slot));
+            return false;
+        }
+        const std::int64_t elapsedMs = k_uptime_get() - startMs;
