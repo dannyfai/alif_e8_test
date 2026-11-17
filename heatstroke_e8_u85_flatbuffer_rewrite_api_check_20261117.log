@@ -1,0 +1,53 @@
+import sys
+from tensorflow.lite.python import schema_py_generated as s
+
+with open(sys.argv[1], "rb") as f:
+    raw = f.read()
+
+model = s.Model.GetRootAsModel(raw, 0)
+
+print("===== SCHEMA OBJECT API CHECK =====")
+print("Schema version:", model.Version())
+print("ModelT available:", hasattr(s, "ModelT"))
+
+for name in (
+    "ModelT", "SubGraphT", "OperatorT", "TensorT",
+    "BufferT", "ReducerOptionsT", "MulOptionsT",
+    "AddOptionsT", "CastOptionsT"
+):
+    cls = getattr(s, name, None)
+    print(f"\n{name}: available={cls is not None}")
+    if cls is not None:
+        obj = cls()
+        print("  fields:", sorted(vars(obj).keys()))
+        print("  Pack:", callable(getattr(obj, "Pack", None)))
+        print("  InitFromObj:", callable(getattr(cls, "InitFromObj", None)))
+
+print("\n===== REQUIRED BUILTIN CODES =====")
+for name in ("SUM", "MEAN", "MUL", "ADD", "CAST", "RESHAPE"):
+    print(name, getattr(s.BuiltinOperator, name, "<not present>"))
+
+print("\n===== MODEL OBJECT CONVERSION =====")
+try:
+    mt = s.ModelT.InitFromObj(model)
+    print("ModelT conversion: PASS")
+    print("Model fields:", sorted(vars(mt).keys()))
+
+    sg = mt.subgraphs[0]
+    print("Subgraph fields:", sorted(vars(sg).keys()))
+
+    for i in (21, 26, 33, 34, 48):
+        op = sg.operators[i]
+        print(f"Operator #{i} fields:", sorted(vars(op).keys()))
+        print(
+            "  opcodeIndex:", op.opcodeIndex,
+            "inputs:", list(op.inputs),
+            "outputs:", list(op.outputs),
+            "options type:", op.builtinOptionsType,
+            "options class:", type(op.builtinOptions).__name__
+        )
+
+except Exception as e:
+    print("ModelT conversion: FAIL", repr(e))
+
+print("\n===== END API CHECK =====")
