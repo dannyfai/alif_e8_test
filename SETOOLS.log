@@ -1,0 +1,61 @@
+C:\app-release-exec>app-gen-toc -f build/config/app-cfg-e8-server-boot-hp.json
+None
+Generating APP Package with:
+Device Part# E8 (AE822FA0E5597LS0) - 5.5 MRAM / 9.75 SRAM - Rev: A1
+- System MRAM Base Address: 0x80580000
+- APP MRAM Base Address: 0x80000000
+- APP MRAM Size: 5767168
+- Configuration file: build/config/app-cfg-e8-server-boot-hp.json
+- Output file: build/AppTocPackage.bin
+
+Generating Device Configuration for: app-device-config-e8.json
+Calculating APP area...
+Creating Content Certificates...
+2026-11-17 17:15:33,896 - Content Certificate Generation Utility started (Logging to ../build/logs/SBContent.log)
+2026-11-17 17:15:34,169 - Content Certificate Generation Utility started (Logging to ../build/logs/SBContent.log)
+Creating APP TOC Package...
+Creating Signature...
+Binary File:  ../build/images/zephyr.bin
+2026-11-17 17:15:34,413 - Content Certificate Generation Utility started (Logging to ../build/logs/SBContent.log)
+Content Certificate File:  build/images/zephyr.bin.crt
+Signature File:  build/images/zephyr.bin.sign
+Adding ATOC...
+APP TOC Package size: 5568 bytes
+Creating Signature...
+Binary File:  ../build/AppTocPackage.bin
+2026-11-17 17:15:34,689 - Content Certificate Generation Utility started (Logging to ../build/logs/SBContent.log)
+Content Certificate File:  build/AppTocPackage.bin.crt
+Signature File:  build/AppTocPackage.bin.sign
+Done!
+
+C:\app-release-exec>echo =========================================================================================
+=========================================================================================
+
+C:\app-release-exec>app-write-mram -p
+Writing MRAM with parameters:
+Device Part# E8 (AE822FA0E5597LS0) - 5.5 MRAM / 9.75 SRAM - Rev: A1
+- Available MRAM: 5,767,168 bytes
+File size = 396412
+!!!WARNING: the SIZE of build/images/zephyr.bin is NOT multiple of 16 bytes as required by MRAM
+Since the -p option was invoked, the binary will be padded with 4 bytes
+[INFO] Burning: ../build/images/zephyr.bin 0x80000000 ../build/AppTocPackage.bin 0x8057ea40
+[INFO] baud rate 57600
+[INFO] dynamic baud rate change  Enabled
+[INFO] COM3 open Serial port success
+[INFO] Detected Device:
+Part# AE822FA0E5597LS0 - Rev:  A1
+[INFO] Device supports OSPI external memory
+Maintenance Mode = Enabled
+OSPI address verification...
+Authenticate Image:  False
+Download Image
+build\images\zephyr.bin         [####################]100%: 396416/396416 bytes
+Done
+       9.01 seconds
+
+OSPI address verification...
+Authenticate Image:  False
+Download Image
+build\AppTocPackage.bin         [####################]100%: 5568/5568 bytes
+Done
+       0.12 seconds
