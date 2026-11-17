@@ -1,0 +1,76 @@
+[12:01:12] Starting Python
+[12:01:12] Importing TensorFlow Lite schema
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888072.992109    4293 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888072.995750    4293 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888074.797332    4293 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888074.799793    4293 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+[12:01:16] Schema import complete
+[12:01:16] Model loaded: 11844184 bytes
+[12:01:16] FlatBuffer parsed: schema version 3
+ModelT: available=True
+  fields: ['buffers', 'description', 'externalBufferGroups', 'externalBuffers', 'metadata', 'metadataBuffer', 'operatorCodes', 'signatureDefs', 'subgraphs', 'version']
+SubGraphT: available=True
+  fields: ['debugMetadataIndex', 'inputs', 'name', 'operators', 'outputs', 'tensors']
+OperatorT: available=True
+  fields: ['builtinOptions', 'builtinOptions2', 'builtinOptions2Type', 'builtinOptionsType', 'customOptions', 'customOptionsFormat', 'debugMetadataIndex', 'inputs', 'intermediates', 'largeCustomOptionsOffset', 'largeCustomOptionsSize', 'mutatingVariableInputs', 'opcodeIndex', 'outputs']
+TensorT: available=True
+  fields: ['buffer', 'externalBuffer', 'hasRank', 'isVariable', 'name', 'quantization', 'shape', 'shapeSignature', 'sparsity', 'type', 'variantTensors']
+BufferT: available=True
+  fields: ['data', 'offset', 'size']
+ReducerOptionsT: available=True
+  fields: ['keepDims']
+MulOptionsT: available=True
+  fields: ['fusedActivationFunction']
+AddOptionsT: available=True
+  fields: ['fusedActivationFunction', 'potScaleInt16']
+CastOptionsT: available=True
+  fields: ['inDataType', 'outDataType']
+
+===== REQUIRED BUILTIN CODES =====
+SUM 74
+MEAN 40
+MUL 18
+ADD 0
+CAST 53
+RESHAPE 22
+[12:01:16] Starting ModelT.InitFromObj conversion
+[12:01:16] ModelT conversion complete
+Subgraphs: 1
+
+Operator #21
+  opcodeIndex: 5
+  inputs: [np.int32(178)]
+  outputs: [np.int32(180)]
+  options type: 37
+  options class: CastOptionsT
+
+Operator #26
+  opcodeIndex: 10
+  inputs: [np.int32(181), np.int32(625)]
+  outputs: [np.int32(185)]
+  options type: 27
+  options class: ReducerOptionsT
+
+Operator #33
+  opcodeIndex: 10
+  inputs: [np.int32(187), np.int32(626)]
+  outputs: [np.int32(192)]
+  options type: 27
+  options class: ReducerOptionsT
+
+Operator #34
+  opcodeIndex: 12
+  inputs: [np.int32(2), np.int32(188)]
+  outputs: [np.int32(193)]
+  options type: 21
+  options class: MulOptionsT
+
+Operator #48
+  opcodeIndex: 10
+  inputs: [np.int32(193), np.int32(628)]
+  outputs: [np.int32(206)]
+  options type: 27
+  options class: ReducerOptionsT
+[12:01:16] API check completed successfully
