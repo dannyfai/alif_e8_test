@@ -1,0 +1,612 @@
+=== PLATFORM-SPECIFIC MLEK CACHE OVERRIDES ===
+    },
+    /* MRAM should never change while running */
+    {
+        .base = SOC_FEAT_MRAM_BASE,
+        .limit = SOC_FEAT_MRAM_BASE + SOC_FEAT_MRAM_SIZE - 1,
+    }
+};
+
+static bool check_need_to_invalidate(const void *p, size_t bytes)
+{
+    uintptr_t base = (uintptr_t) p;
+    if (bytes == 0) {
+        return false;
+    }
+    uintptr_t limit = base + bytes - 1;
+    for (unsigned int i = 0; i < sizeof no_need_to_invalidate_areas / sizeof no_need_to_invalidate_areas[0]; i++) {
+        if (base >= no_need_to_invalidate_areas[i].base && limit <= no_need_to_invalidate_areas[i].limit) {
+            return false;
+        }
+    }
+    return true;
+}
+
+#ifndef BOARD_OSPI_RAM_BASE
+#define BOARD_OSPI_RAM_BASE     0xA0000000
+#define BOARD_OSPI_RAM_SIZE     0x20000000
+#endif
+#ifndef BOARD_OSPI_FLASH_BASE
+#define BOARD_OSPI_FLASH_BASE   0xC0000000
+#define BOARD_OSPI_FLASH_SIZE   0x20000000
+#endif
+
+bool ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+{
+    /* API says null pointer can be passed */
+    if (!p) {
+        return true;
+    }
+    /* We know we have a cache and assume the cache is on */
+    return check_need_to_invalidate(p, bytes);
+}
+
+bool ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+{
+#ifdef OSPI_RAM_SUPPORT
+    if (!p) {
+        return true;
+    }
+    uintptr_t area_start = (uintptr_t) p;
+    uintptr_t area_end = area_start + bytes;
+    if (area_end > BOARD_OSPI_RAM_BASE && area_start < BOARD_OSPI_RAM_BASE + BOARD_OSPI_RAM_SIZE) {
+        return true;
+    }
+#else
+    /* We're not using writeback for any Ethos areas */
+    UNUSED(p);
+    UNUSED(bytes);
+#endif
+    return false;
+}
+
+
+=== LOCAL-TO-GLOBAL ADDRESS TRANSLATION ===
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-420-			     bool force_poll)
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-421-{
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-422-	int err;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-423-	int service_id = ((service_header_t *)ptr)->hdr_service_id;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-424-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:425:	global_address = local_to_global(ptr);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-426-	__asm__ volatile("dmb 0xF" ::: "memory");
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-427-	sys_cache_data_flush_range(ptr, size);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-428-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-429-	if (k_can_yield() && !force_poll) {
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-430-		int wait = 0;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-431-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-432-		/*
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-433-		 * Block SUSPEND_TO_RAM / SOFT_OFF while we hold svc_mutex and
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-434-		 * wait on the SE mailbox response. Otherwise the idle thread
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-435-		 * may run PM device-suspend callbacks
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-436-		 */
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-437-		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+--
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-654-		return err;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-655-	}
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-656-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-657-	memset(&se_service_all_svc_d, 0, sizeof(se_service_all_svc_d));
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-658-	se_service_all_svc_d.update_stoc_svc_d.header.hdr_service_id = SERVICE_UPDATE_STOC;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:659:	se_service_all_svc_d.update_stoc_svc_d.send_image_address = local_to_global(img_addr);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-660-	se_service_all_svc_d.update_stoc_svc_d.send_image_size = img_size;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-661-	err = send_msg_to_se((uint32_t *)&se_service_all_svc_d.update_stoc_svc_d,
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-662-			     sizeof(se_service_all_svc_d.update_stoc_svc_d), SERVICE_TIMEOUT);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-663-	resp_err = se_service_all_svc_d.update_stoc_svc_d.resp_error_code;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-664-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-665-	k_mutex_unlock(&svc_mutex);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-666-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-667-	if (err) {
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-668-		LOG_ERR("%s failed with %d\n", __func__, err);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-669-		return err;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-670-	}
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-671-	if (resp_err) {
+--
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1103-		return err;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1104-	}
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1105-	memset(&se_service_all_svc_d, 0, sizeof(se_service_all_svc_d));
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1106-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1107-	se_service_all_svc_d.boot_svc_d.header.hdr_service_id = SERVICE_EXTSYS0_BOOT_SET_ARGS;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:1108:	se_service_all_svc_d.boot_svc_d.send_nvds_src_addr = local_to_global(nvds_buff);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1109-	se_service_all_svc_d.boot_svc_d.send_nvds_dst_addr = 0x501D0000;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1110-	se_service_all_svc_d.boot_svc_d.send_nvds_copy_len = nvds_size;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1111-	se_service_all_svc_d.boot_svc_d.send_trng_dst_addr = 0x501D0200;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1112-	se_service_all_svc_d.boot_svc_d.send_trng_len = 64;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1113-	se_service_all_svc_d.boot_svc_d.send_internal_clock_select = clock_select;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1114-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1115-	se_service_all_svc_d.boot_svc_d.send_configuration =
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1116-		hpa_mode ? SERVICES_NET_PROC_BOOT_CONFIGURATION_HPA
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1117-			 : SERVICES_NET_PROC_BOOT_CONFIGURATION_NONE;
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1118-
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1119-	if (IS_ENABLED(CONFIG_SOC_AB1C1F1M41820HH0) || IS_ENABLED(CONFIG_SOC_AB1C1F4M51820HH0)) {
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c-1120-		se_service_all_svc_d.boot_svc_d.send_configuration |=
+--
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-74-uint64_t ethosu_address_remap(uint64_t address, int index)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-75-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-76-	(void)index;
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-77-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-78-	/* Double cast to avoid build warning about pointer/integer size mismatch */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:79:	return local_to_global((void *) (uint32_t) address);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-80-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-81-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-82-void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-83-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-84-	if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-85-		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-86-			/*
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-87-			 * For small ranges, do what we were told, but if excessively big,
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-88-			 * faster to do a full cache operation
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-89-			 */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-90-			SCB_CleanDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-91-		} else {
+--
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-861-	LOG_DBG("Image size: %d, #Planes: %d, buffer local address - 0x%08x",
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-862-			buf->size, isp_buf.numPlanes, (uint32_t) buf->buffer);
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-863-	for (int i = 0; i < isp_buf.numPlanes; i++) {
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-864-		if (!i) {
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-865-			isp_buf.planes[i].dmaPhyAddr =
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c:866:				POINTER_TO_UINT(local_to_global(buf->buffer));
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-867-		} else {
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-868-			tmp = fourcc_to_plane_size(channel->output_fmt.pixelformat,
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-869-					i - 1,
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-870-					buf->size);
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-871-			if (tmp == UINT_MAX || tmp == 0) {
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-872-				LOG_ERR("Illegal format!, plane-id: %d", i);
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-873-				return -EINVAL;
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-874-			}
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-875-
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-876-			isp_buf.planes[i].dmaPhyAddr =
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-877-				(tmp + isp_buf.planes[i - 1].dmaPhyAddr);
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c-878-		}
+--
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-19-#define DTCM_BASE (DT_REG_ADDR(DT_NODELABEL(dtcm)))
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-20-#define DTCM_SIZE (DT_REG_SIZE(DT_NODELABEL(dtcm)))
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-21-#define ITCM_GLOBAL_BASE DT_PROP(DT_NODELABEL(itcm), global_base)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-22-#define DTCM_GLOBAL_BASE DT_PROP(DT_NODELABEL(dtcm), global_base)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-23-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h:24:static inline uint32_t local_to_global(const volatile void *local_addr)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-25-{
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-26-	uint32_t addr = (uint32_t)local_addr;
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-27-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-28-	if ((addr >= DTCM_BASE) && (addr < (DTCM_BASE + DTCM_SIZE))) {
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-29-		return (addr - DTCM_BASE + DTCM_GLOBAL_BASE);
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-30-	} else if ((addr < (ITCM_BASE + ITCM_SIZE))) {
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-31-		return (addr - ITCM_BASE + ITCM_GLOBAL_BASE);
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-32-	} else {
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-33-		return (addr);
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-34-	}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-35-}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-36-
+--
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-47-	}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-48-}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-49-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-50-#else /* No local TCM remap (e.g. Cortex-A32/APSS): addresses are already global */
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-51-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h:52:static inline uint32_t local_to_global(const volatile void *local_addr)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-53-{
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-54-	return (uint32_t)local_addr;
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-55-}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-56-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-57-static inline uint32_t global_to_local(const volatile void *global_addr)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-58-{
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-59-	return (uint32_t)global_addr;
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-60-}
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-61-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-62-#endif
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-63-
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h-64-#ifdef __cplusplus
+
+=== ETHOS-U CALLBACK REFERENCES IN DRIVER SOURCES ===
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-50-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-51-	return true;
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-52-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-53-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:54:bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-55-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-56-	/* Passing NULL as p argument expects the whole cache to be flushed. */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-57-	if (!p) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-58-		return true;
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-59-	}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-60-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-61-	return area_needs_invalidate_or_flush(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-62-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-63-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:64:bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-65-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-66-	/* Passing NULL as p argument expects the whole cache to be flushed. */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-67-	if (!p) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-68-		return true;
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-69-	}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-70-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-71-	return area_needs_invalidate_or_flush(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-72-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-73-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:74:uint64_t ethosu_address_remap(uint64_t address, int index)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-75-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-76-	(void)index;
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-77-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-78-	/* Double cast to avoid build warning about pointer/integer size mismatch */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-79-	return local_to_global((void *) (uint32_t) address);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-80-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-81-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:82:void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-83-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:84:	if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-85-		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-86-			/*
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-87-			 * For small ranges, do what we were told, but if excessively big,
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-88-			 * faster to do a full cache operation
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-89-			 */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-90-			SCB_CleanDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-91-		} else {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-92-			SCB_CleanDCache();
+--
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-95-		__DSB();
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-96-	}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-97-}
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-98-
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:99:void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-100-{
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:101:	if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-102-		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-103-			/*
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-104-			 * For small ranges, do what we were told, but if excessively big,
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-105-			 * faster to do a full cache operation
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-106-			 */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-107-			SCB_InvalidateDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-108-		} else {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c-109-			/*
+
+=== CACHE AND ADDRESS SYMBOLS IN FINAL ELF ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8022be4e T ethosu_address_remap
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8022be4a W ethosu_area_needs_flush_dcache
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8021b070 W ethosu_area_needs_invalidate_dcache
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8021b070 t ethosu_area_needs_invalidate_dcache.localalias
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8021b0b4 T ethosu_flush_dcache
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:8021b158 T ethosu_invalidate_dcache
+
+=== RELEVANT OBJECTS IN LINK MAP ===
+1066:modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+1122:modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+1125:                              modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj) (ethosu_dev_run_command_stream)
+1267:                              modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj) (fprintf)
+1269:                              modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj) (fputs)
+12165: .text          0x0000000000000000        0x0 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+12166: .data          0x0000000000000000        0x0 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+12167: .bss           0x0000000000000000        0x0 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+12567: .text          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12568: .data          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12569: .bss           0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12571:                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12573:                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12575:                0x0000000000000000        0x8 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12577:                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12579:                0x0000000000000000        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12581:                0x0000000000000000        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12583:                0x0000000000000000       0x10 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12585:                0x0000000000000000        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12587:                0x0000000000000000       0x10 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12589:                0x0000000000000000        0xc modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12591:                0x0000000000000000        0xa modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12593:                0x0000000000000000        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12595:                0x0000000000000000        0x1 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18329:                0x000000008021b070       0x44 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+18332:                0x000000008021b0b4       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+18335:                0x000000008021b158       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+18637:                0x000000008021f3d8       0xe0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18640:                0x000000008021f4b8       0x78 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18643:                0x000000008021f530       0x44 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18646:                0x000000008021f574       0x44 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18649:                0x000000008021f5b8       0x28 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18652:                0x000000008021f5e0      0x10c modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18655:                0x000000008021f6ec      0x210 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18658:                0x000000008021f8fc       0x6c modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+18661:                0x000000008021f968       0x5c modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20431:                0x000000008022be4a        0x4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+20434:                0x000000008022be4e       0x20 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+20659:                0x000000008022c7c6        0xa modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20661:                0x000000008022c7d0        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20664:                0x000000008022c7d2        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20667:                0x000000008022c7d4       0x24 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20670:                0x000000008022c7f8        0xc modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+20673:                0x000000008022c804       0x30 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23132:                0x000000008025f5fa       0xf9 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23134:                0x000000008025f6f3       0x3b modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23136:                0x000000008025f72e       0x25 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23138:                0x000000008025f753       0x30 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23140:                0x000000008025f783       0x3d modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23142:                0x000000008025f7c0       0xa2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23144:                0x000000008025f862      0x1ff modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23146:                0x000000008025fa61       0x40 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+23670: .comment       0x0000000000000020       0x21 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+23698: .comment       0x0000000000000020       0x21 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+24014:                0x0000000000003d98       0x40 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+24070:                0x00000000000049a8       0xf0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+24228: .debug_info    0x00000000010171c1      0xab9 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+24256: .debug_info    0x00000000010b64de     0x1edf modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+24410: .debug_abbrev  0x000000000003c0b1      0x2de modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+24438: .debug_abbrev  0x0000000000044bd3      0x53b modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+24592: .debug_line    0x000000000008798c      0x58d modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+24620: .debug_line    0x00000000000a36d8      0xb44 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+24765: .debug_frame   0x000000000000b764       0x78 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+24793: .debug_frame   0x000000000000d9c0      0x264 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+25132: .debug_str     0x000000000011d4f4      0x14d modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+25188: .debug_str     0x0000000000129a59      0x40e modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+25328: .debug_loc     0x00000000000bf0f9      0x630 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+25351: .debug_loc     0x00000000000dd383      0xd91 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+25516: .debug_ranges  0x0000000000021700       0x90 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+25544: .debug_ranges  0x0000000000026e38      0x1c0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+26652:                0x0000000000007d3a       0x3e modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+26708:                0x0000000000008402       0x3e modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+27207:                0x0000000020001b34        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+27209:                0x0000000020001b38        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+27211:                0x0000000020001b3c        0x4 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+
+=== MPU REGION INITIALIZATION SOURCES ===
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-31-extern void z_arm_cpu_idle_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-32-#ifdef CONFIG_ARM_MPU
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-33-extern void z_arm_configure_static_mpu_regions(void);
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-34-extern void z_arm_configure_dynamic_mpu_regions(struct k_thread *thread);
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h:35:extern int z_arm_mpu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-36-#endif /* CONFIG_ARM_MPU */
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-37-#ifdef CONFIG_ARM_AARCH32_MMU
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-38-extern int z_arm_mmu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-39-#endif /* CONFIG_ARM_AARCH32_MMU */
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-40-
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-41-static ALWAYS_INLINE void arch_kernel_init(void)
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-42-{
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-43-	z_arm_interrupt_stack_setup();
+--
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-45-	z_arm_fault_init();
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-46-	z_arm_cpu_idle_init();
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-47-	z_arm_clear_faults();
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-48-#if defined(CONFIG_ARM_MPU)
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h:49:	z_arm_mpu_init();
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-50-	/* Configure static memory map. This will program MPU regions,
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-51-	 * to set up access permissions for fixed memory sections, such
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-52-	 * as Application Memory or No-Cacheable SRAM area.
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-53-	 *
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-54-	 * This function is invoked once, upon system initialization.
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-55-	 */
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-56-	z_arm_configure_static_mpu_regions();
+/home/user/sdk-alif/zephyr/arch/arm/include/cortex_m/kernel_arch_func.h-57-#endif /* CONFIG_ARM_MPU */
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-29-#include <cortex_a_r/stack.h>
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-30-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-31-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-32-#ifdef CONFIG_ARM_MPU
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c:33:extern void z_arm_mpu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-34-extern void z_arm_configure_static_mpu_regions(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-35-#elif defined(CONFIG_ARM_AARCH32_MMU)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-36-extern int z_arm_mmu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-37-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-38-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-39-#if defined(CONFIG_CPU_HAS_FPU)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-40-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-41-static inline void z_arm_floating_point_init(void)
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-117-#if CONFIG_ARCH_CACHE
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-118-	arch_cache_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-119-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-120-#ifdef CONFIG_ARM_MPU
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c:121:	z_arm_mpu_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-122-	z_arm_configure_static_mpu_regions();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-123-#elif defined(CONFIG_ARM_AARCH32_MMU)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-124-	z_arm_mmu_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-125-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-126-	z_cstart();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-127-	CODE_UNREACHABLE;
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/prep_c.c-128-}
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-86-	[0 ... (CONFIG_MP_MAX_NUM_CPUS - 1)] = INV_MPID
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-87-};
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-88-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-89-#ifdef CONFIG_ARM_MPU
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c:90:extern void z_arm_mpu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-91-extern void z_arm_configure_static_mpu_regions(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-92-#elif defined(CONFIG_ARM_AARCH32_MMU)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-93-extern int z_arm_mmu_init(void);
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-94-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-95-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-96-/* Called from Zephyr initialization */
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-97-void arch_cpu_start(int cpu_num, k_thread_stack_t *stack, int sz, arch_cpustart_t fn, void *arg)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-98-{
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-182-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-183-	/*! TODO: Unify mpu and mmu initialization function
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-184-	 *  \todo Unify mpu and mmu initialization function
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-185-	 */
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c:186:	z_arm_mpu_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-187-	z_arm_configure_static_mpu_regions();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-188-#elif defined(CONFIG_ARM_AARCH32_MMU)
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-189-	z_arm_mmu_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-190-#endif
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-191-
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-192-#ifdef CONFIG_SMP
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-193-	arm_gic_secondary_init();
+/home/user/sdk-alif/zephyr/arch/arm/core/cortex_a_r/smp.c-194-
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-666- *
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-667- * This function provides the default configuration mechanism for the Memory
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-668- * Protection Unit (MPU).
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-669- */
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c:670:int z_arm_mpu_init(void)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-671-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-672-	uint32_t r_index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-673-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-674-	if (mpu_config.num_regions > get_num_regions()) {
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-675-		/* Attempt to configure more MPU regions than
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-676-		 * what is supported by hardware. As this operation
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-677-		 * may be executed during system (pre-kernel) initialization,
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/nxp_mpu.c-678-		 * we want to ensure we can detect an attempt to
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-38-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-39-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-40-static inline void mpu_set_rnr(uint32_t rnr)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-41-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h:42:	MPU->RNR = rnr;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-43-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-44-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-45-static inline void mpu_set_rbar(uint32_t rbar)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-46-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h:47:	MPU->RBAR = rbar;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-48-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-49-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-50-static inline uint32_t mpu_get_rbar(void)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-51-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h:52:	return MPU->RBAR;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-53-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-54-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-55-static inline void mpu_set_rlar(uint32_t rlar)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-56-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-57-	MPU->RLAR = rlar;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-58-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-59-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v8_internal.h-60-static inline uint32_t mpu_get_rlar(void)
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-18-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-19-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-20-static inline void set_region_number(uint32_t index)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-21-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:22:	MPU->RNR = index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-23-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-24-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-25-static inline uint32_t mpu_region_get_base(uint32_t index)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-26-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:27:	MPU->RNR = index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:28:	return MPU->RBAR & MPU_RBAR_ADDR_Msk;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-29-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-30-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-31-/**
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-32- * This internal function converts the SIZE field value of MPU_RASR
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-33- * to the region size (in bytes).
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-34- */
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-35-static inline uint32_t mpu_rasr_size_to_size(uint32_t rasr_size)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-36-{
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-49-	unsigned int key;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-50-	uint32_t rasr;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-51-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-52-	key = irq_lock();
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:53:	MPU->RNR = index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:54:	rasr = MPU->RASR;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-55-	irq_unlock(key);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-56-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-57-	return (rasr & MPU_RASR_ENABLE_Msk) ? 1 : 0;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-58-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-59-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-60-/**
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-61- * This internal function returns the access permissions of an MPU region
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-62- * specified by its region index.
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-70-	unsigned int key;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-71-	uint32_t rasr;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-72-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-73-	key = irq_lock();
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:74:	MPU->RNR = r_index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:75:	rasr = MPU->RASR;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-76-	irq_unlock(key);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-77-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-78-	return (rasr & MPU_RASR_AP_Msk) >> MPU_RASR_AP_Pos;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-79-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-80-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-81-/**
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-82- * This internal function checks if the given buffer is in the region.
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-83- *
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-95-	unsigned int key;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-96-	uint32_t rbar, rasr;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-97-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-98-	key = irq_lock();
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:99:	MPU->RNR = r_index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:100:	rbar = MPU->RBAR;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:101:	rasr = MPU->RASR;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-102-	irq_unlock(key);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-103-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-104-	r_addr_start = rbar & MPU_RBAR_ADDR_Msk;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-105-	r_size_lshift = ((rasr & MPU_RASR_SIZE_Msk) >>
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-106-			MPU_RASR_SIZE_Pos) + 1U;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-107-	r_addr_end = r_addr_start + (1UL << r_size_lshift) - 1UL;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-108-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-109-	size = size == 0U ? 0U : size - 1U;
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-119-}
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-120-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-121-static inline uint32_t mpu_region_get_size(uint32_t index)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-122-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:123:	MPU->RNR = index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-124-	uint32_t rasr_size =
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h:125:		(MPU->RASR & MPU_RASR_SIZE_Msk) >> MPU_RASR_SIZE_Pos;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-126-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-127-	return mpu_rasr_size_to_size(rasr_size);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/cortex_m/arm_mpu_internal.h-128-}
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-408- *
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-409- * This function provides the default configuration mechanism for the Memory
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-410- * Protection Unit (MPU).
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-411- */
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c:412:int z_arm_mpu_init(void)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-413-{
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-414-	uint32_t r_index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-415-
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-416-	if (mpu_config.num_regions > get_num_regions()) {
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-417-		/* Attempt to configure more MPU regions than
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-418-		 * what is supported by hardware. As this operation
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-419-		 * is executed during system (pre-kernel) initialization,
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c-420-		 * we want to ensure we can detect an attempt to
+--
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-43-	set_region_base_address(region_conf->base & MPU_RBAR_ADDR_Msk);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-44-	set_region_attributes(region_conf->attr.rasr);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-45-	set_region_size(region_conf->size | MPU_RASR_ENABLE_Msk);
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-46-#else
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h:47:	MPU->RBAR = (region_conf->base & MPU_RBAR_ADDR_Msk)
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-48-				| MPU_RBAR_VALID_Msk | index;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h:49:	MPU->RASR = region_conf->attr.rasr | MPU_RASR_ENABLE_Msk;
+/home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu_v7_internal.h-50-	LOG_DBG("[%d] 0x%08x 0x%08x",
+
+=== SRAM0 POWER PROFILE CONFIGURATION ===
+120-#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(lpgpio))
+121-	ewic |= EWIC_VBAT_GPIO;
+122-	wakeup |= WE_LPGPIO;
+123-#endif
+124-
+125-	int ret;
+126-	off_profile_t offp = {
+127-		.power_domains = 0,
+128:		.memory_blocks = MEMORY_RETENTION_CONFIG,
+129-		.dcdc_voltage = DEFAULT_DCDC_VOLTAGE,
+130-		.dcdc_mode = DCDC_MODE_OFF,
+131-		.stby_clk_freq = SCALED_FREQ_RC_STDBY_0_075_MHZ,
+132-		.aon_clk_src = CLK_SRC_LFXO,
+133-		.stby_clk_src = CLK_SRC_HFRC,
+134-		.ip_clock_gating = 0,
+135-		.phy_pwr_gating = 0,
+136-		.ewic_cfg = ewic,
+137-		.wakeup_events = wakeup,
+138-		.vtor_address = SCB->VTOR,
+139-		.vtor_address_ns = SCB->VTOR,
+140-	};
+--
+177-		.cpu_clk_freq = CLOCK_FREQUENCY_160MHZ,
+178-		.phy_pwr_gating = LDO_PHY_MASK,
+179-		.ip_clock_gating = LP_PERIPH_MASK,
+180-		.vdd_ioflex_3V3 = IOFLEX_LEVEL_1V8,
+181-		.scaled_clk_freq = SCALED_FREQ_RC_ACTIVE_76_8_MHZ,
+182-		.dcdc_voltage = DEFAULT_DCDC_VOLTAGE,
+183-#if (IS_ENABLED(CONFIG_SOC_SERIES_E1C) || IS_ENABLED(CONFIG_SOC_SERIES_B1))
+184-		.dcdc_mode = DCDC_MODE_PFM_FORCED,
+185:		.memory_blocks = MEMORY_RETENTION_CONFIG,
+186-#else
+187-		.dcdc_mode = DCDC_MODE_PWM,
+188:		.memory_blocks = MEMORY_RETENTION_CONFIG | SRAM0_MASK | SRAM1_MASK,
+189-#endif
+190-	};
+191-
+192-	se_service_status = se_service_set_run_cfg(&runp);
+193-
+194-	if (se_service_status) {
+195-		return -ENOEXEC;
+196-	}
+197-
+198-	/* Default value is 0 so ignore it */
+199-#if CONFIG_ALIF_BLUETOOTH_COMMON_ACLK_DIVIDER_VALUE
+200-	se_service_status = se_service_clock_set_divider(
