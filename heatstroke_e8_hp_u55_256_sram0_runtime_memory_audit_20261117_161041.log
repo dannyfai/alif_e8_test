@@ -1,0 +1,429 @@
+=== EFFECTIVE CACHE CONFIGURATION ===
+CONFIG_DCACHE=y
+CONFIG_CACHE=y
+CONFIG_ARM_MPU=y
+CONFIG_MPU=y
+CONFIG_ICACHE=y
+
+=== ETHOS-U MEMORY CONFIGURATION HEADER ===
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h
+--- /home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h
+/*
+ * SPDX-FileCopyrightText: Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef ETHOS_U_NPU_MEM_CONFIG_H
+#define ETHOS_U_NPU_MEM_CONFIG_H
+
+#define ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY           0
+#define ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM         1
+#define ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM      2
+
+#define ETHOS_U_MEM_BYTE_ALIGNMENT                  16
+
+#ifndef ETHOS_U_NPU_MEMORY_MODE
+    #define ETHOS_U_NPU_MEMORY_MODE                 ETHOS_U_MEMORY_MODE_SHARED_SRAM
+#endif /* ETHOS_U_NPU_MEMORY_MODE */
+
+#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    #ifndef ETHOS_U_NPU_CACHE_SIZE
+        #define ETHOS_U_CACHE_BUF_SZ                (393216U)  /* See vela doc for reference */
+    #else
+        #define ETHOS_U_CACHE_BUF_SZ                ETHOS_U_NPU_CACHE_SIZE
+    #endif /* ETHOS_U_NPU_CACHE_SIZE */
+#else
+    #define ETHOS_U_CACHE_BUF_SZ    (0U)
+#endif /* CACHE_BUF_SZ */
+
+/**
+ * Activation buffer aka tensor arena section name
+ * We have to place the tensor arena in different region based on the memory config.
+ **/
+#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM)
+    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY)
+    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+    #define CACHE_BUF_SECTION           section(".bss.NoInit.ethos_u_cache")
+    #define ACTIVATION_BUF_SECTION_NAME ("DDR/DRAM")
+    #define CACHE_BUF_ATTRIBUTE         __attribute__((aligned(ETHOS_U_MEM_BYTE_ALIGNMENT), CACHE_BUF_SECTION))
+#endif
+
+#endif /* ETHOS_U_NPU_MEM_CONFIG_H */
+
+=== ARENA DECLARATION AND MODEL INITIALIZATION ===
+grep: Unmatched ( or \(
+
+=== TFLM ARENA CREATION AND INITIALIZATION ===
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/google/protobuf/arena.h:324:  PROTOBUF_ALWAYS_INLINE static T* Create(Arena* arena, Args&&... args) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/google/protobuf/arena.h:573:    // User is constructing with Create() despite the fact that T supports arena
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/google/protobuf/arena.h:583:    // User is constructing with Create() and the type does not support arena
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib64/python3.12/site-packages/torch/include/google/protobuf/arena.h:324:  PROTOBUF_ALWAYS_INLINE static T* Create(Arena* arena, Args&&... args) {
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib64/python3.12/site-packages/torch/include/google/protobuf/arena.h:573:    // User is constructing with Create() despite the fact that T supports arena
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib64/python3.12/site-packages/torch/include/google/protobuf/arena.h:583:    // User is constructing with Create() and the type does not support arena
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:155:            tflite::MicroAllocator::Create(computeBuffer.data, computeBuffer.size);
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:272:         this->m_backendData.m_pInterpreter->arena_used_bytes());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h:144:  static MicroAllocator* Create(uint8_t* tensor_arena, size_t arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:44:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:84:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:121:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize * 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:165:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:190:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:235:      tflite::RecordingMicroAllocator::Create(arena, kTestConvArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:277:      tflite::RecordingMicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc:331:      tflite::RecordingMicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/hello_world/hello_world_test.cc:50:      tflite::RecordingMicroAllocator::Create(tensor_arena, kTensorArenaSize));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/micro_speech/micro_speech_test.cc:38:// MicroInterpreter::arena_used_bytes() on both the AudioPreprocessor and
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/micro_speech/micro_speech_test.cc:103:              interpreter.arena_used_bytes());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/micro_speech/micro_speech_test.cc:202:              interpreter.arena_used_bytes());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.h:145:  // arena_used_bytes() + 16.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.h:146:  size_t arena_used_bytes() const { return allocator_.used_bytes(); }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:170:      tflite::SingleArenaBufferAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:199:      tflite::SingleArenaBufferAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:226:      tflite::SingleArenaBufferAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:253:      tflite::SingleArenaBufferAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:281:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:297:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:319:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:327:  size_t expected_arena_used_bytes =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:330:  TF_LITE_MICRO_EXPECT_EQ(allocator->used_bytes(), expected_arena_used_bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:368:  tflite::MicroAllocator* allocator = tflite::MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:414:      tflite::MicroAllocator::Create(arena, arena_size, &memory_planner);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:422:  size_t expected_arena_used_bytes =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:425:  TF_LITE_MICRO_EXPECT_EQ(allocator->used_bytes(), expected_arena_used_bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:464:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:506:  tflite::MicroAllocator* allocator = tflite::MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:545:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:596:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:687:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:748:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:802:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:862:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:895:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:919:  // MicroAllocator::Create always allocates GreedyMemoryPlanner,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:932:      tflite::MicroAllocator::Create(arena, sizeof(arena));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:946:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:960:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:983:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1013:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1029:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1086:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1152:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1194:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1233:      tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1293:      tflite::MicroAllocator::Create(arena, arena_size, &planner);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1340:  allocator = tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1353:  tflite::MicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc:55:      allocator_(*MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:32:      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:57:      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:87:      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:125:      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:163:      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_interpreter.h:45:            RecordingMicroAllocator::Create(tensor_arena, tensor_arena_size),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.h:62:  static RecordingMicroAllocator* Create(uint8_t* tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:542:MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena, size_t arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:548:      SingleArenaBufferAllocator::Create(aligned_arena, aligned_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:553:MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena, size_t arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:559:      SingleArenaBufferAllocator::Create(aligned_arena, aligned_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:569:MicroAllocator* MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:582:MicroAllocator* MicroAllocator::Create(uint8_t* persistent_tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc:45:RecordingMicroAllocator* RecordingMicroAllocator::Create(uint8_t* tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc:48:      RecordingSingleArenaBufferAllocator::Create(tensor_arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/layer_by_layer.cc:255:  MicroAllocator* allocator = MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/benchmarking/generic_model_benchmark.cc:241:  event_handle = profiler.BeginEvent("tflite::RecordingMicroAllocator::Create");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/benchmarking/generic_model_benchmark.cc:243:      tflite::RecordingMicroAllocator::Create(tensor_arena, kTensorArenaSize));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable_test.cc:49:          tflite::MicroAllocator::Create(tflite::buffer_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable_test.cc:80:          tflite::MicroAllocator::Create(tflite::buffer_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable_test.cc:102:          tflite::MicroAllocator::Create(tflite::buffer_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable_test.cc:143:          tflite::MicroAllocator::Create(tflite::buffer_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/benchmarks/micro_benchmark.h:41:            RecordingMicroAllocator::Create(tensor_arena, tensor_arena_size)),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context_test.cc:39:      MicroAllocator::Create(tensor_arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:76:    TF_LITE_MICRO_EXPECT_LE(interpreter.arena_used_bytes(), 928 + 100);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:334:        tflite::RecordingMicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:350:      tflite::RecordingMicroAllocator::Create(arena, arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:423:      tflite::RecordingMicroAllocator::Create(allocator_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:538:      tflite::RecordingMicroAllocator::Create(allocator_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:584:      tflite::RecordingMicroAllocator::Create(allocator_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:660:    TF_LITE_MICRO_EXPECT_LE(interpreter.arena_used_bytes(), 928 + 100);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_test.cc:746:  size_t used_arena_size = interpreter.arena_used_bytes();
+
+=== ETHOS-U CACHE MAINTENANCE AND MEMORY ACCESS ===
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:56:	/* Passing NULL as p argument expects the whole cache to be flushed. */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:66:	/* Passing NULL as p argument expects the whole cache to be flushed. */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:90:			SCB_CleanDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:92:			SCB_CleanDCache();
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:107:			SCB_InvalidateDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:113:			SCB_CleanInvalidateDCache();
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/data/iterator.h:83:  /// Returns true if the memory address of `other` equals that of `this`.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/oneapi/dnnl/dnnl_graph.h:742:/// disabled. When calling this API, the corresponding cache will be flushed.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/oneapi/dnnl/dnnl_graph_ocl.h:56:/// @returns The memory address of the requested USM allocation.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/cuda/tunable/Tunable.h:239:    bool icache_flush_;
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/core/CachingHostAllocator.h:36:  void* ptr_{nullptr}; // memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/core/CachingHostAllocator.h:179: *   4) In the empty_cache path, we flush any available blocks into the free
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/legacy/ittnotify.h:771:void LIBITTAPI __itt_memory_update(void *address, size_t size);
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/c10/core/CachingDeviceAllocator.h:39:  // after cache flush)
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/c10/core/impl/PyInterpreter.h:65://    We represent the interpreter tag as a memory address to an instance of
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6948:   - If the block shrunk, it marks the freed memory as being unaddressable.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6961:   will be necessary to mark the memory as addressable just before the zeroing
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/valgrind.h:6970:   memory should be considered unaddressable to the client program, but the
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/utils/benchmark/utils/valgrind_wrapper/callgrind.h:111:   When cache simulation is done, it will flush the simulated cache;
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1191: * \param[in]  buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1208: * \param[out] buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1616: * \param[in]  buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1633: * \param[out] buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1717: * \param[in]  buf            memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:1734: * \param[out] buf            memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:2026: * \param[in]  buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:2043: * \param[out] buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:2337: * \param[out] buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:2413: * \param[in]  buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cublas/include/cublasLt.h:2429: * \param[out] buf          memory address containing the new value
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:333:     * memory may now have their address taken by the runtime via
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:783:     * The device encountered a load or store instruction on an invalid memory address.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:895:     * on a memory address which is not aligned.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:904:     * which can only operate on memory locations in certain address spaces
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:905:     * (global, shared, or local), but was supplied a memory address not
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1309:    cudaArray_t            srcArray;  /**< Source memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1311:    struct cudaPitchedPtr  srcPtr;    /**< Pitched source memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1313:    cudaArray_t            dstArray;  /**< Destination memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1315:    struct cudaPitchedPtr  dstPtr;    /**< Pitched destination memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1335:    cudaArray_t            srcArray;  /**< Source memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1337:    struct cudaPitchedPtr  srcPtr;    /**< Pitched source memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1340:    cudaArray_t            dstArray;  /**< Destination memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1342:    struct cudaPitchedPtr  dstPtr;    /**< Pitched destination memory address */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1646:     * the memory or NULL if no such address exists.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1652:     * memory or NULL if no such address exists.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:1940:    cudaDevAttrCanMapHostMemory               = 19, /**< Device can map host memory into CUDA address space */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:2011:    cudaDevAttrCanUseHostPointerForRegisteredMem = 91, /**< Device can access host registered memory at the same virtual address as the CPU */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/driver_types.h:2495:    int          canUseHostPointerForRegisteredMem; /**< Device can access host registered memory at the same virtual address as the CPU */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:730:    CU_DEVICE_ATTRIBUTE_CAN_MAP_HOST_MEMORY = 19,                           /**< Device can map host memory into CUDA address space */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:805:    CU_DEVICE_ATTRIBUTE_CAN_USE_HOST_POINTER_FOR_REGISTERED_MEM = 91,       /**< Device can access host registered memory at the same virtual address as the CPU */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:2746:     * load or store instruction on an invalid memory address.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:2853:     * on a memory address which is not aligned.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:2862:     * which can only operate on memory locations in certain address spaces
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:2863:     * (global, shared, or local), but was supplied a memory address not
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:3129: * If set, host memory is mapped into CUDA address space and
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:3150: * If set, host memory is mapped into CUDA address space and
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:5447: *   memory into the CUDA address space, or 0 if not
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:5502: *   memory at the same virtual address as the CPU.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:9553: * to ::cuMemAlloc returns memory with the same device address,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:9779: * Unmaps the memory range whose base address is specified by \p p, and makes
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:12860:     * unsigned integer in the memory at this address. */
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:13114:* use ::cuMemMap to map the memory into its address ranges before
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:13278:* \brief Unmap the backing memory of a given address range.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:13465:* The handle is guaranteed to be the same handle value used to map the memory. If the address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:14096: * \brief Bind a memory allocation represented by a virtual address to a multicast object.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:14098: * Binds a memory allocation specified by its mapped address \p memptr to a
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:14283: * memory.  The device address is guaranteed to not overlap any valid host
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda.h:16713: * the memory object where the buffer's base address is.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:959: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1012: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1060: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1113: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1180: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1250: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1311: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1358: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1412: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime.h:1470: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:780: * to ::cudaMalloc returns memory with the same device address,
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1644: *   device can map host memory into the CUDA address space for use with
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1760: *   the device can access host registered memory at the same virtual address as the CPU, and 0 otherwise.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:1973: *   registered memory at the same virtual address as the CPU, and 0 otherwise
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:3989: * the memory object where the buffer's base address is.
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:5884: * Unmaps the memory range whose base address is specified by \p ptr, and makes
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6824: * \param dst   - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6825: * \param src   - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6908: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6910: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6956: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:6959: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7006: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7008: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7054: * \param dst        - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7057: * \param src        - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7098: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7141: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7198: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7199: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7435: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7437: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7492: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7495: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7549: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7551: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7601: * \param src    - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:7651: * \param dst    - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8525: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8528: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8567: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8568: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8610: * \param dst        - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8613: * \param src        - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8659: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8662: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8709: * \param dst     - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:8710: * \param src     - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:9263: * memory.  The device address is guaranteed to not overlap any valid host
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10584: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10652: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10723: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10724: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10828: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10873: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10921: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:10922: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:12873: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:12935: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:12998: * \param dst             - Destination memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/nvidia/cuda_runtime/include/cuda_runtime_api.h:12999: * \param src             - Source memory address
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/include/numpy/ndarraytypes.h:923: * Array data is aligned on the appropriate memory address for the type
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/numpy/_core/include/numpy/ndarraytypes.h:925: * array of integers (4 bytes each) starts on a memory address that's
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:34024:PyDoc_STRVAR(__pyx_doc_4cuda_8bindings_5nvrtc_40nvrtcGetLoweredName, "nvrtcGetLoweredName(prog, char *name_expression)\n\nnvrtcGetLoweredName extracts the lowered (mangled) name for a global function or device/__constant__ variable, and updates lowered_name to point to it. The memory containing the name is released when the NVRTC program is destroyed by nvrtcDestroyProgram. The identical name expression must have been previously provided to nvrtcAddNameExpression.\n\nParameters\n----------\nprog : nvrtcProgram\n    CUDA Runtime Compilation program.\nname_expression : bytes\n    constant expression denoting the address of a global function or\n    device/__constant__ variable.\n\nReturns\n-------\nnvrtcResult\n    NVRTC_SUCCESS\n    NVRTC_ERROR_NO_LOWERED_NAMES_BEFORE_COMPILATION\n    NVRTC_ERROR_NAME_EXPRESSION_NOT_VALID\nlowered_name : bytes\n    initialized by the function to point to a C string containing the\n    lowered (mangled) name corresponding to the provided name\n    expression.\n\nSee Also\n--------\nnvrtcAddNameExpression");
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:38331:  {Py_tp_doc, (void *)PyDoc_STR("nvrtcProgram(*args, **kwargs)\n\nnvrtcProgram is the unit of compilation, and an opaque handle for a program.\n\nTo compile a CUDA program string, an instance of nvrtcProgram must be created first with nvrtcCreateProgram, then compiled with nvrtcCompileProgram.\n\nMethods\n-------\ngetPtr()\n    Get memory address of class instance")},
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/nvrtc.cpp:38412:  PyDoc_STR("nvrtcProgram(*args, **kwargs)\n\nnvrtcProgram is the unit of compilation, and an opaque handle for a program.\n\nTo compile a CUDA program string, an instance of nvrtcProgram must be created first with nvrtcCreateProgram, then compiled with nvrtcCompileProgram.\n\nMethods\n-------\ngetPtr()\n    Get memory address of class instance"), /*tp_doc*/
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:70693: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:70819: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:72109: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:72235: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:74083: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:74171: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:75456: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:75582: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:77484: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:77610: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:78897: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:79023: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:80607: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:80733: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:82023: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:82149: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:83439: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:83565: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:86912: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:87038: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:88445: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:88571: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:92101: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:92227: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:94305: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:94431: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:96509: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:96635: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:98594: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:98720: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:99979: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:100105: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:101364: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:101452: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:102414: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:102502: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:103464: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:103552: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:105004: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:105092: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:107038: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:107126: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:109046: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:109183: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:110447: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:110573: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:113162: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:113288: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:114978: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:115104: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:119849: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:119975: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:121082: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:121208: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:122436: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:122562: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:125285: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:125411: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:126359: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:126485: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:128765: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:128891: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:131171: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:131297: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:132140: *         Get memory address of class instance
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/cuda/bindings/runtime.cpp:132266: *         Get memory address of class instance
+
+=== ACTIVE LINKER: SRAM0 AND ZERO-INITIALIZATION SECTIONS ===
+8-    IDT_LIST (wx) : ORIGIN = 0xFFFF7FFF, LENGTH = 32K
+9-    }
+10-ENTRY("__start")
+11-SECTIONS {
+12-
+13:.alif_sram0 (NOLOAD) :
+14- {
+15:KEEP(*(.alif_sram0))
+16:KEEP(*(".alif_sram0.*"))
+17-KEEP(*(.noinit.*kheap_buf_video_buffer_pool))
+18-KEEP(*(.bss.disk_buf_0))
+19- } > SRAM0
+20-
+21-
+22-.alif_sram1 (NOLOAD) :
+23- {
+24-KEEP(*(.alif_sram1))
+25-KEEP(*(".alif_sram1.*"))
+26- } > SRAM1
+27-
+28-}
+29-SECTIONS
+30-    {
+31- .rel.plt :
+32- {
+33- *(.rel.plt)
+34- PROVIDE_HIDDEN (__rel_iplt_start = .);
+--
+413-.last_section :
+414-{
+415-  LONG(0xE015E015)
+416-} > FLASH
+417-_flash_used = LOADADDR(.last_section) + SIZEOF(.last_section) - __rom_region_start;
+418:    bss (NOLOAD) : ALIGN_WITH_INPUT
+419- {
+420-        . = ALIGN(4);
+421: __bss_start = .;
+422- __kernel_ram_start = .;
+423- *(.bss)
+424- *(".bss.*")
+425- *(COMMON)
+426- *(".kernel_bss.*")
+427: __bss_end = ALIGN(4);
+428- } > RAM AT > RAM
+429-noinit (NOLOAD) :
+430-{
+431-        *(.noinit)
+432-        *(".noinit.*")
+433-} > RAM AT > RAM
+434-    __kernel_ram_end = 0x20000000 + (1024 * 1K);
+435-    __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
+436-    .last_ram_section (NOLOAD) :
+437-    {
+438- _image_ram_end = .;
+439- _image_ram_size = _image_ram_end - _image_ram_start;
+440- _end = .;
+441- z_mapped_end = .;
+442-    } > RAM AT > RAM
+443-   
+444-    }
