@@ -1,0 +1,596 @@
+===== DECLARATION AND GUARD CHECK =====
+    70	#else
+    71	#define MEMORY_RETENTION_CONFIG                                                                    \
+    72		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B | SERAM_MASK)
+    73	#endif
+    74	
+    75	#define DEFAULT_DCDC_VOLTAGE 825
+    76	
+    77	#if !defined(CONFIG_ARM_ETHOS_U55_256)
+    78	enum off_state {
+    79		OFF_STATE_IDLE = 0,
+    80		OFF_STATE_STANDBY,
+    81		OFF_STATE_STOP,
+    82		OFF_STATE_OFF,
+    83	};
+    84	
+    85	
+    86	void power_mgr_disable_sleep(void)
+    87	{
+    88		// uses reference counting!!
+    89		pm_policy_state_lock_get(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    90		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    91	}
+    92	
+    93	void power_mgr_allow_sleep(void)
+    94	{
+    95		pm_policy_state_lock_put(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    96		pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    97	}
+    98	
+    99	#if CONFIG_PM && CONFIG_LOG
+   100	/**
+   101	 * Flush log buffer
+   102	 */
+   103	void power_mgr_log_flush(void)
+   104	{
+   105	#if CONFIG_LOG_MODE_DEFERRED
+
+===== REBUILD E8 RTSS-HP / ETHOS-U55-256 =====
+-- west build: generating a build system
+-- Ethos-U: ETHOSU_TARGET_NPU_CONFIG=ethos-u55-256 -> CONFIG_ARM_ETHOS_U55_256=y, model ID H256
+Loading Zephyr default modules (Zephyr base (cached)).
+-- Application: /home/user/sdk-alif/beeinventor/test_heatstroke
+-- CMake version: 3.31.10
+-- Cache files will be written to: /home/user/.cache/zephyr
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr)
+-- Found west (found suitable version "1.5.0", minimum required is "0.14.0")
+-- Board: alif_e8_dk, qualifiers: ae822fa0e5597xx0/rtss_hp
+-- Snippet(s): ospi-flash
+-- Found host-tools: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found BOARD.dts: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.dts
+-- Found devicetree overlay: /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ospi-flash/e8_ospi1.overlay
+-- Generated zephyr.dts: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.dts
+-- Generated pickled edt: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/dts.cmake
+Parsing /home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig
+Loaded configuration '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config'
+No change to configuration in '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config'
+No change to Kconfig header in '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/autoconf.h'
+CMake Warning at /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/debug_metadata.cmake:23 (message):
+  Alif SVD file not found:
+  /home/user/sdk-alif/tools/alif_ensemble-cmsis-dfp/Debug/SVD/AE822FA0E5597BS0_CM55_HP_View.svd
+Call Stack (most recent call first):
+  /home/user/sdk-alif/zephyr/soc/alif/ensemble/CMakeLists.txt:8 (include)
+
+
+-- *******************************************************
+-- PROJECT_NAME                           : ethosu_core_driver
+-- ETHOSU_TARGET_NPU_CONFIG               : ethos-u55-256
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- CMSIS_PATH                             : /home/user/sdk-alif/modules/hal/ethos_u/../cmsis
+-- ETHOSU_LOG_ENABLE                      : ON
+-- ETHOSU_LOG_SEVERITY                    : warning
+-- ETHOSU_INFERENCE_TIMEOUT               : Default (no timeout)
+-- *******************************************************
+-- Including default API config parameters...
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- MLEK log is disabled
+-- **************************************************
+-- Library:                mlek_log
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- **************************************************
+-- *******************************************************
+-- Library                    : arm_math
+-- CMAKE_SYSTEM_PROCESSOR     : arm
+-- *******************************************************
+-- Adding TensorFlow Lite Micro framework to the build...
+-- *******************************************************
+-- Library: ml_framework_tflm
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library: ml_framework_iface
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                common_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : asr_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : kws_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : noise_reduction_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : img_class_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : object_detection_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : vww_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : ad_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                inference_runner_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- Created interface target: mlek::asr_impl
+-- Created interface target: mlek::kws_impl
+-- Created interface target: mlek::noise_reduction_impl
+-- Created interface target: mlek::img_class_impl
+-- Created interface target: mlek::object_detection_impl
+-- Created interface target: mlek::vww_impl
+-- Created interface target: mlek::ad_impl
+-- Created interface target: mlek::inference_runner_impl
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:1011 (message):
+  No SOURCES given to Zephyr library: drivers__audio
+
+  Excluding target from build.
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:1011 (message):
+  No SOURCES given to Zephyr library: drivers__counter
+
+  Excluding target from build.
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2193 (message):
+  __ASSERT() statements are globally ENABLED
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2224 (message):
+  
+
+        The CMake build type was set to 'Release', but the optimization flag was set to '-Os'.
+        This may be intentional and the warning can be turned off by setting the CMake variable 'NO_BUILD_TYPE_WARNING'
+
+
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- Using SRC_GEN_DIR:    /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/src
+-- Using INC_GEN_DIR:    /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/include
+-- Using combined heat-stress model: /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+-- Combined model SHA256: 4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d
+-- Using /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+++ Converting vela_e8_hp_u55_256_20261117.tflite to    vela_e8_hp_u55_256_20261117.tflite.cc
+-- Configuring done (4.8s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+-- west build: building application
+[1/407] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[2/406] Building ASM object zephyr/arch/arch/arm/core/CMakeFiles/arch__arm__core.dir/nmi_on_reset.S.obj
+[3/406] Building ASM object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/fault_s.S.obj
+[4/406] Linking C static library zephyr/arch/common/libisr_tables.a
+[5/406] Building C object zephyr/arch/arch/arm/core/CMakeFiles/arch__arm__core.dir/__aeabi_atexit.c.obj
+[6/406] Building ASM object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/vector_table.S.obj
+[7/406] Building ASM object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/reset.S.obj
+[8/406] Generating linker_zephyr_pre0.cmd
+[9/406] Building ASM object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/swap_helper.S.obj
+[10/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/scb.c.obj
+[11/406] Building C object zephyr/arch/arch/arm/core/CMakeFiles/arch__arm__core.dir/nmi.c.obj
+[12/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/thread_abort.c.obj
+[13/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/fpu.c.obj
+[14/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/exc_exit.c.obj
+[15/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/thread.c.obj
+[16/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/irq_manage.c.obj
+[17/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/fault.c.obj
+[18/406] Building ASM object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/pm_s2ram.S.obj
+[19/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/prep_c.c.obj
+[20/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/irq_init.c.obj
+[21/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/cpu_idle.c.obj
+[22/406] Building C object CMakeFiles/app.dir/src/power/power_mgr.c.obj
+[23/406] Building C object zephyr/arch/arch/arm/core/CMakeFiles/arch__arm__core.dir/fatal.c.obj
+[24/406] Building C object zephyr/arch/arch/arm/core/cortex_m/cmse/CMakeFiles/arch__arm__core__cortex_m__cmse.dir/arm_core_cmse.c.obj
+[25/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/pm_s2ram.c.obj
+[26/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/cache.c.obj
+[27/406] Building C object zephyr/arch/arch/arm/core/cortex_m/CMakeFiles/arch__arm__core__cortex_m.dir/isr_wrapper.c.obj
+[28/406] Building C object zephyr/arch/arch/arm/core/mpu/CMakeFiles/arch__arm__core__mpu.dir/arm_core_mpu.c.obj
+[29/406] Building C object zephyr/drivers/flash/CMakeFiles/drivers__flash.dir/flash_page_layout.c.obj
+[30/406] Building C object zephyr/drivers/misc/ethos_u/CMakeFiles/drivers__misc__ethos_u.dir/ethos_u.c.obj
+[31/406] Building C object zephyr/lib/libc/newlib/CMakeFiles/lib__libc__newlib.dir/libc-hooks.c.obj
+[32/406] Building C object zephyr/lib/libc/common/CMakeFiles/lib__libc__common.dir/source/stdlib/abort.c.obj
+[33/406] Building C object zephyr/drivers/flash/CMakeFiles/drivers__flash.dir/flash_mram_alif.c.obj
+[34/406] Building C object zephyr/arch/arch/arm/core/mpu/CMakeFiles/arch__arm__core__mpu.dir/arm_mpu.c.obj
+[35/406] Building C object zephyr/drivers/clock_control/CMakeFiles/drivers__clock_control.dir/clock_control_alif_ensemble.c.obj
+[36/406] Building C object zephyr/drivers/pinctrl/CMakeFiles/drivers__pinctrl.dir/common.c.obj
+[37/406] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_common.c.obj
+[38/406] Building C object zephyr/drivers/gpio/CMakeFiles/drivers__gpio.dir/gpio_dw.c.obj
+[39/406] Building C object zephyr/drivers/console/CMakeFiles/drivers__console.dir/uart_console.c.obj
+[40/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f64.c.obj
+[41/406] Building C object zephyr/drivers/pinctrl/CMakeFiles/drivers__pinctrl.dir/pinctrl_alif.c.obj
+[42/406] Building C object zephyr/drivers/power_domain/CMakeFiles/drivers__power_domain.dir/power_domain_alif.c.obj
+[43/406] Building C object zephyr/drivers/ipm/CMakeFiles/drivers__ipm.dir/ipm_arm_mhuv2.c.obj
+[44/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f64.c.obj
+[45/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f64.c.obj
+[46/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f64.c.obj
+[47/406] Building C object zephyr/drivers/timer/CMakeFiles/drivers__timer.dir/cortex_m_systick.c.obj
+[48/406] Building C object zephyr/drivers/timer/CMakeFiles/drivers__timer.dir/sys_clock_init.c.obj
+[49/406] Building C object zephyr/drivers/flash/CMakeFiles/drivers__flash.dir/flash_ospi_is25wx.c.obj
+[50/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f64.c.obj
+[51/406] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_dw.c.obj
+[52/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f64.c.obj
+[53/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f32.c.obj
+[54/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f64.c.obj
+[55/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f64.c.obj
+[56/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f32.c.obj
+[57/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f32.c.obj
+[58/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f32.c.obj
+[59/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f16.c.obj
+[60/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f32.c.obj
+[61/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f32.c.obj
+[62/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f16.c.obj
+[63/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f16.c.obj
+[64/406] Building C object modules/sdk_alif/drivers/codec/wm8904/CMakeFiles/..__alif__drivers__codec__wm8904.dir/wm8904.c.obj
+[65/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f32.c.obj
+[66/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f16.c.obj
+[67/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f32.c.obj
+[68/406] Building C object zephyr/drivers/serial/CMakeFiles/drivers__serial.dir/uart_ns16550.c.obj
+[69/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q31.c.obj
+[70/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f32.c.obj
+[71/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f16.c.obj
+[72/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q31.c.obj
+[73/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q31.c.obj
+[74/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f16.c.obj
+[75/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f16.c.obj
+[76/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q31.c.obj
+[77/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f16.c.obj
+[78/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q31.c.obj
+[79/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q31.c.obj
+[80/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q31.c.obj
+[81/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q31.c.obj
+[82/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f16.c.obj
+[83/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q31.c.obj
+[84/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q15.c.obj
+[85/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q31.c.obj
+[86/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q15.c.obj
+[87/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q15.c.obj
+[88/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q15.c.obj
+[89/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q15.c.obj
+[90/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q15.c.obj
+[91/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q15.c.obj
+[92/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q15.c.obj
+[93/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q15.c.obj
+[94/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q7.c.obj
+[95/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q7.c.obj
+[96/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q7.c.obj
+[97/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q7.c.obj
+[98/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q7.c.obj
+[99/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q7.c.obj
+[100/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q7.c.obj
+[101/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q7.c.obj
+[102/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u32.c.obj
+[103/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u32.c.obj
+[104/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u16.c.obj
+[105/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q15.c.obj
+[106/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u32.c.obj
+[107/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u16.c.obj
+[108/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u16.c.obj
+[109/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q7.c.obj
+[110/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q7.c.obj
+[111/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u8.c.obj
+[112/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u8.c.obj
+[113/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u16.c.obj
+[114/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u8.c.obj
+[115/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs.c.obj
+[116/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs_f16.c.obj
+[117/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u32.c.obj
+[118/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u8.c.obj
+[119/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables_f16.c.obj
+[120/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q31.c.obj
+[121/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f32.c.obj
+[122/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables.c.obj
+[123/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f32.c.obj
+[124/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_fast_q15.c.obj
+[125/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables_f16.c.obj
+[126/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q15.c.obj
+[127/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q31.c.obj
+[128/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f64.c.obj
+[129/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f64.c.obj
+[130/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q31.c.obj
+[131/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q15.c.obj
+[132/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f32.c.obj
+[133/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q31.c.obj
+[134/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f32.c.obj
+[135/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q31.c.obj
+[136/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q15.c.obj
+[137/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f32.c.obj
+[138/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q15.c.obj
+[139/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f64.c.obj
+[140/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f32.c.obj
+[141/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q15.c.obj
+[142/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q15.c.obj
+[143/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q31.c.obj
+[144/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_f32.c.obj
+[145/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_f32.c.obj
+[146/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q31.c.obj
+[147/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f16.c.obj
+[148/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f16.c.obj
+[149/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q15.c.obj
+[150/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q31.c.obj
+[151/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f16.c.obj
+[152/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q31.c.obj
+[153/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f16.c.obj
+[154/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f16.c.obj
+[155/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q15.c.obj
+[156/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f16.c.obj
+[157/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f64.c.obj
+[158/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q15.c.obj
+[159/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f64.c.obj
+[160/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q15.c.obj
+[161/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vinverse_f16.c.obj
+[162/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f16.c.obj
+[163/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f16.c.obj
+[164/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q31.c.obj
+[165/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q31.c.obj
+[166/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f64.c.obj
+[167/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q15.c.obj
+[168/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f32.c.obj
+[169/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f32.c.obj
+[170/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q31.c.obj
+[171/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f16.c.obj
+[172/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f64.c.obj
+[173/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f32.c.obj
+[174/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f32.c.obj
+[175/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q15.c.obj
+[176/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f32.c.obj
+[177/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f32.c.obj
+[178/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f32.c.obj
+[179/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f64.c.obj
+[180/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f64.c.obj
+[181/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f32.c.obj
+[182/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f32.c.obj
+[183/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f32.c.obj
+[184/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q31.c.obj
+[185/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f64.c.obj
+[186/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q31.c.obj
+[187/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables.c.obj
+[188/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q15.c.obj
+[189/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q7.c.obj
+[190/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q15.c.obj
+[191/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f32.c.obj
+[192/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q31.c.obj
+[193/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f32.c.obj
+[194/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f64.c.obj
+[195/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q7.c.obj
+[196/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q31.c.obj
+[197/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q31.c.obj
+[198/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q15.c.obj
+[199/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q15.c.obj
+[200/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q7.c.obj
+[201/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q31.c.obj
+[202/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f64.c.obj
+[203/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f32.c.obj
+[204/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q15.c.obj
+[205/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f32.c.obj
+[206/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q15.c.obj
+[207/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q7.c.obj
+[208/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f64.c.obj
+[209/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q15.c.obj
+[210/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f64.c.obj
+[211/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f32.c.obj
+[212/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q31.c.obj
+[213/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q7.c.obj
+[214/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f64.c.obj
+[215/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q31.c.obj
+[216/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q7.c.obj
+[217/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f32.c.obj
+[218/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f32.c.obj
+[219/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f64.c.obj
+[220/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q31.c.obj
+[221/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q15.c.obj
+[222/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q31.c.obj
+[223/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f32.c.obj
+[224/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q15.c.obj
+[225/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f64.c.obj
+[226/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q7.c.obj
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q7.c:49:9: note: '#pragma message: Scalar version of arm_absmax_q7 built. Helium version has build issues with gcc.'
+   49 | #pragma message "Scalar version of arm_absmax_q7 built. Helium version has build issues with gcc."
+      |         ^~~~~~~
+[227/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q31.c.obj
+[228/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q15.c.obj
+[229/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q15.c.obj
+[230/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q15.c.obj
+[231/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f64.c.obj
+[232/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q7.c.obj
+[233/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f32.c.obj
+[234/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f32.c.obj
+[235/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q31.c.obj
+[236/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q31.c.obj
+[237/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q7.c.obj
+[238/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f64.c.obj
+[239/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q7.c.obj
+[240/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q15.c.obj
+[241/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f32.c.obj
+[242/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f16.c.obj
+[243/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q31.c.obj
+[244/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f64.c.obj
+[245/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q15.c.obj
+[246/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f64.c.obj
+[247/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f16.c.obj
+[248/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f16.c.obj
+[249/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f32.c.obj
+[250/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f16.c.obj
+[251/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f16.c.obj
+[252/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q7.c.obj
+[253/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f16.c.obj
+[254/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f16.c.obj
+[255/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f16.c.obj
+[256/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f16.c.obj
+[257/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f16.c.obj
+[258/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f16.c.obj
+[259/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f16.c.obj
+[260/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f16.c.obj
+[261/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f16.c.obj
+[262/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f16.c.obj
+[263/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f16.c.obj
+[264/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f16.c.obj
+[265/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal.c.obj
+[266/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f16.c.obj
+[267/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f16.c.obj
+[268/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f32.c.obj
+[269/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f16.c.obj
+[270/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal_f16.c.obj
+[271/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f16.c.obj
+[272/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f32.c.obj
+[273/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal2.c.obj
+[274/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f32.c.obj
+[275/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f32.c.obj
+[276/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f32.c.obj
+[277/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q15.c.obj
+[278/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f16.c.obj
+[279/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f64.c.obj
+[280/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f64.c.obj
+[281/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_f32.c.obj
+[282/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q15.c.obj
+[283/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f16.c.obj
+[284/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_f32.c.obj
+[285/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f16.c.obj
+[286/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q15.c.obj
+[287/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q31.c.obj
+[288/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q31.c.obj
+[289/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q31.c.obj
+[290/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q15.c.obj
+[291/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q31.c.obj
+[292/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q31.c.obj
+[293/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_f32.c.obj
+[294/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q31.c.obj
+[295/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_f32.c.obj
+[296/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q31.c.obj
+[297/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f32.c.obj
+[298/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q15.c.obj
+[299/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q31.c.obj
+[300/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q15.c.obj
+[301/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q15.c.obj
+[302/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q31.c.obj
+[303/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q15.c.obj
+[304/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f32.c.obj
+[305/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f64.c.obj
+[306/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f32.c.obj
+[307/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q31.c.obj
+[308/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f16.c.obj
+[309/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f32.c.obj
+[310/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f16.c.obj
+[311/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f64.c.obj
+[312/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q15.c.obj
+[313/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q31.c.obj
+[314/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f16.c.obj
+[315/406] Building C object modules/alif/drivers/ospi/CMakeFiles/..__modules__hal__alif__drivers__ospi.dir/src/ospi.c.obj
+[316/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f16.c.obj
+[317/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q15.c.obj
+[318/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q15.c.obj
+[319/406] Linking CXX static library modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a
+[320/406] Building C object modules/alif/drivers/ospi/CMakeFiles/..__modules__hal__alif__drivers__ospi.dir/src/ospi_hal.c.obj
+[321/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f16.c.obj
+[322/406] Building C object modules/cmsis-dsp/CMakeFiles/modules__cmsis-dsp.dir/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f32.c.obj
+[323/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/init_static.c.obj
+[324/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/version.c.obj
+[325/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/main_weak.c.obj
+[326/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/errno.c.obj
+[327/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/banner.c.obj
+[328/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/device.c.obj
+[329/406] Building C object modules/alif/drivers/ethos_u/CMakeFiles/..__modules__hal__alif__drivers__ethos_u.dir/src/ethosu_callback.c.obj
+[330/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/fatal.c.obj
+[331/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/init.c.obj
+[332/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/idle.c.obj
+[333/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mem_slab.c.obj
+[334/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/kheap.c.obj
+[335/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mailbox.c.obj
+[336/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/busy_wait.c.obj
+[337/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mutex.c.obj
+[338/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/float.c.obj
+[339/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/system_work_q.c.obj
+[340/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/stack.c.obj
+[341/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/sem.c.obj
+[342/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/priority_queues.c.obj
+[343/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/msg_q.c.obj
+[344/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/queue.c.obj
+[345/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/thread.c.obj
+[346/406] Building C object modules/alif/se_services/CMakeFiles/..__modules__hal__alif__se_services.dir/zephyr/src/se_service.c.obj
+[347/406] Linking C static library zephyr/libzephyr.a
+[348/406] Linking C static library zephyr/arch/common/libarch__common.a
+[349/406] Building C object zephyr/CMakeFiles/zephyr_pre0.dir/misc/empty_file.c.obj
+[350/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/condvar.c.obj
+[351/406] Linking C static library zephyr/arch/arch/arm/core/libarch__arm__core.a
+[352/406] Linking C static library zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a
+[353/406] Linking C static library zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a
+[354/406] Linking C static library zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a
+[355/406] Linking C static library zephyr/lib/libc/newlib/liblib__libc__newlib.a
+[356/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/spinlock_validate.c.obj
+[357/406] Linking C static library zephyr/lib/libc/common/liblib__libc__common.a
+[358/406] Linking C static library zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a
+[359/406] Linking C static library zephyr/drivers/clock_control/libdrivers__clock_control.a
+[360/406] Linking C static library zephyr/drivers/console/libdrivers__console.a
+[361/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/xip.c.obj
+[362/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/pipe.c.obj
+[363/406] Linking C static library zephyr/drivers/gpio/libdrivers__gpio.a
+[364/406] Linking C static library zephyr/drivers/flash/libdrivers__flash.a
+[365/406] Linking C static library zephyr/drivers/i2c/libdrivers__i2c.a
+[366/406] Linking C static library zephyr/drivers/ipm/libdrivers__ipm.a
+[367/406] Linking C static library zephyr/drivers/pinctrl/libdrivers__pinctrl.a
+[368/406] Linking C static library zephyr/drivers/power_domain/libdrivers__power_domain.a
+[369/406] Linking C static library modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a
+[370/406] Linking C static library zephyr/drivers/serial/libdrivers__serial.a
+[371/406] Linking C static library zephyr/drivers/timer/libdrivers__timer.a
+[372/406] Linking C static library modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a
+[373/406] Linking C static library modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a
+[374/406] Linking C static library modules/alif/se_services/lib..__modules__hal__alif__se_services.a
+[375/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/work.c.obj
+[376/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/timeout.c.obj
+[377/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/dynamic_disabled.c.obj
+[378/406] Linking C static library modules/cmsis-dsp/libmodules__cmsis-dsp.a
+[379/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/timer.c.obj
+[380/406] Generating linker_zephyr_pre1.cmd
+[381/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/events.c.obj
+[382/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/timeslicing.c.obj
+[383/406] Building CXX object modules/mlek/mlek/mlek/common/CMakeFiles/common_api.dir/ImageUtils.cc.obj
+[384/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/sched.c.obj
+[385/406] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mempool.c.obj
+[386/406] Linking C static library zephyr/kernel/libkernel.a
+[387/406] Building CXX object modules/mlek/mlek/mlek/common/CMakeFiles/common_api.dir/AudioRenderUtils.cc.obj
+[388/406] Building CXX object modules/mlek/mlek/mlek/math/CMakeFiles/arm_math.dir/PlatformMath.cc.obj
+[389/406] Linking CXX static library modules/mlek/mlek/mlek/math/libarm_math.a
+[390/406] Building CXX object modules/mlek/mlek/mlek/common/CMakeFiles/common_api.dir/MelSpectrogram.cc.obj
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc: In member function 'std::string arm::app::audio::MelSpecParams::Str() const':
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc:58:19: warning: implicit conversion from 'const float' to 'double' when passing argument to function [-Wdouble-promotion]
+   58 |             this->m_samplingFreq, this->m_numFbankBins, this->m_melLoFreq,
+      |             ~~~~~~^~~~~~~~~~~~~~
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc:58:63: warning: implicit conversion from 'const float' to 'double' when passing argument to function [-Wdouble-promotion]
+   58 |             this->m_samplingFreq, this->m_numFbankBins, this->m_melLoFreq,
+      |                                                         ~~~~~~^~~~~~~~~~~
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc:59:19: warning: implicit conversion from 'const float' to 'double' when passing argument to function [-Wdouble-promotion]
+   59 |             this->m_melHiFreq, this->m_frameLen, this->m_useHtkMethod ? "yes" : "no",
+      |             ~~~~~~^~~~~~~~~~~
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc:60:19: warning: implicit conversion from 'const float' to 'double' when passing argument to function [-Wdouble-promotion]
+   60 |             this->m_melEnergyMin);
+      |             ~~~~~~^~~~~~~~~~~~~~
+[391/406] Building CXX object modules/mlek/mlek/mlek/common/CMakeFiles/common_api.dir/Classifier.cc.obj
+[392/406] Building CXX object modules/mlek/mlek/mlek/common/CMakeFiles/common_api.dir/Mfcc.cc.obj
+[393/406] Linking CXX static library modules/mlek/mlek/mlek/common/libcommon_api.a
+[394/406] Building CXX object CMakeFiles/app.dir/generated/src/vela_e8_hp_u55_256_20261117.tflite.cc.obj
+[395/406] Linking CXX static library app/libapp.a
+[396/406] Linking CXX executable zephyr/zephyr_pre0.elf
+FAILED: [code=1] zephyr/zephyr_pre0.elf zephyr/zephyr_pre0.map /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr_pre0.map 
+: && /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -O3 -DNDEBUG -gdwarf-4 zephyr/CMakeFiles/zephyr_pre0.dir/misc/empty_file.c.obj -o zephyr/zephyr_pre0.elf  zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj  -T  zephyr/linker_zephyr_pre0.cmd  -Wl,-Map=/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr_pre0.map  -Wl,--whole-archive  app/libapp.a  zephyr/libzephyr.a  zephyr/arch/common/libarch__common.a  zephyr/arch/arch/arm/core/libarch__arm__core.a  zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a  zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a  zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a  zephyr/lib/libc/newlib/liblib__libc__newlib.a  zephyr/lib/libc/common/liblib__libc__common.a  zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a  zephyr/drivers/clock_control/libdrivers__clock_control.a  zephyr/drivers/console/libdrivers__console.a  zephyr/drivers/flash/libdrivers__flash.a  zephyr/drivers/gpio/libdrivers__gpio.a  zephyr/drivers/i2c/libdrivers__i2c.a  zephyr/drivers/ipm/libdrivers__ipm.a  zephyr/drivers/pinctrl/libdrivers__pinctrl.a  zephyr/drivers/power_domain/libdrivers__power_domain.a  zephyr/drivers/serial/libdrivers__serial.a  zephyr/drivers/timer/libdrivers__timer.a  modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a  modules/tflite-micro/libmodules__tflite-micro.a  modules/cmsis-dsp/libmodules__cmsis-dsp.a  modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a  modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a  modules/alif/se_services/lib..__modules__hal__alif__se_services.a  -Wl,--no-whole-archive  zephyr/kernel/libkernel.a  -L/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr  modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a  modules/tflite-micro/libmodules__tflite-micro.a  zephyr/arch/common/libisr_tables.a  modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a  modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a  -mcpu=cortex-m55  -mthumb  -mabi=aapcs  -mfpu=auto  -mfloat-abi=hard  -mfp16-format=ieee  -fuse-ld=bfd  -Wl,--gc-sections  -Wl,--build-id=none  -Wl,--sort-common=descending  -Wl,--sort-section=alignment  -Wl,-u,_OffsetAbsSyms  -Wl,-u,_ConfigAbsSyms  -nostdlib  -static  -Wl,-X  -Wl,-N  -Wl,--orphan-handling=warn  -Wl,-no-pie  -L"/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi"/lib/thumb/v8-m.main+dp/hard -L"/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/12.2.0/thumb/v8-m.main+dp/hard" -lstdc++ -lm -lc -lgcc -lc && cd /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr && /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/cmake/data/bin/cmake -E true
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/12.2.0/../../../../arm-zephyr-eabi/bin/ld.bfd: app/libapp.a(power_mgr.c.obj): in function `app_pre_kernel_init':
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:257: undefined reference to `power_mgr_disable_sleep'
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake --build /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+BUILD EXIT CODE: 1
