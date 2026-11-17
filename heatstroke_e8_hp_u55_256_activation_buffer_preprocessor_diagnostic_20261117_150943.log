@@ -1,0 +1,82 @@
+=== PREPROCESSOR COMMAND ===
+Working directory: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+Source: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+Preprocessor exit code: 0
+Preprocessor stdout bytes: 11415485
+Preprocessor stderr:
+(empty)
+
+=== ACTIVATION BUFFER DECLARATION ===
+--- line 1625 ---
+#define CONFIG_CHECK_INIT_PRIORITIES 1
+#define CONFIG_WARN_DEPRECATED 1
+#define CONFIG_ENFORCE_ZEPHYR_STDINT 1
+#define CONFIG_LEGACY_GENERATED_INCLUDE_PATH 1
+#define CONFIG_ACTIVATION_BUF_SECTION ".bss.activation_buf"
+#define CONFIG_ACTIVATION_BUF_SZ 0x00091000
+#define CONFIG_MODEL_IN_EXT_FLASH 1
+#define CONFIG_AUDIO_SAMPLES 16000
+#define CONFIG_AUDIO_STRIDE 8000
+#define CONFIG_RESULTS_MEMORY 8
+--- line 255430 ---
+#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+# 159 "/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc"
+namespace arm {
+namespace app {
+    static uint8_t activationBuf[0x00091000] __attribute__((aligned(16), section(".bss.activation_buf")));
+
+    namespace polyu_heatstroke {
+extern const uint8_t* GetModelPointer();
+extern size_t GetModelLen();
+}
+--- line 256093 ---
+    arm::app::fwk::iface::MemoryRegion modelMem{
+        const_cast<uint8_t*>(modelPointer), modelLength};
+
+    arm::app::fwk::iface::MemoryRegion computeMem{
+        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+
+    PolyUModel1 model;
+
+    if (!model.Init(computeMem, modelMem)) {
+        do { if (!((1 && (((1) <= 0) || ((0 == false) && ((1) <= __log_level) && ((1) <= 4) ) )) && (0 || !0 || (1 <= ((const struct log_source_const_data *)__log_current_const_data)->level)) && (!0 || k_is_user_context() || ((1) <= ((*(&(((struct log_source_dynamic_data *)__log_current_const_data)->filters)) >> (3U * (0))) & ((1UL << (3U)) - 1U)))))) { break; } if (0) { do { z_log_minimal_printk("%c: " "Failed to initialise combined heat-stress model" "\n", z_log_minimal_level_to_char(1)); } while (false); break; } int _mode; bool string_ok; string_ok = true; if (!string_ok) { ; break; } do { z_log_msg_runtime_create((0), (void *)(__log_current_const_data), (1), (uint8_t *)(
+
+=== ACTIVATION-RELATED MACRO DEFINITIONS ===
+#define ACTIVATION_BUF_SZ CONFIG_ACTIVATION_BUF_SZ
+#define ETHOSU 1
+#define ETHOSU55 1
+#define ETHOSU_ARCH u55
+#define ETHOSU_MACS 256
+#define CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY 10
+#define CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE 1024
+#define CONFIG_ETHOSU_VERBOSE_LEVEL 1
+#define CONFIG_ACTIVATION_BUF_SECTION ".bss.activation_buf"
+#define CONFIG_ACTIVATION_BUF_SZ 0x00091000
+#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME_UPPER_TOKEN ETHOSU55_400E1000
+#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME_UPPER_TOKEN ETHOSU85_49042000
+#define ACTIVATION_BUF_SECTION section(CONFIG_ACTIVATION_BUF_SECTION)
+#define MAKE_ATTRIBUTE(x) __attribute__((ALIGNMENT_REQ, x))
+#define ACTIVATION_BUF_ATTRIBUTE MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+#define MODEL_SECTION_ATTRIBUTE MAKE_ATTRIBUTE(MODEL_SECTION)
+#define TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_ 
+
+=== FINAL MACRO DUMP ===
+Macro dump exit code: 0
+Macro dump stdout bytes: 6716024
+#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME_UPPER_TOKEN ETHOSU55_400E1000
+#define CONFIG_ETHOSU_VERBOSE_LEVEL 1
+#define TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_ 
+#define ETHOSU 1
+#define ACTIVATION_BUF_SZ CONFIG_ACTIVATION_BUF_SZ
+#define ACTIVATION_BUF_SECTION section(CONFIG_ACTIVATION_BUF_SECTION)
+#define ETHOSU_ARCH u55
+#define CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE 1024
+#define ACTIVATION_BUF_ATTRIBUTE MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+#define MAKE_ATTRIBUTE(x) __attribute__((ALIGNMENT_REQ, x))
+#define CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY 10
+#define CONFIG_ACTIVATION_BUF_SZ 0x00091000
+#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME_UPPER_TOKEN ETHOSU85_49042000
+#define ETHOSU_MACS 256
+#define MODEL_SECTION_ATTRIBUTE MAKE_ATTRIBUTE(MODEL_SECTION)
+#define CONFIG_ACTIVATION_BUF_SECTION ".bss.activation_buf"
+#define ETHOSU55 1
