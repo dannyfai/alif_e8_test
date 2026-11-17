@@ -1,0 +1,220 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888619.690066    4918 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888619.690373    4918 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888620.519125    4918 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888620.519316    4918 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+[12:10:21] Model parsed; tensor quantization and graph consumers
+
+===== TENSOR 169 =====
+169: convert_element_type_default_DequantizeLinear_Output, INT8, shape=[1, 900, 6]
+scales: [0.003921568859368563]
+zero_points: [-128]
+quantized_dimension: 0
+details_type: 0
+producers:
+  #10 QUANTIZE inputs=[np.int32(168)] outputs=[np.int32(169)]
+consumers:
+  #18 GREATER inputs=[np.int32(169), np.int32(133)] outputs=[np.int32(177)]
+
+===== TENSOR 133 =====
+133: val_0_DequantizeLinear_Output_duplicated_1, INT8, shape=[]
+scales: [0.0019607844296842813]
+zero_points: [-128]
+quantized_dimension: 0
+details_type: 0
+producers:
+consumers:
+  #18 GREATER inputs=[np.int32(169), np.int32(133)] outputs=[np.int32(177)]
+
+===== TENSOR 177 =====
+177: gt_1, BOOL, shape=[1, 900, 6]
+quantization: None
+producers:
+  #18 GREATER inputs=[np.int32(169), np.int32(133)] outputs=[np.int32(177)]
+consumers:
+  #19 LOGICAL_NOT inputs=[np.int32(177)] outputs=[np.int32(178)]
+  #20 SELECT_V2 inputs=[np.int32(177), np.int32(624), np.int32(159)] outputs=[np.int32(179)]
+  #98 SELECT_V2 inputs=[np.int32(177), np.int32(240), np.int32(2)] outputs=[np.int32(263)]
+  #227 SELECT_V2 inputs=[np.int32(177), np.int32(674), np.int32(675)] outputs=[np.int32(386)]
+  #276 SELECT_V2 inputs=[np.int32(177), np.int32(703), np.int32(704)] outputs=[np.int32(424)]
+
+===== TENSOR 178 =====
+178: bitwise_not, BOOL, shape=[1, 900, 6]
+quantization: None
+producers:
+  #19 LOGICAL_NOT inputs=[np.int32(177)] outputs=[np.int32(178)]
+consumers:
+  #21 CAST inputs=[np.int32(178)] outputs=[np.int32(180)]
+  #22 CAST inputs=[np.int32(178)] outputs=[np.int32(181)]
+  #23 LOGICAL_NOT inputs=[np.int32(178)] outputs=[np.int32(182)]
+
+===== TENSOR 180 =====
+180: _to_copy_3, FLOAT32, shape=[1, 900, 6]
+quantization: None
+producers:
+  #21 CAST inputs=[np.int32(178)] outputs=[np.int32(180)]
+consumers:
+  #25 QUANTIZE inputs=[np.int32(180)] outputs=[np.int32(184)]
+
+===== TENSOR 181 =====
+181: convert_element_type_default_1, INT64, shape=[1, 900, 6]
+quantization: None
+producers:
+  #22 CAST inputs=[np.int32(178)] outputs=[np.int32(181)]
+consumers:
+  #26 SUM inputs=[np.int32(181), np.int32(625)] outputs=[np.int32(185)]
+
+===== TENSOR 184 =====
+184: _to_copy_3_QuantizeLinear_Output_1, INT8, shape=[1, 900, 6]
+scales: [0.003921568859368563]
+zero_points: [-128]
+quantized_dimension: 0
+details_type: 0
+producers:
+  #25 QUANTIZE inputs=[np.int32(180)] outputs=[np.int32(184)]
+consumers:
+  #28 DEQUANTIZE inputs=[np.int32(184)] outputs=[np.int32(187)]
+  #29 DEQUANTIZE inputs=[np.int32(184)] outputs=[np.int32(188)]
+
+===== TENSOR 185 =====
+185: sum_1, INT64, shape=[1, 6]
+quantization: None
+producers:
+  #26 SUM inputs=[np.int32(181), np.int32(625)] outputs=[np.int32(185)]
+consumers:
+  #30 GREATER inputs=[np.int32(185), np.int32(33)] outputs=[np.int32(189)]
+  #31 MAXIMUM inputs=[np.int32(185), np.int32(28)] outputs=[np.int32(190)]
+
+===== TENSOR 187 =====
+187: _to_copy_3_DequantizeLinear_Output_1, FLOAT32, shape=[1, 900, 6]
+quantization: None
+producers:
+  #28 DEQUANTIZE inputs=[np.int32(184)] outputs=[np.int32(187)]
+consumers:
+  #33 SUM inputs=[np.int32(187), np.int32(626)] outputs=[np.int32(192)]
+
+===== TENSOR 188 =====
+188: _to_copy_3_DequantizeLinear_Output_2, FLOAT32, shape=[1, 900, 6]
+quantization: None
+producers:
+  #29 DEQUANTIZE inputs=[np.int32(184)] outputs=[np.int32(188)]
+consumers:
+  #34 MUL inputs=[np.int32(2), np.int32(188)] outputs=[np.int32(193)]
+
+===== TENSOR 192 =====
+192: sum_2, FLOAT32, shape=[1, 1, 6]
+quantization: None
+producers:
+  #33 SUM inputs=[np.int32(187), np.int32(626)] outputs=[np.int32(192)]
+consumers:
+  #47 MAXIMUM inputs=[np.int32(192), np.int32(111)] outputs=[np.int32(205)]
+
+===== TENSOR 193 =====
+193: mul_3, FLOAT32, shape=[1, 900, 6]
+quantization: None
+producers:
+  #34 MUL inputs=[np.int32(2), np.int32(188)] outputs=[np.int32(193)]
+consumers:
+  #48 SUM inputs=[np.int32(193), np.int32(628)] outputs=[np.int32(206)]
+
+===== TENSOR 205 =====
+205: clamp_2, FLOAT32, shape=[1, 1, 6]
+quantization: None
+producers:
+  #47 MAXIMUM inputs=[np.int32(192), np.int32(111)] outputs=[np.int32(205)]
+consumers:
+  #65 DIV inputs=[np.int32(206), np.int32(205)] outputs=[np.int32(220)]
+
+===== TENSOR 206 =====
+206: sum_3, FLOAT32, shape=[1, 1, 6]
+quantization: None
+producers:
+  #48 SUM inputs=[np.int32(193), np.int32(628)] outputs=[np.int32(206)]
+consumers:
+  #65 DIV inputs=[np.int32(206), np.int32(205)] outputs=[np.int32(220)]
+[12:10:21] Downstream operator detail: #48 through #65
+
+#48 SUM
+  INPUT 0 193: mul_3, FLOAT32, shape=[1, 900, 6]
+  INPUT 1 628: axes1, INT32, shape=[1]
+  OUTPUT 0 206: sum_3, FLOAT32, shape=[1, 1, 6]
+
+#49 SUB
+  INPUT 0 201: add_2, INT64, shape=[1, 1800, 6]
+  INPUT 1 28: val_39, INT64, shape=[]
+  OUTPUT 0 207: sub, INT64, shape=[1, 1800, 6]
+
+#50 DIV
+  INPUT 0 202: node_Div_64_input_0_int32, INT32, shape=[1, 1800, 6]
+  INPUT 1 43: node_Div_73_input_1_int32, INT32, shape=[]
+  OUTPUT 0 208: node_Div_64_output_int32, INT32, shape=[1, 1800, 6]
+
+#51 SIGN
+  INPUT 0 202: node_Div_64_input_0_int32, INT32, shape=[1, 1800, 6]
+  OUTPUT 0 209: node_Sign_56_output_int32, INT32, shape=[1, 1800, 6]
+
+#52 CAST
+  INPUT 0 203: val_60, INT64, shape=[1, 1800, 6]
+  OUTPUT 0 210: val_61, BOOL, shape=[1, 1800, 6]
+
+#53 QUANTIZE
+  INPUT 0 204: topk_negated_input, FLOAT32, shape=[1, 900, 6]
+  OUTPUT 0 211: topk_negated_input_DequantizeLinear_Output, INT8, shape=[1, 900, 6]
+
+#54 CAST
+  INPUT 0 207: sub, INT64, shape=[1, 1800, 6]
+  OUTPUT 0 212: node_Div_73_input_0_int32, INT32, shape=[1, 1800, 6]
+
+#55 FLOOR_MOD
+  INPUT 0 207: sub, INT64, shape=[1, 1800, 6]
+  INPUT 1 35: val_46, INT64, shape=[]
+  OUTPUT 0 213: val_69, INT64, shape=[1, 1800, 6]
+
+#56 CAST
+  INPUT 0 208: node_Div_64_output_int32, INT32, shape=[1, 1800, 6]
+  OUTPUT 0 214: val_64, INT64, shape=[1, 1800, 6]
+
+#57 CAST
+  INPUT 0 209: node_Sign_56_output_int32, INT32, shape=[1, 1800, 6]
+  OUTPUT 0 215: val_56, INT64, shape=[1, 1800, 6]
+
+#58 DIV
+  INPUT 0 212: node_Div_73_input_0_int32, INT32, shape=[1, 1800, 6]
+  INPUT 1 43: node_Div_73_input_1_int32, INT32, shape=[]
+  OUTPUT 0 216: node_Div_73_output_int32, INT32, shape=[1, 1800, 6]
+
+#59 SIGN
+  INPUT 0 212: node_Div_73_input_0_int32, INT32, shape=[1, 1800, 6]
+  OUTPUT 0 217: node_Sign_65_output_int32, INT32, shape=[1, 1800, 6]
+
+#60 CAST
+  INPUT 0 213: val_69, INT64, shape=[1, 1800, 6]
+  OUTPUT 0 218: val_70, BOOL, shape=[1, 1800, 6]
+
+#61 EQUAL
+  INPUT 0 215: val_56, INT64, shape=[1, 1800, 6]
+  INPUT 1 28: val_39, INT64, shape=[]
+  OUTPUT 0 219: val_58, BOOL, shape=[1, 1800, 6]
+
+#62 TRANSPOSE
+  INPUT 0 211: topk_negated_input_DequantizeLinear_Output, INT8, shape=[1, 900, 6]
+  INPUT 1 631: perm, INT32, shape=[3]
+  OUTPUT 0 630: topk_negated_input_DequantizeLinear_Output_transposed_, INT8, shape=[1, 6, 900]
+
+#63 TOPK_V2
+  INPUT 0 630: topk_negated_input_DequantizeLinear_Output_transposed_, INT8, shape=[1, 6, 900]
+  INPUT 1 27: val_36, INT32, shape=[1]
+  OUTPUT 0 632: sort__0_QuantizeLinear_Output0, INT8, shape=[1, 6, 900]
+  OUTPUT 1 633: getitem_1_casted0, INT32, shape=[1, 6, 900]
+
+#64 TRANSPOSE
+  INPUT 0 633: getitem_1_casted0, INT32, shape=[1, 6, 900]
+  INPUT 1 634: perm1, INT32, shape=[3]
+  OUTPUT 0 629: getitem_1_casted, INT32, shape=[1, 900, 6]
+
+#65 DIV
+  INPUT 0 206: sum_3, FLOAT32, shape=[1, 1, 6]
+  INPUT 1 205: clamp_2, FLOAT32, shape=[1, 1, 6]
+  OUTPUT 0 220: div_1, FLOAT32, shape=[1, 1, 6]
+[12:10:21] Inspection complete
