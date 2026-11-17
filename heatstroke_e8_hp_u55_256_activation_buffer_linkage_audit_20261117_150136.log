@@ -1,0 +1,523 @@
+=== APPLICATION BUFFER ATTRIBUTE HEADER ===
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef BUF_ATTRIBUTES_HPP
+    20	#define BUF_ATTRIBUTES_HPP
+    21	
+    22	#include <zephyr/devicetree.h>
+    23	
+    24	#define BYTE_ALIGNMENT              16
+    25	#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+    26	#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+    27	
+    28	#if CONFIG_MODEL_IN_EXT_FLASH
+    29	#define MODEL_SECTION               section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+    30	#else
+    31	#define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+    32	#endif
+    33	
+    34	#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+    35	#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+    36	#define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+    37	#define LABELS_ATTRIBUTE
+    38	
+    39	
+    40	#endif /* BUF_ATTRIBUTES_HPP */
+
+=== MLEK BUFFER ATTRIBUTE HEADER ===
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef BUF_ATTRIBUTES_HPP
+    20	#define BUF_ATTRIBUTES_HPP
+    21	
+    22	#if defined(__cplusplus)
+    23	extern "C" {
+    24	#endif /* defined(__cplusplus) */
+    25	
+    26	#if defined(ARM_NPU)
+    27	    /* When Arm NPU is defined, we use the config set by NPU mem parameters */
+    28	    #include "ethosu_mem_config.h"
+    29	    #define BYTE_ALIGNMENT              ETHOS_U_MEM_BYTE_ALIGNMENT
+    30	#else /* defined(ARM_NPU) */
+    31	    /* otherwise, we use the default ones here. */
+    32	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    33	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    34	    #define BYTE_ALIGNMENT              16
+    35	#endif /* defined(ARM_NPU) */
+    36	
+    37	#ifdef __has_attribute
+    38	#define HAVE_ATTRIBUTE(x) __has_attribute(x)
+    39	#else   /* __has_attribute */
+    40	#define HAVE_ATTRIBUTE(x) 0
+    41	#endif  /* __has_attribute */
+    42	
+    43	#if HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__))
+    44	
+    45	/* We want all buffers/sections to be aligned to 16 byte.  */
+    46	#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+    47	
+    48	#if defined(MODEL_IN_EXT_FLASH)
+    49	#define MODEL_SECTION               section("nn_model_ext_flash")
+    50	#else
+    51	#define MODEL_SECTION               section("nn_model")
+    52	#endif
+    53	
+    54	/* Label section name */
+    55	#define LABEL_SECTION               section("labels")
+    56	
+    57	#ifndef ACTIVATION_BUF_SZ
+    58	    #warning  "ACTIVATION_BUF_SZ needs to be defined. Using default value"
+    59	    #define ACTIVATION_BUF_SZ       0x00200000
+    60	#endif  /* ACTIVATION_BUF_SZ */
+    61	
+    62	/* IFM section name. */
+    63	#define IFM_BUF_SECTION             section("ifm")
+    64	
+    65	/* Form the attributes, alignment is mandatory. */
+    66	#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+    67	#define MODEL_SECTION_ATTRIBUTE      MAKE_ATTRIBUTE(MODEL_SECTION)
+    68	#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+    69	#define IFM_BUF_ATTRIBUTE           MAKE_ATTRIBUTE(IFM_BUF_SECTION)
+    70	#define LABELS_ATTRIBUTE            MAKE_ATTRIBUTE(LABEL_SECTION)
+    71	
+    72	#else /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+    73	
+    74	#define MODEL_SECTION_ATTRIBUTE
+    75	#define ACTIVATION_BUF_ATTRIBUTE
+    76	#define IFM_BUF_ATTRIBUTE
+    77	#define LABELS_ATTRIBUTE
+    78	
+    79	#endif /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+    80	
+    81	#if defined(__cplusplus)
+    82	}
+    83	#endif /* defined(__cplusplus) */
+    84	
+    85	#endif /* BUF_ATTRIBUTES_HPP */
+
+=== HP LINKER SCRIPT ACTIVATION AND BSS RULES ===
+   155	    /* ITCM has non-startup code, CMSIS-DSP tables, audio record buffer and RAM vectors */
+   156	    *(.text*)
+   157	    *(fast_code)
+   158	  } > ITCM AT> MRAM
+   159	
+   160	  .data.dtcm.at_mram : ALIGN(8)
+   161	  {
+   162	    /* DTCM has all read-write data, including NPU activation buffer and audio processing buffers */
+   163	    *(vtable)
+   164	    *(.data)
+   165	    *(.data*)
+   166	    *arm_common_tables.c.obj(.data* .rodata*)
+   167	
+   168	    KEEP(*(.jcr*))
+   169	
+   170	    . = ALIGN(8);
+   171	    *(.ARM.extab* .gnu.linkonce.armextab.*)
+   172	    . = ALIGN(8);
+   173	    __exidx_start = .;
+   174	    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+   175	    __exidx_end = .;
+   176	
+   177	  } > DTCM AT> MRAM
+   178	
+   179	  /* Place non-zero code/data here if required in SRAM */
+   180	  .data.sram.at_mram : ALIGN(8)
+   181	  {
+   182	    * (ifm)
+   183	  } > SRAM AT> MRAM
+   184	
+   185	  .bss.sram (NOLOAD) : ALIGN(8)
+   186	  {
+   187	    * (.bss.large_ram)                     /* Large LVGL buffers */
+   188	    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+   189	    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+   190	    * (.bss.NoInit.ethos_u_cache)
+   191	    * (.bss.NoInit.activation_buf_sram)
+   192	    * (.bss.NoInit.temp_buf_sram)
+   193	  } > SRAM
+   194	
+   195	  .bss.unstriped (NOLOAD) :
+   196	  {
+   197	    * (.bss.lcd_image_buf)
+   198	  } > UNSTRIPED
+   199	
+   200	  .bss.itcm (NOLOAD) : ALIGN(8)
+   201	  {
+   202	  } > ITCM
+   203	
+   204	#ifdef BOARD_OSPI_RAM_BASE
+   205	  .bss.ext_ram (NOLOAD) : ALIGN(8)
+   206	  {
+   207	    * (.bss.NoInit.activation_buf_dram)
+   208	  } > OSPI_RAM
+   209	#endif
+   210	
+   211	  .nonsecure0_region (NOLOAD) :
+   212	  {
+   213	    . = ALIGN(TGU_BLOCK_SIZE);
+   214	    __ns_region_0_start = .;
+   215	    * (.bss.lvgl_buf)
+   216	    * (.bss.d0_heap)
+   217	    . = ALIGN(TGU_BLOCK_SIZE);
+   218	    __ns_region_0_end = .;
+   219	  } > DTCM
+   220	
+   221	  .bss (NOLOAD) : ALIGN(8)
+   222	  {
+   223	    __bss_start__ = .;
+   224	    *(.bss)
+   225	    *(.bss.*)
+
+=== LINKER MAP: APPLICATION MAINLOOP OBJECT ===
+1-Archive member included to satisfy reference by file (symbol)
+2-
+3-app/libapp.a(Main.cc.obj)     (--whole-archive)
+4:app/libapp.a(MainLoop.cc.obj)
+5-                              (--whole-archive)
+6-app/libapp.a(reverse_v2.cc.obj)
+7-                              (--whole-archive)
+8-app/libapp.a(PolyUModel1.cc.obj)
+9-                              (--whole-archive)
+--
+1084-zephyr/kernel/libkernel.a(mutex.c.obj)
+1085-                              zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj) (z_impl_k_mutex_init)
+1086-zephyr/kernel/libkernel.a(queue.c.obj)
+1087-                              zephyr/libzephyr.a(getline.c.obj) (k_queue_append)
+1088-zephyr/kernel/libkernel.a(sem.c.obj)
+1089:                              app/libapp.a(MainLoop.cc.obj) (z_impl_k_sem_init)
+1090-zephyr/kernel/libkernel.a(work.c.obj)
+1091:                              app/libapp.a(MainLoop.cc.obj) (k_work_submit)
+1092-zephyr/kernel/libkernel.a(thread.c.obj)
+1093-                              zephyr/kernel/libkernel.a(work.c.obj) (k_is_in_isr)
+1094-zephyr/kernel/libkernel.a(sched.c.obj)
+1095-                              zephyr/kernel/libkernel.a(init.c.obj) (z_ready_thread)
+1096-zephyr/kernel/libkernel.a(timeslicing.c.obj)
+--
+1120-modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+1121-                              zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj) (ethosu_irq_handler)
+1122-modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+1123-                              modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj) (ethosu_dev_run_command_stream)
+1124-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(del_ops.o)
+1125:                              app/libapp.a(MainLoop.cc.obj) (operator delete(void*, unsigned int))
+1126-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(eh_terminate.o)
+1127-                              app/libapp.a(Main.cc.obj) (std::terminate())
+1128-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(eh_unex_handler.o)
+1129-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(eh_terminate.o) (__cxxabiv1::__unexpected_handler)
+1130-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(guard.o)
+--
+1132-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(guard_error.o)
+1133-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(guard.o) (__gnu_cxx::recursive_init_error::~recursive_init_error())
+1134-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(new_handler.o)
+1135-                              app/libapp.a(Main.cc.obj) (std::set_new_handler(void (*)()))
+1136-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(new_op.o)
+1137:                              app/libapp.a(MainLoop.cc.obj) (operator new(unsigned int))
+1138-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(si_class_type_info.o)
+1139-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(guard_error.o) (vtable for __cxxabiv1::__si_class_type_info)
+1140-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(tinfo.o)
+1141-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(si_class_type_info.o) (std::type_info::__is_pointer_p() const)
+1142-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(functexcept.o)
+1143:                              app/libapp.a(MainLoop.cc.obj) (std::__throw_bad_alloc())
+1144-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(shared_ptr.o)
+1145-                              modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj) (std::_Sp_make_shared_tag::_S_eq(std::type_info const&))
+1146-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(string-inst.o)
+1147-                              modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj) (std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned int&, unsigned int))
+1148-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(bad_alloc.o)
+--
+1276-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-mallocr.o)
+1277-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-fvwrite.o) (_malloc_r)
+1278-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-memchr-stub.o)
+1279-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(string-inst.o) (memchr)
+1280-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-memcmp.o)
+1281:                              app/libapp.a(MainLoop.cc.obj) (memcmp)
+1282-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-memcpy.o)
+1283:                              app/libapp.a(MainLoop.cc.obj) (memcpy)
+1284-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-memmove.o)
+1285:                              app/libapp.a(MainLoop.cc.obj) (memmove)
+1286-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-memset.o)
+1287-                              app/libapp.a(PolyUModel1.cc.obj) (memset)
+1288-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-mlock.o)
+1289-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-mallocr.o) (__malloc_lock)
+1290-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-realloc.o)
+--
+1292-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-reallocr.o)
+1293-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-fvwrite.o) (_realloc_r)
+1294-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-sbrkr.o)
+1295-                              /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-mallocr.o) (_sbrk_r)
+1296-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-strcmp.o)
+1297:                              app/libapp.a(MainLoop.cc.obj) (strcmp)
+1298-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-strlen-stub.o)
+1299-                              zephyr/libzephyr.a(cbprintf_packaged.c.obj) (strlen)
+1300-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-strncmp.o)
+1301-                              modules/tflite-micro/libmodules__tflite-micro.a(micro_allocation_info.cc.obj) (strncmp)
+1302-/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a(lib_a-strncpy.o)
+--
+1412- .data          0x0000000000000000        0x0 zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+1413- .bss           0x0000000000000000        0x0 zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+1414- .text          0x0000000000000000        0x0 app/libapp.a(Main.cc.obj)
+1415- .data          0x0000000000000000        0x0 app/libapp.a(Main.cc.obj)
+1416- .bss           0x0000000000000000        0x0 app/libapp.a(Main.cc.obj)
+1417: .group         0x0000000000000000       0x10 app/libapp.a(MainLoop.cc.obj)
+1418: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1419: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1420: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1421: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1422: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1423: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1424: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1425: .group         0x0000000000000000       0x14 app/libapp.a(MainLoop.cc.obj)
+1426: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1427: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1428: .text          0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+1429: .data          0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+1430: .bss           0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+1431- .text._ZL17SmokeFloatToMicrof
+1432:                0x0000000000000000       0x70 app/libapp.a(MainLoop.cc.obj)
+1433- .text._ZL12SmokeArgMax4PKf
+1434:                0x0000000000000000       0x2a app/libapp.a(MainLoop.cc.obj)
+1435- .text._ZN6tflite22MicroMutableOpResolverILj32EED2Ev
+1436:                0x0000000000000000        0x2 app/libapp.a(MainLoop.cc.obj)
+1437- .text._ZNK6tflite22MicroMutableOpResolverILj32EE15GetOpDataParserENS_15BuiltinOperatorE
+1438:                0x0000000000000000       0x2c app/libapp.a(MainLoop.cc.obj)
+1439- .text._ZN6tflite22MicroMutableOpResolverILj32EED0Ev
+1440:                0x0000000000000000       0x10 app/libapp.a(MainLoop.cc.obj)
+1441- .text._ZNK6tflite22MicroMutableOpResolverILj32EE6FindOpEPKc
+1442:                0x0000000000000000       0x3a app/libapp.a(MainLoop.cc.obj)
+1443- .text._ZN12_GLOBAL__N_135HeatstrokeEthosuMonitorTimerHandlerEP7k_timer
+1444:                0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1445- .text._ZNK6tflite22MicroMutableOpResolverILj32EE6FindOpENS_15BuiltinOperatorE
+1446:                0x0000000000000000       0x30 app/libapp.a(MainLoop.cc.obj)
+1447- .rodata._ZN12_GLOBAL__N_134HeatstrokeEthosuMonitorWorkHandlerEP6k_work.str1.1
+1448:                0x0000000000000000       0x7c app/libapp.a(MainLoop.cc.obj)
+1449- .text._ZN12_GLOBAL__N_134HeatstrokeEthosuMonitorWorkHandlerEP6k_work
+1450:                0x0000000000000000       0x88 app/libapp.a(MainLoop.cc.obj)
+1451- .rodata._ZNSt6vectorIjSaIjEEC2ESt16initializer_listIjERKS0_.str1.1
+1452:                0x0000000000000000       0x31 app/libapp.a(MainLoop.cc.obj)
+1453- .text._ZNSt6vectorIjSaIjEEC2ESt16initializer_listIjERKS0_
+1454:                0x0000000000000000       0x50 app/libapp.a(MainLoop.cc.obj)
+1455- .text._ZNSt6vectorIS_IjSaIjEESaIS1_EEC2ESt16initializer_listIS1_ERKS2_
+1456:                0x0000000000000000       0xcc app/libapp.a(MainLoop.cc.obj)
+1457- .text._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE0EED2Ev
+1458:                0x0000000000000000       0x2c app/libapp.a(MainLoop.cc.obj)
+1459- .text._ZNSt6vectorISt10shared_ptrIN3arm3app3fwk5iface11TensorIfaceEESaIS6_EED2Ev
+1460:                0x0000000000000000       0x26 app/libapp.a(MainLoop.cc.obj)
+1461- .text._ZN3arm3app3fwk4tflm9TflmModelD2Ev
+1462:                0x0000000000000000       0x30 app/libapp.a(MainLoop.cc.obj)
+1463- .text._ZN3arm3app3fwk4tflm9TflmModelD0Ev
+1464:                0x0000000000000000       0x14 app/libapp.a(MainLoop.cc.obj)
+1465- .text._ZNSt12_Vector_baseIjSaIjEED2Ev
+1466:                0x0000000000000000       0x14 app/libapp.a(MainLoop.cc.obj)
+1467- .text._ZNSt6vectorIS_IjSaIjEESaIS1_EED2Ev
+1468:                0x0000000000000000       0x26 app/libapp.a(MainLoop.cc.obj)
+1469- .rodata._ZL15VerifyOneTensorPKcjRKSt10shared_ptrIN3arm3app3fwk5iface11TensorIfaceEERKSt6vectorIjSaIjEE.str1.1
+1470:                0x0000000000000000       0xb7 app/libapp.a(MainLoop.cc.obj)
+1471- .text._ZL15VerifyOneTensorPKcjRKSt10shared_ptrIN3arm3app3fwk5iface11TensorIfaceEERKSt6vectorIjSaIjEE
+1472:                0x0000000000000000      0x14c app/libapp.a(MainLoop.cc.obj)
+1473- .rodata._ZL20BindSmokeInputTensorRN3arm3app3fwk4tflm11PolyUModel1EjPKcPKjjRKSt6vectorIjSaIjEE.constprop.0.str1.1
+1474:                0x0000000000000000       0x3a app/libapp.a(MainLoop.cc.obj)
+1475- .text._ZL20BindSmokeInputTensorRN3arm3app3fwk4tflm11PolyUModel1EjPKcPKjjRKSt6vectorIjSaIjEE.constprop.0
+1476:                0x0000000000000000       0xa0 app/libapp.a(MainLoop.cc.obj)
+1477- .rodata.CSWTCH.179
+1478:                0x0000000000000000       0x18 app/libapp.a(MainLoop.cc.obj)
+1479- .bss.button_pressed
+1480:                0x0000000000000000        0x1 app/libapp.a(MainLoop.cc.obj)
+1481- .bss._ZN12_GLOBAL__N_129g_heatstrokeEthosuMonitorWorkE
+1482:                0x0000000000000000       0x10 app/libapp.a(MainLoop.cc.obj)
+1483- .text          0x0000000000000000        0x0 app/libapp.a(reverse_v2.cc.obj)
+1484- .data          0x0000000000000000        0x0 app/libapp.a(reverse_v2.cc.obj)
+1485- .bss           0x0000000000000000        0x0 app/libapp.a(reverse_v2.cc.obj)
+1486- .text._ZN6tflite12_GLOBAL__N_112ValidateAxesIiEEbPKT_ii
+1487-                0x0000000000000000       0x2c app/libapp.a(reverse_v2.cc.obj)
+--
+19914- .text._ZL11out_of_heapv
+19915-                0x000000008020410c       0x24 app/libapp.a(Main.cc.obj)
+19916- .text.main     0x0000000080204130      0x190 app/libapp.a(Main.cc.obj)
+19917-                0x0000000080204130                main
+19918- .text._Z8MainLoopv
+19919:                0x00000000802042c0       0x50 app/libapp.a(MainLoop.cc.obj)
+19920-                0x00000000802042c0                MainLoop()
+19921- .text.set_run_params
+19922-                0x0000000080204310       0x34 app/libapp.a(power_mgr.c.obj)
+19923- .text.pm_notify_pre_device_resume
+19924-                0x0000000080204344       0x48 app/libapp.a(power_mgr.c.obj)
+--
+20842-                0x0000000080213740        0x2 zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+20843-                0x0000000080213740                _OffsetAbsSyms
+20844- .text.z_log_msg_runtime_create.constprop.0
+20845-                0x0000000080213742       0x1e app/libapp.a(Main.cc.obj)
+20846- .text.z_log_msg_runtime_create.constprop.0
+20847:                0x0000000080213760       0x1e app/libapp.a(MainLoop.cc.obj)
+20848- .text.pre_configure_profiles
+20849-                0x000000008021377e        0x4 app/libapp.a(power_mgr.c.obj)
+20850- .text.power_mgr_disable_sleep
+
+=== LINKER MAP: BSS OUTPUT SECTION ===
+26096-                0x00000000c0a83360                __OSPI1_end = .
+26097-                0x0000000000000000                __OSPI1_size = (__OSPI1_end - __OSPI1_start)
+26098-                0x00000000c0a83360                __OSPI1_load_start = LOADADDR (OSPI1)
+26099-
+26100-.last_section   0x000000008021bbec        0x4
+26101-                0x000000008021bbec        0x4 LONG 0xe015e015
+26102-                0x000000000001bbf0                _flash_used = ((LOADADDR (.last_section) + SIZEOF (.last_section)) - __rom_region_start)
+26103-
+26104:bss             0x0000000020000c20      0xd9d
+26105-                0x0000000020000c20                . = ALIGN (0x4)
+26106-                0x0000000020000c20                __bss_start = .
+26107-                0x0000000020000c20                __kernel_ram_start = .
+26108- *(SORT_BY_ALIGNMENT(.bss))
+26109- *(SORT_BY_ALIGNMENT(.bss.*))
+26110- .bss.se_service_all_svc_buf
+26111-                0x0000000020000c20      0x120 modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+26112- .bss.ethosu_data_0
+26113-                0x0000000020000d40       0x48 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+26114- .bss.announced_cycles
+26115-                0x0000000020000d88        0x8 zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+26116- .bss.cycle_count
+26117-                0x0000000020000d90        0x8 zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+26118- .bss.z_idle_threads
+26119-                0x0000000020000d98       0xd0 zephyr/kernel/libkernel.a(init.c.obj)
+26120-                0x0000000020000d98                z_idle_threads
+26121- .bss.z_main_thread
+26122-                0x0000000020000e68       0xd0 zephyr/kernel/libkernel.a(init.c.obj)
+26123-                0x0000000020000e68                z_main_thread
+26124- .bss._thread_dummy
+26125-                0x0000000020000f38       0xd0 zephyr/kernel/libkernel.a(sched.c.obj)
+26126-                0x0000000020000f38                _thread_dummy
+26127- .bss.slice_timeouts
+26128-                0x0000000020001008       0x18 zephyr/kernel/libkernel.a(timeslicing.c.obj)
+26129- .bss.curr_tick
+26130-                0x0000000020001020        0x8 zephyr/kernel/libkernel.a(timeout.c.obj)
+26131- .bss.k_sys_work_q
+26132-                0x0000000020001028       0xf0 zephyr/kernel/libkernel.a(system_work_q.c.obj)
+26133-                0x0000000020001028                k_sys_work_q
+26134- .bss._ZL15button_wait_sem
+26135-                0x0000000020001118       0x10 app/libapp.a(MainLoop.cc.obj)
+26136- .bss.se_service_status
+26137-                0x0000000020001128        0x4 app/libapp.a(power_mgr.c.obj)
+26138- .bss.__dso_handle
+26139-                0x000000002000112c        0x4 zephyr/libzephyr.a(cpp_dtors.c.obj)
+26140-                0x000000002000112c                __dso_handle
+26141- .bss.dropped_cnt
+26142-                0x0000000020001130        0x4 zephyr/libzephyr.a(log_core.c.obj)
+26143- .bss.buffered_cnt
+26144-                0x0000000020001134        0x4 zephyr/libzephyr.a(log_core.c.obj)
+26145- .bss.initialized
+26146-                0x0000000020001138        0x4 zephyr/libzephyr.a(log_core.c.obj)
+26147- .bss.timestamp_div
+26148-                0x000000002000113c        0x4 zephyr/libzephyr.a(log_output.c.obj)
+26149- .bss.freq      0x0000000020001140        0x4 zephyr/libzephyr.a(log_output.c.obj)
+26150- .bss.lbu_data  0x0000000020001144       0x18 zephyr/libzephyr.a(log_backend_uart.c.obj)
+26151- .bss.lbu_output_control_block
+26152-                0x000000002000115c        0xc zephyr/libzephyr.a(log_backend_uart.c.obj)
+26153- .bss.pm_notifier_lock
+26154-                0x0000000020001168        0x4 zephyr/libzephyr.a(pm.c.obj)
+26155- .bss.pm_forced_state_lock
+26156-                0x000000002000116c        0x4 zephyr/libzephyr.a(pm.c.obj)
+26157- .bss.z_cpus_pm_forced_state
+26158-                0x0000000020001170        0xc zephyr/libzephyr.a(pm.c.obj)
+26159- .bss.z_cpus_pm_state
+26160-                0x000000002000117c        0xc zephyr/libzephyr.a(pm.c.obj)
+26161- .bss.pm_notifiers
+26162-                0x0000000020001188        0x8 zephyr/libzephyr.a(pm.c.obj)
+26163- .bss.z_post_ops_required
+26164-                0x0000000020001190        0x4 zephyr/libzephyr.a(pm.c.obj)
+26165- .bss.next_event
+26166-                0x0000000020001194        0x4 zephyr/libzephyr.a(policy_events.c.obj)
+26167-                0x0000000020001194                next_event
+26168- .bss.events_lock
+26169-                0x0000000020001198        0x4 zephyr/libzephyr.a(policy_events.c.obj)
+26170- .bss.line_bufs
+26171-                0x000000002000119c      0x110 zephyr/libzephyr.a(getline.c.obj)
+26172- .bss.dyn_reg_info
+26173-                0x00000000200012ac       0x14 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+26174- .bss.heap_sz   0x00000000200012c0        0x4 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+26175- .bss.ensemble_clk
+26176-                0x00000000200012c4       0x20 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+26177- .bss.cmd.1     0x00000000200012e4        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26178- .bss.ansi_val_2
+26179-                0x00000000200012e8        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26180- .bss.ansi_val  0x00000000200012ec        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26181- .bss.esc_state
+26182-                0x00000000200012f0        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26183- .bss.completion_cb
+26184-                0x00000000200012f4        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26185- .bss.lines_queue
+26186-                0x00000000200012f8        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26187- .bss.avail_queue
+26188-                0x00000000200012fc        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+26189- .bss.data      0x0000000020001300       0x10 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+26190- .bss.flash_ospi_data
+26191-                0x0000000020001310      0x444 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+26192- .bss.i2c_0_runtime
+26193-                0x0000000020001754       0x78 zephyr/drivers/i2c/libdrivers__i2c.a(i2c_dw.c.obj)
+26194- .bss.mhuv2_data_11
+26195-                0x00000000200017cc        0xc zephyr/drivers/ipm/libdrivers__ipm.a(ipm_arm_mhuv2.c.obj)
+26196- .bss.mhuv2_data_10
+26197-                0x00000000200017d8        0xc zephyr/drivers/ipm/libdrivers__ipm.a(ipm_arm_mhuv2.c.obj)
+26198- .bss.mhuv2_data_9
+26199-                0x00000000200017e4        0xc zephyr/drivers/ipm/libdrivers__ipm.a(ipm_arm_mhuv2.c.obj)
+26200- .bss.mhuv2_data_8
+26201-                0x00000000200017f0        0xc zephyr/drivers/ipm/libdrivers__ipm.a(ipm_arm_mhuv2.c.obj)
+26202- .bss.mhuv2_data_7
+26203-                0x00000000200017fc        0xc zephyr/drivers/ipm/libdrivers__ipm.a(ipm_arm_mhuv2.c.obj)
+26204- .bss.mhuv2_data_6
+
+=== COMPILE COMMAND FOR MAINLOOP ===
+Directory: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+File: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+Command: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=256 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=163840 -DMLEK_FWK_TFLM=1 -D_ANSI_SOURCE -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/power -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/include -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/lib/libc/newlib/include -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -I/home/user/sdk-alif/modules/alif-mlek/source/lib -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include  -Wno-psabi -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++17 -Wno-register -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/test_heatstroke=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -o CMakeFiles/app.dir/src/use_case/alif_asr/src/MainLoop.cc.obj -c /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+
+=== MAINLOOP OBJECT FILES AND ACTIVATION SYMBOLS ===
+--- OBJECT: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/CMakeFiles/app.dir/src/use_case/alif_asr/src/MainLoop.cc.obj
+  [14] .bss              NOBITS          00000000 0000b8 000000 00  WA  0   0  1
+  [59] .bss._ZL15button_wait_sem NOBITS          00000000 000900 000010 00  WA  0   0  4
+  [60] .bss.button_pressed NOBITS          00000000 000900 000001 00  WA  0   0  1
+  [61] .bss._ZN12_GLOBAL__N_129g_heatstrokeEthosuMonitorWorkE NOBITS          00000000 000900 000010 00  WA  0   0  4
+00000000 00000008 R log_const_MainLoop
+00000000 r ._log_const.static.log_const_MainLoop_
+00000000 a MainLoop.cc
+00000000 r .rodata._Z8MainLoopv.str1.1
+00000000 t .text._Z8MainLoopv
+00000000 00000050 T MainLoop()
+.bss                                                                                                                     0      0
+.bss._ZL15button_wait_sem                                                                                               16      0
+.bss.button_pressed                                                                                                      1      0
+.bss._ZN12_GLOBAL__N_129g_heatstrokeEthosuMonitorWorkE                                                                  16      0
+
+=== FINAL ELF: MAINLOOP AND ACTIVATION SYMBOLS ===
+00000001 A CONFIG_ACTIVATION_BUF_SECTION
+00091000 A CONFIG_ACTIVATION_BUF_SZ
+80217364 00000008 R log_const_MainLoop
+00000000 a MainLoop.cc
+802042c0 00000050 T MainLoop()
