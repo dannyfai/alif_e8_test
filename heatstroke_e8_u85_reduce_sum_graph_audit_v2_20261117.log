@@ -1,0 +1,1007 @@
+===== E8 U85 REDUCE-SUM GRAPH AUDIT V2 =====
+Tue Nov 17 10:09:50 AM HKT 2026
+
+===== MODEL INTEGRITY =====
+275f6468499bdf146d6f1889d01d866a80277416e6f686e5be9f1fa07184408f  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp.tflite
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881391.072730   28987 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881391.072902   28987 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881391.866926   28987 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881391.867117   28987 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== MODEL METADATA =====
+Schema version: 3
+File size: 11844184
+Subgraphs: 1
+Operator codes: 38
+
+===== SUBGRAPH 0 =====
+Tensor count: 915
+Operator count: 574
+Subgraph inputs:
+  tensor[2] x_values
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+  tensor[3] missing_mask
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+  tensor[4] x_mark
+    shape=[1, 900, 3], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+  tensor[5] worker_features
+    shape=[1, 30], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+Subgraph outputs:
+  tensor[0] rpe_logits
+    shape=[1, 4], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+  tensor[1] psi_logits
+    shape=[1, 4], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+
+===== REDUCTION COUNTS =====
+MEAN: 24
+SUM: 3
+
+===== ALL SUM / MEAN OPERATORS =====
+
+==============================================================================
+NODE #26: SUM
+Operator version: 1
+Options: keep_dims=False
+Inputs:
+tensor[181] convert_element_type_default_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+    Producer: (22, 'CAST')
+    Consumers: [(26, 'SUM')]
+tensor[625] axes
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=153, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(26, 'SUM')]
+Outputs:
+tensor[185] sum_1
+    shape=[1, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+    Producer: (26, 'SUM')
+    Consumers: [(30, 'GREATER'), (31, 'MAXIMUM')]
+End reduction node
+
+==============================================================================
+NODE #33: SUM
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[187] _to_copy_3_DequantizeLinear_Output_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (28, 'DEQUANTIZE')
+    Consumers: [(33, 'SUM')]
+tensor[626] axes0
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=154, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(33, 'SUM')]
+Outputs:
+tensor[192] sum_2
+    shape=[1, 1, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (33, 'SUM')
+    Consumers: [(47, 'MAXIMUM')]
+End reduction node
+
+==============================================================================
+NODE #48: SUM
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[193] mul_3
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (34, 'MUL')
+    Consumers: [(48, 'SUM')]
+tensor[628] axes1
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=155, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(48, 'SUM')]
+Outputs:
+tensor[206] sum_3
+    shape=[1, 1, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (48, 'SUM')
+    Consumers: [(65, 'DIV')]
+End reduction node
+
+==============================================================================
+NODE #145: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[650] conv1d_1_DequantizeLinear_Output_1_transposed_
+    shape=[1, 32, 900], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.012240228243172169], zero_point=[-12], quantized_dimension=0
+    buffer=0, empty
+    Producer: (144, 'TRANSPOSE')
+    Consumers: [(145, 'MEAN')]
+tensor[649] axes2
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=167, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(145, 'MEAN')]
+Outputs:
+tensor[652] node_layer_norm_mean_QuantizeLinear_Output0
+    shape=[1, 32, 1], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.008897047489881516], zero_point=[-7], quantized_dimension=0
+    buffer=0, empty
+    Producer: (145, 'MEAN')
+    Consumers: [(146, 'RESHAPE')]
+End reduction node
+
+==============================================================================
+NODE #184: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[660] node_layer_norm_squared_DequantizeLinear_Output_transposed_
+    shape=[1, 32, 900], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.009899962693452835], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+    Producer: (183, 'TRANSPOSE')
+    Consumers: [(184, 'MEAN')]
+tensor[659] axes3
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=169, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(184, 'MEAN')]
+Outputs:
+tensor[662] node_layer_norm_variance_QuantizeLinear_Output0
+    shape=[1, 32, 1], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.0015624354127794504], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+    Producer: (184, 'MEAN')
+    Consumers: [(185, 'RESHAPE')]
+End reduction node
+
+==============================================================================
+NODE #245: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[686] conv1d_3_DequantizeLinear_Output_1_transposed_
+    shape=[1, 128, 900], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.023794371634721756], zero_point=[-6], quantized_dimension=0
+    buffer=0, empty
+    Producer: (244, 'TRANSPOSE')
+    Consumers: [(245, 'MEAN')]
+tensor[685] axes4
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=182, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(245, 'MEAN')]
+Outputs:
+tensor[688] node_layer_norm_1_mean_QuantizeLinear_Output0
+    shape=[1, 128, 1], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.0009348408784717321], zero_point=[3], quantized_dimension=0
+    buffer=0, empty
+    Producer: (245, 'MEAN')
+    Consumers: [(246, 'RESHAPE')]
+End reduction node
+
+==============================================================================
+NODE #252: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[690] node_layer_norm_1_squared_DequantizeLinear_Output_transposed_
+    shape=[1, 128, 900], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.03805660828948021], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+    Producer: (251, 'TRANSPOSE')
+    Consumers: [(252, 'MEAN')]
+tensor[689] axes5
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=184, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(252, 'MEAN')]
+Outputs:
+tensor[692] node_layer_norm_1_variance_QuantizeLinear_Output0
+    shape=[1, 128, 1], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.0009359312243759632], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+    Producer: (252, 'MEAN')
+    Consumers: [(253, 'RESHAPE')]
+End reduction node
+
+==============================================================================
+NODE #310: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[450] linear_7_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (304, 'DEQUANTIZE')
+    Consumers: [(310, 'MEAN'), (311, 'SUB')]
+tensor[751] axes6
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=229, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(310, 'MEAN'), (313, 'MEAN')]
+Outputs:
+tensor[759] mean
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (310, 'MEAN')
+    Consumers: [(311, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #313: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[754] D squared
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (312, 'SQUARE')
+    Consumers: [(313, 'MEAN')]
+tensor[751] axes6
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=229, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(310, 'MEAN'), (313, 'MEAN')]
+Outputs:
+tensor[755] var
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (313, 'MEAN')
+    Consumers: [(314, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #319: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[451] linear_9_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (305, 'DEQUANTIZE')
+    Consumers: [(319, 'MEAN'), (320, 'SUB')]
+tensor[761] axes7
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=231, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(319, 'MEAN'), (322, 'MEAN')]
+Outputs:
+tensor[769] mean0
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (319, 'MEAN')
+    Consumers: [(320, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #322: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[764] D squared0
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (321, 'SQUARE')
+    Consumers: [(322, 'MEAN')]
+tensor[761] axes7
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=231, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(319, 'MEAN'), (322, 'MEAN')]
+Outputs:
+tensor[765] var0
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (322, 'MEAN')
+    Consumers: [(323, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #328: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[452] linear_11_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (306, 'DEQUANTIZE')
+    Consumers: [(328, 'MEAN'), (329, 'SUB')]
+tensor[771] axes8
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=233, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(328, 'MEAN'), (331, 'MEAN')]
+Outputs:
+tensor[779] mean1
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (328, 'MEAN')
+    Consumers: [(329, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #331: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[774] D squared1
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (330, 'SQUARE')
+    Consumers: [(331, 'MEAN')]
+tensor[771] axes8
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=233, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(328, 'MEAN'), (331, 'MEAN')]
+Outputs:
+tensor[775] var1
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (331, 'MEAN')
+    Consumers: [(332, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #337: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[453] linear_13_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (307, 'DEQUANTIZE')
+    Consumers: [(337, 'MEAN'), (338, 'SUB')]
+tensor[781] axes9
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=235, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(337, 'MEAN'), (340, 'MEAN')]
+Outputs:
+tensor[789] mean2
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (337, 'MEAN')
+    Consumers: [(338, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #340: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[784] D squared2
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (339, 'SQUARE')
+    Consumers: [(340, 'MEAN')]
+tensor[781] axes9
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=235, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(337, 'MEAN'), (340, 'MEAN')]
+Outputs:
+tensor[785] var2
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (340, 'MEAN')
+    Consumers: [(341, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #346: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[454] linear_15_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (308, 'DEQUANTIZE')
+    Consumers: [(346, 'MEAN'), (347, 'SUB')]
+tensor[791] axes10
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=237, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(346, 'MEAN'), (349, 'MEAN')]
+Outputs:
+tensor[799] mean3
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (346, 'MEAN')
+    Consumers: [(347, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #349: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[794] D squared3
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (348, 'SQUARE')
+    Consumers: [(349, 'MEAN')]
+tensor[791] axes10
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=237, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(346, 'MEAN'), (349, 'MEAN')]
+Outputs:
+tensor[795] var3
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (349, 'MEAN')
+    Consumers: [(350, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #355: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[455] linear_17_DequantizeLinear_Output
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (309, 'DEQUANTIZE')
+    Consumers: [(355, 'MEAN'), (356, 'SUB')]
+tensor[801] axes11
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=239, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(355, 'MEAN'), (358, 'MEAN')]
+Outputs:
+tensor[809] mean4
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (355, 'MEAN')
+    Consumers: [(356, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #358: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[804] D squared4
+    shape=[1, 900, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (357, 'SQUARE')
+    Consumers: [(358, 'MEAN')]
+tensor[801] axes11
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=239, bytes=4, data=[2, 0, 0, 0]
+    Producer: None
+    Consumers: [(355, 'MEAN'), (358, 'MEAN')]
+Outputs:
+tensor[805] var4
+    shape=[1, 900, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (358, 'MEAN')
+    Consumers: [(359, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #478: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[561] linear_19_DequantizeLinear_Output
+    shape=[1, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (476, 'DEQUANTIZE')
+    Consumers: [(478, 'MEAN'), (479, 'SUB')]
+tensor[871] axes12
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=279, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(478, 'MEAN'), (481, 'MEAN')]
+Outputs:
+tensor[879] mean5
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (478, 'MEAN')
+    Consumers: [(479, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #481: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[874] D squared5
+    shape=[1, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (480, 'SQUARE')
+    Consumers: [(481, 'MEAN')]
+tensor[871] axes12
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=279, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(478, 'MEAN'), (481, 'MEAN')]
+Outputs:
+tensor[875] var5
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (481, 'MEAN')
+    Consumers: [(482, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #491: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[567] linear_20_DequantizeLinear_Output
+    shape=[1, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (490, 'DEQUANTIZE')
+    Consumers: [(491, 'MEAN'), (492, 'SUB')]
+tensor[881] axes13
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=281, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(491, 'MEAN'), (494, 'MEAN')]
+Outputs:
+tensor[889] mean6
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (491, 'MEAN')
+    Consumers: [(492, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #494: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[884] D squared6
+    shape=[1, 128], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (493, 'SQUARE')
+    Consumers: [(494, 'MEAN')]
+tensor[881] axes13
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=281, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(491, 'MEAN'), (494, 'MEAN')]
+Outputs:
+tensor[885] var6
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (494, 'MEAN')
+    Consumers: [(495, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #524: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[589] linear_21_DequantizeLinear_Output
+    shape=[1, 512], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (523, 'DEQUANTIZE')
+    Consumers: [(524, 'MEAN'), (525, 'SUB')]
+tensor[894] axes14
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=283, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(524, 'MEAN'), (527, 'MEAN')]
+Outputs:
+tensor[902] mean7
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (524, 'MEAN')
+    Consumers: [(525, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #527: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[897] D squared7
+    shape=[1, 512], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (526, 'SQUARE')
+    Consumers: [(527, 'MEAN')]
+tensor[894] axes14
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=283, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(524, 'MEAN'), (527, 'MEAN')]
+Outputs:
+tensor[898] var7
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (527, 'MEAN')
+    Consumers: [(528, 'ADD')]
+End reduction node
+
+==============================================================================
+NODE #552: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[607] linear_23_DequantizeLinear_Output
+    shape=[1, 512], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (551, 'DEQUANTIZE')
+    Consumers: [(552, 'MEAN'), (553, 'SUB')]
+tensor[905] axes15
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=285, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(552, 'MEAN'), (555, 'MEAN')]
+Outputs:
+tensor[913] mean8
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (552, 'MEAN')
+    Consumers: [(553, 'SUB')]
+End reduction node
+
+==============================================================================
+NODE #555: MEAN
+Operator version: 1
+Options: keep_dims=True
+Inputs:
+tensor[908] D squared8
+    shape=[1, 512], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (554, 'SQUARE')
+    Consumers: [(555, 'MEAN')]
+tensor[905] axes15
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=285, bytes=4, data=[1, 0, 0, 0]
+    Producer: None
+    Consumers: [(552, 'MEAN'), (555, 'MEAN')]
+Outputs:
+tensor[909] var8
+    shape=[1, 1], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+    Producer: (555, 'MEAN')
+    Consumers: [(556, 'ADD')]
+End reduction node
+
+===== CONTEXT AROUND SUM NODE #26 =====
+
+NODE #22: CAST
+ Inputs:
+   tensor[178] bitwise_not
+    shape=[1, 900, 6], shape_signature=0
+    dtype=BOOL
+    quant=none
+    buffer=0, empty
+ Outputs:
+   tensor[181] convert_element_type_default_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+
+NODE #23: LOGICAL_NOT
+ Inputs:
+   tensor[178] bitwise_not
+    shape=[1, 900, 6], shape_signature=0
+    dtype=BOOL
+    quant=none
+    buffer=0, empty
+ Outputs:
+   tensor[182] bitwise_not_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=BOOL
+    quant=none
+    buffer=0, empty
+
+NODE #24: RESHAPE
+ Inputs:
+   tensor[170] linear_DequantizeLinear_Output
+    shape=[1, 900], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.0008827518904581666], zero_point=[15], quantized_dimension=0
+    buffer=0, empty
+ Outputs:
+   tensor[183] view_DequantizeLinear_Output
+    shape=[1, 900, 1], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.0008827518904581666], zero_point=[15], quantized_dimension=0
+    buffer=0, empty
+
+NODE #25: QUANTIZE
+ Inputs:
+   tensor[180] _to_copy_3
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+ Outputs:
+   tensor[184] _to_copy_3_QuantizeLinear_Output_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.003921568859368563], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+
+NODE #26: SUM
+ Inputs:
+   tensor[181] convert_element_type_default_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+   tensor[625] axes
+    shape=[1], shape_signature=0
+    dtype=INT32
+    quant=none
+    buffer=153, bytes=4, data=[1, 0, 0, 0]
+ Outputs:
+   tensor[185] sum_1
+    shape=[1, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+
+NODE #27: CAST
+ Inputs:
+   tensor[182] bitwise_not_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=BOOL
+    quant=none
+    buffer=0, empty
+ Outputs:
+   tensor[186] _to_copy
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+
+NODE #28: DEQUANTIZE
+ Inputs:
+   tensor[184] _to_copy_3_QuantizeLinear_Output_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.003921568859368563], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+ Outputs:
+   tensor[187] _to_copy_3_DequantizeLinear_Output_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+
+NODE #29: DEQUANTIZE
+ Inputs:
+   tensor[184] _to_copy_3_QuantizeLinear_Output_1
+    shape=[1, 900, 6], shape_signature=0
+    dtype=INT8
+    quant=scale=[0.003921568859368563], zero_point=[-128], quantized_dimension=0
+    buffer=0, empty
+ Outputs:
+   tensor[188] _to_copy_3_DequantizeLinear_Output_2
+    shape=[1, 900, 6], shape_signature=0
+    dtype=FLOAT32
+    quant=none
+    buffer=0, empty
+
+NODE #30: GREATER
+ Inputs:
+   tensor[185] sum_1
+    shape=[1, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+   tensor[33] val_1
+    shape=[], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=28, bytes=8, data=[0, 0, 0, 0, 0, 0, 0, 0]
+ Outputs:
+   tensor[189] gt_2
+    shape=[1, 6], shape_signature=0
+    dtype=BOOL
+    quant=none
+    buffer=0, empty
+
+NODE #31: MAXIMUM
+ Inputs:
+   tensor[185] sum_1
+    shape=[1, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+   tensor[28] val_39
+    shape=[], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=23, bytes=8, data=[1, 0, 0, 0, 0, 0, 0, 0]
+ Outputs:
+   tensor[190] clamp
+    shape=[1, 6], shape_signature=0
+    dtype=INT64
+    quant=none
+    buffer=0, empty
+
+===== END SUBGRAPH =====
+
+===== GRAPH AUDIT SUCCESSFULLY COMPLETED =====
+
+PYTHON AUDIT EXIT CODE: 0
+
+===== AUDIT COMPLETE =====
