@@ -1,0 +1,40 @@
+=== EFFECTIVE CONFIGURATION ===
+CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+
+=== ACTIVATION ARENA SYMBOL ===
+02000000 00091000 b arm::app::activationBuf
+
+=== SRAM0 MAP PLACEMENT ===
+17013-LOAD /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a
+17014-LOAD /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/12.2.0/thumb/v8-m.main+dp/hard/libgcc.a
+17015-LOAD /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libc.a
+17016-                0x0000000000000020                _region_min_align = 0x20
+17017-
+17018:.alif_sram0     0x0000000002000000    0x91000
+17019- *(SORT_BY_ALIGNMENT(.alif_sram0))
+17020- *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17021: .alif_sram0.activation_buf
+17022-                0x0000000002000000    0x91000 app/libapp.a(MainLoop.cc.obj)
+17023- *(SORT_BY_ALIGNMENT(.noinit.*kheap_buf_video_buffer_pool))
+17024- *(SORT_BY_ALIGNMENT(.bss.disk_buf_0))
+17025-
+17026-.alif_sram1
+17027- *(SORT_BY_ALIGNMENT(.alif_sram1))
+17028- *(SORT_BY_ALIGNMENT(.alif_sram1.*))
+17029-
+17030-.rel.plt        0x0000000080200000        0x0
+17031- *(SORT_BY_ALIGNMENT(.rel.plt))
+17032-                [!provide]                        PROVIDE (__rel_iplt_start = .)
+17033- *(SORT_BY_ALIGNMENT(.rel.iplt))
+
+=== ELF MEMORY SECTIONS ===
+  [ 1] .alif_sram0       NOBITS          02000000 000120 091000 00  WA  0   0 16
+  [40] bss               NOBITS          20000d40 000120 000e78 00  WA  0   0 32
+
+=== MODEL SHA256 ===
+4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+
+=== BUILD ARTIFACTS ===
+-rwxrwxr-x 1 user user  11M Nov 17 16:06 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/ospi1.bin
+-rwxrwxr-x 1 user user 388K Nov 17 16:06 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.bin
+-rwxrwxr-x 1 user user  32M Nov 17 16:06 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf
