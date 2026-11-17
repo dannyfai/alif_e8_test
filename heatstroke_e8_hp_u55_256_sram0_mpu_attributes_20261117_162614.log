@@ -1,0 +1,835 @@
+=== RELEVANT MPU / MEMORY CONFIGURATION ===
+CONFIG_FLASH_SIZE=5632
+CONFIG_FLASH_BASE_ADDRESS=0x80000000
+CONFIG_DCACHE=y
+CONFIG_CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS=y
+CONFIG_CACHE=y
+CONFIG_ARM_MPU=y
+CONFIG_SRAM_SIZE=1024
+CONFIG_SRAM_BASE_ADDRESS=0x20000000
+CONFIG_MPU=y
+CONFIG_ICACHE=y
+CONFIG_MEM_ATTR=y
+
+=== ACTIVE GENERATED DEVICETREE: SRAM AND MEMORY ATTRIBUTES ===
+97-					};
+98-					storage_partition: partition@3A0000 {
+99-						label = "storage";
+100-						reg = < 0x3a0000 0x2800 >;
+101-					};
+102-				};
+103-			};
+104-		};
+105:		sram0: sram@2000000 {
+106:			compatible = "zephyr,memory-region", "mmio-sram";
+107:			zephyr,memory-region = "SRAM0";
+108:			zephyr,memory-attr = < 0x100000 >;
+109-			reg = < 0x2000000 0x400000 >;
+110-		};
+111-		ns: ns@20018000 {
+112:			compatible = "zephyr,memory-region";
+113-			reg = < 0x20018000 0x18000 >;
+114:			zephyr,memory-region = "NON_SECURE0";
+115-			status = "disabled";
+116-		};
+117-		host_peripheral: host_peripheral@1a000000 {
+118:			compatible = "zephyr,memory-region";
+119:			zephyr,memory-region = "HOST_PERIPHERAL";
+120-			reg = < 0x1a000000 0x1000000 >;
+121-		};
+122-		pinctrl: pin-controller@1a603000 {
+123-			compatible = "alif,pinctrl";
+124-			reg = < 0x1a603000 0x1000 >, < 0x42007000 0x1000 >;
+125-			reg-names = "pinctrl", "lpgpio_pinctrl";
+126-			pinctrl_uart4: pinctrl_uart4 {
+127-				phandle = < 0x10 >;
+128-				group0 {
+129-					pinmux = < 0x30a >, < 0x312 >;
+130-				};
+131-			};
+132-			pinctrl_uart4_sleep: uart4_sleep {
+133-				phandle = < 0x11 >;
+134-				group0 {
+135-					pinmux = < 0x308 >, < 0x310 >;
+136-					read-enable = < 0x1 >;
+137-					driver-state-control = < 0x2 >;
+--
+2742-					compatible = "soc-nv-flash";
+2743-					reg = < 0x0 0x8000000 >;
+2744-					erase-block-size = < 0x1000 >;
+2745-					write-block-size = < 0x2 >;
+2746-				};
+2747-			};
+2748-		};
+2749-		sram1: sram@2400000 {
+2750:			compatible = "zephyr,memory-region", "mmio-sram";
+2751-			reg = < 0x2400000 0x400000 >;
+2752:			zephyr,memory-region = "SRAM1";
+2753:			zephyr,memory-attr = < 0x100000 >;
+2754-		};
+2755-		ethosu1: ethosu85@49042000 {
+2756-			compatible = "arm,ethos-u";
+2757-			reg = < 0x49042000 0x1000 >;
+2758-			interrupts = < 0x16e 0x3 >;
+2759-			interrupt-parent = < &nvic >;
+2760-			secure-enable;
+2761-			privilege-enable;
+2762-			clocks = < &clockctrl 0x1f8a1 >;
+2763-			status = "disabled";
+2764-		};
+2765-		gpio16: gpio@4300a000 {
+2766-			compatible = "snps,designware-gpio";
+2767-			reg = < 0x4300a000 0x1000 >;
+2768-			ngpios = < 0x8 >;
+2769-			interrupts = < 0x1dc 0x0 >;
+2770-			pinctrl-0 = < &pinctrl_gpio16 >;
+2771-			pinctrl-names = "default";
+--
+2940-			max-burst-length = < 0x40 >;
+2941-			quality-factor = < 0x4b >;
+2942-			status = "disabled";
+2943-		};
+2944-		itcm: itcm@0 {
+2945-			compatible = "alif,itcm";
+2946-			reg = < 0x0 0x40000 >;
+2947-			global_base = < 0x50000000 >;
+2948:			zephyr,memory-region = "ITCM";
+2949-		};
+2950-		dtcm: dtcm@20000000 {
+2951-			compatible = "alif,dtcm";
+2952-			reg = < 0x20000000 0x100000 >;
+2953-			global_base = < 0x50800000 >;
+2954:			zephyr,memory-region = "DTCM";
+2955-		};
+2956-		dma1: dma1@400c0000 {
+2957-			compatible = "arm,dma-pl330";
+2958-			reg = < 0x400c0000 0x1000 >;
+2959-			reg-names = "pl330_regs";
+2960-			dma-channels = < 0x8 >;
+2961-			#dma-cells = < 0x2 >;
+2962-			interrupt-parent = < &nvic >;
+2963-			interrupts = < 0x0 0x0 >, < 0x1 0x0 >, < 0x2 0x0 >, < 0x3 0x0 >, < 0x4 0x0 >, < 0x5 0x0 >, < 0x6 0x0 >, < 0x7 0x0 >, < 0x20 0x0 >;
+2964-			interrupt-names = "channel0", "channel1", "channel2", "channel3", "channel4", "channel5", "channel6", "channel7", "abort";
+2965-			clocks = < &clockctrl 0x12087 >;
+2966-			status = "disabled";
+2967-			phandle = < 0x88 >;
+2968-		};
+2969-		evtrtr1: event-router@400e2000 {
+2970-			compatible = "alif,dma-event-router";
+2971-			reg = < 0x400e2000 0x100 >;
+2972-			dma-controller = < &dma1 >;
+--
+3300-		camera_select: sensor_select {
+3301-			select-gpios = < &gpio14 0x2 0x1 >;
+3302-		};
+3303-		display_select: display_panel_select {
+3304-			select-gpios = < &gpio14 0x2 0x0 >;
+3305-		};
+3306-	};
+3307-	ext_flash_xip: memory@c0000000 {
+3308:		compatible = "zephyr,memory-region";
+3309-		reg = < 0xc0000000 0x4000000 >;
+3310:		zephyr,memory-region = "OSPI1";
+3311-	};
+3312-	wakeup_pins: wakeup_pins {
+3313-		compatible = "lpgpio-wakeup-pin";
+3314-		lpgpios = < &lpgpio 0x4 0x1 >;
+3315-	};
+3316-};
+
+=== ALIF SOC / BOARD MPU REGION IMPLEMENTATION ===
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-104-	MPU_REGION_ENTRY("ITCM", DT_REG_ADDR(DT_NODELABEL(itcm)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-105-			 REGION_FLASH_ATTR(DT_REG_ADDR(DT_NODELABEL(itcm)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-106-							DT_REG_SIZE(DT_NODELABEL(itcm)))),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-107-	/* Region 3 */
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-108-	MPU_REGION_ENTRY("DTCM", DT_REG_ADDR(DT_NODELABEL(dtcm)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c:109:			 REGION_RAM_ATTR(DT_REG_ADDR(DT_NODELABEL(dtcm)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-110-							DT_REG_SIZE(DT_NODELABEL(dtcm)))),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-111-	/* Region 4 */
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-112-	MPU_REGION_ENTRY("OSPI_CTRL", ALIF_HOST_OSPI_REG,
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-113-			 REGION_DEVICE_ATTR(ALIF_HOST_OSPI_REG, ALIF_HOST_OSPI_SIZE)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-114-	/* Region 5 */
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-115-	MPU_REGION_ENTRY("PERIPHERALS", ALIF_HOST_PERIPHERAL_BASE,
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-116-			 REGION_DEVICE_ATTR(ALIF_HOST_PERIPHERAL_BASE,
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-117-							ALIF_HOST_PERIPHERAL_SIZE)),
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-118-	/* Region 6 */
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-119-	MPU_REGION_ENTRY(OSPI0_XIP_REGION_NAME, ALIF_HOST_OSPI0_XIP_BASE,
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-120-			 REGION_OSPI_XIP_ATTR(OSPI0_XIP_MAIR_INDEX,
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/mpu_regions.c-121-					      ALIF_HOST_OSPI0_XIP_BASE,
+--
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-79-#define DEVICE_MRAM_SIZE	MRAM_STORAGE_PARTITION_SIZE
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-80-#endif
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-81-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-82-/*
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-83- * Note that in addition to the below regions, SRAM regions are
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c:84: * configured via zephyr,memory-attr in DT.
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-85- */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-86-static const struct arm_mpu_region mpu_regions[] = {
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-87-	/* Region 0: Executable MRAM */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-88-	MPU_REGION_ENTRY("FLASH_MRAM", FLASH_MRAM_BASE_ADDR,
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-89-			 REGION_FLASH_ATTR(FLASH_MRAM_BASE_ADDR, FLASH_MRAM_SIZE)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-90-	/* Region 1: Writable MRAM (device mode for write access) */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-91-	MPU_REGION_ENTRY("DEVICE_MRAM", DEVICE_MRAM_BASE_ADDR,
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-92-			 REGION_DEVICE_ATTR(DEVICE_MRAM_BASE_ADDR, DEVICE_MRAM_SIZE)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-93-	/* Region 2 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-94-	MPU_REGION_ENTRY("ITCM", DT_REG_ADDR(DT_NODELABEL(itcm)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-95-			 REGION_FLASH_ATTR(DT_REG_ADDR(DT_NODELABEL(itcm)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-96-							DT_REG_SIZE(DT_NODELABEL(itcm)))),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-97-	/* Region 3 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-98-	MPU_REGION_ENTRY("DTCM", DT_REG_ADDR(DT_NODELABEL(dtcm)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c:99:			 REGION_RAM_ATTR(DT_REG_ADDR(DT_NODELABEL(dtcm)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-100-							DT_REG_SIZE(DT_NODELABEL(dtcm)))),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-101-	/* Region 4 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-102-	MPU_REGION_ENTRY("PERIPHERALS", DT_REG_ADDR(DT_NODELABEL(host_peripheral)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-103-			 REGION_DEVICE_ATTR(DT_REG_ADDR(DT_NODELABEL(host_peripheral)), DT_REG_SIZE(DT_NODELABEL(host_peripheral)))),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-104-	/* Region 5 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-105-	MPU_REGION_ENTRY("OSPI_CTRL", ALIF_ENSEMBLE_OSPI_REG,
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-106-			 REGION_DEVICE_ATTR(ALIF_ENSEMBLE_OSPI_REG, ALIF_ENSEMBLE_OSPI_SIZE)),
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-107-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-108- #ifdef CONFIG_SOC_SERIES_E1C
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-109-	/* Region 6 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-110-	MPU_REGION_ENTRY("OSPI0_XIP", ALIF_ENSEMBLE_OSPI0_XIP_BASE,
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c-111-			 REGION_OSPI_FLASH_ATTR(ALIF_ENSEMBLE_OSPI0_XIP_BASE,
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-16-	#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-17-	#size-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-18-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-19-	chosen {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-20-		zephyr,flash = &mram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-22-		zephyr,console = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-23-		zephyr,shell-uart = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-24-	};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-25-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-26-	cpus {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-27-		#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-28-		#size-cells = <0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-29-		cpu0: cpu@0 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-30-			device_type = "cpu";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-31-			compatible = "arm,cortex-a32";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-32-			reg = <0x0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-33-		};
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-54-			compatible = "zephyr,memory-region";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-55-			reg = <0x80100000 DT_SIZE_K(4608)>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-56-			zephyr,memory-region = "MRAM";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-57-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-58-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:59:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-60-			compatible = "mmio-sram";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-61-			reg = <0x2000000 0x400000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:62:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-63-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-64-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-65-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-66-		gic: interrupt-controller@1c010000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-67-			compatible = "arm,gic-v2", "arm,gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-68-			reg = <0x1c010000 0x1000>,
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-69-			      <0x1c02f000 0x2000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-70-			interrupt-controller;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-71-			#interrupt-cells = <4>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-72-			label = "gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-73-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts-74-		};
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-16-	#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-17-	#size-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-18-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-19-	chosen {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-20-		zephyr,flash = &mram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-22-		zephyr,console = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-23-		zephyr,shell-uart = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-24-	};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-25-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-26-	cpus {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-27-		#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-28-		#size-cells = <0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-29-		cpu0: cpu@0 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-30-			device_type = "cpu";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-31-			compatible = "arm,cortex-a32";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-32-			reg = <0x0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-33-		};
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-54-			compatible = "zephyr,memory-region";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-55-			reg = <0x80100000 DT_SIZE_K(4608)>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-56-			zephyr,memory-region = "MRAM";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-57-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-58-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:59:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-60-			compatible = "mmio-sram";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-61-			reg = <0x2000000 0x400000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:62:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-63-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-64-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-65-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-66-		gic: interrupt-controller@1c010000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-67-			compatible = "arm,gic-v2", "arm,gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-68-			reg = <0x1c010000 0x1000>,
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-69-			      <0x1c02f000 0x2000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-70-			interrupt-controller;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-71-			#interrupt-cells = <4>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-72-			label = "gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-73-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts-74-		};
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-17-	#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-18-	#size-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-19-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-20-	chosen {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-21-		zephyr,flash = &mram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-23-		zephyr,console = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-24-		zephyr,shell-uart = &uart2;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-25-	};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-26-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-27-	cpus {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-28-		#address-cells = <1>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-29-		#size-cells = <0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-30-		cpu0: cpu@0 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-31-			device_type = "cpu";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-32-			compatible = "arm,cortex-a32";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-33-			reg = <0x0>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-34-		};
+--
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-55-			compatible = "zephyr,memory-region";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-56-			reg = <0x80100000 DT_SIZE_K(4608)>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-57-			zephyr,memory-region = "MRAM";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-58-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-59-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:60:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-61-			compatible = "mmio-sram";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-62-			reg = <0x2000000 0x400000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:63:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-64-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-65-		};
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-66-
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-67-		gic: interrupt-controller@1c010000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-68-			compatible = "arm,gic-v2", "arm,gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-69-			reg = <0x1c010000 0x1000>,
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-70-			      <0x1c02f000 0x2000>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-71-			interrupt-controller;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-72-			#interrupt-cells = <4>;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-73-			label = "gic";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-74-			status = "okay";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts-75-		};
+
+=== GENERIC MPU RAM ATTRIBUTE MACROS ===
+
+=== MPU OBJECTS IN ACTIVE BUILD ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/arch/arch/arm/core/mpu/CMakeFiles/arch__arm__core__mpu.dir/arm_mpu.c.obj
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/CMakeFiles/zephyr.dir/soc/alif/ensemble/common/mpu_regions.c.obj
+
+=== MPU OBJECT SYMBOLS ===
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/arch/arch/arm/core/mpu/CMakeFiles/arch__arm__core__mpu.dir/arm_mpu.c.obj
+         U arm_cmse_mpu_region_get
+00000000 T arm_core_mpu_configure_dynamic_mpu_regions
+00000000 T arm_core_mpu_configure_static_mpu_regions
+00000000 T arm_core_mpu_disable
+00000000 T arm_core_mpu_enable
+00000000 T arm_core_mpu_mark_areas_for_dynamic_regions
+00000000 a arm_mpu.c
+00000000 b .bss.static_regions_num
+         U log_const_mpu
+         U mem_attr_get_regions
+         U mpu_config
+00000000 t mpu_configure_region
+00000000 t mpu_configure_regions_and_partition.constprop.0
+00000000 t region_allocate_and_init
+00000000 t region_init
+00000000 r .rodata.arm_core_mpu_configure_dynamic_mpu_regions.str1.1
+00000000 r .rodata.arm_core_mpu_configure_static_mpu_regions.str1.1
+00000000 r .rodata.arm_core_mpu_mark_areas_for_dynamic_regions.str1.1
+00000000 r .rodata.mpu_configure_regions_and_partition.constprop.0.str1.1
+00000000 r .rodata.region_allocate_and_init.str1.1
+00000000 r .rodata.z_arm_mpu_init.str1.1
+00000000 b static_regions_num
+00000000 t .text.arm_core_mpu_configure_dynamic_mpu_regions
+00000000 t .text.arm_core_mpu_configure_static_mpu_regions
+00000000 t .text.arm_core_mpu_disable
+00000000 t .text.arm_core_mpu_enable
+00000000 t .text.arm_core_mpu_mark_areas_for_dynamic_regions
+00000000 t .text.mpu_configure_region
+00000000 t .text.mpu_configure_regions_and_partition.constprop.0
+00000000 t .text.region_allocate_and_init
+00000000 t .text.region_init
+00000000 t .text.z_arm_mpu_init
+00000000 T z_arm_mpu_init
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/CMakeFiles/zephyr.dir/soc/alif/ensemble/common/mpu_regions.c.obj
+00000000 R mpu_config
+00000000 r mpu_regions
+00000000 a mpu_regions.c
+00000000 r .rodata.mpu_config
+00000000 r .rodata.mpu_regions
+
+=== MPU LINK-MAP OBJECT AND REGION REFERENCES ===
+54-                              (--whole-archive)
+55-zephyr/libzephyr.a(startup.S.obj)
+56-                              (--whole-archive)
+57:zephyr/libzephyr.a(mpu_regions.c.obj)
+58-                              (--whole-archive)
+59-zephyr/libzephyr.a(log_core.c.obj)
+60-                              (--whole-archive)
+61-zephyr/libzephyr.a(log_mgmt.c.obj)
+62-                              (--whole-archive)
+63-zephyr/libzephyr.a(log_cache.c.obj)
+64-                              (--whole-archive)
+65-zephyr/libzephyr.a(log_msg.c.obj)
+--
+149-                              (--whole-archive)
+150-zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+151-                              (--whole-archive)
+152:zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+153-                              (--whole-archive)
+154-zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+155-                              (--whole-archive)
+156-zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+157-                              (--whole-archive)
+158-zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+159-                              (--whole-archive)
+160-zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+--
+1827- .text          0x0000000000000000        0x0 zephyr/libzephyr.a(startup.S.obj)
+1828- .data          0x0000000000000000        0x0 zephyr/libzephyr.a(startup.S.obj)
+1829- .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(startup.S.obj)
+1830: .text          0x0000000000000000        0x0 zephyr/libzephyr.a(mpu_regions.c.obj)
+1831: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(mpu_regions.c.obj)
+1832: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(mpu_regions.c.obj)
+1833- .text          0x0000000000000000        0x0 zephyr/libzephyr.a(log_core.c.obj)
+1834- .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_core.c.obj)
+1835- .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_core.c.obj)
+1836- .rodata.z_log_msg_runtime_create.constprop.0.str1.1
+1837-                0x0000000000000000       0x28 zephyr/libzephyr.a(log_core.c.obj)
+1838- .text.z_log_msg_runtime_create.constprop.0
+1839-                0x0000000000000000       0x24 zephyr/libzephyr.a(log_core.c.obj)
+1840- .text.log_format_table_size
+--
+2268- .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2269- .text.sys_arch_reboot
+2270-                0x0000000000000000       0x24 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2271: .text.z_arm_clear_arm_mpu_config
+2272-                0x0000000000000000       0x28 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2273- .debug_info    0x0000000000000000      0x68f zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2274- .debug_abbrev  0x0000000000000000      0x1d8 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2275- .debug_loc     0x0000000000000000       0x7c zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2276- .debug_aranges
+2277-                0x0000000000000000       0x28 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2278- .debug_ranges  0x0000000000000000       0x38 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+2279- .debug_line    0x0000000000000000      0x282 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+--
+2364- .text          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+2365- .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+2366- .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+2367: .text.z_arm_configure_dynamic_mpu_regions
+2368-                0x0000000000000000        0xc zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+2369- .bss.dynamic_regions.0
+2370-                0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+2371: .text          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+2372: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+2373: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+2374: .rodata.arm_core_mpu_configure_dynamic_mpu_regions.str1.1
+2375:                0x0000000000000000       0x2d zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+2376: .text.arm_core_mpu_configure_dynamic_mpu_regions
+2377:                0x0000000000000000       0x80 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+2378- .text          0x0000000000000000        0x0 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2379- .data          0x0000000000000000        0x0 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2380- .bss           0x0000000000000000        0x0 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2381- .text.__stdin_hook_install
+2382-                0x0000000000000000        0xc zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2383- .text._open    0x0000000000000000        0xa zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2384- .text._kill    0x0000000000000000        0x4 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+2385- .text._getpid  0x0000000000000000        0x4 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+--
+17488- .text.arch_dcache_invd_range
+17489-                0x000000008020b384       0x48 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+17490-                0x000000008020b384                arch_dcache_invd_range
+17491: .text.z_arm_configure_static_mpu_regions
+17492-                0x000000008020b3cc       0x38 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+17493:                0x000000008020b3cc                z_arm_configure_static_mpu_regions
+17494- .text.region_init
+17495:                0x000000008020b404       0x34 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17496- .text.region_allocate_and_init
+17497:                0x000000008020b438       0x48 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17498: .text.mpu_configure_regions_and_partition.constprop.0
+17499:                0x000000008020b480      0x170 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17500- .text.arm_core_mpu_enable
+17501:                0x000000008020b5f0       0x18 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17502-                0x000000008020b5f0                arm_core_mpu_enable
+17503- .text.arm_core_mpu_disable
+17504:                0x000000008020b608       0x14 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17505-                0x000000008020b608                arm_core_mpu_disable
+17506: .text.arm_core_mpu_configure_static_mpu_regions
+17507:                0x000000008020b61c       0x48 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17508:                0x000000008020b61c                arm_core_mpu_configure_static_mpu_regions
+17509- .text.arm_core_mpu_mark_areas_for_dynamic_regions
+17510:                0x000000008020b664       0xe8 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17511-                0x000000008020b664                arm_core_mpu_mark_areas_for_dynamic_regions
+17512- .text.z_arm_mpu_init
+17513:                0x000000008020b74c      0x194 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+17514-                0x000000008020b74c                z_arm_mpu_init
+17515- .text.malloc_prepare
+17516-                0x000000008020b8e0       0x44 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+17517- .text.__stdout_hook_install
+17518-                0x000000008020b924        0xc zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+17519-                0x000000008020b924                __stdout_hook_install
+17520- .text.z_impl_zephyr_read_stdin
+17521-                0x000000008020b930       0x28 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+--
+19261-                0x0000000080224fc4       0x12 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+19262-                0x0000000080224fc4                arm_cmse_mpu_region_get
+19263- .text.z_log_msg_runtime_create.constprop.0
+19264:                0x0000000080224fd6       0x20 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+19265: .text.mpu_configure_region
+19266:                0x0000000080224ff6       0x32 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+19267- .text._stdin_hook_default
+19268-                0x0000000080225028        0x4 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+19269- .text._stdout_hook_default
+19270-                0x000000008022502c        0x6 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+19271- .text._read    0x0000000080225032        0x8 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+19272-                0x0000000080225032                _read
+19273-                0x0000000080225032                read
+19274- .text._write   0x000000008022503a        0x8 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+--
+22213- .rodata._ZTVN3arm3app3fwk4tflm11PolyUModel1E
+22214-                0x00000000802568ec       0x58 app/libapp.a(PolyUModel1.cc.obj)
+22215-                0x00000000802568ec                vtable for arm::app::fwk::tflm::PolyUModel1
+22216: .rodata.mpu_config
+22217:                0x0000000080256944        0x8 zephyr/libzephyr.a(mpu_regions.c.obj)
+22218:                0x0000000080256944                mpu_config
+22219: .rodata.mpu_regions
+22220:                0x000000008025694c       0x70 zephyr/libzephyr.a(mpu_regions.c.obj)
+22221- .rodata.format_table
+22222-                0x00000000802569bc       0x10 zephyr/libzephyr.a(log_core.c.obj)
+22223- .rodata.colors
+22224-                0x00000000802569cc       0x14 zephyr/libzephyr.a(log_output.c.obj)
+22225- .rodata.severity
+22226-                0x00000000802569e0       0x14 zephyr/libzephyr.a(log_output.c.obj)
+22227- .rodata.lbu_cb_ctx
+22228-                0x00000000802569f4        0x8 zephyr/libzephyr.a(log_backend_uart.c.obj)
+--
+22565- .rodata.z_cbvprintf_impl.str1.1
+22566-                0x00000000802592a3        0x6 zephyr/libzephyr.a(cbprintf_complete.c.obj)
+22567- .rodata.str1.1
+22568:                0x00000000802592a9       0x41 zephyr/libzephyr.a(mpu_regions.c.obj)
+22569- .rodata.z_log_init.isra.0.str1.1
+22570-                0x00000000802592ea       0x9d zephyr/libzephyr.a(log_core.c.obj)
+22571-                                         0xba (size before relaxing)
+22572- .rodata.str1.1
+22573-                0x0000000080259387        0x4 zephyr/libzephyr.a(log_core.c.obj)
+22574- .rodata.str1.1
+22575-                0x000000008025938b        0x9 zephyr/libzephyr.a(log_mgmt.c.obj)
+22576- .rodata.z_log_msg_runtime_vcreate.str1.1
+--
+22630- .rodata.str1.1
+22631-                0x0000000080259d3c        0x4 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+22632- .rodata.region_allocate_and_init.str1.1
+22633:                0x0000000080259d40       0x26 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+22634: .rodata.mpu_configure_regions_and_partition.constprop.0.str1.1
+22635:                0x0000000080259d66       0x46 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+22636: .rodata.arm_core_mpu_configure_static_mpu_regions.str1.1
+22637:                0x0000000080259dac       0x5b zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+22638-                                         0x7a (size before relaxing)
+22639- .rodata.arm_core_mpu_mark_areas_for_dynamic_regions.str1.1
+22640:                0x0000000080259e07       0x2f zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+22641- .rodata.z_arm_mpu_init.str1.1
+22642:                0x0000000080259e36       0xb3 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+22643- .rodata.malloc_prepare.str1.1
+22644-                0x0000000080259ee9      0x103 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+22645-                                        0x120 (size before relaxing)
+22646- .rodata.__retarget_lock_init.str1.1
+22647-                0x0000000080259fec       0x3c zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+22648-                                         0x50 (size before relaxing)
+22649- .rodata.__retarget_lock_init_recursive.str1.1
+22650-                0x000000008025a028       0x23 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+--
+23543- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(configs.c.obj)
+23544- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(power.c.obj)
+23545- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(soc_common.c.obj)
+23546: .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(mpu_regions.c.obj)
+23547- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(log_core.c.obj)
+23548- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(log_mgmt.c.obj)
+23549- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(log_msg.c.obj)
+23550- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(log_output.c.obj)
+23551- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(log_backend_uart.c.obj)
+23552- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(mem_attr.c.obj)
+23553- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(pm.c.obj)
+23554- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(state.c.obj)
+--
+23578- .comment       0x0000000000000020       0x21 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+23579- .comment       0x0000000000000020       0x21 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+23580- .comment       0x0000000000000020       0x21 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+23581: .comment       0x0000000000000020       0x21 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+23582- .comment       0x0000000000000020       0x21 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+23583- .comment       0x0000000000000020       0x21 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+23584- .comment       0x0000000000000020       0x21 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+23585- .comment       0x0000000000000020       0x21 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+23586- .comment       0x0000000000000020       0x21 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+23587- .comment       0x0000000000000020       0x21 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+23588- .comment       0x0000000000000020       0x21 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23589- .comment       0x0000000000000020       0x21 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+23763- .debug_aranges
+23764-                0x0000000000000648       0x48 zephyr/libzephyr.a(soc_common.c.obj)
+23765- .debug_aranges
+23766:                0x0000000000000690       0x18 zephyr/libzephyr.a(mpu_regions.c.obj)
+23767- .debug_aranges
+23768-                0x00000000000006a8      0x148 zephyr/libzephyr.a(log_core.c.obj)
+23769- .debug_aranges
+23770-                0x00000000000007f0       0xc8 zephyr/libzephyr.a(log_mgmt.c.obj)
+23771- .debug_aranges
+23772-                0x00000000000008b8       0x68 zephyr/libzephyr.a(log_msg.c.obj)
+23773- .debug_aranges
+23774-                0x0000000000000920       0x70 zephyr/libzephyr.a(log_output.c.obj)
+--
+23833- .debug_aranges
+23834-                0x0000000000001010       0x28 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+23835- .debug_aranges
+23836:                0x0000000000001038       0x70 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+23837- .debug_aranges
+23838-                0x00000000000010a8      0x110 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+23839- .debug_aranges
+23840-                0x00000000000011b8       0x20 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+23841- .debug_aranges
+23842-                0x00000000000011d8       0x80 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+23843- .debug_aranges
+23844-                0x0000000000001258       0x98 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+--
+24096- .debug_info    0x0000000000b79805     0x1257 zephyr/libzephyr.a(power.c.obj)
+24097- .debug_info    0x0000000000b7aa5c      0x6f5 zephyr/libzephyr.a(soc_common.c.obj)
+24098- .debug_info    0x0000000000b7b151       0x23 zephyr/libzephyr.a(startup.S.obj)
+24099: .debug_info    0x0000000000b7b174      0x1b3 zephyr/libzephyr.a(mpu_regions.c.obj)
+24100- .debug_info    0x0000000000b7b327     0x3144 zephyr/libzephyr.a(log_core.c.obj)
+24101- .debug_info    0x0000000000b7e46b     0x26c1 zephyr/libzephyr.a(log_mgmt.c.obj)
+24102- .debug_info    0x0000000000b80b2c     0x151c zephyr/libzephyr.a(log_msg.c.obj)
+24103- .debug_info    0x0000000000b82048     0x2217 zephyr/libzephyr.a(log_output.c.obj)
+24104- .debug_info    0x0000000000b8425f     0x15a3 zephyr/libzephyr.a(log_backend_uart.c.obj)
+24105- .debug_info    0x0000000000b85802      0x2e0 zephyr/libzephyr.a(mem_attr.c.obj)
+24106- .debug_info    0x0000000000b85ae2     0x2b24 zephyr/libzephyr.a(pm.c.obj)
+24107- .debug_info    0x0000000000b88606      0x207 zephyr/libzephyr.a(state.c.obj)
+--
+24136- .debug_info    0x0000000000b9949e      0xf7b zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+24137- .debug_info    0x0000000000b9a419      0x637 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+24138- .debug_info    0x0000000000b9aa50      0x9e7 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+24139: .debug_info    0x0000000000b9b437     0x1f86 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+24140- .debug_info    0x0000000000b9d3bd     0x1e42 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+24141- .debug_info    0x0000000000b9f1ff      0x1c2 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+24142- .debug_info    0x0000000000b9f3c1     0x1f7a zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+24143- .debug_info    0x0000000000ba133b     0x1fa5 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+24144- .debug_info    0x0000000000ba32e0     0x1db7 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+24145- .debug_info    0x0000000000ba5097     0x1999 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+24146- .debug_info    0x0000000000ba6a30     0x3720 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24147- .debug_info    0x0000000000baa150     0x32d8 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+24278- .debug_abbrev  0x000000000000584f      0x487 zephyr/libzephyr.a(power.c.obj)
+24279- .debug_abbrev  0x0000000000005cd6      0x32d zephyr/libzephyr.a(soc_common.c.obj)
+24280- .debug_abbrev  0x0000000000006003       0x14 zephyr/libzephyr.a(startup.S.obj)
+24281: .debug_abbrev  0x0000000000006017       0xf4 zephyr/libzephyr.a(mpu_regions.c.obj)
+24282- .debug_abbrev  0x000000000000610b      0x877 zephyr/libzephyr.a(log_core.c.obj)
+24283- .debug_abbrev  0x0000000000006982      0x677 zephyr/libzephyr.a(log_mgmt.c.obj)
+24284- .debug_abbrev  0x0000000000006ff9      0x586 zephyr/libzephyr.a(log_msg.c.obj)
+24285- .debug_abbrev  0x000000000000757f      0x59a zephyr/libzephyr.a(log_output.c.obj)
+24286- .debug_abbrev  0x0000000000007b19      0x4c9 zephyr/libzephyr.a(log_backend_uart.c.obj)
+24287- .debug_abbrev  0x0000000000007fe2      0x13a zephyr/libzephyr.a(mem_attr.c.obj)
+24288- .debug_abbrev  0x000000000000811c      0x5a4 zephyr/libzephyr.a(pm.c.obj)
+24289- .debug_abbrev  0x00000000000086c0      0x118 zephyr/libzephyr.a(state.c.obj)
+--
+24318- .debug_abbrev  0x000000000000c29f      0x2ad zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+24319- .debug_abbrev  0x000000000000c54c      0x1b2 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+24320- .debug_abbrev  0x000000000000c6fe      0x268 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+24321: .debug_abbrev  0x000000000000c966      0x59a zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+24322- .debug_abbrev  0x000000000000cf00      0x67c zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+24323- .debug_abbrev  0x000000000000d57c      0x14d zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+24324- .debug_abbrev  0x000000000000d6c9      0x58c zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+24325- .debug_abbrev  0x000000000000dc55      0x609 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+24326- .debug_abbrev  0x000000000000e25e      0x60b zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+24327- .debug_abbrev  0x000000000000e869      0x62a zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+24328- .debug_abbrev  0x000000000000ee93      0x6a3 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24329- .debug_abbrev  0x000000000000f536      0x547 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+24460- .debug_line    0x000000000000daa0      0x888 zephyr/libzephyr.a(power.c.obj)
+24461- .debug_line    0x000000000000e328      0x436 zephyr/libzephyr.a(soc_common.c.obj)
+24462- .debug_line    0x000000000000e75e       0x7a zephyr/libzephyr.a(startup.S.obj)
+24463: .debug_line    0x000000000000e7d8      0x1d5 zephyr/libzephyr.a(mpu_regions.c.obj)
+24464- .debug_line    0x000000000000e9ad      0xfde zephyr/libzephyr.a(log_core.c.obj)
+24465- .debug_line    0x000000000000f98b      0xcff zephyr/libzephyr.a(log_mgmt.c.obj)
+24466- .debug_line    0x000000000001068a      0x7fc zephyr/libzephyr.a(log_msg.c.obj)
+24467- .debug_line    0x0000000000010e86      0xb74 zephyr/libzephyr.a(log_output.c.obj)
+24468- .debug_line    0x00000000000119fa      0x6cc zephyr/libzephyr.a(log_backend_uart.c.obj)
+24469- .debug_line    0x00000000000120c6      0x2a4 zephyr/libzephyr.a(mem_attr.c.obj)
+24470- .debug_line    0x000000000001236a     0x106b zephyr/libzephyr.a(pm.c.obj)
+24471- .debug_line    0x00000000000133d5      0x1cd zephyr/libzephyr.a(state.c.obj)
+--
+24500- .debug_line    0x000000000001acff      0xa58 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+24501- .debug_line    0x000000000001b757      0x302 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+24502- .debug_line    0x000000000001ba59      0x435 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+24503: .debug_line    0x000000000001be8e     0x105d zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+24504- .debug_line    0x000000000001ceeb      0xd4a zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+24505- .debug_line    0x000000000001dc35      0x2d2 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+24506- .debug_line    0x000000000001df07      0xaa8 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+24507- .debug_line    0x000000000001e9af      0xdc3 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+24508- .debug_line    0x000000000001f772      0xd3f zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+24509- .debug_line    0x00000000000204b1      0xa93 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+24510- .debug_line    0x0000000000020f44     0x1c24 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24511- .debug_line    0x0000000000022b68      0xf3f zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+24673- .debug_frame   0x0000000000002324      0x17c zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+24674- .debug_frame   0x00000000000024a0       0x70 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+24675- .debug_frame   0x0000000000002510       0x3c zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+24676: .debug_frame   0x000000000000254c      0x15c zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+24677- .debug_frame   0x00000000000026a8      0x2c0 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+24678- .debug_frame   0x0000000000002968       0x28 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+24679- .debug_frame   0x0000000000002990      0x160 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+24680- .debug_frame   0x0000000000002af0      0x1ac zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+24681- .debug_frame   0x0000000000002c9c       0xf4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+24682- .debug_frame   0x0000000000002d90      0x108 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+24683- .debug_frame   0x0000000000002e98      0x260 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24684- .debug_frame   0x00000000000030f8      0x178 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+24871-                                        0x6b0 (size before relaxing)
+24872- .debug_str     0x00000000000a96e7       0x4a zephyr/libzephyr.a(startup.S.obj)
+24873-                                         0x8b (size before relaxing)
+24874: .debug_str     0x00000000000a9731       0x9b zephyr/libzephyr.a(mpu_regions.c.obj)
+24875-                                        0x324 (size before relaxing)
+24876- .debug_str     0x00000000000a97cc      0x9e1 zephyr/libzephyr.a(log_core.c.obj)
+24877-                                       0x165f (size before relaxing)
+24878- .debug_str     0x00000000000aa1ad      0x536 zephyr/libzephyr.a(log_mgmt.c.obj)
+24879-                                        0xfad (size before relaxing)
+24880- .debug_str     0x00000000000aa6e3      0x198 zephyr/libzephyr.a(log_msg.c.obj)
+24881-                                        0x9fd (size before relaxing)
+24882- .debug_str     0x00000000000aa87b      0x251 zephyr/libzephyr.a(log_output.c.obj)
+--
+24951-                                        0x40d (size before relaxing)
+24952- .debug_str     0x00000000000ad472      0x199 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+24953-                                        0x9a1 (size before relaxing)
+24954: .debug_str     0x00000000000ad60b      0x38b zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+24955-                                        0xdb1 (size before relaxing)
+24956- .debug_str     0x00000000000ad996      0x4e6 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+24957-                                        0xf19 (size before relaxing)
+24958- .debug_str     0x00000000000ade7c      0x1a4 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+24959-                                        0x35a (size before relaxing)
+24960- .debug_str     0x00000000000ae020      0x6a9 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+24961-                                       0x14c8 (size before relaxing)
+24962- .debug_str     0x00000000000ae6c9      0x582 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+--
+25237- .debug_loc     0x000000000001d476      0x4f0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+25238- .debug_loc     0x000000000001d966      0x5f9 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+25239- .debug_loc     0x000000000001df5f       0x25 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+25240: .debug_loc     0x000000000001df84      0xe93 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+25241- .debug_loc     0x000000000001ee17      0x8d3 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+25242- .debug_loc     0x000000000001f6ea       0x2c zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+25243- .debug_loc     0x000000000001f716      0x791 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+25244- .debug_loc     0x000000000001fea7     0x1793 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+25245- .debug_loc     0x000000000002163a      0xa49 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+25246- .debug_loc     0x0000000000022083      0xc1e zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+25247- .debug_loc     0x0000000000022ca1     0x239b zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+25248- .debug_loc     0x000000000002503c     0x2028 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+25424- .debug_ranges  0x00000000000047f0      0x168 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+25425- .debug_ranges  0x0000000000004958       0xd8 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+25426- .debug_ranges  0x0000000000004a30       0x18 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+25427: .debug_ranges  0x0000000000004a48      0x488 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+25428- .debug_ranges  0x0000000000004ed0      0x1c0 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+25429- .debug_ranges  0x0000000000005090       0x10 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+25430- .debug_ranges  0x00000000000050a0       0xd0 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+25431- .debug_ranges  0x0000000000005170      0x1c8 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+25432- .debug_ranges  0x0000000000005338      0x240 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+25433- .debug_ranges  0x0000000000005578      0x100 zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+25434- .debug_ranges  0x0000000000005678      0x208 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+25435- .debug_ranges  0x0000000000005880      0x378 zephyr/drivers/gpio/libdrivers__gpio.a(gpio_dw.c.obj)
+--
+25639- .ARM.attributes
+25640-                0x0000000000000782       0x28 zephyr/libzephyr.a(startup.S.obj)
+25641- .ARM.attributes
+25642:                0x00000000000007aa       0x3e zephyr/libzephyr.a(mpu_regions.c.obj)
+25643- .ARM.attributes
+25644-                0x00000000000007e8       0x3e zephyr/libzephyr.a(log_core.c.obj)
+25645- .ARM.attributes
+25646-                0x0000000000000826       0x3e zephyr/libzephyr.a(log_mgmt.c.obj)
+25647- .ARM.attributes
+25648-                0x0000000000000864       0x3e zephyr/libzephyr.a(log_cache.c.obj)
+25649- .ARM.attributes
+25650-                0x00000000000008a2       0x3e zephyr/libzephyr.a(log_msg.c.obj)
+--
+25735- .ARM.attributes
+25736-                0x000000000000128a       0x3e zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+25737- .ARM.attributes
+25738:                0x00000000000012c8       0x3e zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+25739- .ARM.attributes
+25740-                0x0000000000001306       0x3e zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+25741- .ARM.attributes
+25742-                0x0000000000001344       0x3e zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+25743- .ARM.attributes
+25744-                0x0000000000001382       0x3e zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+25745- .ARM.attributes
+25746-                0x00000000000013c0       0x3e zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+--
+27102- .bss.line_bufs
+27103-                0x0000000020001358      0x110 zephyr/libzephyr.a(getline.c.obj)
+27104- .bss.dyn_reg_info
+27105:                0x0000000020001468       0x14 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+27106- .bss.heap_sz   0x000000002000147c        0x4 zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj)
+27107- .bss.ensemble_clk
+27108-                0x0000000020001480       0x20 zephyr/drivers/clock_control/libdrivers__clock_control.a(clock_control_alif_ensemble.c.obj)
+27109- .bss.cmd.1     0x00000000200014a0        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27110- .bss.ansi_val_2
+27111-                0x00000000200014a4        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27112- .bss.ansi_val  0x00000000200014a8        0x4 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27113- .bss.esc_state
+--
+27244- .bss.lbu_buffer
+27245-                0x0000000020001bac        0x1 zephyr/libzephyr.a(log_backend_uart.c.obj)
+27246- .bss.static_regions_num
+27247:                0x0000000020001bad        0x1 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+27248- .bss.last_char.0
+27249-                0x0000000020001bae        0x1 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27250- .bss.end       0x0000000020001baf        0x1 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27251- .bss.cur       0x0000000020001bb0        0x1 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+27252- .bss._ZN12_GLOBAL__N_127micro_error_reporter_bufferE
+27253-                0x0000000020001bb1        0x4 modules/tflite-micro/libmodules__tflite-micro.a(micro_error_reporter.cc.obj)
+27254- .bss.run_profile_initialized
+27255-                0x0000000020001bb5        0x1 modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+
+=== FINAL ELF MPU REGION SYMBOL ADDRESSES ===
+8020b61c T arm_core_mpu_configure_static_mpu_regions
+00000001 A CONFIG_CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
+00000001 A CONFIG_MEM_ATTR
+00000000 a mem_attr.c
+80209c8c T mem_attr_get_regions
+80256a28 r mem_attr_region
+80256944 R mpu_config
+80224ff6 t mpu_configure_region
+8020b480 t mpu_configure_regions_and_partition.constprop.0
+8025694c r mpu_regions
+00000000 a mpu_regions.c
+8020b3cc T z_arm_configure_static_mpu_regions
+
+=== FINAL ELF DATA AROUND MPU REGION TABLE ===
+
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:     file format elf32-littlearm
+
+Contents of section rodata:
+ 80256920 47c52280 97c22280 9bc22280 ddee2180  G."..."..."...!.
+ 80256930 e1c22280 bbc22280 bfc22280 01602080  .."..."..."..` .
+ 80256940 b1742080 07000000 4c692580 00002080  .t .....Li%... .
+ 80256950 a9922580 06000000 e0ff3980 00003a80  ..%.......9...:.
+ 80256960 b4922580 61000000 e0273a80 00000000  ..%.a....':.....
+ 80256970 c0922580 06000000 e0ff0300 00000020  ..%............ 
+ 80256980 c5922580 21000000 e0ff0f20 0000001a  ..%.!...... ....
+ 80256990 ca922580 61000000 e0ffff1a 00000083  ..%.a...........
+ 802569a0 d6922580 61000000 e03f0083 000000c0  ..%.a....?......
+ 802569b0 e0922580 46000000 e0ffffdf e94d2280  ..%.F........M".
+ 802569c0 00000000 00000000 00000000 00000000  ................
+ 802569d0 94942580 9c942580 00000000 00000000  ..%...%.........
+ 802569e0 00000000 a4942580 a8942580 ac942580  ......%...%...%.
+ 802569f0 b0942580 fc692580 00130020 2d9c2080  ..%..i%.... -. .
+ 80256a00 18130020 ac1b0020 01000000 5f4e2280  ... ... ...._N".
+ 80256a10 00000000 d99b2080 519c2080 00000000  ...... .Q. .....
+ 80256a20 534e2280 00000000 26952580 00000002  SN".....&.%.....
+ 80256a30 00004000 00001000 33952580 00004002  ..@.....3.%...@.
+ 80256a40 00004000 00001000 00000020 00000000  ..@........ ....
+ 80256a50 06000100 00100e40 01010000 37000000  .......@....7...
+ 80256a60 6b502280 00000000 00000000 0020601a  kP".......... `.
+ 80256a70 00f00349 00f00249 0040601a 0090601a  ...I...I.@`...`.
+
+=== GENERATED MEMORY ATTRIBUTE FILES ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/CMakeFiles/zephyr.dir/subsys/mem_mgmt/mem_attr.c.obj
