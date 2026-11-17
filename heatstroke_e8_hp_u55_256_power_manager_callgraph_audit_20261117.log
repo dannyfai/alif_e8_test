@@ -1,0 +1,514 @@
+===== COMPLETE POWER MANAGER SOURCE =====
+     1	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 */
+     9	
+    10	#include <zephyr/drivers/counter.h>
+    11	#include <zephyr/kernel.h>
+    12	#include <zephyr/logging/log.h>
+    13	#include <zephyr/logging/log_ctrl.h>
+    14	#include <zephyr/pm/pm.h>
+    15	#include <zephyr/pm/policy.h>
+    16	#include <zephyr/sys/poweroff.h>
+    17	#include <zephyr/sys/__assert.h>
+    18	#include <se_service.h>
+    19	#include <soc_common.h>
+    20	#include "power_mgr.h"
+    21	
+    22	#if !DT_NODE_HAS_COMPAT_STATUS(DT_NODELABEL(rtc0), snps_dw_apb_rtc, okay)
+    23	#error "RTC device not enabled in the dts. It is mandatory for wakeup from low power modes."
+    24	#endif
+    25	
+    26	#if !DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(stop_s2ram))
+    27	#error "stop_s2ram node not enabled in the dts. It is mandatory for low power mode."
+    28	#endif
+    29	
+    30	LOG_MODULE_REGISTER(common_ble_power_mgr, LOG_LEVEL_INF);
+    31	
+    32	/**
+    33	 * SRAM4 == SRAM0
+    34	 * SRAM5 == SRAM1
+    35	 *
+    36	 * See HWRM Figure 9-1 M55-HE TCM Retention
+    37	 *
+    38	 * MB_SRAM4_1 : M55-HE ITCM RET1 itcm 64kb
+    39	 * MB_SRAM4_2 : M55-HE ITCM RET2 itcm 64kb
+    40	 * MB_SRAM4_3 : M55-HE ITCM RET3 itcm 128kb
+    41	 * MB_SRAM4_4 : M55-HE ITCM RET4 itcm 256kb
+    42	 * MB_SRAM5_1 : M55-HE DTCM RET1 dtcm 64kb
+    43	 * MB_SRAM5_2 : M55-HE DTCM RET2 dtcm 64kb
+    44	 * MB_SRAM5_3 : M55-HE DTCM RET3 dtcm 128kb
+    45	 * MB_SRAM5_4 : M55-HE DTCM RET4 dtcm 256kb
+    46	 * MB_SRAM5_5 : M55-HE DTCM RET5 dtcm 1024kb
+    47	 */
+    48	
+    49	#define RET_A1 SRAM4_1_MASK
+    50	#define RET_A2 SRAM5_1_MASK
+    51	#define RET_B  (SRAM4_2_MASK | SRAM5_2_MASK)
+    52	#if (IS_ENABLED(CONFIG_SOC_SERIES_E1C) || IS_ENABLED(CONFIG_SOC_SERIES_B1))
+    53	#define RET_C (SRAM4_3_MASK | SRAM5_3_MASK)
+    54	#define RET_D (SRAM4_4_MASK | SRAM5_4_MASK)
+    55	#define RET_E (SRAM5_5_MASK)
+    56	
+    57	#define MEMORY_RETENTION_CONFIG                                                                    \
+    58		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B | RET_C |    \
+    59		 RET_D | RET_E | SERAM_MASK)
+    60	
+    61	#elif defined(CONFIG_ENSEMBLE_GEN2)
+    62	#define MEMORY_RETENTION_CONFIG                                                                    \
+    63		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B |            \
+    64		 SERAM_MASK | SRAM0_1_RET_MASK | SRAM0_2_RET_MASK | SRAM0_3_RET_MASK | SRAM0_4_RET_MASK)
+    65	#else
+    66	#define MEMORY_RETENTION_CONFIG                                                                    \
+    67		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B | SERAM_MASK)
+    68	#endif
+    69	
+    70	#define DEFAULT_DCDC_VOLTAGE 825
+    71	
+    72	enum off_state {
+    73		OFF_STATE_IDLE = 0,
+    74		OFF_STATE_STANDBY,
+    75		OFF_STATE_STOP,
+    76		OFF_STATE_OFF,
+    77	};
+    78	
+    79	static int se_service_status;
+    80	
+    81	void power_mgr_disable_sleep(void)
+    82	{
+    83		// uses reference counting!!
+    84		pm_policy_state_lock_get(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    85		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    86	}
+    87	
+    88	void power_mgr_allow_sleep(void)
+    89	{
+    90		pm_policy_state_lock_put(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    91		pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    92	}
+    93	
+    94	#if CONFIG_PM && CONFIG_LOG
+    95	/**
+    96	 * Flush log buffer
+    97	 */
+    98	void power_mgr_log_flush(void)
+    99	{
+   100	#if CONFIG_LOG_MODE_DEFERRED
+   101		log_flush();
+   102	#else
+   103		while (log_process()) {
+   104			k_sleep(K_MSEC(1));
+   105		}
+   106	#endif
+   107	}
+   108	#endif
+   109	
+   110	static int set_off_profile(enum off_state const mode)
+   111	{
+   112		uint32_t ewic = EWIC_RTC_A;
+   113		uint32_t wakeup = WE_LPRTC;
+   114	
+   115	#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(lpgpio))
+   116		ewic |= EWIC_VBAT_GPIO;
+   117		wakeup |= WE_LPGPIO;
+   118	#endif
+   119	
+   120		int ret;
+   121		off_profile_t offp = {
+   122			.power_domains = 0,
+   123			.memory_blocks = MEMORY_RETENTION_CONFIG,
+   124			.dcdc_voltage = DEFAULT_DCDC_VOLTAGE,
+   125			.dcdc_mode = DCDC_MODE_OFF,
+   126			.stby_clk_freq = SCALED_FREQ_RC_STDBY_0_075_MHZ,
+   127			.aon_clk_src = CLK_SRC_LFXO,
+   128			.stby_clk_src = CLK_SRC_HFRC,
+   129			.ip_clock_gating = 0,
+   130			.phy_pwr_gating = 0,
+   131			.ewic_cfg = ewic,
+   132			.wakeup_events = wakeup,
+   133			.vtor_address = SCB->VTOR,
+   134			.vtor_address_ns = SCB->VTOR,
+   135		};
+   136	
+   137		switch (mode) {
+   138		case OFF_STATE_IDLE:
+   139			return 0;
+   140		case OFF_STATE_STANDBY:
+   141			offp.power_domains = PD_SSE700_AON_MASK;
+   142			offp.stby_clk_freq = SCALED_FREQ_RC_STDBY_76_8_MHZ;
+   143			break;
+   144		case OFF_STATE_STOP:
+   145			break;
+   146		case OFF_STATE_OFF:
+   147			break;
+   148		}
+   149	
+   150		ret = se_service_set_off_cfg(&offp);
+   151		if (ret) {
+   152			LOG_ERR("SE: set_off_cfg failed = %d", ret);
+   153		}
+   154	
+   155		return ret;
+   156	}
+   157	
+   158	static int set_run_params(void)
+   159	{
+   160		run_profile_t runp = {
+   161			.power_domains =
+   162				(PD_VBAT_AON_MASK | PD_SYST_MASK | PD_SSE700_AON_MASK | PD_SESS_MASK
+   163	#if CONFIG_DEBUG || 1
+   164				 | PD_DBSS_MASK
+   165	#endif
+   166				 ),
+   167			.aon_clk_src = CLK_SRC_LFXO,
+   168			.run_clk_src = CLK_SRC_PLL,
+   169			.cpu_clk_freq = CLOCK_FREQUENCY_160MHZ,
+   170			.phy_pwr_gating = LDO_PHY_MASK,
+   171			.ip_clock_gating = LP_PERIPH_MASK,
+   172			.vdd_ioflex_3V3 = IOFLEX_LEVEL_1V8,
+   173			.scaled_clk_freq = SCALED_FREQ_RC_ACTIVE_76_8_MHZ,
+   174			.dcdc_voltage = DEFAULT_DCDC_VOLTAGE,
+   175	#if (IS_ENABLED(CONFIG_SOC_SERIES_E1C) || IS_ENABLED(CONFIG_SOC_SERIES_B1))
+   176			.dcdc_mode = DCDC_MODE_PFM_FORCED,
+   177			.memory_blocks = MEMORY_RETENTION_CONFIG,
+   178	#else
+   179			.dcdc_mode = DCDC_MODE_PWM,
+   180			.memory_blocks = MEMORY_RETENTION_CONFIG | SRAM0_MASK | SRAM1_MASK,
+   181	#endif
+   182		};
+   183	
+   184		se_service_status = se_service_set_run_cfg(&runp);
+   185	
+   186		if (se_service_status) {
+   187			return -ENOEXEC;
+   188		}
+   189	
+   190		/* Default value is 0 so ignore it */
+   191	#if CONFIG_ALIF_BLUETOOTH_COMMON_ACLK_DIVIDER_VALUE
+   192		se_service_status = se_service_clock_set_divider(
+   193			DIVIDER_ACLK, CONFIG_ALIF_BLUETOOTH_COMMON_ACLK_DIVIDER_VALUE);
+   194	
+   195		if (se_service_status) {
+   196			return -ENOEXEC;
+   197		}
+   198	#endif
+   199	
+   200		return 0;
+   201	}
+   202	
+   203	static int pre_configure_profiles(void)
+   204	{
+   205		return set_run_params();
+   206	}
+   207	
+   208	SYS_INIT(pre_configure_profiles, PRE_KERNEL_1, 3);
+   209	
+   210	/**
+   211	 * PM Notifier callback called BEFORE devices are resumed
+   212	 *
+   213	 * This restores SE run configuration when resuming from S2RAM states.
+   214	 * Note: For SOFT_OFF, the system resets completely and set_run_params()
+   215	 * runs during normal PRE_KERNEL_1 initialization, so this callback is not needed.
+   216	 */
+   217	static void pm_notify_pre_device_resume(const enum pm_state state)
+   218	{
+   219		switch (state) {
+   220		case PM_STATE_SUSPEND_TO_IDLE:
+   221			/* No action needed */
+   222			break;
+   223		case PM_STATE_SOFT_OFF:
+   224		case PM_STATE_SUSPEND_TO_RAM: {
+   225			set_run_params();
+   226			break;
+   227		}
+   228		default: {
+   229			__ASSERT(false, "Pre-resume for unknown power state %d", state);
+   230			LOG_ERR("Pre-resume for unknown power state %d", state);
+   231			break;
+   232		}
+   233		}
+   234	}
+   235	
+   236	static struct pm_notifier notifier = {
+   237		.pre_device_resume = pm_notify_pre_device_resume,
+   238	};
+   239	
+   240	/*
+   241	 * This function will be invoked in the PRE_KERNEL_1 phase of the init
+   242	 * routine to prevent sleep during startup.
+   243	 */
+   244	static int app_pre_kernel_init(void)
+   245	{
+   246		pm_notifier_register(&notifier);
+   247	
+   248	#if PREKERNEL_DISABLE_SLEEP
+   249		power_mgr_disable_sleep();
+   250		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
+   251	#endif
+   252	
+   253		return 0;
+   254	}
+   255	SYS_INIT(app_pre_kernel_init, PRE_KERNEL_1, 39);
+   256	
+   257	void print_se_err()
+   258	{
+   259		if (se_service_status) {
+   260			LOG_ERR("SE service failed to initialize earlier. Error: %d", se_service_status);
+   261		}
+   262	}
+   263	
+   264	/*
+   265	 * Prepare configuration at application initialization
+   266	 */
+   267	static int prepare_application_config(void)
+   268	{
+   269		if (se_service_status) {
+   270			LOG_ERR("SE service failed to initialize earlier. Error: %d", se_service_status);
+   271			return se_service_status;
+   272		}
+   273	
+   274		const struct device *const wakeup_dev = DEVICE_DT_GET(DT_NODELABEL(rtc0));
+   275	
+   276		if (!device_is_ready(wakeup_dev)) {
+   277			LOG_ERR("device '%s' not ready", wakeup_dev->name);
+   278			return -1;
+   279		}
+   280	
+   281		int ret = counter_start(wakeup_dev);
+   282	
+   283		if (ret && ret != -EALREADY) {
+   284			LOG_ERR("Counter '%s' start failed!", wakeup_dev->name);
+   285			return -1;
+   286		}
+   287	
+   288		ret = set_off_profile(OFF_STATE_STOP);
+   289	
+   290	#if PREKERNEL_DISABLE_SLEEP
+   291		pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
+   292	#endif
+   293	
+   294		return ret;
+   295	}
+   296	SYS_INIT(prepare_application_config, APPLICATION, 0);
+
+===== POWER MANAGER HEADER =====
+     1	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 */
+     9	
+    10	#ifndef __POWER_MGR_H__
+    11	#define __POWER_MGR_H__
+    12	
+    13	#ifdef __cplusplus
+    14	extern "C" {
+    15	#endif
+    16	
+    17	/* TODO/FIXME: this is a temporary workaround to disable sleep
+    18	 * during pre-kernel initialization.
+    19	 * Remove this when proper PM integration is done.
+    20	 */
+    21	#define PREKERNEL_DISABLE_SLEEP 1
+    22	
+    23	/**
+    24	 * Disable sleep mode.
+    25	 */
+    26	void power_mgr_disable_sleep(void);
+    27	
+    28	/**
+    29	 * Allow sleep mode.
+    30	 */
+    31	void power_mgr_allow_sleep(void);
+    32	
+    33	#if CONFIG_PM && CONFIG_LOG
+    34	/**
+    35	 * Flush log buffer
+    36	 */
+    37	void power_mgr_log_flush(void);
+    38	
+    39	void print_se_err(void);
+    40	#else
+    41	#define power_mgr_log_flush()
+    42	#endif
+    43	
+    44	#ifdef __cplusplus
+    45	}
+    46	#endif
+    47	
+    48	#endif /* __POWER_MGR_H__ */
+
+===== POWER MANAGER INCLUDE AND CALL SITES =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:44:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:47:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:234:// 	power_mgr_allow_sleep();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:250:// 		power_mgr_disable_sleep();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:255:// 		power_mgr_allow_sleep();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:41:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc.bak_itgu_diag_v2_20261106_232545:24:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc:24:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc.bak_itgu_diag_20261106_232240:24:#include "power_mgr.h"             /* power management APIs */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.h:26:void power_mgr_disable_sleep(void);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.h:31:void power_mgr_allow_sleep(void);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.h:37:void power_mgr_log_flush(void);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.h:41:#define power_mgr_log_flush()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:20:#include "power_mgr.h"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:30:LOG_MODULE_REGISTER(common_ble_power_mgr, LOG_LEVEL_INF);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:81:void power_mgr_disable_sleep(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:84:	pm_policy_state_lock_get(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:85:	pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:88:void power_mgr_allow_sleep(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:90:	pm_policy_state_lock_put(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:91:	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:98:void power_mgr_log_flush(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:110:static int set_off_profile(enum off_state const mode)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:208:SYS_INIT(pre_configure_profiles, PRE_KERNEL_1, 3);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:217:static void pm_notify_pre_device_resume(const enum pm_state state)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:220:	case PM_STATE_SUSPEND_TO_IDLE:
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:223:	case PM_STATE_SOFT_OFF:
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:224:	case PM_STATE_SUSPEND_TO_RAM: {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:249:	power_mgr_disable_sleep();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:250:	pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:255:SYS_INIT(app_pre_kernel_init, PRE_KERNEL_1, 39);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:267:static int prepare_application_config(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:281:	int ret = counter_start(wakeup_dev);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:288:	ret = set_off_profile(OFF_STATE_STOP);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:291:	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:296:SYS_INIT(prepare_application_config, APPLICATION, 0);
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:227:    src/power/power_mgr.c
+
+===== GENERATED RTC NODE =====
+					drive-strength = < 0xc >;
+					slew-rate = < 0x1 >;
+				};
+			};
+		};
+		rtc0: lprtc@42000000 {
+			compatible = "snps,dw-apb-rtc";
+			reg = < 0x42000000 0x1000 >;
+			interrupts = < 0x3a 0x0 >;
+			clock-frequency = < 0x8000 >;
+			prescaler = < 0x0 >;
+			load-value = < 0x0 >;
+			status = "disabled";
+		};
+		sdhc: sdhc@48102000 {
+			compatible = "snps,dwc-sdhc";
+			reg = < 0x48102000 0xf70 >;
+			interrupt-parent = < &nvic >;
+			interrupts = < 0x66 0x0 >, < 0x67 0x0 >;
+			interrupt-names = "sdmmc", "sdmmc_wakeup";
+			max-bus-freq = < 0x2faf080 >;
+			min-bus-freq = < 0x61a80 >;
+			power-delay-ms = < 0x1f4 >;
+			pinctrl-0 = < &pinctrl_sdmmc >;
+			pinctrl-names = "default";
+			cd-gpios = < &gpio3 0x3 0x1 >;
+			status = "disabled";
+			vmmc-supply = < &sd_pwr >;
+			vqmmc-supply = < &sd_vsel >;
+			mmc {
+				compatible = "zephyr,sdmmc-disk";
+				bus-width = < 0x4 >;
+				status = "disabled";
+			};
+		};
+		peripheral@40000000 {
+
+===== GENERATED POWER STATES =====
+		};
+	};
+	power-states {
+		suspend_idle: suspend_idle {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			min-residency-us = < 0x9c4 >;
+			exit-latency-us = < 0x1f4 >;
+			substate-id = < 0x0 >;
+			zephyr,pm-device-disabled;
+			status = "disabled";
+			phandle = < 0x8c >;
+		};
+		standby_s2ram: standby_s2ram {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-ram";
+			min-residency-us = < 0xf4240 >;
+			exit-latency-us = < 0x2710 >;
+			substate-id = < 0x0 >;
+			status = "disabled";
+			phandle = < 0x8d >;
+		};
+		stop_s2ram: stop_s2ram {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-ram";
+			min-residency-us = < 0x1e8480 >;
+			exit-latency-us = < 0x4e20 >;
+			substate-id = < 0x1 >;
+			status = "disabled";
+			phandle = < 0x8e >;
+		};
+		subsys_off: subsys_off {
+			compatible = "zephyr,power-state";
+			power-state-name = "soft-off";
+			min-residency-us = < 0x4c4b40 >;
+			exit-latency-us = < 0xea60 >;
+			status = "disabled";
+			phandle = < 0x8f >;
+		};
+	};
+	cpus {
+
+===== RELEVANT POWER CONFIGURATION =====
+CONFIG_COUNTER=y
+CONFIG_PM_DEVICE=y
+CONFIG_PM=y
+CONFIG_PM_DEVICE_SYSTEM_MANAGED=y
+CONFIG_PM_DEVICE_POWER_DOMAIN=y
+# CONFIG_PM_NEED_ALL_DEVICES_IDLE is not set
+CONFIG_ARM_ETHOS_U55_256=y
+# CONFIG_ARM_ETHOS_U85_256 is not set
+CONFIG_COUNTER_INIT_PRIORITY=60
+# CONFIG_COUNTER_LOG_LEVEL_OFF is not set
+# CONFIG_COUNTER_LOG_LEVEL_ERR is not set
+# CONFIG_COUNTER_LOG_LEVEL_WRN is not set
+# CONFIG_COUNTER_LOG_LEVEL_INF is not set
+# CONFIG_COUNTER_LOG_LEVEL_DBG is not set
+CONFIG_COUNTER_LOG_LEVEL_DEFAULT=y
+CONFIG_COUNTER_LOG_LEVEL=3
+# CONFIG_PM_CPU_OPS is not set
+CONFIG_PM_POLICY_DEFAULT=y
+# CONFIG_PM_POLICY_CUSTOM is not set
+# CONFIG_PM_POLICY_DEVICE_CONSTRAINTS is not set
+# CONFIG_PM_LOG_LEVEL_OFF is not set
+# CONFIG_PM_LOG_LEVEL_ERR is not set
+# CONFIG_PM_LOG_LEVEL_WRN is not set
+# CONFIG_PM_LOG_LEVEL_INF is not set
+# CONFIG_PM_LOG_LEVEL_DBG is not set
+CONFIG_PM_LOG_LEVEL_DEFAULT=y
+CONFIG_PM_LOG_LEVEL=3
+CONFIG_PM_S2RAM=y
+# CONFIG_PM_S2RAM_CUSTOM_MARKING is not set
+CONFIG_PM_SAU_SAVE_RESTORE=y
+# CONFIG_PM_DEVICE_LOG_LEVEL_OFF is not set
+# CONFIG_PM_DEVICE_LOG_LEVEL_ERR is not set
+# CONFIG_PM_DEVICE_LOG_LEVEL_WRN is not set
+# CONFIG_PM_DEVICE_LOG_LEVEL_INF is not set
+# CONFIG_PM_DEVICE_LOG_LEVEL_DBG is not set
+CONFIG_PM_DEVICE_LOG_LEVEL_DEFAULT=y
+CONFIG_PM_DEVICE_LOG_LEVEL=3
+# CONFIG_PM_DEVICE_RUNTIME is not set
+
+===== CURRENT HP OVERLAY =====
+#include "alif_e8_common.overlay"
+
+&ethosu0 {
+    status = "okay";
+};
