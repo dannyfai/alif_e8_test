@@ -1,0 +1,293 @@
+=== ACTIVE LINKER MEMORY REGIONS ===
+2-_region_min_align = 32;
+3-MEMORY
+4-    {
+5:    FLASH (rx) : ORIGIN = (0x80000000 + 0x200000), LENGTH = (5632 * 1024 - 0x200000 - 0x0)
+6:    RAM (wx) : ORIGIN = 0x20000000, LENGTH = (1024 * 1K)
+7:    SRAM0 ( rw ) : ORIGIN = (33554432), LENGTH = (4194304) HOST_PERIPHERAL ( rw ) : ORIGIN = (436207616), LENGTH = (16777216) SRAM1 ( rw ) : ORIGIN = (37748736), LENGTH = (4194304) OSPI1 ( rw ) : ORIGIN = (3221225472), LENGTH = (67108864)
+8:    IDT_LIST (wx) : ORIGIN = 0xFFFF7FFF, LENGTH = 32K
+9-    }
+10-ENTRY("__start")
+11-SECTIONS {
+12-
+13-.alif_sram0 (NOLOAD) :
+14- {
+15-KEEP(*(.alif_sram0))
+16-KEEP(*(".alif_sram0.*"))
+17-KEEP(*(.noinit.*kheap_buf_video_buffer_pool))
+18-KEEP(*(.bss.disk_buf_0))
+19: } > SRAM0
+20-
+21-
+22-.alif_sram1 (NOLOAD) :
+23- {
+24-KEEP(*(.alif_sram1))
+25-KEEP(*(".alif_sram1.*"))
+26: } > SRAM1
+27-
+28-}
+29-SECTIONS
+30-    {
+31- .rel.plt :
+32- {
+33- *(.rel.plt)
+34- PROVIDE_HIDDEN (__rel_iplt_start = .);
+35- *(.rel.iplt)
+36- PROVIDE_HIDDEN (__rel_iplt_end = .);
+37- }
+38- .rela.plt :
+39- {
+40- *(.rela.plt)
+41- PROVIDE_HIDDEN (__rela_iplt_start = .);
+42- *(.rela.iplt)
+43- PROVIDE_HIDDEN (__rela_iplt_end = .);
+44- }
+45- .rel.dyn :
+46- {
+47- *(.rel.*)
+48- }
+49- .rela.dyn :
+50- {
+51- *(.rela.*)
+52- }
+53-    /DISCARD/ :
+54- {
+55- *(.plt)
+56- }
+57-    /DISCARD/ :
+58- {
+59- *(.iplt)
+60- }
+61-   
+62- __rom_region_start = (0x80000000 + 0x200000);
+63-    rom_start :
+64- {
+65-HIDDEN(__rom_start_address = .);
+66-FILL(0x00);
+67-. += 0x0 - (. - __rom_start_address);
+68-. = ALIGN(4);
+69-. = ALIGN( 1 << LOG2CEIL(4 * 32) );
+70-. = ALIGN( 1 << LOG2CEIL(4 * (16 + 480)) );
+71-_vector_start = .;
+--
+409- KEEP(*(.ARM.attributes))
+410- KEEP(*(.gnu.attributes))
+411- }
+412:    SRAM0 (NOLOAD) : { __SRAM0_start = .; KEEP(*(SRAM0)) KEEP(*(SRAM0.*)) __SRAM0_end = .; } > SRAM0 __SRAM0_size = __SRAM0_end - __SRAM0_start; __SRAM0_load_start = LOADADDR(SRAM0); HOST_PERIPHERAL (NOLOAD) : { __HOST_PERIPHERAL_start = .; KEEP(*(HOST_PERIPHERAL)) KEEP(*(HOST_PERIPHERAL.*)) __HOST_PERIPHERAL_end = .; } > HOST_PERIPHERAL __HOST_PERIPHERAL_size = __HOST_PERIPHERAL_end - __HOST_PERIPHERAL_start; __HOST_PERIPHERAL_load_start = LOADADDR(HOST_PERIPHERAL); SRAM1 (NOLOAD) : { __SRAM1_start = .; KEEP(*(SRAM1)) KEEP(*(SRAM1.*)) __SRAM1_end = .; } > SRAM1 __SRAM1_size = __SRAM1_end - __SRAM1_start; __SRAM1_load_start = LOADADDR(SRAM1); OSPI1 (NOLOAD) : { __OSPI1_start = .; KEEP(*(OSPI1)) KEEP(*(OSPI1.*)) __OSPI1_end = .; } > OSPI1 __OSPI1_size = __OSPI1_end - __OSPI1_start; __OSPI1_load_start = LOADADDR(OSPI1);
+413-.last_section :
+414-{
+415-  LONG(0xE015E015)
+416-} > FLASH
+417-_flash_used = LOADADDR(.last_section) + SIZEOF(.last_section) - __rom_region_start;
+418-    bss (NOLOAD) : ALIGN_WITH_INPUT
+419- {
+420-        . = ALIGN(4);
+421- __bss_start = .;
+422- __kernel_ram_start = .;
+423- *(.bss)
+424- *(".bss.*")
+425- *(COMMON)
+426- *(".kernel_bss.*")
+427- __bss_end = ALIGN(4);
+428- } > RAM AT > RAM
+429-noinit (NOLOAD) :
+430-{
+431-        *(.noinit)
+432-        *(".noinit.*")
+433-} > RAM AT > RAM
+434-    __kernel_ram_end = 0x20000000 + (1024 * 1K);
+435-    __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
+436-    .last_ram_section (NOLOAD) :
+437-    {
+438- _image_ram_end = .;
+439- _image_ram_size = _image_ram_end - _image_ram_start;
+440- _end = .;
+441- z_mapped_end = .;
+442-    } > RAM AT > RAM
+443-   
+444-    }
+
+=== ACTIVE BSS OUTPUT SECTIONS ===
+5-    FLASH (rx) : ORIGIN = (0x80000000 + 0x200000), LENGTH = (5632 * 1024 - 0x200000 - 0x0)
+6-    RAM (wx) : ORIGIN = 0x20000000, LENGTH = (1024 * 1K)
+7-    SRAM0 ( rw ) : ORIGIN = (33554432), LENGTH = (4194304) HOST_PERIPHERAL ( rw ) : ORIGIN = (436207616), LENGTH = (16777216) SRAM1 ( rw ) : ORIGIN = (37748736), LENGTH = (4194304) OSPI1 ( rw ) : ORIGIN = (3221225472), LENGTH = (67108864)
+8-    IDT_LIST (wx) : ORIGIN = 0xFFFF7FFF, LENGTH = 32K
+9-    }
+10-ENTRY("__start")
+11-SECTIONS {
+12-
+13:.alif_sram0 (NOLOAD) :
+14- {
+15-KEEP(*(.alif_sram0))
+16-KEEP(*(".alif_sram0.*"))
+17-KEEP(*(.noinit.*kheap_buf_video_buffer_pool))
+18-KEEP(*(.bss.disk_buf_0))
+19- } > SRAM0
+20-
+21-
+22:.alif_sram1 (NOLOAD) :
+23- {
+24-KEEP(*(.alif_sram1))
+25-KEEP(*(".alif_sram1.*"))
+26- } > SRAM1
+27-
+28-}
+29-SECTIONS
+30-    {
+31- .rel.plt :
+32- {
+33- *(.rel.plt)
+34- PROVIDE_HIDDEN (__rel_iplt_start = .);
+35- *(.rel.iplt)
+36- PROVIDE_HIDDEN (__rel_iplt_end = .);
+37- }
+38- .rela.plt :
+39- {
+40- *(.rela.plt)
+41- PROVIDE_HIDDEN (__rela_iplt_start = .);
+42- *(.rela.iplt)
+43- PROVIDE_HIDDEN (__rela_iplt_end = .);
+44- }
+45- .rel.dyn :
+46- {
+47- *(.rel.*)
+48- }
+49- .rela.dyn :
+50- {
+51- *(.rela.*)
+52- }
+53-    /DISCARD/ :
+54- {
+55- *(.plt)
+56- }
+57-    /DISCARD/ :
+58- {
+59- *(.iplt)
+60- }
+61-   
+62- __rom_region_start = (0x80000000 + 0x200000);
+63-    rom_start :
+64- {
+65-HIDDEN(__rom_start_address = .);
+66-FILL(0x00);
+67-. += 0x0 - (. - __rom_start_address);
+68-. = ALIGN(4);
+69-. = ALIGN( 1 << LOG2CEIL(4 * 32) );
+70-. = ALIGN( 1 << LOG2CEIL(4 * (16 + 480)) );
+71-_vector_start = .;
+72-KEEP(*(.exc_vector_table))
+73-KEEP(*(".exc_vector_table.*"))
+74-KEEP(*(.vectors))
+75-_vector_end = .;
+76-. = ALIGN(4);
+77-KEEP(*(.gnu.linkonce.irq_vector_table*))
+78- _vector_end = .;
+79- } > FLASH
+80-    text :
+81- {
+82- __text_region_start = .;
+83- *(.text)
+84- *(".text.*")
+85- *(".TEXT.*")
+86- *(.gnu.linkonce.t.*)
+87- *(.glue_7t) *(.glue_7) *(.vfp11_veneer) *(.v4_bx)
+--
+404- .debug_str_offsets 0 : { *(.debug_str_offsets) }
+405- .debug_sup 0 : { *(.debug_sup) }
+406-    /DISCARD/ : { *(.note.GNU-stack) }
+407-    .ARM.attributes 0 :
+408- {
+409- KEEP(*(.ARM.attributes))
+410- KEEP(*(.gnu.attributes))
+411- }
+412:    SRAM0 (NOLOAD) : { __SRAM0_start = .; KEEP(*(SRAM0)) KEEP(*(SRAM0.*)) __SRAM0_end = .; } > SRAM0 __SRAM0_size = __SRAM0_end - __SRAM0_start; __SRAM0_load_start = LOADADDR(SRAM0); HOST_PERIPHERAL (NOLOAD) : { __HOST_PERIPHERAL_start = .; KEEP(*(HOST_PERIPHERAL)) KEEP(*(HOST_PERIPHERAL.*)) __HOST_PERIPHERAL_end = .; } > HOST_PERIPHERAL __HOST_PERIPHERAL_size = __HOST_PERIPHERAL_end - __HOST_PERIPHERAL_start; __HOST_PERIPHERAL_load_start = LOADADDR(HOST_PERIPHERAL); SRAM1 (NOLOAD) : { __SRAM1_start = .; KEEP(*(SRAM1)) KEEP(*(SRAM1.*)) __SRAM1_end = .; } > SRAM1 __SRAM1_size = __SRAM1_end - __SRAM1_start; __SRAM1_load_start = LOADADDR(SRAM1); OSPI1 (NOLOAD) : { __OSPI1_start = .; KEEP(*(OSPI1)) KEEP(*(OSPI1.*)) __OSPI1_end = .; } > OSPI1 __OSPI1_size = __OSPI1_end - __OSPI1_start; __OSPI1_load_start = LOADADDR(OSPI1);
+413-.last_section :
+414-{
+415-  LONG(0xE015E015)
+416-} > FLASH
+417-_flash_used = LOADADDR(.last_section) + SIZEOF(.last_section) - __rom_region_start;
+418:    bss (NOLOAD) : ALIGN_WITH_INPUT
+419- {
+420-        . = ALIGN(4);
+421- __bss_start = .;
+422- __kernel_ram_start = .;
+423- *(.bss)
+424- *(".bss.*")
+425- *(COMMON)
+426- *(".kernel_bss.*")
+427- __bss_end = ALIGN(4);
+428- } > RAM AT > RAM
+429:noinit (NOLOAD) :
+430-{
+431-        *(.noinit)
+432-        *(".noinit.*")
+433-} > RAM AT > RAM
+434-    __kernel_ram_end = 0x20000000 + (1024 * 1K);
+435-    __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
+436:    .last_ram_section (NOLOAD) :
+437-    {
+438- _image_ram_end = .;
+439- _image_ram_size = _image_ram_end - _image_ram_start;
+440- _end = .;
+441- z_mapped_end = .;
+442-    } > RAM AT > RAM
+443-   
+444-    }
+
+=== ZEPHYR LINKER EXTENSION SUPPORT ===
+/home/user/sdk-alif/zephyr/cmake/modules/kernel.cmake:118:zephyr_linker_sources(SECTIONS)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/nios2/linker.ld:194:        } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/nios2/linker.ld:240:        } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/nios2/linker.ld:271:        } GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/mips/linker.ld:135:	} GROUP_DATA_LINK_IN(REGION_DATA_VMA, REGION_DATA_LMA)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_a_r/scripts/linker.ld:90:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_a_r/scripts/linker.ld:309:    } GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_a_r/scripts/linker.ld:331:    } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_m/scripts/linker.ld:93:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_m/scripts/linker.ld:302:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm/cortex_m/scripts/linker.ld:447:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/pagetables.ld:30:    } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/ia32/linker.ld:145:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/ia32/linker.ld:254:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/ia32/linker.ld:461:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/intel64/linker.ld:186:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/x86/memory.ld:98:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm64/scripts/linker.ld:70:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arm64/scripts/linker.ld:258:    } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/sparc/linker.ld:109:	}  GROUP_DATA_LINK_IN(REGION_DATA_VMA, REGION_DATA_LMA)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/riscv/common/linker.ld:117:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/include/zephyr/arch/riscv/common/linker.ld:291:	}  GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/riscv/common/linker.ld:334:	}  GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arc/v2/linker.ld:210:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arc/v2/linker.ld:232:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arc/v2/linker.ld:277:	} GROUP_DATA_LINK_IN(XCCM, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/arc/v2/linker.ld:284:	} GROUP_DATA_LINK_IN(YCCM, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/arch/posix/linker.ld:56:} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:29:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:36:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:48:        } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:58:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:109:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/common-ram.ld:121:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/kobject-priv-stacks.ld:56:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/kobject-data.ld:74:        } GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/iterable_sections.h:111:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/iterable_sections.h:126:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/iterable_sections.h:144:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-lld.h:49: * GROUP_DATA_LINK_IN to specify the correct output load address.
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-mwdt.h:59:#define GROUP_DATA_LINK_IN(vregion, lregion) > vregion AT > lregion
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-mwdt.h:61:#define GROUP_DATA_LINK_IN(vregion, lregion) > vregion
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-gcc.h:123: * @def GROUP_DATA_LINK_IN
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-gcc.h:135:#define GROUP_DATA_LINK_IN(vregion, lregion)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-gcc.h:137:#define GROUP_DATA_LINK_IN(vregion, lregion) > vregion AT > lregion
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-gcc.h:139:#define GROUP_DATA_LINK_IN(vregion, lregion) > vregion
+/home/user/sdk-alif/zephyr/include/zephyr/linker/linker-tool-gcc.h:191: * GROUP_DATA_LINK_IN to specify the correct output load address.
+/home/user/sdk-alif/zephyr/include/zephyr/linker/devicetree_regions.h:235:#define LINKER_DT_REGIONS() \
+/home/user/sdk-alif/zephyr/include/zephyr/linker/cplusplus-ram.ld:11:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/include/zephyr/linker/cplusplus-ram.ld:18:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/linker.ld:95:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/linker.ld:305:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/balletto/common/linker.ld:450:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld:94:    LINKER_DT_REGIONS()
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld:304:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld:449:	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
