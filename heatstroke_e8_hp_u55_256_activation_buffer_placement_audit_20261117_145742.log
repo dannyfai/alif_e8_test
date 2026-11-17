@@ -1,0 +1,325 @@
+=== ACTIVATION BUFFER SOURCE DEFINITION ===
+   145	#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+   146	
+   147	#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+   148	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+   149	#elif CONFIG_LPGPIO_WAKEUP_SOURCE == 1
+   150	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+   151	#else
+   152	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO0
+   153	#endif
+   154	#else
+   155	#define LPGPIO_EWIC_CFG 0
+   156	#define LPGPIO_WAKEUP_EVENT 0
+   157	#endif
+   158	
+   159	namespace arm {
+   160	namespace app {
+   161	    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+   162	
+   163	    namespace polyu_heatstroke {
+   164	extern const uint8_t* GetModelPointer();
+   165	extern size_t GetModelLen();
+   166	} /* namespace polyu_heatstroke */
+   167	
+   168	} /* namespace app */
+   169	} /* namespace arm */
+   170	
+
+=== ACTIVATION BUFFER ATTRIBUTE AND SECTION DEFINITIONS ===
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.conf:28:#CONFIG_ACTIVATION_BUF_SZ=0xA0000
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.conf:29:#CONFIG_ACTIVATION_BUF_SZ=0x100000
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.conf:30:CONFIG_ACTIVATION_BUF_SZ=0x120000
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:14:CONFIG_ACTIVATION_BUF_SZ=0x200000
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf:15:CONFIG_ACTIVATION_BUF_SZ=0x200000
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/heatstroke_activation_plus_64k_20261110_093157.conf:1:CONFIG_ACTIVATION_BUF_SZ=0x130000
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/heatstroke_arena130000_kernelheap64k_20261110_094648.conf:2:CONFIG_ACTIVATION_BUF_SZ=0x130000
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:161:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:26:#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:35:#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc:28:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/ObjectDetectionUCTest.cc:30:        static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/Wav2LetterPostprocessingTest.cc:29:        static uint8_t  tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InitModels.cc:25:        static uint8_t  tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/ImgClassificationUCTest.cc:31:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/VisualWakeWordUCTests.cc:31:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/inference_runner/InferenceTestInferenceRunner.cc:26:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNNoiseUCTests.cc:28:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/ad/InferenceTestAD.cc:33:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws/KWSHandlerTest.cc:31:        static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws/InferenceTestMicroNetKws.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/asr/tflm/Wav2LetterPostprocessingTest.cc:29:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/asr/tflm/InferenceTestWav2Letter.cc:27:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.gnu.ld:159:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.gnu.ld:227:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.llvm.ld:177:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.llvm.ld:241:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.gnu.ld:159:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.gnu.ld:227:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.llvm.ld:177:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.llvm.ld:241:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.gnu.ld:162:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.gnu.ld:207:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.llvm.ld:93:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.llvm.ld:126:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.gnu.ld:154:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.gnu.ld:222:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.llvm.ld:90:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.llvm.ld:236:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld:180:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld:196:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld:145:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld:161:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld:145:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld:161:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld:191:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld:207:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld:161:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:157:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:167:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:132:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld:167:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:131:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP.ld:174:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.gnu.ld:155:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.gnu.ld:200:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.llvm.ld:93:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.llvm.ld:126:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/native/build_configuration.cmake:151:                "ACTIVATION_BUF_SZ=${${use_case}_ACTIVATION_BUF_SZ}"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_kws/usecase.cmake:69:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_kws/src/MainLoop.cc:41:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/object_detection/usecase.cmake:54:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/object_detection/src/MainLoop.cc:27:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_vww/usecase.cmake:40:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_vww/src/MainLoop.cc:28:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/kws_asr/usecase.cmake:72:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/kws_asr/src/MainLoop.cc:41:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection/usecase.cmake:56:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection/src/MainLoop.cc:38:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_asr/usecase.cmake:116:    USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_asr/usecase.cmake:144:    USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_asr/src/MainLoop.cc:50:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/usecase.cmake:42:    set(DEFAULT_ACTIVATION_BUF_SZ  0x00200000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/usecase.cmake:57:        set(DEFAULT_ACTIVATION_BUF_SZ   0x00200000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/usecase.cmake:60:        set(DEFAULT_ACTIVATION_BUF_SZ   0x00C00000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/usecase.cmake:83:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/usecase.cmake:84:        ${DEFAULT_ACTIVATION_BUF_SZ}
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_img_class/src/MainLoop.cc:44:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/usecase.cmake:39:    set(DEFAULT_ACTIVATION_BUF_SZ  0x00200000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/usecase.cmake:54:        set(DEFAULT_ACTIVATION_BUF_SZ   0x00200000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/usecase.cmake:57:        set(DEFAULT_ACTIVATION_BUF_SZ   0x00C00000)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/usecase.cmake:80:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/usecase.cmake:81:        ${DEFAULT_ACTIVATION_BUF_SZ}
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/img_class/src/MainLoop.cc:33:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/vww/usecase.cmake:41:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/vww/src/MainLoop.cc:29:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:34:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/MainLoop.cc:27:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/noise_reduction/usecase.cmake:31:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/noise_reduction/src/MainLoop.cc:26:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_kws_with_power/usecase.cmake:69:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_kws_with_power/src/MainLoop.cc:45:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/ad/usecase.cmake:70:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/ad/src/MainLoop.cc:30:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_ad/usecase.cmake:50:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_ad/src/MainLoop.cc:29:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/kws/usecase.cmake:83:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/kws/src/MainLoop.cc:29:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/asr/usecase.cmake:106:    USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/asr/usecase.cmake:134:    USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/asr/src/MainLoop.cc:38:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection_power/usecase.cmake:56:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection_power/src/MainLoop.cc:44:    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:32:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:33:    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:57:#ifndef ACTIVATION_BUF_SZ
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:58:    #warning  "ACTIVATION_BUF_SZ needs to be defined. Using default value"
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:59:    #define ACTIVATION_BUF_SZ       0x00200000
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:60:#endif  /* ACTIVATION_BUF_SZ */
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:68:#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:75:#define ACTIVATION_BUF_ATTRIBUTE
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:46:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:47:    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:49:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:50:    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:52:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:54:    #define ACTIVATION_BUF_SECTION_NAME ("DDR/DRAM")
+
+=== LINKER MAP ACTIVATION REFERENCES ===
+304:modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+306:modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+1648: .text._ZN6tflite12_GLOBAL__N_129InitializeFloatLstmParametersEPNS_10OpDataLSTMEbiiii21TfLiteFusedActivationf.constprop.0
+1660: .text._ZN6tflite13lstm_internal17CalculateLstmGateIffffEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+2068: .noinit."WEST_TOPDIR/zephyr/subsys/logging/log_core.c".0
+5284: .rodata._ZN6tflite33CalculateActivationRangeQuantizedEP13TfLiteContext21TfLiteFusedActivationP12TfLiteTensorPiS5_.str1.1
+5286: .text._ZN6tflite33CalculateActivationRangeQuantizedEP13TfLiteContext21TfLiteFusedActivationP12TfLiteTensorPiS5_
+5288: .rodata._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_i.str1.1
+5290: .text._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_i
+5292: .text._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_
+5686: .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5687: .text          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5688: .data          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5689: .bss           0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5691:                0x0000000000000000        0x6 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5693:                0x0000000000000000        0x6 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5695:                0x0000000000000000       0x2c modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5697:                0x0000000000000000       0x90 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5699:                0x0000000000000000       0x20 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5701:                0x0000000000000000      0x104 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5703:                0x0000000000000000       0x28 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5705:                0x0000000000000000       0x28 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5706: .debug_info    0x0000000000000000     0x4c2c modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5707: .debug_abbrev  0x0000000000000000      0x8aa modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5708: .debug_loc     0x0000000000000000      0x6e4 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5710:                0x0000000000000000       0x50 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5711: .debug_ranges  0x0000000000000000      0x150 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5712: .debug_line    0x0000000000000000      0xccc modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5713: .debug_str     0x0000000000000000     0x2e5b modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5714: .comment       0x0000000000000000       0x21 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5715: .debug_frame   0x0000000000000000       0xd0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+5716: .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5717: .text          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5718: .data          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5719: .bss           0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5721:                0x0000000000000000       0x20 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5723:                0x0000000000000000       0x46 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5725:                0x0000000000000000       0x40 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5727:                0x0000000000000000       0x54 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5729:                0x0000000000000000       0x9c modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5731:                0x0000000000000000       0xf4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5733:                0x0000000000000000       0xb0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5734: .rodata._ZN6tflite24kActivationsOutputTensorE
+5735:                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5736: .rodata._ZN6tflite23kActivationsInputTensorE
+5737:                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5738: .debug_info    0x0000000000000000     0x49db modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5739: .debug_abbrev  0x0000000000000000      0x8bc modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5740: .debug_loc     0x0000000000000000      0x892 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5742:                0x0000000000000000       0x48 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5743: .debug_ranges  0x0000000000000000      0x198 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5744: .debug_line    0x0000000000000000      0xe1f modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5745: .debug_str     0x0000000000000000     0x2d05 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5746: .comment       0x0000000000000000       0x21 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+5747: .debug_frame   0x0000000000000000       0xe0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+7153: .text._ZN6tflite25FullyConnectedParamsFloatE21TfLiteFusedActivation
+7155: .rodata._ZN6tflite29CalculateOpDataFullyConnectedEP13TfLiteContext21TfLiteFusedActivation10TfLiteTypePK12TfLiteTensorS6_S6_PS4_PNS_20OpDataFullyConnectedE.str1.1
+7157: .text._ZN6tflite29CalculateOpDataFullyConnectedEP13TfLiteContext21TfLiteFusedActivation10TfLiteTypePK12TfLiteTensorS6_S6_PS4_PNS_20OpDataFullyConnectedE
+7948: .text._ZN6tflite31PortableApplyActivationToVectorEPKfi21TfLiteFusedActivationPf
+9141: .rodata._ZN6tflite31kSvdfInputActivationStateTensorE
+9307: .text._ZN6tflite13lstm_internal17CalculateLstmGateIffffEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+9311: .text._ZN6tflite13lstm_internal17CalculateLstmGateIaasiEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+9317: .text._ZN6tflite13lstm_internal17CalculateLstmGateIsasxEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+19738:SRAM0            0x0000000002000000 0x0000000000400000 rw
+19740:SRAM1            0x0000000002400000 0x0000000000400000 rw
+19790:.alif_sram0
+19791: *(SORT_BY_ALIGNMENT(.alif_sram0))
+19792: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+19793: *(SORT_BY_ALIGNMENT(.noinit.*kheap_buf_video_buffer_pool))
+19796:.alif_sram1
+19797: *(SORT_BY_ALIGNMENT(.alif_sram1))
+19798: *(SORT_BY_ALIGNMENT(.alif_sram1.*))
+24974:                0x0000000000002530       0x3e modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+24976:                0x000000000000256e       0x3e modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+26067:SRAM0           0x0000000002000000        0x0
+26068:                0x0000000002000000                __SRAM0_start = .
+26069: *(SORT_BY_ALIGNMENT(SRAM0))
+26070: *(SORT_BY_ALIGNMENT(SRAM0.*))
+26071:                0x0000000002000000                __SRAM0_end = .
+26072:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+26073:                0x0000000002000000                __SRAM0_load_start = LOADADDR (SRAM0)
+26084:SRAM1           0x0000000002400000        0x0
+26085:                0x0000000002400000                __SRAM1_start = .
+26086: *(SORT_BY_ALIGNMENT(SRAM1))
+26087: *(SORT_BY_ALIGNMENT(SRAM1.*))
+26088:                0x0000000002400000                __SRAM1_end = .
+26089:                0x0000000000000000                __SRAM1_size = (__SRAM1_end - __SRAM1_start)
+26090:                0x0000000002400000                __SRAM1_load_start = LOADADDR (SRAM1)
+26315: *(SORT_BY_ALIGNMENT(.noinit))
+26316: *(SORT_BY_ALIGNMENT(.noinit.*))
+26317: .noinit."WEST_TOPDIR/zephyr/arch/arm/core/cortex_m/pm_s2ram.c".1
+26319: .noinit."WEST_TOPDIR/zephyr/kernel/init.c".2
+26322: .noinit."WEST_TOPDIR/zephyr/kernel/init.c".1
+26324: .noinit."WEST_TOPDIR/zephyr/kernel/init.c".0
+26327: .noinit."WEST_TOPDIR/zephyr/kernel/mempool.c".kheap_buf__system_heap
+26330: .noinit."WEST_TOPDIR/zephyr/kernel/system_work_q.c".0
+26332: .noinit."WEST_TOPDIR/zephyr/arch/arm/core/cortex_m/pm_s2ram.c".2
+26334: .noinit."WEST_TOPDIR/zephyr/arch/arm/core/cortex_m/pm_s2ram.c".0
+
+=== ELF SECTION HEADERS ===
+There are 44 section headers, starting at offset 0x17b5434:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] rom_start         PROGBITS        80200000 0000f8 0007c0 00 WAX  0   0  4
+  [ 2] text              PROGBITS        802007c0 0008b8 015568 00  AX  0   0  8
+  [ 3] .ARM.extab        PROGBITS        80215d28 015e20 0000bc 00   A  0   0  4
+  [ 4] .ARM.exidx        ARM_EXIDX       80215de4 015edc 000188 00  AL  2   0  4
+  [ 5] initlevel         PROGBITS        80215f6c 016064 000120 00   A  0   0  4
+  [ 6] device_area       PROGBITS        8021608c 016184 000284 00   A  0   0  4
+  [ 7] sw_isr_table      PROGBITS        80216310 016408 000f00 00  WA  0   0  4
+  [ 8] device_deps       PROGBITS        80217210 017308 00009a 00   A  0   0  2
+  [ 9] gpio_driver_api_area PROGBITS        802172ac 0173a4 000024 00   A  0   0  4
+  [10] i2c_driver_api_area PROGBITS        802172d0 0173c8 000018 00   A  0   0  4
+  [11] clock_control_driver_api_area PROGBITS        802172e8 0173e0 00001c 00   A  0   0  4
+  [12] uart_driver_api_area PROGBITS        80217304 0173fc 00004c 00   A  0   0  4
+  [13] ctors             PROGBITS        80217350 017448 00000c 00  WA  0   0  1
+  [14] init_array        INIT_ARRAY      8021735c 017454 000008 04  WA  0   0  4
+  [15] log_const_area    PROGBITS        80217364 01745c 0000b8 00   A  0   0  4
+  [16] log_backend_area  PROGBITS        8021741c 017514 000010 00   A  0   0  4
+  [17] rodata            PROGBITS        80217430 017528 003bb4 00   A  0   0  8
+  [18] .ramfunc          PROGBITS        20000000 a9f050 000000 00   W  0   0  1
+  [19] datas             PROGBITS        20000000 01b0e0 000a74 00  WA  0   0  8
+  [20] device_states     PROGBITS        20000a74 01bb54 00002e 00  WA  0   0  1
+  [21] pm_device_slots_area PROGBITS        20000aa4 01bb84 0000c4 00  WA  0   0  4
+  [22] log_msg_ptr_area  PROGBITS        20000b68 01bc48 000004 00  WA  0   0  4
+  [23] k_heap_area       PROGBITS        20000b6c 01bc4c 000018 00  WA  0   0  4
+  [24] k_mutex_area      PROGBITS        20000b84 01bc64 00003c 00  WA  0   0  4
+  [25] k_sem_area        PROGBITS        20000bc0 01bca0 000020 00  WA  0   0  4
+  [26] k_fifo_area       PROGBITS        20000be0 01bcc0 000028 00  WA  0   0  4
+  [27] ospi1             PROGBITS        c0000000 01bcf0 a83360 00   A  0   0 16
+  [28] .comment          PROGBITS        00000000 a9f050 000020 01  MS  0   0  1
+  [29] .debug_aranges    PROGBITS        00000000 a9f070 002308 00      0   0  8
+  [30] .debug_info       PROGBITS        00000000 aa1378 b9a473 00      0   0  1
+  [31] .debug_abbrev     PROGBITS        00000000 163b7eb 016b5c 00      0   0  1
+  [32] .debug_line       PROGBITS        00000000 1652347 03f558 00      0   0  1
+  [33] .debug_frame      PROGBITS        00000000 16918a0 0065e8 00      0   0  4
+  [34] .debug_str        PROGBITS        00000000 1697e88 0b5a9f 01  MS  0   0  1
+  [35] .debug_loc        PROGBITS        00000000 174d927 0430d6 00      0   0  1
+  [36] .debug_ranges     PROGBITS        00000000 1790a00 00a6b8 00      0   0  8
+  [37] .ARM.attributes   ARM_ATTRIBUTES  00000000 179b0b8 00003c 00      0   0  1
+  [38] .last_section     PROGBITS        8021bbec 01bce8 000004 00   A  0   0  1
+  [39] bss               NOBITS          20000c20 000100 000d9d 00  WA  0   0 32
+  [40] noinit            NOBITS          200019c0 000100 02b09c 00  WA  0   0  8
+  [41] .symtab           SYMTAB          00000000 179b0f4 00ecf0 10     42 2331  4
+  [42] .strtab           STRTAB          00000000 17a9de4 00b43a 00      0   0  1
+  [43] .shstrtab         STRTAB          00000000 17b521e 000214 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), y (purecode), p (processor specific)
+
+=== ELF SYMBOLS ===
+  2786: 00000001     0 OBJECT  GLOBAL DEFAULT  ABS CONFIG_TENSORFLOW_LITE_MICRO
+  2809: 00000001     0 OBJECT  GLOBAL DEFAULT  ABS CONFIG_ACTIVATION_BUF_SECTION
+  3240: 00091000     0 OBJECT  GLOBAL DEFAULT  ABS CONFIG_ACTIVATION_BUF_SZ
+
+=== ACTIVATION BUFFER CONFIGURATION ===
+CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+CONFIG_ACTIVATION_BUF_SZ=0x00091000
+# CONFIG_HEAP_MEM_POOL_IGNORE_MIN is not set
+CONFIG_HEAP_MEM_POOL_SIZE=163840
+# CONFIG_RAM_CONSOLE is not set
+CONFIG_SRAM_BASE_ADDRESS=0x20000000
+CONFIG_SRAM_OFFSET=0
+CONFIG_SRAM_REGION_PERMISSIONS=y
+CONFIG_SRAM_SIZE=1024
+# CONFIG_SRAM_VECTOR_TABLE is not set
