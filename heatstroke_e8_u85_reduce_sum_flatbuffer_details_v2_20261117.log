@@ -1,0 +1,228 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888495.595354    4716 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888495.595554    4716 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794888496.324000    4716 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794888496.324216    4716 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+[12:08:17] Model parsed; inspecting operators 18-50
+
+===== OPERATOR #18: GREATER =====
+opcode index: 2
+operator version: 1
+INPUT 0 tensor 169: convert_element_type_default_DequantizeLinear_Output, type=INT8, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 133: val_0_DequantizeLinear_Output_duplicated_1, type=INT8, shape=[], buffer=128, constant_values=[127]
+OUTPUT 0 tensor 177: gt_1, type=BOOL, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #19: LOGICAL_NOT =====
+opcode index: 8
+operator version: 1
+INPUT 0 tensor 177: gt_1, type=BOOL, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 178: bitwise_not, type=BOOL, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #20: SELECT_V2 =====
+opcode index: 9
+operator version: 1
+INPUT 0 tensor 177: gt_1, type=BOOL, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 624: zeros_like_3_DequantizeLinear_Output0, type=INT8, shape=[1, 900, 6], buffer=152, constant_elements=5400
+INPUT 2 tensor 159: x_values_DequantizeLinear_Output_5, type=INT8, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 179: where_4_DequantizeLinear_Output, type=INT8, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #21: CAST =====
+opcode index: 5
+operator version: 1
+INPUT 0 tensor 178: bitwise_not, type=BOOL, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 180: _to_copy_3, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #22: CAST =====
+opcode index: 5
+operator version: 1
+INPUT 0 tensor 178: bitwise_not, type=BOOL, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 181: convert_element_type_default_1, type=INT64, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #23: LOGICAL_NOT =====
+opcode index: 8
+operator version: 1
+INPUT 0 tensor 178: bitwise_not, type=BOOL, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 182: bitwise_not_1, type=BOOL, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #24: RESHAPE =====
+opcode index: 7
+operator version: 1
+INPUT 0 tensor 170: linear_DequantizeLinear_Output, type=INT8, shape=[1, 900], buffer=0
+OUTPUT 0 tensor 183: view_DequantizeLinear_Output, type=INT8, shape=[1, 900, 1], buffer=0
+
+===== OPERATOR #25: QUANTIZE =====
+opcode index: 0
+operator version: 1
+INPUT 0 tensor 180: _to_copy_3, type=FLOAT32, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 184: _to_copy_3_QuantizeLinear_Output_1, type=INT8, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #26: SUM =====
+opcode index: 10
+operator version: 1
+INPUT 0 tensor 181: convert_element_type_default_1, type=INT64, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 625: axes, type=INT32, shape=[1], buffer=153, constant_values=[1]
+OUTPUT 0 tensor 185: sum_1, type=INT64, shape=[1, 6], buffer=0
+keepDims: False
+
+===== OPERATOR #27: CAST =====
+opcode index: 5
+operator version: 1
+INPUT 0 tensor 182: bitwise_not_1, type=BOOL, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 186: _to_copy, type=INT64, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #28: DEQUANTIZE =====
+opcode index: 1
+operator version: 1
+INPUT 0 tensor 184: _to_copy_3_QuantizeLinear_Output_1, type=INT8, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 187: _to_copy_3_DequantizeLinear_Output_1, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #29: DEQUANTIZE =====
+opcode index: 1
+operator version: 1
+INPUT 0 tensor 184: _to_copy_3_QuantizeLinear_Output_1, type=INT8, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 188: _to_copy_3_DequantizeLinear_Output_2, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #30: GREATER =====
+opcode index: 2
+operator version: 1
+INPUT 0 tensor 185: sum_1, type=INT64, shape=[1, 6], buffer=0
+INPUT 1 tensor 33: val_1, type=INT64, shape=[], buffer=28, constant_values=[0]
+OUTPUT 0 tensor 189: gt_2, type=BOOL, shape=[1, 6], buffer=0
+
+===== OPERATOR #31: MAXIMUM =====
+opcode index: 11
+operator version: 1
+INPUT 0 tensor 185: sum_1, type=INT64, shape=[1, 6], buffer=0
+INPUT 1 tensor 28: val_39, type=INT64, shape=[], buffer=23, constant_values=[1]
+OUTPUT 0 tensor 190: clamp, type=INT64, shape=[1, 6], buffer=0
+
+===== OPERATOR #32: MUL =====
+opcode index: 12
+operator version: 1
+INPUT 0 tensor 186: _to_copy, type=INT64, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 34: val_19, type=INT64, shape=[], buffer=29, constant_values=[900]
+OUTPUT 0 tensor 191: mul, type=INT64, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #33: SUM =====
+opcode index: 10
+operator version: 1
+INPUT 0 tensor 187: _to_copy_3_DequantizeLinear_Output_1, type=FLOAT32, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 626: axes0, type=INT32, shape=[1], buffer=154, constant_values=[1]
+OUTPUT 0 tensor 192: sum_2, type=FLOAT32, shape=[1, 1, 6], buffer=0
+keepDims: True
+
+===== OPERATOR #34: MUL =====
+opcode index: 12
+operator version: 1
+INPUT 0 tensor 2: x_values, type=FLOAT32, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 188: _to_copy_3_DequantizeLinear_Output_2, type=FLOAT32, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 193: mul_3, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #35: RESHAPE =====
+opcode index: 7
+operator version: 1
+INPUT 0 tensor 189: gt_2, type=BOOL, shape=[1, 6], buffer=0
+OUTPUT 0 tensor 194: unsqueeze_2, type=BOOL, shape=[1, 1, 6], buffer=0
+
+===== OPERATOR #36: RESHAPE =====
+opcode index: 7
+operator version: 1
+INPUT 0 tensor 190: clamp, type=INT64, shape=[1, 6], buffer=0
+OUTPUT 0 tensor 195: unsqueeze, type=INT64, shape=[1, 1, 6], buffer=0
+
+===== OPERATOR #37: ADD =====
+opcode index: 13
+operator version: 1
+INPUT 0 tensor 26: expand, type=INT64, shape=[1, 900, 6], buffer=21, constant_elements=5400
+INPUT 1 tensor 191: mul, type=INT64, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 196: add, type=INT64, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #38: QUANTIZE =====
+opcode index: 0
+operator version: 1
+INPUT 0 tensor 183: view_DequantizeLinear_Output, type=INT8, shape=[1, 900, 1], buffer=0
+OUTPUT 0 tensor 627: view_DequantizeLinear_Output0, type=INT8, shape=[1, 900, 1], buffer=0
+
+===== OPERATOR #39: CONCATENATION =====
+opcode index: 14
+operator version: 1
+INPUT 0 tensor 158: x_mark_DequantizeLinear_Output, type=INT8, shape=[1, 900, 3], buffer=0
+INPUT 1 tensor 627: view_DequantizeLinear_Output0, type=INT8, shape=[1, 900, 1], buffer=0
+OUTPUT 0 tensor 197: cat_DequantizeLinear_Output, type=INT8, shape=[1, 900, 4], buffer=0
+
+===== OPERATOR #40: MUL =====
+opcode index: 12
+operator version: 1
+INPUT 0 tensor 31: convert_element_type_default_3, type=INT64, shape=[1, 1800, 1], buffer=26, constant_elements=1800
+INPUT 1 tensor 195: unsqueeze, type=INT64, shape=[1, 1, 6], buffer=0
+OUTPUT 0 tensor 198: mul_2, type=INT64, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #41: MUL =====
+opcode index: 12
+operator version: 1
+INPUT 0 tensor 30: convert_element_type_default_2, type=INT64, shape=[1, 1800, 1], buffer=25, constant_elements=1800
+INPUT 1 tensor 195: unsqueeze, type=INT64, shape=[1, 1, 6], buffer=0
+OUTPUT 0 tensor 199: mul_1, type=INT64, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #42: CAST =====
+opcode index: 5
+operator version: 1
+INPUT 0 tensor 196: add, type=INT64, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 200: topk_input_float32, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #43: ADD =====
+opcode index: 13
+operator version: 1
+INPUT 0 tensor 198: mul_2, type=INT64, shape=[1, 1800, 6], buffer=0
+INPUT 1 tensor 35: val_46, type=INT64, shape=[], buffer=30, constant_values=[1800]
+OUTPUT 0 tensor 201: add_2, type=INT64, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #44: CAST =====
+opcode index: 5
+operator version: 1
+INPUT 0 tensor 199: mul_1, type=INT64, shape=[1, 1800, 6], buffer=0
+OUTPUT 0 tensor 202: node_Div_64_input_0_int32, type=INT32, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #45: FLOOR_MOD =====
+opcode index: 15
+operator version: 1
+INPUT 0 tensor 199: mul_1, type=INT64, shape=[1, 1800, 6], buffer=0
+INPUT 1 tensor 35: val_46, type=INT64, shape=[], buffer=30, constant_values=[1800]
+OUTPUT 0 tensor 203: val_60, type=INT64, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #46: NEG =====
+opcode index: 16
+operator version: 1
+INPUT 0 tensor 200: topk_input_float32, type=FLOAT32, shape=[1, 900, 6], buffer=0
+OUTPUT 0 tensor 204: topk_negated_input, type=FLOAT32, shape=[1, 900, 6], buffer=0
+
+===== OPERATOR #47: MAXIMUM =====
+opcode index: 11
+operator version: 1
+INPUT 0 tensor 192: sum_2, type=FLOAT32, shape=[1, 1, 6], buffer=0
+INPUT 1 tensor 111: preprocess_clip_min_fp32, type=FLOAT32, shape=[], buffer=106, constant_values=[1.0]
+OUTPUT 0 tensor 205: clamp_2, type=FLOAT32, shape=[1, 1, 6], buffer=0
+
+===== OPERATOR #48: SUM =====
+opcode index: 10
+operator version: 1
+INPUT 0 tensor 193: mul_3, type=FLOAT32, shape=[1, 900, 6], buffer=0
+INPUT 1 tensor 628: axes1, type=INT32, shape=[1], buffer=155, constant_values=[1]
+OUTPUT 0 tensor 206: sum_3, type=FLOAT32, shape=[1, 1, 6], buffer=0
+keepDims: True
+
+===== OPERATOR #49: SUB =====
+opcode index: 17
+operator version: 1
+INPUT 0 tensor 201: add_2, type=INT64, shape=[1, 1800, 6], buffer=0
+INPUT 1 tensor 28: val_39, type=INT64, shape=[], buffer=23, constant_values=[1]
+OUTPUT 0 tensor 207: sub, type=INT64, shape=[1, 1800, 6], buffer=0
+
+===== OPERATOR #50: DIV =====
+opcode index: 18
+operator version: 1
+INPUT 0 tensor 202: node_Div_64_input_0_int32, type=INT32, shape=[1, 1800, 6], buffer=0
+INPUT 1 tensor 43: node_Div_73_input_1_int32, type=INT32, shape=[], buffer=38, constant_values=[1800]
+OUTPUT 0 tensor 208: node_Div_64_output_int32, type=INT32, shape=[1, 1800, 6], buffer=0
+[12:08:17] Inspection complete
