@@ -1,0 +1,540 @@
+=== BUILD CONFIGURATION: UART / CONSOLE / LOGGING ===
+CONFIG_UART_INTERRUPT_DRIVEN=y
+CONFIG_CLOCK_CONTROL=y
+CONFIG_UART_NS16550=y
+CONFIG_CLOCK_CONTROL_INIT_PRIORITY=30
+CONFIG_SERIAL=y
+CONFIG_LOG=y
+CONFIG_LOG_DOMAIN_NAME=""
+CONFIG_UART_USE_RUNTIME_CONFIGURE=y
+CONFIG_SERIAL_INIT_PRIORITY=50
+CONFIG_CONSOLE=y
+CONFIG_CLOCK_CONTROL_LOG_LEVEL_DEFAULT=y
+CONFIG_CLOCK_CONTROL_LOG_LEVEL=3
+CONFIG_CLOCK_CONTROL_ALIF=y
+CONFIG_CONSOLE_INPUT_MAX_LINE_LEN=128
+CONFIG_CONSOLE_HAS_DRIVER=y
+CONFIG_CONSOLE_HANDLER=y
+CONFIG_CONSOLE_INIT_PRIORITY=60
+CONFIG_UART_CONSOLE=y
+CONFIG_UART_CONSOLE_INPUT_EXPIRED=y
+CONFIG_UART_CONSOLE_INPUT_EXPIRED_TIMEOUT=15000
+CONFIG_UART_CONSOLE_LOG_LEVEL_DEFAULT=y
+CONFIG_UART_CONSOLE_LOG_LEVEL=3
+CONFIG_PINCTRL=y
+CONFIG_PINCTRL_LOG_LEVEL_DEFAULT=y
+CONFIG_PINCTRL_LOG_LEVEL=3
+CONFIG_PINCTRL_ALIF=y
+CONFIG_SERIAL_HAS_DRIVER=y
+CONFIG_SERIAL_SUPPORT_INTERRUPT=y
+CONFIG_UART_LOG_LEVEL_DEFAULT=y
+CONFIG_UART_LOG_LEVEL=3
+CONFIG_UART_NS16550_VARIANT_NS16750=y
+CONFIG_UART_NS16550_FIFO_SIZE=64
+CONFIG_CONSOLE_SUBSYS=y
+CONFIG_CONSOLE_GETLINE=y
+CONFIG_PRINTK=y
+CONFIG_LOG_CORE_INIT_PRIORITY=0
+CONFIG_LOG_MODE_IMMEDIATE=y
+CONFIG_LOG_DEFAULT_LEVEL=3
+CONFIG_LOG_OVERRIDE_LEVEL=0
+CONFIG_LOG_MAX_LEVEL=4
+CONFIG_LOG_PRINTK=y
+CONFIG_LOG_TRACE_SHORT_TIMESTAMP=y
+CONFIG_LOG_FUNC_NAME_PREFIX_DBG=y
+CONFIG_LOG_BACKEND_SHOW_COLOR=y
+CONFIG_LOG_TAG_MAX_LEN=0
+CONFIG_LOG_BACKEND_SUPPORTS_FORMAT_TIMESTAMP=y
+CONFIG_LOG_BACKEND_FORMAT_TIMESTAMP=y
+CONFIG_LOG_OUTPUT_FORMAT_TIME_TIMESTAMP=y
+CONFIG_LOG_BACKEND_UART=y
+CONFIG_LOG_BACKEND_UART_BUFFER_SIZE=1
+CONFIG_LOG_BACKEND_UART_AUTOSTART=y
+CONFIG_LOG_BACKEND_UART_OUTPUT_TEXT=y
+CONFIG_LOG_BACKEND_UART_OUTPUT_DEFAULT=0
+CONFIG_LOG_USE_VLA=y
+CONFIG_LOG_SIMPLE_MSG_OPTIMIZE=y
+CONFIG_LOG_ALWAYS_RUNTIME=y
+CONFIG_LOG_OUTPUT=y
+
+=== GENERATED DEVICETREE: CONSOLE AND UART INSTANCES ===
+9-		zephyr,flash-controller = &mram_flash;
+10-		zephyr,display = &cdc200;
+11-		zephyr,flash = &mram_storage;
+12-		zephyr,code-partition = &slot0_partition;
+13-		zephyr,sram = &dtcm;
+14:		zephyr,console = &uart4;
+15-		zephyr,shell-uart = &uart4;
+16-		zephyr,uart-mcumgr = &uart4;
+17-	};
+18-	aliases {
+19-		mipi-dsi = &mipi_dsi;
+20-		panel = &mw405;
+21-		led0 = &aled0;
+22-		sw0 = &button0;
+23-		watchdog0 = &wdog0;
+24-		rtsshemhu0r = &rtsshp_rtsshe_mhu0_r;
+25-		rtsshemhu0s = &rtsshe_rtsshp_mhu0_s;
+26-		rtsshemhu1r = &rtsshp_rtsshe_mhu1_r;
+27-		rtsshemhu1s = &rtsshe_rtsshp_mhu1_s;
+28-		audio-codec = &wm8904;
+29-		spi-flash0 = &ospi_flash;
+30-	};
+31-	soc {
+32-		#address-cells = < 0x1 >;
+--
+121-		};
+122-		pinctrl: pin-controller@1a603000 {
+123-			compatible = "alif,pinctrl";
+124-			reg = < 0x1a603000 0x1000 >, < 0x42007000 0x1000 >;
+125-			reg-names = "pinctrl", "lpgpio_pinctrl";
+126:			pinctrl_uart4: pinctrl_uart4 {
+127-				phandle = < 0x10 >;
+128-				group0 {
+129-					pinmux = < 0x30a >, < 0x312 >;
+130-				};
+131-			};
+132-			pinctrl_uart4_sleep: uart4_sleep {
+133-				phandle = < 0x11 >;
+134-				group0 {
+135-					pinmux = < 0x308 >, < 0x310 >;
+136-					read-enable = < 0x1 >;
+137-					driver-state-control = < 0x2 >;
+138-				};
+139-			};
+140:			pinctrl_uart0: pinctrl_uart0 {
+141-				phandle = < 0x8 >;
+142-				group0 {
+143-					pinmux = < 0x2 >, < 0xa >;
+144-				};
+145-			};
+146-			pinctrl_uart0_sleep: uart0_sleep {
+147-				phandle = < 0x9 >;
+148-				group0 {
+149-					pinmux = < 0x0 >, < 0x8 >;
+150-					read-enable = < 0x1 >;
+151-					driver-state-control = < 0x2 >;
+152-				};
+153-			};
+154:			pinctrl_uart1: pinctrl_uart1 {
+155-				phandle = < 0xa >;
+156-				group0 {
+157-					pinmux = < 0x22 >, < 0x2a >;
+158-				};
+159-			};
+160-			pinctrl_uart1_sleep: uart1_sleep {
+161-				phandle = < 0xb >;
+162-				group0 {
+163-					pinmux = < 0x20 >, < 0x28 >;
+164-					read-enable = < 0x1 >;
+165-					driver-state-control = < 0x2 >;
+166-				};
+167-			};
+168:			pinctrl_uart2: pinctrl_uart2 {
+169-				phandle = < 0xc >;
+170-				group0 {
+171-					pinmux = < 0x41 >, < 0x49 >;
+172-				};
+173-			};
+174-			pinctrl_uart2_sleep: uart2_sleep {
+175-				phandle = < 0xd >;
+176-				group0 {
+177-					pinmux = < 0x40 >, < 0x48 >;
+178-					read-enable = < 0x1 >;
+179-					driver-state-control = < 0x2 >;
+180-				};
+181-			};
+182:			pinctrl_uart3: pinctrl_uart3 {
+183-				phandle = < 0xe >;
+184-				group0 {
+185-					pinmux = < 0x51 >, < 0x59 >;
+186-				};
+187-			};
+188-			pinctrl_uart3_sleep: uart3_sleep {
+189-				phandle = < 0xf >;
+190-				group0 {
+191-					pinmux = < 0x50 >, < 0x58 >;
+192-					read-enable = < 0x1 >;
+193-					driver-state-control = < 0x2 >;
+194-				};
+195-			};
+196:			pinctrl_uart5: pinctrl_uart5 {
+197-				phandle = < 0x12 >;
+198-				group0 {
+199-					pinmux = < 0xe2 >, < 0xea >;
+200-				};
+201-			};
+202-			pinctrl_uart5_sleep: uart5_sleep {
+203-				phandle = < 0x13 >;
+204-				group0 {
+205-					pinmux = < 0xe0 >, < 0xe8 >;
+206-					read-enable = < 0x1 >;
+207-					driver-state-control = < 0x2 >;
+208-				};
+209-			};
+210:			pinctrl_uart6: pinctrl_uart6 {
+211-				phandle = < 0x67 >;
+212-				group0 {
+213-					pinmux = < 0x2a9 >, < 0x2b1 >;
+214-				};
+215-			};
+216-			pinctrl_uart6_sleep: uart6_sleep {
+217-				phandle = < 0x68 >;
+218-				group0 {
+219-					pinmux = < 0x2a8 >, < 0x2b0 >;
+220-					read-enable = < 0x1 >;
+221-					driver-state-control = < 0x2 >;
+222-				};
+223-			};
+224:			pinctrl_uart7: pinctrl_uart7 {
+225-				phandle = < 0x69 >;
+226-				group0 {
+227-					pinmux = < 0x25a >, < 0x261 >;
+228-				};
+229-			};
+230-			pinctrl_uart7_sleep: uart7_sleep {
+231-				phandle = < 0x6a >;
+232-				group0 {
+233-					pinmux = < 0x258 >, < 0x260 >;
+234-					read-enable = < 0x1 >;
+235-					driver-state-control = < 0x2 >;
+236-				};
+237-			};
+238-			pinctrl_lpuart: pinctrl_lpuart {
+239-				group0 {
+240-					pinmux = < 0x1f2 >, < 0x1fa >;
+241-				};
+242-			};
+--
+245-					pinmux = < 0x1f0 >, < 0x1f8 >;
+246-					read-enable = < 0x1 >;
+247-					driver-state-control = < 0x2 >;
+248-				};
+249-			};
+250:			pinctrl_hsuart0: pinctrl_hsuart0 {
+251-				group0 {
+252-					pinmux = < 0x28a >, < 0x292 >;
+253-				};
+254-			};
+255-			pinctrl_pdm0: pinctrl_pdm0 {
+256-				phandle = < 0x42 >;
+257-				group0 {
+258-					pinmux = < 0x1bb >, < 0x2b >, < 0xda >, < 0x153 >;
+259-					read-enable = < 0x0 >;
+260-				};
+261-				group1 {
+262-					pinmux = < 0x163 >, < 0x23 >, < 0xd2 >, < 0x14b >;
+263-					read-enable = < 0x1 >;
+264-				};
+265-			};
+266-			pinctrl_pdm0_sleep: pinctrl_pdm0_sleep {
+267-				phandle = < 0x43 >;
+268-				group0 {
+--
+1138-			interrupts = < 0x66 0x0 >, < 0x67 0x0 >;
+1139-			interrupt-names = "sdmmc", "sdmmc_wakeup";
+1140-			max-bus-freq = < 0x2faf080 >;
+1141-			min-bus-freq = < 0x61a80 >;
+1142-			power-delay-ms = < 0x1f4 >;
+1143:			pinctrl-0 = < &pinctrl_sdmmc >;
+1144-			pinctrl-names = "default";
+1145-			cd-gpios = < &gpio3 0x3 0x1 >;
+1146-			status = "disabled";
+1147-			vmmc-supply = < &sd_pwr >;
+1148-			vqmmc-supply = < &sd_vsel >;
+1149-			mmc {
+1150-				compatible = "zephyr,sdmmc-disk";
+1151-				bus-width = < 0x4 >;
+1152-				status = "disabled";
+1153-			};
+1154-		};
+1155-		peripheral@40000000 {
+1156-			#address-cells = < 0x1 >;
+1157-			#size-cells = < 0x1 >;
+1158-			ranges = < 0x0 0x40000000 0x2000000 >;
+1159-			seservice0r: mhu@40040000 {
+1160-				compatible = "arm,mhuv2";
+1161-				reg = < 0x40040000 0x1000 >;
+--
+1319-		hwsem15: hwsem@4902e0f0 {
+1320-			compatible = "alif,hwsem";
+1321-			reg = < 0x4902e0f0 0x10 >;
+1322-			interrupts = < 0x78 0x0 >;
+1323-		};
+1324:		uart0: uart@49018000 {
+1325-			compatible = "ns16550";
+1326-			reg = < 0x49018000 0x100 >;
+1327-			clocks = < &clockctrl 0x10b0043 >;
+1328-			interrupts = < 0x7c 0x0 >;
+1329-			power-domains = < &pd_syst >;
+1330-			reg-shift = < 0x2 >;
+1331:			current-speed = < 0x1c200 >;
+1332-			dlf = < 0x4 >;
+1333:			pinctrl-0 = < &pinctrl_uart0 >;
+1334:			pinctrl-1 = < &pinctrl_uart0_sleep >;
+1335-			pinctrl-names = "default", "sleep";
+1336-			fifo-size = < 0x20 >;
+1337-			status = "disabled";
+1338-		};
+1339:		uart1: uart@49019000 {
+1340-			compatible = "ns16550";
+1341-			reg = < 0x49019000 0x100 >;
+1342-			clocks = < &clockctrl 0x12b0843 >;
+1343-			interrupts = < 0x7d 0x0 >;
+1344-			power-domains = < &pd_syst >;
+1345-			reg-shift = < 0x2 >;
+1346:			current-speed = < 0x1c200 >;
+1347-			dlf = < 0x4 >;
+1348:			pinctrl-0 = < &pinctrl_uart1 >;
+1349:			pinctrl-1 = < &pinctrl_uart1_sleep >;
+1350-			pinctrl-names = "default", "sleep";
+1351-			fifo-size = < 0x20 >;
+1352-			status = "disabled";
+1353-		};
+1354:		uart2: uart@4901a000 {
+1355-			compatible = "ns16550";
+1356-			reg = < 0x4901a000 0x100 >;
+1357-			clocks = < &clockctrl 0x14b1043 >;
+1358-			interrupts = < 0x7e 0x0 >;
+1359-			power-domains = < &pd_syst >;
+1360-			reg-shift = < 0x2 >;
+1361:			current-speed = < 0x1c200 >;
+1362-			dlf = < 0x4 >;
+1363:			pinctrl-0 = < &pinctrl_uart2 >;
+1364:			pinctrl-1 = < &pinctrl_uart2_sleep >;
+1365-			pinctrl-names = "default", "sleep";
+1366-			fifo-size = < 0x20 >;
+1367-			status = "disabled";
+1368-		};
+1369:		uart3: uart@4901b000 {
+1370-			compatible = "ns16550";
+1371-			reg = < 0x4901b000 0x100 >;
+1372-			clocks = < &clockctrl 0x16b1843 >;
+1373-			interrupts = < 0x7f 0x0 >;
+1374-			power-domains = < &pd_syst >;
+1375-			reg-shift = < 0x2 >;
+1376:			current-speed = < 0x1c200 >;
+1377-			dlf = < 0x4 >;
+1378:			pinctrl-0 = < &pinctrl_uart3 >;
+1379:			pinctrl-1 = < &pinctrl_uart3_sleep >;
+1380-			pinctrl-names = "default", "sleep";
+1381-			fifo-size = < 0x20 >;
+1382-			status = "disabled";
+1383-		};
+1384:		uart4: uart@4901c000 {
+1385-			compatible = "ns16550";
+1386-			reg = < 0x4901c000 0x100 >;
+1387-			clocks = < &clockctrl 0x18b2043 >;
+1388-			interrupts = < 0x80 0x0 >;
+1389-			power-domains = < &pd_syst >;
+1390-			reg-shift = < 0x2 >;
+1391:			current-speed = < 0x1c200 >;
+1392-			dlf = < 0x4 >;
+1393:			pinctrl-0 = < &pinctrl_uart4 >;
+1394:			pinctrl-1 = < &pinctrl_uart4_sleep >;
+1395-			pinctrl-names = "default", "sleep";
+1396-			fifo-size = < 0x20 >;
+1397-			status = "okay";
+1398-		};
+1399:		uart5: uart@4901d000 {
+1400-			compatible = "ns16550";
+
+=== GENERATED CONSOLE DEVICE MACROS ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:31305:#define DT_N_NODELABEL_uart0 DT_N_S_soc_S_uart_49018000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:31691:#define DT_N_NODELABEL_uart1 DT_N_S_soc_S_uart_49019000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:32077:#define DT_N_NODELABEL_uart2 DT_N_S_soc_S_uart_4901a000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:32463:#define DT_N_NODELABEL_uart3 DT_N_S_soc_S_uart_4901b000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:32849:#define DT_N_NODELABEL_uart4 DT_N_S_soc_S_uart_4901c000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:33235:#define DT_N_NODELABEL_uart5 DT_N_S_soc_S_uart_4901d000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:33621:#define DT_N_NODELABEL_uart6 DT_N_S_soc_S_uart_4901e000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:34007:#define DT_N_NODELABEL_uart7 DT_N_S_soc_S_uart_4901f000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:75684:#define DT_CHOSEN_zephyr_console                 DT_N_S_soc_S_uart_4901c000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h:75685:#define DT_CHOSEN_zephyr_console_EXISTS          1
+
+=== APPLICATION STARTUP AND UART OUTPUT CALLS ===
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261105_174212:17:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261105_174212:23:const tflite::MicroOpResolver& arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261105_174212:33:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_int64_gather_20261109_095629:8:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_int64_gather_20261109_095629:20:arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_int64_gather_20261109_095629:155:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:31:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:42:using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:82:    LOG_INF(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:120:        LOG_WRN("ETHOSU_DIAG: initial snapshot submission failed: %d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:129:    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:135:    LOG_INF("ETHOSU_DIAG: runtime monitor stopped");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:196:        LOG_ERR("Failed to read pin: %d", val);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:201:    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:212:static int configure_lpgpio(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:219:		LOG_ERR("lpgpio invalid");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:225:		LOG_ERR("LPGPIO0 device is not ready");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:231:		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:238:		LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:245:		LOG_ERR("Failed to add button callback: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:249:	LOG_INF("LPGPIO%d configured", spec->pin);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:265:        LOG_ERR("%s[%u] tensor handle is null",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:272:        LOG_ERR("%s[%u] shape mismatch",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:278:        LOG_ERR("%s[%u] must be FP32; got %s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:293:        LOG_ERR("%s[%u] element count, byte size, or data pointer is invalid",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:298:    LOG_INF("%s[%u]: FP32, elements=%u, bytes=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:310:        LOG_ERR("Model I/O count mismatch: inputs=%u outputs=%u; expected 4/2",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:330:            LOG_ERR("Input contract failed for %s", inputNames[i]);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:345:            LOG_ERR("Output contract failed for %s", outputNames[i]);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:355:    PolyUModel1& model,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:368:        LOG_ERR("%s[%u] input payload size mismatch",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:374:    LOG_INF("%s[%u] bound: %u bytes",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:412:static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:417:    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:418:    LOG_INF("Multi-sample vector count: %u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:423:        LOG_ERR("TFLM backend interpreter pointer is null");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:431:        LOG_INF("=== SAMPLE %u / %u ===",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:434:        LOG_INF("Dataset position: %u; sample ID: %u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:437:        LOG_INF("Missing positions: %u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:439:        LOG_INF("Ground-truth labels RPE=%u PSI=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:442:        LOG_INF("Input-vector SHA256: %s", sample.input_sha256);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:446:            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:450:        LOG_INF("MicroInterpreter::Reset: SUCCESS");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:479:        LOG_INF("HEATSTROKE_DIAG: entering TFLM RunInference()");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:486:            LOG_ERR("TFLM RunInference() returned false for slot %u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:504:            LOG_ERR("Inference output data pointer is null");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:520:                LOG_ERR("Non-finite output/reference at class index %u", i);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:538:        LOG_INF("TFLM RunInference: SUCCESS; elapsed=%u ms",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:540:        LOG_INF("RPE reference micro: [%d,%d,%d,%d]",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:543:        LOG_INF("RPE MCU micro:       [%d,%d,%d,%d]",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:546:        LOG_INF("PSI reference micro: [%d,%d,%d,%d]",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:549:        LOG_INF("PSI MCU micro:       [%d,%d,%d,%d]",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:552:        LOG_INF("RPE max/mean abs error micro: %d / %d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:554:        LOG_INF("PSI max/mean abs error micro: %d / %d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:556:        LOG_INF("RPE class reference=%u MCU=%u match=%s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:559:        LOG_INF("PSI class reference=%u MCU=%u match=%s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:562:        LOG_INF("RPE ground-truth=%u predicted=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:564:        LOG_INF("PSI ground-truth=%u predicted=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:566:        LOG_INF("Activation arena capacity: %u bytes",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:568:        LOG_INF("Model buffer size: %u bytes",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:570:        LOG_INF("=== SAMPLE %u COMPLETE ===", static_cast<unsigned int>(slot));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:573:    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:582:    if (configure_lpgpio()) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:583:        LOG_ERR("Failed to configure LPGPIO for button input");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:593:        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:597:    LOG_INF("=====================");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:598:    LOG_INF("Combined model pointer: %p",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:600:    LOG_INF("Combined model size: %u bytes",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:610:    PolyUModel1 model;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:613:        LOG_ERR("Failed to initialise combined heat-stress model");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:617:    LOG_INF("Combined heat-stress model initialisation: OK");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:618:    LOG_INF("Contains Ethos-U operators: %s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:622:        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:626:    LOG_INF("Combined heat-stress model I/O contract verified.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:628:        LOG_ERR("One-sample heat-stress inference failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:631:    LOG_INF("One-sample heat-stress inference: COMPLETE.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:103:		LOG_ERR("Failed to configure TX stream: %d\n", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:128:		LOG_ERR("audio_codec_configure failed with error: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:158:		LOG_ERR("Model is not initialised! Terminating processing.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:201:		LOG_INF("Waiting for button press to start audio capture... (btn=%d)",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:205:	LOG_INF("Button pressed. Init audio and start audio capture...\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:209:		LOG_ERR("hal_audio_init failed with error: %d", err);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:222:			LOG_ERR("hal_get_audio_data failed with error: %d", err);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:245:	LOG_INF("Audio capture finished.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:270:		LOG_ERR("%s is not ready", i2s_dev_tx->name);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:275:		LOG_ERR("%s is not ready", codec_dev->name);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:290:			LOG_ERR("Failed to allocate TX slab block");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:304:			LOG_ERR("Failed to write data: %d", err);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:313:				LOG_ERR("Failed to start I2S output: %d", err);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:341:			LOG_ERR("Failed to drop I2S output: %d", err);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:354:		LOG_ERR("Not enough audio samples, minimum needed is %" PRIu32 "\n", mfccFrameLen);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:377:		LOG_INF("Inference %zu/%zu\n", audioDataSlider.Index() + 1,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:382:			LOG_ERR("Pre-processing failed.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:387:			LOG_ERR("Inference failed.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:391:		LOG_INF("NPU inference done.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:396:			LOG_ERR("Post-processing failed.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:416:	LOG_INF("Final results:\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:417:	LOG_INF("Total number of inferences: %zu\n", results.size());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:424:		LOG_INF("For timestamp: %f (inference #: %" PRIu32 "); label: %s\n",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:437:	LOG_INF("Complete recognition: %s\n", finalResultStr.c_str());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_before_heatstroke_bilstm:17:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_before_heatstroke_bilstm:22:const tflite::MicroOpResolver& arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_before_heatstroke_bilstm:32:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:37:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:40:using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:110:        LOG_ERR("Failed to read pin: %d", val);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:115:    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:126:static int configure_lpgpio(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:133:		LOG_ERR("lpgpio invalid");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:139:		LOG_ERR("LPGPIO0 device is not ready");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:145:		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:152:		LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:159:		LOG_ERR("Failed to add button callback: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:163:	LOG_INF("LPGPIO%d configured", spec->pin);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:176:	if (configure_lpgpio()) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:177:		LOG_ERR("Failed to configure LPGPIO for button input");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:181:    PolyUModel1 model; /* Model wrapper object. */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:187:	LOG_INF("=====================\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:188:	LOG_INF("Model Ptr: 0x%X", arm::app::asr::GetModelPointer());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:189:	LOG_INF("Model Size: %d", arm::app::asr::GetModelLen());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:190:	LOG_INF("Model data pointer: 0x%X", modelMem.data);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:191:	LOG_INF("Model Subgraph: %d", ::tflite::GetModel(modelMem.data)->subgraphs()->size());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:194:	LOG_INF("Operators Size : %d", operators_size);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:196:	LOG_INF("Node&Reg Size : %d (Total: %d)", sizeof(::tflite::NodeAndRegistration), sizeof(::tflite::NodeAndRegistration) * operators_size);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:200:        LOG_ERR("Failed to initialise model");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:203:	LOG_INF("Init model: OK!");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:206:        LOG_ERR("Model's input or output dimension verification failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:239:// 		LOG_INF("Push to talk start by going to STOP mode. Press button to start capturing audio.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:240:// 		LOG_INF("Release the button to stop capturing audio.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:241:// 		LOG_INF("NOTE: If the button is not released, audio will be captured ~10 seconds.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:245:// 		LOG_INF("Press the button to start capturing audio...\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:246:// 		LOG_INF("Release the button to stop capturing audio.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:247:// 		LOG_INF("NOTE: If the button is not released, audio will be captured ~10 seconds.\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:267:	LOG_ERR("Input tensor size = %d\n", inputTensor->Shape().size());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:269:        LOG_ERR("Invalid input tensor dims\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:273:        LOG_ERR("Input tensor dimension should be >= 3\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:278:	LOG_ERR("Output tensor size = %d\n", outputTensor->Shape().size());
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:280:        LOG_ERR("Invalid output tensor dims\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_20261108_203013:285:        LOG_ERR("Output tensor dimension should be >= 3\n");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:8:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:198:arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:243:        printk("HEATSTROKE_PROFILE_HOOKS: Ethos-U=%s BiLSTM=%s\n",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:269:    printk("HEATSTROKE_OPERATOR_TIMING EthosU "
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:279:    printk("HEATSTROKE_OPERATOR_TIMING BiLSTM "
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:294:        printk(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:882:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261108_193718:17:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261108_193718:24:const tflite::MicroOpResolver& arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc.bak_20261108_193718:48:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:31:#include "PolyUModel1.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:39:using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:104:        LOG_ERR("Failed to read pin: %d", val);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:109:    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:120:static int configure_lpgpio(void)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:127:		LOG_ERR("lpgpio invalid");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:133:		LOG_ERR("LPGPIO0 device is not ready");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:139:		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:146:		LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:153:		LOG_ERR("Failed to add button callback: %d", ret);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:157:	LOG_INF("LPGPIO%d configured", spec->pin);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:173:        LOG_ERR("%s[%u] tensor handle is null",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:180:        LOG_ERR("%s[%u] shape mismatch",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:186:        LOG_ERR("%s[%u] must be FP32; got %s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:201:        LOG_ERR("%s[%u] element count, byte size, or data pointer is invalid",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:206:    LOG_INF("%s[%u]: FP32, elements=%u, bytes=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:218:        LOG_ERR("Model I/O count mismatch: inputs=%u outputs=%u; expected 4/2",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:238:            LOG_ERR("Input contract failed for %s", inputNames[i]);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:253:            LOG_ERR("Output contract failed for %s", outputNames[i]);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:266:    if (configure_lpgpio()) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:267:        LOG_ERR("Failed to configure LPGPIO for button input");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:277:        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:281:    LOG_INF("=====================");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:282:    LOG_INF("Combined model pointer: %p",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:284:    LOG_INF("Combined model size: %u bytes",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:294:    PolyUModel1 model;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:297:        LOG_ERR("Failed to initialise combined heat-stress model");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:301:    LOG_INF("Combined heat-stress model initialisation: OK");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:302:    LOG_INF("Contains Ethos-U operators: %s",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:306:        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:310:    LOG_INF("Combined heat-stress model I/O contract verified.");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc.bak_buttonfix_20261108_204001:311:    LOG_INF("Inference not started: real input preprocessing/data binding "
+
+=== FIRMWARE IMAGE IDENTITY ===
+-rwxrwxr-x 1 user user   396412 Nov 17 16:06 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.bin
+-rwxrwxr-x 1 user user 32528872 Nov 17 16:06 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf
+d29e62c34d836bc319a5f7872ab9cd9d28d1b3b1135ebfccc4f567ac12259b20  /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.bin
