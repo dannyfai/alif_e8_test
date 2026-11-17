@@ -1,0 +1,44 @@
+===== E8 U85 REDUCE-SUM GRAPH AUDIT =====
+Tue Nov 17 10:06:17 AM HKT 2026
+
+===== INPUT MODEL =====
+275f6468499bdf146d6f1889d01d866a80277416e6f686e5be9f1fa07184408f  /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp.tflite
+
+===== FIND PYTHON WITH TFLITE SCHEMA =====
+Python: /home/user/onnx2tflite_env/bin/python
+Schema: tensorflow
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881181.989528   28846 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881181.989704   28846 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1794881182.017425   28846 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794881182.804087   28846 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794881182.804353   28846 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Traceback (most recent call last):
+  File "<stdin>", line 171, in <module>
+TypeError: object of type 'int' has no len()
+===== MODEL METADATA =====
+TFLite schema version: 3
+Model size: 11844184
+Subgraphs: 1
+Operator codes: 38
+
+===== SUBGRAPH 0 =====
+Tensor count: 915
+Operator count: 574
+
+===== REDUCTION OPERATOR COUNTS =====
+MEAN: 24
+SUM: 3
+
+========================================================================
+REDUCTION NODE #26: SUM
+Operator version: 1
+Inputs:
+  tensor[181] convert_element_type_default_1: shape=(1, 900, 6), dtype=INT64, quant=none
+    Producer: (22, 'CAST')
+GRAPH AUDIT ERROR: TypeError("object of type 'int' has no len()")
+
+===== GRAPH AUDIT COMPLETE =====
