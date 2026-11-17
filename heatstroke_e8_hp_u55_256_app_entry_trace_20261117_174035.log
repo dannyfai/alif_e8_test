@@ -1,0 +1,340 @@
+=== MAINLOOP STARTUP CODE ===
+    55	 * Reads NPU STATUS and NVIC IRQ 55 only; does not alter either.
+    56	 */
+    57	namespace {
+    58	
+    59	constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+    60	constexpr IRQn_Type kHeatstrokeEthosuIrq =
+    61	    static_cast<IRQn_Type>(55);
+    62	
+    63	struct k_work g_heatstrokeEthosuMonitorWork;
+    64	struct k_timer g_heatstrokeEthosuMonitorTimer;
+    65	
+    66	void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+    67	{
+    68	    (void)work;
+    69	
+    70	    const auto* statusRegister =
+    71	        reinterpret_cast<volatile const std::uint32_t*>(
+    72	            kHeatstrokeEthosuStatusAddress);
+    73	    const std::uint32_t status = *statusRegister;
+    74	
+    75	    const unsigned int enabled = static_cast<unsigned int>(
+    76	        NVIC_GetEnableIRQ(kHeatstrokeEthosuIrq));
+    77	    const unsigned int pending = static_cast<unsigned int>(
+    78	        NVIC_GetPendingIRQ(kHeatstrokeEthosuIrq));
+    79	    const unsigned int active = static_cast<unsigned int>(
+    80	        NVIC_GetActive(kHeatstrokeEthosuIrq));
+    81	
+    82	    LOG_INF(
+    83	        "ETHOSU_DIAG: status=0x%08x run=%u irq=%u bus=%u reset=%u "
+    84	        "parse=%u end=%u pmu=%u wd=%u ecc=%u "
+    85	        "IRQ55[en=%u pend=%u active=%u]",
+    86	        static_cast<unsigned int>(status),
+    87	        static_cast<unsigned int>((status >> 0U) & 1U),
+    88	        static_cast<unsigned int>((status >> 1U) & 1U),
+    89	        static_cast<unsigned int>((status >> 2U) & 1U),
+    90	        static_cast<unsigned int>((status >> 3U) & 1U),
+    91	        static_cast<unsigned int>((status >> 4U) & 1U),
+    92	        static_cast<unsigned int>((status >> 5U) & 1U),
+    93	        static_cast<unsigned int>((status >> 6U) & 1U),
+    94	        static_cast<unsigned int>((status >> 7U) & 1U),
+    95	        static_cast<unsigned int>((status >> 8U) & 1U),
+    96	        enabled, pending, active);
+    97	}
+    98	
+    99	void HeatstrokeEthosuMonitorTimerHandler(struct k_timer* timer)
+   100	{
+   101	    (void)timer;
+   102	    (void)k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   103	}
+   104	
+   105	void StartHeatstrokeEthosuMonitor()
+   106	{
+   107	    k_work_init(
+   108	        &g_heatstrokeEthosuMonitorWork,
+   109	        HeatstrokeEthosuMonitorWorkHandler);
+   110	
+   111	    k_timer_init(
+   112	        &g_heatstrokeEthosuMonitorTimer,
+   113	        HeatstrokeEthosuMonitorTimerHandler,
+   114	        nullptr);
+   115	
+   116	    const int initialSubmit =
+   117	        k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   118	
+   119	    if (initialSubmit < 0) {
+   120	        LOG_WRN("ETHOSU_DIAG: initial snapshot submission failed: %d",
+   121	                initialSubmit);
+   122	    }
+   123	
+   124	    k_timer_start(
+   125	        &g_heatstrokeEthosuMonitorTimer,
+   126	        K_SECONDS(1),
+   127	        K_SECONDS(1));
+   128	
+   129	    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+   130	}
+   131	
+   132	void StopHeatstrokeEthosuMonitor()
+   133	{
+   134	    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+   135	    LOG_INF("ETHOSU_DIAG: runtime monitor stopped");
+   136	}
+   137	
+   138	} /* namespace */
+   139	
+   140	#define LPGPIO_NODE           DT_NODELABEL(lpgpio)
+   141	#define LPGPIO_WAKEUP_ENABLED DT_NODE_HAS_STATUS_OKAY(LPGPIO_NODE)
+   142	
+   143	#if LPGPIO_WAKEUP_ENABLED
+   144	/* LPGPIO wake up source is used */
+   145	#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+   146	
+   147	#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+   148	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+   149	#elif CONFIG_LPGPIO_WAKEUP_SOURCE == 1
+   150	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+   205		}
+   206	}
+   207	
+   208	/**
+   209	 * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+   210	 * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+   211	 * With B1/E1C devkit you need to also remove resistor R64. */
+   212	static int configure_lpgpio(void)
+   213	{
+   214		int ret;
+   215		const struct gpio_dt_spec *spec = &lpgpio_config;
+   216	
+   217		if (!spec || !spec->port) {
+   218			/* Just ignore */
+   219			LOG_ERR("lpgpio invalid");
+   220			return -ENODEV;
+   221		}
+   222	
+   223		/* Configure LPGPIO0 for wakeup */
+   224		if (!gpio_is_ready_dt(spec)) {
+   225			LOG_ERR("LPGPIO0 device is not ready");
+   226			return -ENODEV;
+   227		}
+   228	
+   229		ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+   230		if (ret != 0) {
+   231			LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+   232			return ret;
+   233		}
+   234	
+   235		ret = gpio_pin_interrupt_configure_dt(spec,
+   236						      GPIO_INT_EDGE_BOTH);
+   237		if (ret != 0) {
+   238			LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+   239			return ret;
+   240		}
+   241	
+   242		gpio_init_callback(&button_cb_data, button_callback, BIT(spec->pin));
+   243		ret = gpio_add_callback(spec->port, &button_cb_data);
+   244		if (ret != 0) {
+   245			LOG_ERR("Failed to add button callback: %d", ret);
+   246			return ret;
+   247		}
+   248	
+   249		LOG_INF("LPGPIO%d configured", spec->pin);
+   250	
+   251		return 0;
+   252	}
+   253	
+   254	/** @brief   Verify input and output tensor are of certain min dimensions. */
+   255	
+   570	        LOG_INF("=== SAMPLE %u COMPLETE ===", static_cast<unsigned int>(slot));
+   571	    }
+   572	
+   573	    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+   574	    return true;
+   575	}
+   576	
+   577	void MainLoop()
+   578	{
+   579	    por_boot = true;
+   580	    k_sem_init(&button_wait_sem, 0, 1);
+   581	
+   582	    if (configure_lpgpio()) {
+   583	        LOG_ERR("Failed to configure LPGPIO for button input");
+   584	        return;
+   585	    }
+   586	
+   587	    const uint8_t* modelPointer =
+   588	        arm::app::polyu_heatstroke::GetModelPointer();
+   589	    const size_t modelLength =
+   590	        arm::app::polyu_heatstroke::GetModelLen();
+   591	
+   592	    if (modelPointer == nullptr || modelLength == 0U) {
+   593	        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+   594	        return;
+   595	    }
+   596	
+   597	    LOG_INF("=====================");
+   598	    LOG_INF("Combined model pointer: %p",
+   599	            static_cast<const void*>(modelPointer));
+   600	    LOG_INF("Combined model size: %u bytes",
+   601	            static_cast<unsigned int>(modelLength));
+   602	
+   603	    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+   604	    arm::app::fwk::iface::MemoryRegion modelMem{
+   605	        const_cast<uint8_t*>(modelPointer), modelLength};
+   606	
+   607	    arm::app::fwk::iface::MemoryRegion computeMem{
+   608	        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+   609	
+   610	    PolyUModel1 model;
+   611	
+   612	    if (!model.Init(computeMem, modelMem)) {
+   613	        LOG_ERR("Failed to initialise combined heat-stress model");
+   614	        return;
+   615	    }
+   616	
+   617	    LOG_INF("Combined heat-stress model initialisation: OK");
+   618	    LOG_INF("Contains Ethos-U operators: %s",
+   619	            model.ContainsEthosUOperator() ? "yes" : "no");
+   620	
+   621	    if (!VerifyTensorInterface(model)) {
+   622	        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+   623	        return;
+   624	    }
+   625	
+   626	    LOG_INF("Combined heat-stress model I/O contract verified.");
+   627	    if (!RunHeatstrokeSmokeInference(model)) {
+   628	        LOG_ERR("One-sample heat-stress inference failed");
+   629	        return;
+   630	    }
+   631	    LOG_INF("One-sample heat-stress inference: COMPLETE.");
+   632	}
+
+=== APPLICATION ENTRY AND MAINLOOP CALL SITES ===
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:577:void MainLoop()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc:35:extern void MainLoop();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc:92:int main ()
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc:103:	MainLoop();
+
+=== LINKED APPLICATION OBJECTS ===
+4:app/libapp.a(MainLoop.cc.obj)
+1089:                              app/libapp.a(MainLoop.cc.obj) (z_impl_k_sem_init)
+1091:                              app/libapp.a(MainLoop.cc.obj) (k_work_init)
+1105:                              app/libapp.a(MainLoop.cc.obj) (k_timer_init)
+1127:                              app/libapp.a(MainLoop.cc.obj) (operator delete(void*, unsigned int))
+1139:                              app/libapp.a(MainLoop.cc.obj) (operator new(unsigned int))
+1145:                              app/libapp.a(MainLoop.cc.obj) (std::__throw_bad_alloc())
+1283:                              app/libapp.a(MainLoop.cc.obj) (memcmp)
+1285:                              app/libapp.a(MainLoop.cc.obj) (memcpy)
+1287:                              app/libapp.a(MainLoop.cc.obj) (memmove)
+1299:                              app/libapp.a(MainLoop.cc.obj) (strcmp)
+1419: .group         0x0000000000000000       0x10 app/libapp.a(MainLoop.cc.obj)
+1420: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1421: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1422: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1423: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1424: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1425: .group         0x0000000000000000        0x8 app/libapp.a(MainLoop.cc.obj)
+1426: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1427: .group         0x0000000000000000       0x14 app/libapp.a(MainLoop.cc.obj)
+1428: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1429: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1430: .group         0x0000000000000000        0xc app/libapp.a(MainLoop.cc.obj)
+1431: .text          0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+1432: .data          0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+1433: .bss           0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+17022:                0x0000000002000000    0x91000 app/libapp.a(MainLoop.cc.obj)
+17164:                0x0000000080201f58       0x70 app/libapp.a(MainLoop.cc.obj)
+17166:                0x0000000080201fc8      0xd14 app/libapp.a(MainLoop.cc.obj)
+17194:                0x0000000080205b50        0xc app/libapp.a(MainLoop.cc.obj)
+17196:                0x0000000080205b5c       0x88 app/libapp.a(MainLoop.cc.obj)
+17198:                0x0000000080205be4       0xe4 app/libapp.a(MainLoop.cc.obj)
+17200:                0x0000000080205cc8       0x50 app/libapp.a(MainLoop.cc.obj)
+17204:                0x0000000080205d18       0xcc app/libapp.a(MainLoop.cc.obj)
+17208:                0x0000000080205de4       0x30 app/libapp.a(MainLoop.cc.obj)
+17212:                0x0000000080205e14      0x14c app/libapp.a(MainLoop.cc.obj)
+17214:                0x0000000080205f60       0xa0 app/libapp.a(MainLoop.cc.obj)
+19019:                0x0000000080224080       0x2a app/libapp.a(MainLoop.cc.obj)
+19021:                0x00000000802240aa        0x2 app/libapp.a(MainLoop.cc.obj)
+19025:                0x00000000802240ac       0x2c app/libapp.a(MainLoop.cc.obj)
+19028:                0x00000000802240d8       0x10 app/libapp.a(MainLoop.cc.obj)
+19031:                0x00000000802240e8       0x3a app/libapp.a(MainLoop.cc.obj)
+19034:                0x0000000080224122       0x30 app/libapp.a(MainLoop.cc.obj)
+19037:                0x0000000080224152       0x1e app/libapp.a(MainLoop.cc.obj)
+19039:                0x0000000080224170       0x2c app/libapp.a(MainLoop.cc.obj)
+19043:                0x000000008022419c       0x26 app/libapp.a(MainLoop.cc.obj)
+19047:                0x00000000802241c2       0x14 app/libapp.a(MainLoop.cc.obj)
+19050:                0x00000000802241d6       0x14 app/libapp.a(MainLoop.cc.obj)
+19054:                0x00000000802241ea       0x26 app/libapp.a(MainLoop.cc.obj)
+22022:                0x000000008022e978        0x8 app/libapp.a(MainLoop.cc.obj)
+22156: .rodata        0x000000008022eb04       0x28 app/libapp.a(MainLoop.cc.obj)
+22171:                0x000000008022ed90       0x18 app/libapp.a(MainLoop.cc.obj)
+22173:                0x000000008022eda8       0x1c app/libapp.a(MainLoop.cc.obj)
+22176:                0x000000008022edc4       0x90 app/libapp.a(MainLoop.cc.obj)
+22178:                0x000000008022ee54       0x10 app/libapp.a(MainLoop.cc.obj)
+22180:                0x000000008022ee64       0x10 app/libapp.a(MainLoop.cc.obj)
+22182:                0x000000008022ee74       0x78 app/libapp.a(MainLoop.cc.obj)
+22184:                0x000000008022eeec     0x2a30 app/libapp.a(MainLoop.cc.obj)
+22186:                0x000000008023191c     0x5460 app/libapp.a(MainLoop.cc.obj)
+22188:                0x0000000080236d7c     0x5460 app/libapp.a(MainLoop.cc.obj)
+22190:                0x000000008023c1dc       0x10 app/libapp.a(MainLoop.cc.obj)
+22192:                0x000000008023c1ec       0x10 app/libapp.a(MainLoop.cc.obj)
+22194:                0x000000008023c1fc       0x78 app/libapp.a(MainLoop.cc.obj)
+22196:                0x000000008023c274     0x2a30 app/libapp.a(MainLoop.cc.obj)
+22198:                0x000000008023eca4     0x5460 app/libapp.a(MainLoop.cc.obj)
+22200:                0x0000000080244104     0x5460 app/libapp.a(MainLoop.cc.obj)
+22202:                0x0000000080249564       0x10 app/libapp.a(MainLoop.cc.obj)
+22204:                0x0000000080249574       0x10 app/libapp.a(MainLoop.cc.obj)
+22206:                0x0000000080249584       0x78 app/libapp.a(MainLoop.cc.obj)
+22208:                0x00000000802495fc     0x2a30 app/libapp.a(MainLoop.cc.obj)
+22210:                0x000000008024c02c     0x5460 app/libapp.a(MainLoop.cc.obj)
+22212:                0x000000008025148c     0x5460 app/libapp.a(MainLoop.cc.obj)
+22514:                0x0000000080257941       0x7c app/libapp.a(MainLoop.cc.obj)
+22516:                0x00000000802579bd       0xd0 app/libapp.a(MainLoop.cc.obj)
+22518:                0x0000000080257a8d       0x31 app/libapp.a(MainLoop.cc.obj)
+22520:                0x0000000080257abe       0xb7 app/libapp.a(MainLoop.cc.obj)
+22522:                0x0000000080257b75       0x3a app/libapp.a(MainLoop.cc.obj)
+22524:                0x0000000080257baf      0x81d app/libapp.a(MainLoop.cc.obj)
+22527:                0x00000000802583cc       0xe8 app/libapp.a(MainLoop.cc.obj)
+23531: .comment       0x0000000000000020       0x21 app/libapp.a(MainLoop.cc.obj)
+23736:                0x0000000000000150       0xc8 app/libapp.a(MainLoop.cc.obj)
+24083: .debug_info    0x0000000000003b8a    0x8896f app/libapp.a(MainLoop.cc.obj)
+24265: .debug_abbrev  0x00000000000009b1     0x15a3 app/libapp.a(MainLoop.cc.obj)
+24447: .debug_line    0x0000000000001002     0x3450 app/libapp.a(MainLoop.cc.obj)
+24627: .debug_frame   0x0000000000000084      0x2b4 app/libapp.a(MainLoop.cc.obj)
+24842: .debug_str     0x0000000000002646    0xa174c app/libapp.a(MainLoop.cc.obj)
+25196: .debug_loc     0x000000000000016e     0x4874 app/libapp.a(MainLoop.cc.obj)
+25378: .debug_ranges  0x0000000000000148      0xc40 app/libapp.a(MainLoop.cc.obj)
+25588:                0x0000000000000136       0x3e app/libapp.a(MainLoop.cc.obj)
+27031:                0x0000000020000e60       0x38 app/libapp.a(MainLoop.cc.obj)
+27059:                0x00000000200012b0       0x10 app/libapp.a(MainLoop.cc.obj)
+27061:                0x00000000200012c0        0xc app/libapp.a(MainLoop.cc.obj)
+27063:                0x00000000200012cc       0x10 app/libapp.a(MainLoop.cc.obj)
+27236:                0x0000000020001ba8        0x1 app/libapp.a(MainLoop.cc.obj)
+27238:                0x0000000020001ba9        0x1 app/libapp.a(MainLoop.cc.obj)
+
+=== FINAL ELF ENTRY SYMBOLS ===
+20001000 B z_main_thread
+20003830 B z_main_stack
+80201fc8 T MainLoop()
+802059c0 T main
+8021bb2c t z_sys_init_run_level
+8021bcf8 T z_cstart
+8022e978 R log_const_MainLoop
+
+=== EARLY BOOT / FAULT CONFIGURATION ===
+CONFIG_ASSERT=y
+CONFIG_REBOOT=y
+CONFIG_BOOT_BANNER=y
+CONFIG_BOOT_BANNER_STRING="Booting Zephyr OS build"
+CONFIG_ASSERT_LEVEL=2
+CONFIG_ASSERT_VERBOSE=y
+CONFIG_LOG_MODE_IMMEDIATE=y
+CONFIG_LOG_BACKEND_UART=y
+CONFIG_LOG_BACKEND_UART_BUFFER_SIZE=1
+CONFIG_LOG_BACKEND_UART_AUTOSTART=y
+CONFIG_LOG_BACKEND_UART_OUTPUT_TEXT=y
+CONFIG_LOG_BACKEND_UART_OUTPUT_DEFAULT=0
+
+=== BUILD IMAGE CHECKSUM ===
+d29e62c34d836bc319a5f7872ab9cd9d28d1b3b1135ebfccc4f567ac12259b20  /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.bin
