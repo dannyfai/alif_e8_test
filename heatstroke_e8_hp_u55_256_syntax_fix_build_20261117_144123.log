@@ -1,0 +1,294 @@
+===== PREPROCESSOR GUARD CHECK =====
+    65	#define MEMORY_RETENTION_CONFIG                                                                    \
+    66		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B |            \
+    67		 SERAM_MASK | SRAM0_1_RET_MASK | SRAM0_2_RET_MASK | SRAM0_3_RET_MASK | SRAM0_4_RET_MASK)
+    68	#else
+    69	#define MEMORY_RETENTION_CONFIG                                                                    \
+    70		(((CONFIG_FLASH_BASE_ADDRESS == 0) ? 0 : MRAM_MASK) | RET_A1 | RET_A2 | RET_B | SERAM_MASK)
+    71	#endif
+    72	
+    73	#define DEFAULT_DCDC_VOLTAGE 825
+    74	
+    75	#if !defined(CONFIG_ARM_ETHOS_U55_256)
+    76	enum off_state {
+    77		OFF_STATE_IDLE = 0,
+    78		OFF_STATE_STANDBY,
+    79		OFF_STATE_STOP,
+    80		OFF_STATE_OFF,
+    81	};
+    82	
+    83	static int se_service_status;
+    84	
+    85	void power_mgr_disable_sleep(void)
+    86	{
+    87		// uses reference counting!!
+    88		pm_policy_state_lock_get(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    89		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    90	}
+    91	
+    92	void power_mgr_allow_sleep(void)
+    93	{
+    94		pm_policy_state_lock_put(PM_STATE_SOFT_OFF, PM_ALL_SUBSTATES);
+    95		pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_RAM, PM_ALL_SUBSTATES);
+    96	}
+    97	
+    98	#if CONFIG_PM && CONFIG_LOG
+    99	/**
+   100	 * Flush log buffer
+   101	 */
+   102	void power_mgr_log_flush(void)
+   103	{
+   104	#if CONFIG_LOG_MODE_DEFERRED
+   105		log_flush();
+   106	#else
+   107		while (log_process()) {
+   108			k_sleep(K_MSEC(1));
+   109		}
+   110	#endif
+   111	}
+   112	#endif
+   113	
+   114	static int set_off_profile(enum off_state const mode)
+   115	{
+   116		uint32_t ewic = EWIC_RTC_A;
+   117		uint32_t wakeup = WE_LPRTC;
+   118	
+   119	#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(lpgpio))
+   120		ewic |= EWIC_VBAT_GPIO;
+   121		wakeup |= WE_LPGPIO;
+   122	#endif
+   123	
+   124		int ret;
+   125		off_profile_t offp = {
+   126			.power_domains = 0,
+   127			.memory_blocks = MEMORY_RETENTION_CONFIG,
+   128			.dcdc_voltage = DEFAULT_DCDC_VOLTAGE,
+   129			.dcdc_mode = DCDC_MODE_OFF,
+   130			.stby_clk_freq = SCALED_FREQ_RC_STDBY_0_075_MHZ,
+   131			.aon_clk_src = CLK_SRC_LFXO,
+   132			.stby_clk_src = CLK_SRC_HFRC,
+   133			.ip_clock_gating = 0,
+   134			.phy_pwr_gating = 0,
+   135			.ewic_cfg = ewic,
+   136			.wakeup_events = wakeup,
+   137			.vtor_address = SCB->VTOR,
+   138			.vtor_address_ns = SCB->VTOR,
+   139		};
+   140	
+   141		switch (mode) {
+   142		case OFF_STATE_IDLE:
+   143			return 0;
+   144		case OFF_STATE_STANDBY:
+   145			offp.power_domains = PD_SSE700_AON_MASK;
+   146			offp.stby_clk_freq = SCALED_FREQ_RC_STDBY_76_8_MHZ;
+   147			break;
+   148		case OFF_STATE_STOP:
+   149			break;
+   150		case OFF_STATE_OFF:
+   151			break;
+   152		}
+   153	
+   154		ret = se_service_set_off_cfg(&offp);
+   155		if (ret) {
+   156			LOG_ERR("SE: set_off_cfg failed = %d", ret);
+   157		}
+   158	
+   159		return ret;
+   160	}
+   161	#endif /* !CONFIG_ARM_ETHOS_U55_256 */
+   162	
+   163	
+   164	
+   165	static int set_run_params(void)
+   166	{
+   167		run_profile_t runp = {
+   168			.power_domains =
+   169				(PD_VBAT_AON_MASK | PD_SYST_MASK | PD_SSE700_AON_MASK | PD_SESS_MASK
+   170	#if CONFIG_DEBUG || 1
+   171				 | PD_DBSS_MASK
+   172	#endif
+   173				 ),
+   174			.aon_clk_src = CLK_SRC_LFXO,
+   175			.run_clk_src = CLK_SRC_PLL,
+
+===== REBUILD: E8 RTSS-HP / ETHOS-U55-256 =====
+-- west build: generating a build system
+-- Ethos-U: ETHOSU_TARGET_NPU_CONFIG=ethos-u55-256 -> CONFIG_ARM_ETHOS_U55_256=y, model ID H256
+Loading Zephyr default modules (Zephyr base (cached)).
+-- Application: /home/user/sdk-alif/beeinventor/test_heatstroke
+-- CMake version: 3.31.10
+-- Cache files will be written to: /home/user/.cache/zephyr
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr)
+-- Found west (found suitable version "1.5.0", minimum required is "0.14.0")
+-- Board: alif_e8_dk, qualifiers: ae822fa0e5597xx0/rtss_hp
+-- Snippet(s): ospi-flash
+-- Found host-tools: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found BOARD.dts: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.dts
+-- Found devicetree overlay: /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ospi-flash/e8_ospi1.overlay
+-- Generated zephyr.dts: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.dts
+-- Generated pickled edt: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/dts.cmake
+Parsing /home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig
+Loaded configuration '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config'
+No change to configuration in '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config'
+No change to Kconfig header in '/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/autoconf.h'
+CMake Warning at /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/debug_metadata.cmake:23 (message):
+  Alif SVD file not found:
+  /home/user/sdk-alif/tools/alif_ensemble-cmsis-dfp/Debug/SVD/AE822FA0E5597BS0_CM55_HP_View.svd
+Call Stack (most recent call first):
+  /home/user/sdk-alif/zephyr/soc/alif/ensemble/CMakeLists.txt:8 (include)
+
+
+-- *******************************************************
+-- PROJECT_NAME                           : ethosu_core_driver
+-- ETHOSU_TARGET_NPU_CONFIG               : ethos-u55-256
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- CMSIS_PATH                             : /home/user/sdk-alif/modules/hal/ethos_u/../cmsis
+-- ETHOSU_LOG_ENABLE                      : ON
+-- ETHOSU_LOG_SEVERITY                    : warning
+-- ETHOSU_INFERENCE_TIMEOUT               : Default (no timeout)
+-- *******************************************************
+-- Including default API config parameters...
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- MLEK log is disabled
+-- **************************************************
+-- Library:                mlek_log
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- **************************************************
+-- *******************************************************
+-- Library                    : arm_math
+-- CMAKE_SYSTEM_PROCESSOR     : arm
+-- *******************************************************
+-- Adding TensorFlow Lite Micro framework to the build...
+-- *******************************************************
+-- Library: ml_framework_tflm
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library: ml_framework_iface
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                common_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : asr_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : kws_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : noise_reduction_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : img_class_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : object_detection_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : vww_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : ad_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                inference_runner_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- Created interface target: mlek::asr_impl
+-- Created interface target: mlek::kws_impl
+-- Created interface target: mlek::noise_reduction_impl
+-- Created interface target: mlek::img_class_impl
+-- Created interface target: mlek::object_detection_impl
+-- Created interface target: mlek::vww_impl
+-- Created interface target: mlek::ad_impl
+-- Created interface target: mlek::inference_runner_impl
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:1011 (message):
+  No SOURCES given to Zephyr library: drivers__audio
+
+  Excluding target from build.
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:1011 (message):
+  No SOURCES given to Zephyr library: drivers__counter
+
+  Excluding target from build.
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2193 (message):
+  __ASSERT() statements are globally ENABLED
+
+
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2224 (message):
+  
+
+        The CMake build type was set to 'Release', but the optimization flag was set to '-Os'.
+        This may be intentional and the warning can be turned off by setting the CMake variable 'NO_BUILD_TYPE_WARNING'
+
+
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- Using SRC_GEN_DIR:    /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/src
+-- Using INC_GEN_DIR:    /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/include
+-- Using combined heat-stress model: /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+-- Combined model SHA256: 4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d
+-- Using /home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+++ Converting vela_e8_hp_u55_256_20261117.tflite to    vela_e8_hp_u55_256_20261117.tflite.cc
+-- Configuring done (4.6s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+-- west build: building application
+[1/430] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[2/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_cache.c.obj
+[3/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/state.c.obj
+[4/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/policy/policy_state_lock.c.obj
+[5/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/tracing/tracing_none.c.obj
+[6/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/policy/policy_default.c.obj
+[7/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/mem_mgmt/mem_attr.c.obj
+[8/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/policy/policy_events.c.obj
+[9/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_output.c.obj
+[10/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_core.c.obj
+[11/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/policy/policy_latency.c.obj
+[12/429] Building C object CMakeFiles/app.dir/src/power/power_mgr.c.obj
+FAILED: [code=1] CMakeFiles/app.dir/src/power/power_mgr.c.obj 
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=256 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=163840 -DMLEK_FWK_TFLM=1 -D_ANSI_SOURCE -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include -I/home/user/sdk-alif/beeinventor/test_heatstroke/src/power -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/generated/include -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/lib/libc/newlib/include -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -I/home/user/sdk-alif/modules/alif-mlek/source/lib -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -Wno-psabi -O3 -DNDEBUG -fno-strict-aliasing -Os -imacros /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/test_heatstroke=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -std=c99 -MD -MT CMakeFiles/app.dir/src/power/power_mgr.c.obj -MF CMakeFiles/app.dir/src/power/power_mgr.c.obj.d -o CMakeFiles/app.dir/src/power/power_mgr.c.obj -c /home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c: In function 'set_run_params':
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:191:9: error: 'se_service_status' undeclared (first use in this function); did you mean 'se_service_sync'?
+  191 |         se_service_status = se_service_set_run_cfg(&runp);
+      |         ^~~~~~~~~~~~~~~~~
+      |         se_service_sync
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:191:9: note: each undeclared identifier is reported only once for each function it appears in
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c: In function 'print_se_err':
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:266:13: error: 'se_service_status' undeclared (first use in this function); did you mean 'se_service_sync'?
+  266 |         if (se_service_status) {
+      |             ^~~~~~~~~~~~~~~~~
+      |             se_service_sync
+[13/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_mgmt.c.obj
+[14/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/device_system_managed.c.obj
+[15/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/device.c.obj
+[16/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/log_msg.c.obj
+[17/429] Building C object zephyr/CMakeFiles/zephyr.dir/home/user/sdk-alif/modules/hal/alif/common/src/system.c.obj
+[18/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/console/getline.c.obj
+[19/429] Building C object zephyr/CMakeFiles/zephyr.dir/home/user/sdk-alif/modules/hal/alif/common/src/sau_tcm_ns_setup.c.obj
+[20/429] Building C object zephyr/CMakeFiles/zephyr.dir/home/user/sdk-alif/modules/hal/alif/common/src/tgu.c.obj
+[21/429] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/flash/flash_util.c.obj
+[22/429] Building C object zephyr/arch/common/CMakeFiles/arch__common.dir/sw_isr_common.c.obj
+[23/429] Generating linker_zephyr_pre0.cmd
+[24/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/pm/pm.c.obj
+[25/429] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/logging/backends/log_backend_uart.c.obj
+[26/429] Building C object zephyr/CMakeFiles/zephyr.dir/home/user/sdk-alif/modules/hal/alif/common/src/mram_rw.c.obj
+[27/429] Building CXX object CMakeFiles/app.dir/generated/src/vela_e8_hp_u55_256_20261117.tflite.cc.obj
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake --build /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+BUILD EXIT CODE: 1
