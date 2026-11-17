@@ -1,0 +1,653 @@
+=== MAIN.CC: COMPLETE APPLICATION ENTRY ===
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	/****************************************************************************\
+    20	 *               Main application file for ARM NPU on MPS3 board             *
+    21	\****************************************************************************/
+    22	
+    23	#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp" /* our inference logic api */
+    24	#include "power_mgr.h"             /* power management APIs */
+    25	#include <cstdio>
+    26	#include <cstdint>
+    27	#include <new>
+    28	#include <exception>
+    29	
+    30	#include <zephyr/console/console.h>
+    31	#include <zephyr/logging/log.h>
+    32	
+    33	LOG_MODULE_REGISTER(Main);
+    34	
+    35	extern void MainLoop();
+    36	
+    37	#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+    38	__ASM(" .global __ARM_use_no_argv\n");
+    39	#endif
+    40	
+    41	/* Print application information. */
+    42	static void PrintApplicationIntro()
+    43	{
+    44	    #define PRJ_DES_STR     "BeeInventor - PolyU Model1 Test"
+    45	    LOG_INF("%s\n", PRJ_DES_STR);
+    46	    LOG_INF("Version %s Build date: " __DATE__ " @ " __TIME__ "\n", PRJ_VER_STR);
+    47	    //LOG_INF("Compiler: %s\n", PRJ_COMPILER);
+    48	    // LOG_INF("Copyright 2021-2026 Arm Limited and/or "
+    49	    //      "its affiliates <open-source-office@arm.com>\n\n");
+    50	}
+    51	
+    52	static void out_of_heap()
+    53	{
+    54	    LOG_WRN("Out of heap\n");
+    55	    std::terminate();
+    56	}
+    57	
+    58	/* ITGU READ-ONLY DIAGNOSTIC
+    59	 * Reads ITGU registers only. No security configuration is modified.
+    60	 */
+    61	static void PrintItguRegisters()
+    62	{
+    63	    constexpr std::uintptr_t ITGU_BASE = 0xE001E500UL;
+    64	    constexpr std::uintptr_t ITGU_CTRL = ITGU_BASE + 0x00UL;
+    65	    constexpr std::uintptr_t ITGU_CFG  = ITGU_BASE + 0x04UL;
+    66	    constexpr std::uintptr_t ITGU_LUT  = ITGU_BASE + 0x10UL;
+    67	
+    68	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC START");
+    69	    LOG_INF("No ITGU/DTGU/SAU registers will be written.");
+    70	
+    71	    LOG_INF("About to read ITGU_CTRL at 0x%08x",
+    72	            static_cast<unsigned int>(ITGU_CTRL));
+    73	    const auto ctrl = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CTRL);
+    74	    LOG_INF("ITGU_CTRL = 0x%08x", static_cast<unsigned int>(ctrl));
+    75	
+    76	    LOG_INF("About to read ITGU_CFG at 0x%08x",
+    77	            static_cast<unsigned int>(ITGU_CFG));
+    78	    const auto cfg = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CFG);
+    79	    LOG_INF("ITGU_CFG = 0x%08x", static_cast<unsigned int>(cfg));
+    80	
+    81	    for (unsigned int i = 0; i < 16; ++i) {
+    82	        const std::uintptr_t address = ITGU_LUT + (i * 4U);
+    83	        LOG_INF("About to read ITGU_LUT[%u] at 0x%08x",
+    84	                i, static_cast<unsigned int>(address));
+    85	        const auto value = *reinterpret_cast<volatile const std::uint32_t *>(address);
+    86	        LOG_INF("ITGU_LUT[%u] = 0x%08x",
+    87	                i, static_cast<unsigned int>(value));
+    88	    }
+    89	
+    90	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC COMPLETE");
+    91	}
+    92	int main ()
+    93	{
+    94		console_getline_init();
+    95	
+    96		/* Application information, UART should have been initialised. */
+    97		PrintApplicationIntro();
+    98		PrintItguRegisters();
+    99	
+   100		std::set_new_handler(out_of_heap);
+   101	
+   102		/* Run the application. */
+   103		MainLoop();
+   104	
+   105	    /* This is unreachable without errors. */
+   106	    LOG_INF("program terminating...\n");
+   107	
+   108	    return 0;
+   109	}
+
+=== MAINLOOP: INCLUDES AND GLOBAL INITIALIZATION ===
+     1	/* This file was ported to work on Alif Semiconductor devices. */
+     2	
+     3	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     4	 * Use, distribution and modification of this code is permitted under the
+     5	 * terms stated in the Alif Semiconductor Software License Agreement
+     6	 *
+     7	 * You should have received a copy of the Alif Semiconductor Software
+     8	 * License Agreement with this file. If not, please write to:
+     9	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+    10	 *
+    11	 */
+    12	
+    13	/*
+    14	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+    15	 * affiliates <open-source-office@arm.com>
+    16	 * SPDX-License-Identifier: Apache-2.0
+    17	 *
+    18	 * Licensed under the Apache License, Version 2.0 (the "License");
+    19	 * you may not use this file except in compliance with the License.
+    20	 * You may obtain a copy of the License at
+    21	 *
+    22	 *     http://www.apache.org/licenses/LICENSE-2.0
+    23	 *
+    24	 * Unless required by applicable law or agreed to in writing, software
+    25	 * distributed under the License is distributed on an "AS IS" BASIS,
+    26	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    27	 * See the License for the specific language governing permissions and
+    28	 * limitations under the License.
+    29	 */
+    30	#include "BufAttributes.hpp"
+    31	#include "PolyUModel1.hpp"
+    32	#include "heatstroke_smoke_test_vector.hpp"
+    33	#include "mlek/fwk/iface/Tensor.hpp"
+    34	
+    35	#include <cstddef>
+    36	#include <cstdint>
+    37	#include <cstring>
+    38	#include <cmath>
+    39	#include <memory>
+    40	#include <vector>
+    41	
+    42	using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+    43	
+    44	#include "power_mgr.h"             /* power management APIs */
+    45	#include <zephyr/logging/log.h>
+    46	#include <zephyr/kernel.h>
+    47	#include <zephyr/drivers/gpio.h>
+    48	#include <cmsis_core.h>
+    49	
+    50	LOG_MODULE_REGISTER(MainLoop);
+    51	
+    52	
+    53	/*
+    54	 * Application-local Ethos-U runtime diagnostic.
+    55	 * Reads NPU STATUS and NVIC IRQ 55 only; does not alter either.
+    56	 */
+    57	namespace {
+    58	
+    59	constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+    60	constexpr IRQn_Type kHeatstrokeEthosuIrq =
+    61	    static_cast<IRQn_Type>(55);
+    62	
+    63	struct k_work g_heatstrokeEthosuMonitorWork;
+    64	struct k_timer g_heatstrokeEthosuMonitorTimer;
+    65	
+    66	void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+    67	{
+    68	    (void)work;
+    69	
+    70	    const auto* statusRegister =
+    71	        reinterpret_cast<volatile const std::uint32_t*>(
+    72	            kHeatstrokeEthosuStatusAddress);
+    73	    const std::uint32_t status = *statusRegister;
+    74	
+    75	    const unsigned int enabled = static_cast<unsigned int>(
+    76	        NVIC_GetEnableIRQ(kHeatstrokeEthosuIrq));
+    77	    const unsigned int pending = static_cast<unsigned int>(
+    78	        NVIC_GetPendingIRQ(kHeatstrokeEthosuIrq));
+    79	    const unsigned int active = static_cast<unsigned int>(
+    80	        NVIC_GetActive(kHeatstrokeEthosuIrq));
+    81	
+    82	    LOG_INF(
+    83	        "ETHOSU_DIAG: status=0x%08x run=%u irq=%u bus=%u reset=%u "
+    84	        "parse=%u end=%u pmu=%u wd=%u ecc=%u "
+    85	        "IRQ55[en=%u pend=%u active=%u]",
+    86	        static_cast<unsigned int>(status),
+    87	        static_cast<unsigned int>((status >> 0U) & 1U),
+    88	        static_cast<unsigned int>((status >> 1U) & 1U),
+    89	        static_cast<unsigned int>((status >> 2U) & 1U),
+    90	        static_cast<unsigned int>((status >> 3U) & 1U),
+    91	        static_cast<unsigned int>((status >> 4U) & 1U),
+    92	        static_cast<unsigned int>((status >> 5U) & 1U),
+    93	        static_cast<unsigned int>((status >> 6U) & 1U),
+    94	        static_cast<unsigned int>((status >> 7U) & 1U),
+    95	        static_cast<unsigned int>((status >> 8U) & 1U),
+    96	        enabled, pending, active);
+    97	}
+    98	
+    99	void HeatstrokeEthosuMonitorTimerHandler(struct k_timer* timer)
+   100	{
+   101	    (void)timer;
+   102	    (void)k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   103	}
+   104	
+   105	void StartHeatstrokeEthosuMonitor()
+   106	{
+   107	    k_work_init(
+   108	        &g_heatstrokeEthosuMonitorWork,
+   109	        HeatstrokeEthosuMonitorWorkHandler);
+   110	
+   111	    k_timer_init(
+   112	        &g_heatstrokeEthosuMonitorTimer,
+   113	        HeatstrokeEthosuMonitorTimerHandler,
+   114	        nullptr);
+   115	
+   116	    const int initialSubmit =
+   117	        k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   118	
+   119	    if (initialSubmit < 0) {
+   120	        LOG_WRN("ETHOSU_DIAG: initial snapshot submission failed: %d",
+   121	                initialSubmit);
+   122	    }
+   123	
+   124	    k_timer_start(
+   125	        &g_heatstrokeEthosuMonitorTimer,
+   126	        K_SECONDS(1),
+   127	        K_SECONDS(1));
+   128	
+   129	    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+   130	}
+   131	
+   132	void StopHeatstrokeEthosuMonitor()
+   133	{
+   134	    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+   135	    LOG_INF("ETHOSU_DIAG: runtime monitor stopped");
+   136	}
+   137	
+   138	} /* namespace */
+   139	
+   140	#define LPGPIO_NODE           DT_NODELABEL(lpgpio)
+   141	#define LPGPIO_WAKEUP_ENABLED DT_NODE_HAS_STATUS_OKAY(LPGPIO_NODE)
+   142	
+   143	#if LPGPIO_WAKEUP_ENABLED
+   144	/* LPGPIO wake up source is used */
+   145	#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+   146	
+   147	#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+   148	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+   149	#elif CONFIG_LPGPIO_WAKEUP_SOURCE == 1
+   150	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+   151	#else
+   152	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO0
+   153	#endif
+   154	#else
+   155	#define LPGPIO_EWIC_CFG 0
+   156	#define LPGPIO_WAKEUP_EVENT 0
+   157	#endif
+   158	
+   159	namespace arm {
+   160	namespace app {
+   161	    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+   162	
+   163	    namespace polyu_heatstroke {
+   164	extern const uint8_t* GetModelPointer();
+   165	extern size_t GetModelLen();
+   166	} /* namespace polyu_heatstroke */
+   167	
+   168	} /* namespace app */
+   169	} /* namespace arm */
+   170	
+   171	
+   172	#if LPGPIO_WAKEUP_ENABLED
+   173	static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+   174		DT_NODELABEL(wakeup_pins), lpgpios, 0, {0});
+   175	#endif
+   176	
+   177	
+   178	volatile uint8_t button_pressed = 0U;
+   179	static struct gpio_callback button_cb_data;
+   180	static bool por_boot;
+   181	static struct k_sem button_wait_sem;
+   182	
+   183	static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+   184	{
+   185		ARG_UNUSED(dev);
+   186		ARG_UNUSED(cb);
+   187		ARG_UNUSED(pins);
+   188	
+   189		if (por_boot) {
+   190			/* Ignore button press event if it's from POR boot, as the button state may be unstable during POR. */
+   191			return;
+   192		}
+   193	
+   194		int val = gpio_pin_get_dt(&lpgpio_config);  // 1 = pressed, 0 = released
+   195	    if (val < 0) {
+   196	        LOG_ERR("Failed to read pin: %d", val);
+   197	        return;
+   198	    }
+   199	
+   200	    button_pressed = (val == 1);
+   201	    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+   202	
+   203		if (!k_sem_count_get(&button_wait_sem) && button_pressed) {
+   204			k_sem_give(&button_wait_sem);
+   205		}
+   206	}
+   207	
+   208	/**
+   209	 * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+   210	 * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+   211	 * With B1/E1C devkit you need to also remove resistor R64. */
+   212	static int configure_lpgpio(void)
+   213	{
+   214		int ret;
+   215		const struct gpio_dt_spec *spec = &lpgpio_config;
+
+=== MAIN FUNCTION DISASSEMBLY ===
+
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+802059c0 <main>:
+802059c0:	b5f0      	push	{r4, r5, r6, r7, lr}
+802059c2:	2400      	movs	r4, #0
+802059c4:	b087      	sub	sp, #28
+802059c6:	f004 fcb7 	bl	8020a338 <console_getline_init>
+802059ca:	4b4d      	ldr	r3, [pc, #308]	; (80205b00 <main+0x140>)
+802059cc:	2203      	movs	r2, #3
+802059ce:	9303      	str	r3, [sp, #12]
+802059d0:	4b4c      	ldr	r3, [pc, #304]	; (80205b04 <main+0x144>)
+802059d2:	4620      	mov	r0, r4
+802059d4:	494c      	ldr	r1, [pc, #304]	; (80205b08 <main+0x148>)
+802059d6:	9302      	str	r3, [sp, #8]
+802059d8:	e9cd 4400 	strd	r4, r4, [sp]
+802059dc:	4623      	mov	r3, r4
+802059de:	f01e fb40 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+802059e2:	4b4a      	ldr	r3, [pc, #296]	; (80205b0c <main+0x14c>)
+802059e4:	2203      	movs	r2, #3
+802059e6:	9303      	str	r3, [sp, #12]
+802059e8:	4b49      	ldr	r3, [pc, #292]	; (80205b10 <main+0x150>)
+802059ea:	4620      	mov	r0, r4
+802059ec:	e9cd 4301 	strd	r4, r3, [sp, #4]
+802059f0:	4945      	ldr	r1, [pc, #276]	; (80205b08 <main+0x148>)
+802059f2:	4623      	mov	r3, r4
+802059f4:	9400      	str	r4, [sp, #0]
+802059f6:	f01e fb34 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+802059fa:	4b46      	ldr	r3, [pc, #280]	; (80205b14 <main+0x154>)
+802059fc:	2203      	movs	r2, #3
+802059fe:	4620      	mov	r0, r4
+80205a00:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a04:	4940      	ldr	r1, [pc, #256]	; (80205b08 <main+0x148>)
+80205a06:	4623      	mov	r3, r4
+80205a08:	9400      	str	r4, [sp, #0]
+80205a0a:	f01e fb2a 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a0e:	4b42      	ldr	r3, [pc, #264]	; (80205b18 <main+0x158>)
+80205a10:	2203      	movs	r2, #3
+80205a12:	4620      	mov	r0, r4
+80205a14:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a18:	493b      	ldr	r1, [pc, #236]	; (80205b08 <main+0x148>)
+80205a1a:	4623      	mov	r3, r4
+80205a1c:	9400      	str	r4, [sp, #0]
+80205a1e:	f01e fb20 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a22:	4b3e      	ldr	r3, [pc, #248]	; (80205b1c <main+0x15c>)
+80205a24:	4d3e      	ldr	r5, [pc, #248]	; (80205b20 <main+0x160>)
+80205a26:	9303      	str	r3, [sp, #12]
+80205a28:	4b3e      	ldr	r3, [pc, #248]	; (80205b24 <main+0x164>)
+80205a2a:	2203      	movs	r2, #3
+80205a2c:	4620      	mov	r0, r4
+80205a2e:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a32:	4935      	ldr	r1, [pc, #212]	; (80205b08 <main+0x148>)
+80205a34:	4623      	mov	r3, r4
+80205a36:	9400      	str	r4, [sp, #0]
+80205a38:	f01e fb13 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a3c:	f8d5 3500 	ldr.w	r3, [r5, #1280]	; 0x500
+80205a40:	2203      	movs	r2, #3
+80205a42:	9303      	str	r3, [sp, #12]
+80205a44:	4b38      	ldr	r3, [pc, #224]	; (80205b28 <main+0x168>)
+80205a46:	4620      	mov	r0, r4
+80205a48:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a4c:	492e      	ldr	r1, [pc, #184]	; (80205b08 <main+0x148>)
+80205a4e:	4623      	mov	r3, r4
+80205a50:	9400      	str	r4, [sp, #0]
+80205a52:	f01e fb06 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a56:	4b35      	ldr	r3, [pc, #212]	; (80205b2c <main+0x16c>)
+80205a58:	2203      	movs	r2, #3
+80205a5a:	9303      	str	r3, [sp, #12]
+80205a5c:	4b34      	ldr	r3, [pc, #208]	; (80205b30 <main+0x170>)
+80205a5e:	4620      	mov	r0, r4
+80205a60:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a64:	4928      	ldr	r1, [pc, #160]	; (80205b08 <main+0x148>)
+80205a66:	4623      	mov	r3, r4
+80205a68:	9400      	str	r4, [sp, #0]
+80205a6a:	f01e fafa 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a6e:	f8d5 3504 	ldr.w	r3, [r5, #1284]	; 0x504
+80205a72:	2203      	movs	r2, #3
+80205a74:	9303      	str	r3, [sp, #12]
+80205a76:	4b2f      	ldr	r3, [pc, #188]	; (80205b34 <main+0x174>)
+80205a78:	4620      	mov	r0, r4
+80205a7a:	e9cd 4301 	strd	r4, r3, [sp, #4]
+80205a7e:	4922      	ldr	r1, [pc, #136]	; (80205b08 <main+0x148>)
+80205a80:	4623      	mov	r3, r4
+80205a82:	9400      	str	r4, [sp, #0]
+80205a84:	f01e faed 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205a88:	4e2b      	ldr	r6, [pc, #172]	; (80205b38 <main+0x178>)
+80205a8a:	4f2c      	ldr	r7, [pc, #176]	; (80205b3c <main+0x17c>)
+80205a8c:	2500      	movs	r5, #0
+80205a8e:	e9cd 4603 	strd	r4, r6, [sp, #12]
+80205a92:	462b      	mov	r3, r5
+80205a94:	2203      	movs	r2, #3
+80205a96:	4628      	mov	r0, r5
+80205a98:	491b      	ldr	r1, [pc, #108]	; (80205b08 <main+0x148>)
+80205a9a:	e9cd 5500 	strd	r5, r5, [sp]
+80205a9e:	9702      	str	r7, [sp, #8]
+80205aa0:	f01e fadf 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205aa4:	f856 3b04 	ldr.w	r3, [r6], #4
+80205aa8:	2203      	movs	r2, #3
+80205aaa:	e9cd 4303 	strd	r4, r3, [sp, #12]
+80205aae:	4b24      	ldr	r3, [pc, #144]	; (80205b40 <main+0x180>)
+80205ab0:	4628      	mov	r0, r5
+80205ab2:	e9cd 5301 	strd	r5, r3, [sp, #4]
+80205ab6:	4914      	ldr	r1, [pc, #80]	; (80205b08 <main+0x148>)
+80205ab8:	462b      	mov	r3, r5
+80205aba:	9500      	str	r5, [sp, #0]
+80205abc:	3401      	adds	r4, #1
+80205abe:	f01e fad0 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205ac2:	2c10      	cmp	r4, #16
+80205ac4:	d1e2      	bne.n	80205a8c <main+0xcc>
+80205ac6:	4b1f      	ldr	r3, [pc, #124]	; (80205b44 <main+0x184>)
+80205ac8:	2203      	movs	r2, #3
+80205aca:	490f      	ldr	r1, [pc, #60]	; (80205b08 <main+0x148>)
+80205acc:	4628      	mov	r0, r5
+80205ace:	e9cd 5301 	strd	r5, r3, [sp, #4]
+80205ad2:	9500      	str	r5, [sp, #0]
+80205ad4:	462b      	mov	r3, r5
+80205ad6:	f01e fac4 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205ada:	481b      	ldr	r0, [pc, #108]	; (80205b48 <main+0x188>)
+80205adc:	f01a f8d4 	bl	8021fc88 <std::set_new_handler(void (*)())>
+80205ae0:	f7fc fa72 	bl	80201fc8 <MainLoop()>
+80205ae4:	4b19      	ldr	r3, [pc, #100]	; (80205b4c <main+0x18c>)
+80205ae6:	4628      	mov	r0, r5
+80205ae8:	e9cd 5301 	strd	r5, r3, [sp, #4]
+80205aec:	2203      	movs	r2, #3
+80205aee:	462b      	mov	r3, r5
+80205af0:	4905      	ldr	r1, [pc, #20]	; (80205b08 <main+0x148>)
+80205af2:	9500      	str	r5, [sp, #0]
+80205af4:	f01e fab5 	bl	80224062 <z_log_msg_runtime_create.constprop.0>
+80205af8:	4628      	mov	r0, r5
+80205afa:	b007      	add	sp, #28
+80205afc:	bdf0      	pop	{r4, r5, r6, r7, pc}
+80205afe:	bf00      	nop
+80205b00:	802577c3 	.word	0x802577c3
+80205b04:	802584f2 	.word	0x802584f2
+80205b08:	8022e980 	.word	0x8022e980
+80205b0c:	8025eda2 	.word	0x8025eda2
+80205b10:	802577e3 	.word	0x802577e3
+80205b14:	80257812 	.word	0x80257812
+80205b18:	80257832 	.word	0x80257832
+80205b1c:	e001e500 	.word	0xe001e500
+80205b20:	e001e000 	.word	0xe001e000
+80205b24:	8025785e 	.word	0x8025785e
+80205b28:	80257880 	.word	0x80257880
+80205b2c:	e001e504 	.word	0xe001e504
+80205b30:	80257893 	.word	0x80257893
+80205b34:	802578b4 	.word	0x802578b4
+80205b38:	e001e510 	.word	0xe001e510
+80205b3c:	802578c6 	.word	0x802578c6
+80205b40:	802578eb 	.word	0x802578eb
+80205b44:	80257901 	.word	0x80257901
+80205b48:	8020599d 	.word	0x8020599d
+80205b4c:	80257924 	.word	0x80257924
+
+=== UART4 DEVICE INITIALIZATION IN LINK MAP ===
+181-                              (--whole-archive)
+182-zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+183-                              (--whole-archive)
+184:zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+185-                              (--whole-archive)
+186-zephyr/drivers/timer/libdrivers__timer.a(sys_clock_init.c.obj)
+187-                              (--whole-archive)
+188-zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+189-                              (--whole-archive)
+--
+1068-modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+1069-                              (--whole-archive)
+1070-zephyr/kernel/libkernel.a(busy_wait.c.obj)
+1071:                              zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj) (z_impl_k_busy_wait)
+1072-zephyr/kernel/libkernel.a(device.c.obj)
+1073-                              zephyr/libzephyr.a(device.c.obj) (z_device_get_all_static)
+1074-zephyr/kernel/libkernel.a(errno.c.obj)
+1075-                              zephyr/lib/libc/newlib/liblib__libc__newlib.a(libc-hooks.c.obj) (z_impl_z_errno)
+1076-zephyr/kernel/libkernel.a(fatal.c.obj)
+--
+2502- .bss           0x0000000000000000        0x0 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+2503- .__device_deps_pass1
+2504-                0x0000000000000000       0x28 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+2505: .text          0x0000000000000000        0x0 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+2506: .data          0x0000000000000000        0x0 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+2507: .bss           0x0000000000000000        0x0 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+2508- .__device_deps_pass1
+2509:                0x0000000000000000       0x12 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+2510- .text          0x0000000000000000        0x0 zephyr/drivers/timer/libdrivers__timer.a(sys_clock_init.c.obj)
+2511- .data          0x0000000000000000        0x0 zephyr/drivers/timer/libdrivers__timer.a(sys_clock_init.c.obj)
+2512- .bss           0x0000000000000000        0x0 zephyr/drivers/timer/libdrivers__timer.a(sys_clock_init.c.obj)
+2513- .text.sys_clock_set_timeout
+2514-                0x0000000000000000        0x2 zephyr/drivers/timer/libdrivers__timer.a(sys_clock_init.c.obj)
+--
+17629-                0x000000008020dee0       0x60 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+17630- .text.alif_pd_pm_action
+17631-                0x000000008020df40      0x150 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+17632: .text.uart_ns16550_poll_out
+17633:                0x000000008020e090       0x9c zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17634: .text.uart_ns16550_err_check
+17635:                0x000000008020e12c       0x9c zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17636: .text.uart_ns16550_fifo_fill
+17637:                0x000000008020e1c8       0xc8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17638: .text.uart_ns16550_irq_tx_ready
+17639:                0x000000008020e290       0x98 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17640: .text.uart_ns16550_irq_tx_complete
+17641:                0x000000008020e328       0xa4 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17642: .text.uart_ns16550_irq_rx_enable
+17643:                0x000000008020e3cc       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17644: .text.uart_ns16550_irq_rx_disable
+17645:                0x000000008020e460       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17646: .text.uart_ns16550_irq_rx_ready
+17647:                0x000000008020e4f4       0x98 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17648: .text.uart_ns16550_irq_err_enable
+17649:                0x000000008020e58c       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17650: .text.uart_ns16550_irq_err_disable
+17651:                0x000000008020e620       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17652: .text.uart_ns16550_irq_is_pending
+17653:                0x000000008020e6b4       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17654: .text.uart_ns16550_irq_update
+17655:                0x000000008020e748       0x98 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17656: .text.uart_ns16550_irq_callback_set
+17657:                0x000000008020e7e0       0x98 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17658: .text.uart_ns16550_irq_tx_disable
+17659:                0x000000008020e878       0xcc zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17660: .text.uart_ns16550_irq_tx_enable
+17661:                0x000000008020e944       0xc8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17662: .text.uart_ns16550_configure
+17663:                0x000000008020ea0c      0x274 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17664: .text.uart_ns16550_pm_action
+17665:                0x000000008020ec80       0xb0 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17666: .text.uart_ns16550_fifo_read
+17667:                0x000000008020ed30       0xa8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17668: .text.uart_ns16550_poll_in
+17669:                0x000000008020edd8       0x94 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+17670- .text.elapsed  0x000000008020ee6c       0x4c zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+17671- .text.sys_clock_driver_init
+17672-                0x000000008020eeb8       0x38 zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+17673- .text.sys_clock_isr
+17674-                0x000000008020eef0       0x64 zephyr/drivers/timer/libdrivers__timer.a(cortex_m_systick.c.obj)
+--
+19440-                0x0000000080225e14                pinctrl_configure_pins
+19441- .text.z_log_msg_runtime_create.constprop.0
+19442-                0x0000000080225e32       0x1e zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+19443: .text.uart_ns16550_config_get
+19444:                0x0000000080225e50       0x1a zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19445: .text.uart_ns16550_isr
+19446:                0x0000000080225e6a       0x58 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19447: .text.uart_ns16550_irq_config_func0
+19448:                0x0000000080225ec2        0xa zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19449- .text.pinctrl_apply_state
+19450:                0x0000000080225ecc       0x1e zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19451: .text.ns16550_read_char.isra.0
+19452:                0x0000000080225eea       0x1c zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19453: .text.uart_ns16550_init
+19454:                0x0000000080225f06       0x1a zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+19455- .text.cwm_apply_properties
+19456-                0x0000000080225f20        0x6 modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a(wm8904.c.obj)
+19457- .text.cwm_clear_errors
+19458-                0x0000000080225f26        0x4 modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a(wm8904.c.obj)
+19459- .text.cwm_register_error_callback
+--
+21276- .z_init_PRE_KERNEL_147_00154_
+21277-                0x000000008022d628        0x8 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+21278- .z_init_PRE_KERNEL_150_00227_
+21279:                0x000000008022d630        0x8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+21280- .z_init_PRE_KERNEL_160_0_
+21281-                0x000000008022d638        0x8 zephyr/drivers/console/libdrivers__console.a(uart_console.c.obj)
+21282-                0x000000008022d640                __init_PRE_KERNEL_2_start = .
+21283- *(SORT_BY_NAME(SORT_BY_ALIGNMENT(.z_init_PRE_KERNEL_2?_*)))
+21284- .z_init_PRE_KERNEL_20_0_
+--
+21356-                0x000000008022d87c                __device_dts_ord_4
+21357-                0x000000008022d898                __device_dts_ord_154
+21358- ._device.static.1_50_
+21359:                0x000000008022d8b4       0x1c zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+21360-                0x000000008022d8b4                __device_dts_ord_227
+21361- ._device.static.3_50_
+21362-                0x000000008022d8d0       0x1c zephyr/drivers/flash/libdrivers__flash.a(flash_mram_alif.c.obj)
+21363-                0x000000008022d8d0                __device_dts_ord_268
+21364- ._device.static.3_50_
+--
+21904-                0x000000008022e918       0x4c
+21905-                0x000000008022e918                _uart_driver_api_list_start = .
+21906- *(SORT_BY_NAME(SORT_BY_ALIGNMENT(._uart_driver_api.static.*)))
+21907: ._uart_driver_api.static.uart_ns16550_driver_api_
+21908:                0x000000008022e918       0x4c zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+21909-                0x000000008022e964                _uart_driver_api_list_end = .
+21910-
+21911-bc12_emul_driver_api_area
+21912-                0x000000008022e964        0x0
+21913-                0x000000008022e964                _bc12_emul_driver_api_list_start = .
+--
+22081- ._log_const.static.log_const_se_service_
+22082-                0x000000008022ea18        0x8 modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+22083-                0x000000008022ea18                log_const_se_service
+22084: ._log_const.static.log_const_uart_ns16550_
+22085:                0x000000008022ea20        0x8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22086:                0x000000008022ea20                log_const_uart_ns16550
+22087- ._log_const.static.log_const_wm8904_
+22088-                0x000000008022ea28        0x8 modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a(wm8904.c.obj)
+22089-                0x000000008022ea28                log_const_wm8904
+22090-                0x000000008022ea30                _log_const_list_end = .
+22091-
+--
+22309-                0x0000000080256c84        0x4 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+22310- .rodata.alif_pd_config_0
+22311-                0x0000000080256c88        0x4 zephyr/drivers/power_domain/libdrivers__power_domain.a(power_domain_alif.c.obj)
+22312: .rodata.uart_ns16550_dev_cfg_0
+22313:                0x0000000080256c8c       0x20 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22314- .rodata.__pinctrl_dev_config__device_dts_ord_227
+22315:                0x0000000080256cac        0x8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22316- .rodata.__pinctrl_states__device_dts_ord_227
+22317:                0x0000000080256cb4       0x10 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22318- .rodata.__pinctrl_state_pins_1__device_dts_ord_227
+22319:                0x0000000080256cc4        0x8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22320- .rodata.__pinctrl_state_pins_0__device_dts_ord_227
+22321:                0x0000000080256ccc        0x8 zephyr/drivers/serial/libdrivers__serial.a(uart_ns16550.c.obj)
+22322- .rodata.wm8904_config_0
+22323-                0x0000000080256cd4       0x14 modules/sdk_alif/drivers/codec/wm8904/lib..__alif__drivers__codec__wm8904.a(wm8904.c.obj)
+
+=== ZEPHYR INITIALIZATION PRIORITIES ===
+CONFIG_SERIAL_INIT_PRIORITY=50
+CONFIG_APPLICATION_INIT_PRIORITY=90
+CONFIG_CONSOLE_INIT_PRIORITY=60
