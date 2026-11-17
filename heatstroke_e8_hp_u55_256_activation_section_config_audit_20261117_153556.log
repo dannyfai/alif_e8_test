@@ -1,0 +1,122 @@
+=== ALL APPLICATION ACTIVATION SECTION SETTINGS ===
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.conf:1:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:26:#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:35:#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:15:config ACTIVATION_BUF_SECTION
+
+=== KCONFIG INPUT FILES ===
+APPLICATION_SOURCE_DIR:PATH=/home/user/sdk-alif/beeinventor/test_heatstroke
+BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+CONF_FILE:STRING=/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf
+
+=== EFFECTIVE ACTIVATION CONFIGURATION ===
+1833-CONFIG_LEGACY_GENERATED_INCLUDE_PATH=y
+1834-# end of Compatibility
+1835-
+1836-# CONFIG_USE_APP_MENU is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1838-CONFIG_ACTIVATION_BUF_SZ=0x00091000
+1839-CONFIG_MODEL_IN_EXT_FLASH=y
+1840-# CONFIG_ETHOS_U_AXI0_ONLY is not set
+1841-CONFIG_AUDIO_SAMPLES=16000
+
+=== CONFIGURATION FRAGMENTS ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/misc/generated/extra_kconfig_options.conf
+
+=== E8 HP LINKER SCRIPT REGION AND ACTIVATION RULES ===
+44-#ifdef BOARD_OSPI_RAM_BASE
+45-__OSPI_RAM_BASE = BOARD_OSPI_RAM_BASE;
+46-__OSPI_RAM_SIZE = BOARD_OSPI_RAM_SIZE;
+47-#endif
+48-
+49:MEMORY
+50-{
+51-  ITCM  (rwx)     : ORIGIN = 0x01000000,     LENGTH = 0x00040000
+52-  DTCM  (rwx)     : ORIGIN = 0x20000000,     LENGTH = 0x00100000
+53:  SRAM  (rwx)     : ORIGIN = ALIF_SRAM_BASE, LENGTH = ALIF_SRAM_SIZE
+54-  UNSTRIPED (rwx) : ORIGIN = UNSTRIPED_BASE, LENGTH = UNSTRIPED_SIZE
+55-  MRAM  (rx)      : ORIGIN = __ROM_BASE,     LENGTH = __ROM_SIZE
+56-
+57-#ifdef BOARD_OSPI_FLASH_BASE
+58-  OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+59-#endif
+60-
+61-#ifdef BOARD_OSPI_RAM_BASE
+--
+174-    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+175-    __exidx_end = .;
+176-
+177-  } > DTCM AT> MRAM
+178-
+179:  /* Place non-zero code/data here if required in SRAM */
+180-  .data.sram.at_mram : ALIGN(8)
+181-  {
+182-    * (ifm)
+183:  } > SRAM AT> MRAM
+184-
+185-  .bss.sram (NOLOAD) : ALIGN(8)
+186-  {
+187-    * (.bss.large_ram)                     /* Large LVGL buffers */
+188-    * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+189-    * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+190-    * (.bss.NoInit.ethos_u_cache)
+191:    * (.bss.NoInit.activation_buf_sram)
+192-    * (.bss.NoInit.temp_buf_sram)
+193-  } > SRAM
+194-
+195-  .bss.unstriped (NOLOAD) :
+196-  {
+197-    * (.bss.lcd_image_buf)
+198-  } > UNSTRIPED
+199-
+--
+202-  } > ITCM
+203-
+204-#ifdef BOARD_OSPI_RAM_BASE
+205-  .bss.ext_ram (NOLOAD) : ALIGN(8)
+206-  {
+207:    * (.bss.NoInit.activation_buf_dram)
+208-  } > OSPI_RAM
+209-#endif
+210-
+211-  .nonsecure0_region (NOLOAD) :
+212-  {
+213-    . = ALIGN(TGU_BLOCK_SIZE);
+214-    __ns_region_0_start = .;
+215-    * (.bss.lvgl_buf)
+
+=== MLEK ETHOS-U ACTIVATION SECTION SELECTION ===
+    30	
+    31	#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    32	    #ifndef ETHOS_U_NPU_CACHE_SIZE
+    33	        #define ETHOS_U_CACHE_BUF_SZ                (393216U)  /* See vela doc for reference */
+    34	    #else
+    35	        #define ETHOS_U_CACHE_BUF_SZ                ETHOS_U_NPU_CACHE_SIZE
+    36	    #endif /* ETHOS_U_NPU_CACHE_SIZE */
+    37	#else
+    38	    #define ETHOS_U_CACHE_BUF_SZ    (0U)
+    39	#endif /* CACHE_BUF_SZ */
+    40	
+    41	/**
+    42	 * Activation buffer aka tensor arena section name
+    43	 * We have to place the tensor arena in different region based on the memory config.
+    44	 **/
+    45	#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM)
+    46	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    47	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    48	#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY)
+    49	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    50	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    51	#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    52	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+    53	    #define CACHE_BUF_SECTION           section(".bss.NoInit.ethos_u_cache")
+    54	    #define ACTIVATION_BUF_SECTION_NAME ("DDR/DRAM")
+    55	    #define CACHE_BUF_ATTRIBUTE         __attribute__((aligned(ETHOS_U_MEM_BYTE_ALIGNMENT), CACHE_BUF_SECTION))
+    56	#endif
+    57	
+    58	#endif /* ETHOS_U_NPU_MEM_CONFIG_H */
+
+=== FINAL BUFFER ADDRESS AND SIZE ===
+20000e60 00091000 b arm::app::activationBuf
