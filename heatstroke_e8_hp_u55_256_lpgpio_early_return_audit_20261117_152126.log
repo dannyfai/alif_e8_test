@@ -1,0 +1,382 @@
+=== configure_lpgpio DEFINITION AND CALLS ===
+177-
+178-volatile uint8_t button_pressed = 0U;
+179-static struct gpio_callback button_cb_data;
+180-static bool por_boot;
+181-static struct k_sem button_wait_sem;
+182-
+183-static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+184-{
+185-	ARG_UNUSED(dev);
+186-	ARG_UNUSED(cb);
+187-	ARG_UNUSED(pins);
+188-
+189-	if (por_boot) {
+190-		/* Ignore button press event if it's from POR boot, as the button state may be unstable during POR. */
+191-		return;
+192-	}
+193-
+194-	int val = gpio_pin_get_dt(&lpgpio_config);  // 1 = pressed, 0 = released
+195-    if (val < 0) {
+196-        LOG_ERR("Failed to read pin: %d", val);
+197-        return;
+198-    }
+199-
+200-    button_pressed = (val == 1);
+201-    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+202-
+203-	if (!k_sem_count_get(&button_wait_sem) && button_pressed) {
+204-		k_sem_give(&button_wait_sem);
+205-	}
+206-}
+207-
+208-/**
+209- * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+210- * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+211- * With B1/E1C devkit you need to also remove resistor R64. */
+212:static int configure_lpgpio(void)
+213-{
+214-	int ret;
+215-	const struct gpio_dt_spec *spec = &lpgpio_config;
+216-
+217-	if (!spec || !spec->port) {
+218-		/* Just ignore */
+219-		LOG_ERR("lpgpio invalid");
+220-		return -ENODEV;
+221-	}
+222-
+223-	/* Configure LPGPIO0 for wakeup */
+224-	if (!gpio_is_ready_dt(spec)) {
+225-		LOG_ERR("LPGPIO0 device is not ready");
+226-		return -ENODEV;
+227-	}
+228-
+229-	ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+230-	if (ret != 0) {
+231-		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+232-		return ret;
+233-	}
+234-
+235-	ret = gpio_pin_interrupt_configure_dt(spec,
+236-					      GPIO_INT_EDGE_BOTH);
+237-	if (ret != 0) {
+238-		LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+239-		return ret;
+240-	}
+241-
+242-	gpio_init_callback(&button_cb_data, button_callback, BIT(spec->pin));
+243-	ret = gpio_add_callback(spec->port, &button_cb_data);
+244-	if (ret != 0) {
+245-		LOG_ERR("Failed to add button callback: %d", ret);
+246-		return ret;
+247-	}
+--
+547-                SmokeFloatToMicro(psiRef[0]), SmokeFloatToMicro(psiRef[1]),
+548-                SmokeFloatToMicro(psiRef[2]), SmokeFloatToMicro(psiRef[3]));
+549-        LOG_INF("PSI MCU micro:       [%d,%d,%d,%d]",
+550-                SmokeFloatToMicro(psi[0]), SmokeFloatToMicro(psi[1]),
+551-                SmokeFloatToMicro(psi[2]), SmokeFloatToMicro(psi[3]));
+552-        LOG_INF("RPE max/mean abs error micro: %d / %d",
+553-                SmokeFloatToMicro(rpeMaxError), SmokeFloatToMicro(rpeMeanError));
+554-        LOG_INF("PSI max/mean abs error micro: %d / %d",
+555-                SmokeFloatToMicro(psiMaxError), SmokeFloatToMicro(psiMeanError));
+556-        LOG_INF("RPE class reference=%u MCU=%u match=%s",
+557-                rpeRefClass, rpeMcuClass,
+558-                rpeRefClass == rpeMcuClass ? "yes" : "no");
+559-        LOG_INF("PSI class reference=%u MCU=%u match=%s",
+560-                psiRefClass, psiMcuClass,
+561-                psiRefClass == psiMcuClass ? "yes" : "no");
+562-        LOG_INF("RPE ground-truth=%u predicted=%u",
+563-                static_cast<unsigned int>(sample.rpe_label), rpeMcuClass);
+564-        LOG_INF("PSI ground-truth=%u predicted=%u",
+565-                static_cast<unsigned int>(sample.psi_label), psiMcuClass);
+566-        LOG_INF("Activation arena capacity: %u bytes",
+567-                static_cast<unsigned int>(model.GetComputeBuffer().size));
+568-        LOG_INF("Model buffer size: %u bytes",
+569-                static_cast<unsigned int>(model.GetModelBuffer().size));
+570-        LOG_INF("=== SAMPLE %u COMPLETE ===", static_cast<unsigned int>(slot));
+571-    }
+572-
+573-    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+574-    return true;
+575-}
+576-
+577-void MainLoop()
+578-{
+579-    por_boot = true;
+580-    k_sem_init(&button_wait_sem, 0, 1);
+581-
+582:    if (configure_lpgpio()) {
+583-        LOG_ERR("Failed to configure LPGPIO for button input");
+584-        return;
+585-    }
+586-
+587-    const uint8_t* modelPointer =
+588-        arm::app::polyu_heatstroke::GetModelPointer();
+589-    const size_t modelLength =
+590-        arm::app::polyu_heatstroke::GetModelLen();
+591-
+592-    if (modelPointer == nullptr || modelLength == 0U) {
+593-        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+594-        return;
+595-    }
+596-
+597-    LOG_INF("=====================");
+598-    LOG_INF("Combined model pointer: %p",
+599-            static_cast<const void*>(modelPointer));
+600-    LOG_INF("Combined model size: %u bytes",
+601-            static_cast<unsigned int>(modelLength));
+602-
+603-    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+604-    arm::app::fwk::iface::MemoryRegion modelMem{
+605-        const_cast<uint8_t*>(modelPointer), modelLength};
+606-
+607-    arm::app::fwk::iface::MemoryRegion computeMem{
+608-        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+609-
+610-    PolyUModel1 model;
+611-
+612-    if (!model.Init(computeMem, modelMem)) {
+613-        LOG_ERR("Failed to initialise combined heat-stress model");
+614-        return;
+615-    }
+616-
+617-    LOG_INF("Combined heat-stress model initialisation: OK");
+
+=== LPGPIO-RELATED SOURCE CONDITIONS ===
+136-}
+137-
+138-} /* namespace */
+139-
+140-#define LPGPIO_NODE           DT_NODELABEL(lpgpio)
+141:#define LPGPIO_WAKEUP_ENABLED DT_NODE_HAS_STATUS_OKAY(LPGPIO_NODE)
+142-
+143:#if LPGPIO_WAKEUP_ENABLED
+144-/* LPGPIO wake up source is used */
+145-#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+146-
+147-#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+148-#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+--
+167-
+168-} /* namespace app */
+169-} /* namespace arm */
+170-
+171-
+172:#if LPGPIO_WAKEUP_ENABLED
+173:static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+174-	DT_NODELABEL(wakeup_pins), lpgpios, CONFIG_LPGPIO_WAKEUP_SOURCE, {0});
+175-#endif
+176-
+177-
+178-volatile uint8_t button_pressed = 0U;
+--
+189-	if (por_boot) {
+190-		/* Ignore button press event if it's from POR boot, as the button state may be unstable during POR. */
+191-		return;
+192-	}
+193-
+194:	int val = gpio_pin_get_dt(&lpgpio_config);  // 1 = pressed, 0 = released
+195-    if (val < 0) {
+196-        LOG_ERR("Failed to read pin: %d", val);
+197-        return;
+198-    }
+199-
+--
+210- * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+211- * With B1/E1C devkit you need to also remove resistor R64. */
+212-static int configure_lpgpio(void)
+213-{
+214-	int ret;
+215:	const struct gpio_dt_spec *spec = &lpgpio_config;
+216-
+217-	if (!spec || !spec->port) {
+218-		/* Just ignore */
+219-		LOG_ERR("lpgpio invalid");
+220-		return -ENODEV;
+221-	}
+222-
+223-	/* Configure LPGPIO0 for wakeup */
+224:	if (!gpio_is_ready_dt(spec)) {
+225-		LOG_ERR("LPGPIO0 device is not ready");
+226-		return -ENODEV;
+227-	}
+228-
+229:	ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+230-	if (ret != 0) {
+231-		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+232-		return ret;
+233-	}
+234-
+235:	ret = gpio_pin_interrupt_configure_dt(spec,
+236-					      GPIO_INT_EDGE_BOTH);
+237-	if (ret != 0) {
+238-		LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+239-		return ret;
+240-	}
+
+=== HP BUILD LPGPIO CONFIGURATION ===
+CONFIG_DT_HAS_GPIO_KEYS_ENABLED=y
+CONFIG_DT_HAS_GPIO_LEDS_ENABLED=y
+CONFIG_DT_HAS_LPGPIO_WAKEUP_PIN_ENABLED=y
+CONFIG_DT_HAS_REGULATOR_GPIO_ENABLED=y
+CONFIG_DT_HAS_SNPS_DESIGNWARE_GPIO_ENABLED=y
+CONFIG_GPIO=y
+CONFIG_GPIO_DW=y
+# CONFIG_GPIO_ENABLE_DISABLE_INTERRUPT is not set
+# CONFIG_GPIO_GET_CONFIG is not set
+# CONFIG_GPIO_GET_DIRECTION is not set
+# CONFIG_GPIO_HOGS is not set
+CONFIG_GPIO_INIT_PRIORITY=40
+CONFIG_GPIO_LOG_LEVEL=3
+# CONFIG_GPIO_LOG_LEVEL_DBG is not set
+CONFIG_GPIO_LOG_LEVEL_DEFAULT=y
+# CONFIG_GPIO_LOG_LEVEL_ERR is not set
+# CONFIG_GPIO_LOG_LEVEL_INF is not set
+# CONFIG_GPIO_LOG_LEVEL_OFF is not set
+# CONFIG_GPIO_LOG_LEVEL_WRN is not set
+# CONFIG_GPIO_RA_HAS_VBTICTLR is not set
+# CONFIG_LPGPIO_M55_IRQ_EDGE_BOTH is not set
+CONFIG_LPGPIO_M55_IRQ_EDGE_FALLING=y
+# CONFIG_LPGPIO_M55_IRQ_EDGE_RISING is not set
+CONFIG_LPGPIO_M55_IRQ_ENABLED=y
+CONFIG_LPGPIO_WAKEUP_SOURCE=1
+# CONFIG_TIMEAWARE_GPIO is not set
+
+=== GENERATED DEVICE TREE: LPGPIO AND WAKEUP PINS ===
+120-			reg = < 0x1a000000 0x1000000 >;
+121-		};
+122-		pinctrl: pin-controller@1a603000 {
+123-			compatible = "alif,pinctrl";
+124-			reg = < 0x1a603000 0x1000 >, < 0x42007000 0x1000 >;
+125:			reg-names = "pinctrl", "lpgpio_pinctrl";
+126-			pinctrl_uart4: pinctrl_uart4 {
+127-				phandle = < 0x10 >;
+128-				group0 {
+129-					pinmux = < 0x30a >, < 0x312 >;
+130-				};
+131-			};
+132-			pinctrl_uart4_sleep: uart4_sleep {
+133-				phandle = < 0x11 >;
+134-				group0 {
+135-					pinmux = < 0x308 >, < 0x310 >;
+136-					read-enable = < 0x1 >;
+137-					driver-state-control = < 0x2 >;
+138-				};
+139-			};
+140-			pinctrl_uart0: pinctrl_uart0 {
+141-				phandle = < 0x8 >;
+142-				group0 {
+143-					pinmux = < 0x2 >, < 0xa >;
+--
+660-				group0 {
+661-					pinmux = < 0x380 >, < 0x388 >, < 0x390 >, < 0x398 >, < 0x3a0 >, < 0x3a8 >, < 0x3b0 >, < 0x3b8 >;
+662-					read-enable = < 0x1 >;
+663-				};
+664-			};
+665:			pinctrl_lpgpio: pinctrl_lpgpio {
+666-				phandle = < 0x41 >;
+667-				group0 {
+668-					pinmux = < 0x3c4 >;
+669-					read-enable = < 0x1 >;
+670-					driver-state-control = < 0x1 >;
+671-					drive-strength = < 0x8 >;
+672-				};
+673-			};
+674-			pinctrl_gpio16: pinctrl_gpio16 {
+675-				phandle = < 0x7a >;
+676-				group0 {
+677-					pinmux = < 0x400 >, < 0x408 >, < 0x410 >, < 0x418 >, < 0x420 >, < 0x428 >, < 0x430 >, < 0x438 >;
+678-					read-enable = < 0x1 >;
+679-				};
+680-			};
+681-			pinctrl_gpio17: pinctrl_gpio17 {
+682-				phandle = < 0x7b >;
+683-				group0 {
+--
+2068-			pinctrl-names = "default";
+2069-			gpio-controller;
+2070-			#gpio-cells = < 0x2 >;
+2071-			status = "disabled";
+2072-		};
+2073:		lpgpio: gpio@42002000 {
+2074-			compatible = "snps,designware-gpio";
+2075-			reg = < 0x42002000 0x1000 >;
+2076-			ngpios = < 0x8 >;
+2077-			interrupts = < 0xab 0x0 >, < 0xac 0x0 >, < 0xad 0x0 >, < 0xae 0x0 >, < 0xaf 0x0 >, < 0xb0 0x0 >, < 0xb1 0x0 >, < 0xb2 0x0 >;
+2078:			pinctrl-0 = < &pinctrl_lpgpio >;
+2079-			pinctrl-names = "default";
+2080-			gpio-controller;
+2081-			#gpio-cells = < 0x2 >;
+2082-			status = "okay";
+2083-			phandle = < 0x65 >;
+2084-		};
+2085-		crc0: crc0@48107000 {
+2086-			compatible = "alif,alif-crc";
+2087-			reg = < 0x48107000 0x1000 >;
+2088-			crc-algo = "crc8-ccitt";
+2089-			status = "disabled";
+2090-		};
+2091-		crc1: crc1@48108000 {
+2092-			compatible = "alif,alif-crc";
+2093-			reg = < 0x48108000 0x1000 >;
+2094-			crc-algo = "crc8-ccitt";
+2095-			status = "disabled";
+2096-		};
+--
+2505-			cam-disp-mux-gpios = < &gpio14 0x2 0x0 >;
+2506-			mw405: mw405@0 {
+2507-				status = "okay";
+2508-				compatible = "focuslcds,mw405";
+2509-				reg = < 0x0 >;
+2510:				reset-gpios = < &lpgpio 0x5 0x0 >;
+2511-				bl-gpios = < &gpio6 0x1 0x0 >;
+2512-				data-lanes = < 0x2 >;
+2513-				width = < 0x1e0 >;
+2514-				height = < 0x320 >;
+2515-				video-mode = "burst";
+2516-				command-tx-mode = "high-speed";
+2517-				pixel-format = < 0x0 >;
+2518-			};
+2519-		};
+2520-		dphy: d-phy@4903f000 {
+2521-			compatible = "snps,designware-dphy";
+2522-			reg = < 0x4903f000 0x40 >, < 0x49033000 0x1000 >, < 0x49032000 0x1000 >;
+2523-			reg-names = "expmst_reg", "csi_reg", "dsi_reg";
+2524-			#dphy-cells = < 0x1 >;
+2525-			clocks = < &clockctrl 0x14202 >, < &clockctrl 0x16202 >, < &clockctrl 0x10202 >, < &clockctrl 0x12202 >;
+2526-			clock-names = "pllref-clk", "pllbypass-clk", "tx-dphy-clk", "rx-dphy-clk";
+2527-			ref-frequency = < 0x249f000 >;
+2528-			cfg-clk-frequency = < 0x17d7840 >;
+--
+3289-		};
+3290-	};
+3291-	buttons {
+3292-		compatible = "gpio-keys";
+3293-		button0: button_0 {
+3294:			gpios = < &lpgpio 0x4 0x0 >;
+3295-			label = "SW0";
+3296-		};
+3297-	};
+3298-	mipi_switch {
+3299-		compatible = "mipi-lvds-mux";
+3300-		camera_select: sensor_select {
+3301-			select-gpios = < &gpio14 0x2 0x1 >;
+3302-		};
+3303-		display_select: display_panel_select {
+3304-			select-gpios = < &gpio14 0x2 0x0 >;
+3305-		};
+3306-	};
+3307-	ext_flash_xip: memory@c0000000 {
+3308-		compatible = "zephyr,memory-region";
+3309-		reg = < 0xc0000000 0x4000000 >;
+3310-		zephyr,memory-region = "OSPI1";
+3311-	};
+3312:	wakeup_pins: wakeup_pins {
+3313:		compatible = "lpgpio-wakeup-pin";
+3314:		lpgpios = < &lpgpio 0x4 0x1 >;
+3315-	};
+3316-};
+
+=== PREPROCESSED LPGPIO CONDITION AND FUNCTION ===
+grep: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_e8_hp_u55_256_activation_buffer_preprocessor_diagnostic_20261117_150943.ii: No such file or directory
