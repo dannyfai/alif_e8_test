@@ -1,0 +1,95 @@
+=== MODEL INITIALIZATION AND COMPUTE BUFFER ===
+   560	                psiRefClass, psiMcuClass,
+   561	                psiRefClass == psiMcuClass ? "yes" : "no");
+   562	        LOG_INF("RPE ground-truth=%u predicted=%u",
+   563	                static_cast<unsigned int>(sample.rpe_label), rpeMcuClass);
+   564	        LOG_INF("PSI ground-truth=%u predicted=%u",
+   565	                static_cast<unsigned int>(sample.psi_label), psiMcuClass);
+   566	        LOG_INF("Activation arena capacity: %u bytes",
+   567	                static_cast<unsigned int>(model.GetComputeBuffer().size));
+   568	        LOG_INF("Model buffer size: %u bytes",
+   569	                static_cast<unsigned int>(model.GetModelBuffer().size));
+   570	        LOG_INF("=== SAMPLE %u COMPLETE ===", static_cast<unsigned int>(slot));
+   571	    }
+   572	
+   573	    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+   574	    return true;
+   575	}
+   576	
+   577	void MainLoop()
+   578	{
+   579	    por_boot = true;
+   580	    k_sem_init(&button_wait_sem, 0, 1);
+   581	
+   582	    if (configure_lpgpio()) {
+   583	        LOG_ERR("Failed to configure LPGPIO for button input");
+   584	        return;
+   585	    }
+   586	
+   587	    const uint8_t* modelPointer =
+   588	        arm::app::polyu_heatstroke::GetModelPointer();
+   589	    const size_t modelLength =
+   590	        arm::app::polyu_heatstroke::GetModelLen();
+   591	
+   592	    if (modelPointer == nullptr || modelLength == 0U) {
+   593	        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+   594	        return;
+   595	    }
+   596	
+   597	    LOG_INF("=====================");
+   598	    LOG_INF("Combined model pointer: %p",
+   599	            static_cast<const void*>(modelPointer));
+   600	    LOG_INF("Combined model size: %u bytes",
+   601	            static_cast<unsigned int>(modelLength));
+   602	
+   603	    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+   604	    arm::app::fwk::iface::MemoryRegion modelMem{
+   605	        const_cast<uint8_t*>(modelPointer), modelLength};
+   606	
+   607	    arm::app::fwk::iface::MemoryRegion computeMem{
+   608	        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+   609	
+   610	    PolyUModel1 model;
+   611	
+   612	    if (!model.Init(computeMem, modelMem)) {
+   613	        LOG_ERR("Failed to initialise combined heat-stress model");
+   614	        return;
+   615	    }
+   616	
+   617	    LOG_INF("Combined heat-stress model initialisation: OK");
+   618	    LOG_INF("Contains Ethos-U operators: %s",
+   619	            model.ContainsEthosUOperator() ? "yes" : "no");
+   620	
+   621	    if (!VerifyTensorInterface(model)) {
+   622	        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+   623	        return;
+   624	    }
+   625	
+   626	    LOG_INF("Combined heat-stress model I/O contract verified.");
+   627	    if (!RunHeatstrokeSmokeInference(model)) {
+   628	        LOG_ERR("One-sample heat-stress inference failed");
+   629	        return;
+   630	    }
+   631	    LOG_INF("One-sample heat-stress inference: COMPLETE.");
+   632	}
+
+=== ALL COMPUTE BUFFER DEFINITIONS AND ASSIGNMENTS ===
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:567:                static_cast<unsigned int>(model.GetComputeBuffer().size));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:603:    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:604:    arm::app::fwk::iface::MemoryRegion modelMem{
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:607:    arm::app::fwk::iface::MemoryRegion computeMem{
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:612:    if (!model.Init(computeMem, modelMem)) {
+
+=== MEMORY REGION DEFINITION ===
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/iface/Model.hpp:29:struct MemoryRegion {
+
+=== RELEVANT BUILD CONFIGURATION ===
+# CONFIG_HEAP_MEM_POOL_IGNORE_MIN is not set
+CONFIG_HEAP_MEM_POOL_SIZE=163840
+CONFIG_ISR_STACK_SIZE=4096
+CONFIG_MAIN_STACK_SIZE=4096
+CONFIG_TENSORFLOW_LITE_MICRO=y
+# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+
+=== COMPUTE BUFFER SYMBOLS IN ELF ===
+00000001 A CONFIG_TENSORFLOW_LITE_MICRO
