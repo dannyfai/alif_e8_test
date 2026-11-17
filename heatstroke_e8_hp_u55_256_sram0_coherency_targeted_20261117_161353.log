@@ -1,0 +1,1149 @@
+=== APPLICATION ARENA AND INITIALIZATION ===
+21- *
+22- *     http://www.apache.org/licenses/LICENSE-2.0
+23- *
+24- * Unless required by applicable law or agreed to in writing, software
+25- * distributed under the License is distributed on an "AS IS" BASIS,
+26- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+27- * See the License for the specific language governing permissions and
+28- * limitations under the License.
+29- */
+30-#include "BufAttributes.hpp"
+31:#include "PolyUModel1.hpp"
+32-#include "heatstroke_smoke_test_vector.hpp"
+33-#include "mlek/fwk/iface/Tensor.hpp"
+34-
+35-#include <cstddef>
+36-#include <cstdint>
+37-#include <cstring>
+38-#include <cmath>
+39-#include <memory>
+40-#include <vector>
+41-
+42:using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+43-
+44-#include "power_mgr.h"             /* power management APIs */
+45-#include <zephyr/logging/log.h>
+46-#include <zephyr/kernel.h>
+47-#include <zephyr/drivers/gpio.h>
+48-#include <cmsis_core.h>
+49-
+50-LOG_MODULE_REGISTER(MainLoop);
+51-
+52-
+53-/*
+54- * Application-local Ethos-U runtime diagnostic.
+55- * Reads NPU STATUS and NVIC IRQ 55 only; does not alter either.
+56- */
+57-namespace {
+58-
+59-constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+60-constexpr IRQn_Type kHeatstrokeEthosuIrq =
+61-    static_cast<IRQn_Type>(55);
+62-
+63-struct k_work g_heatstrokeEthosuMonitorWork;
+64-struct k_timer g_heatstrokeEthosuMonitorTimer;
+65-
+66-void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+--
+151-#else
+152-#define LPGPIO_WAKEUP_EVENT WE_LPGPIO0
+153-#endif
+154-#else
+155-#define LPGPIO_EWIC_CFG 0
+156-#define LPGPIO_WAKEUP_EVENT 0
+157-#endif
+158-
+159-namespace arm {
+160-namespace app {
+161:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+162-
+163-    namespace polyu_heatstroke {
+164-extern const uint8_t* GetModelPointer();
+165-extern size_t GetModelLen();
+166-} /* namespace polyu_heatstroke */
+167-
+168-} /* namespace app */
+169-} /* namespace arm */
+170-
+171-
+172-#if LPGPIO_WAKEUP_ENABLED
+173-static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+174-	DT_NODELABEL(wakeup_pins), lpgpios, 0, {0});
+175-#endif
+176-
+177-
+178-volatile uint8_t button_pressed = 0U;
+179-static struct gpio_callback button_cb_data;
+180-static bool por_boot;
+181-static struct k_sem button_wait_sem;
+182-
+183-static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+184-{
+185-	ARG_UNUSED(dev);
+--
+202-
+203-	if (!k_sem_count_get(&button_wait_sem) && button_pressed) {
+204-		k_sem_give(&button_wait_sem);
+205-	}
+206-}
+207-
+208-/**
+209- * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+210- * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+211- * With B1/E1C devkit you need to also remove resistor R64. */
+212:static int configure_lpgpio(void)
+213-{
+214-	int ret;
+215-	const struct gpio_dt_spec *spec = &lpgpio_config;
+216-
+217-	if (!spec || !spec->port) {
+218-		/* Just ignore */
+219-		LOG_ERR("lpgpio invalid");
+220-		return -ENODEV;
+221-	}
+222-
+223-	/* Configure LPGPIO0 for wakeup */
+224-	if (!gpio_is_ready_dt(spec)) {
+225-		LOG_ERR("LPGPIO0 device is not ready");
+226-		return -ENODEV;
+227-	}
+228-
+229-	ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+230-	if (ret != 0) {
+231-		LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+232-		return ret;
+233-	}
+234-
+235-	ret = gpio_pin_interrupt_configure_dt(spec,
+236-					      GPIO_INT_EDGE_BOTH);
+--
+345-            LOG_ERR("Output contract failed for %s", outputNames[i]);
+346-            return false;
+347-        }
+348-    }
+349-
+350-    return true;
+351-}
+352-
+353-
+354-static bool BindSmokeInputTensor(
+355:    PolyUModel1& model,
+356-    size_t index,
+357-    const char* name,
+358-    const std::uint32_t* sourceBits,
+359-    size_t sourceBytes,
+360-    const std::vector<size_t>& expectedShape)
+361-{
+362-    auto tensor = model.GetInputTensor(index);
+363-    if (!VerifyOneTensor(name, index, tensor, expectedShape)) {
+364-        return false;
+365-    }
+366-
+367-    if (tensor->Bytes() != sourceBytes || sourceBits == nullptr) {
+368-        LOG_ERR("%s[%u] input payload size mismatch",
+369-                name, static_cast<unsigned int>(index));
+370-        return false;
+371-    }
+372-
+373-    std::memcpy(tensor->GetData(), sourceBits, sourceBytes);
+374-    LOG_INF("%s[%u] bound: %u bytes",
+375-            name,
+376-            static_cast<unsigned int>(index),
+377-            static_cast<unsigned int>(sourceBytes));
+378-    return true;
+379-}
+--
+402-    unsigned int best = 0U;
+403-    for (unsigned int i = 1U; i < 4U; ++i) {
+404-        if (values[i] > values[best]) {
+405-            best = i;
+406-        }
+407-    }
+408-    return best;
+409-}
+410-
+411-
+412:static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+413-{
+414-    static_assert(sizeof(float) == sizeof(std::uint32_t),
+415-                  "Smoke test requires 32-bit FP32");
+416-
+417-    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+418-    LOG_INF("Multi-sample vector count: %u",
+419-            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+420-
+421-    const auto& backendData = model.GetBackendData();
+422-    if (!backendData.m_pInterpreter) {
+423-        LOG_ERR("TFLM backend interpreter pointer is null");
+424-        return false;
+425-    }
+426-
+427-    for (std::uint32_t slot = 0U;
+428-         slot < heatstroke_smoke::kSampleCount; ++slot) {
+429-        const auto& sample = heatstroke_smoke::kSamples[slot];
+430-
+431-        LOG_INF("=== SAMPLE %u / %u ===",
+432-                static_cast<unsigned int>(slot + 1U),
+433-                static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+434-        LOG_INF("Dataset position: %u; sample ID: %u",
+435-                static_cast<unsigned int>(sample.dataset_position),
+436-                static_cast<unsigned int>(sample.dataset_sample_id));
+--
+572-
+573-    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+574-    return true;
+575-}
+576-
+577-void MainLoop()
+578-{
+579-    por_boot = true;
+580-    k_sem_init(&button_wait_sem, 0, 1);
+581-
+582:    if (configure_lpgpio()) {
+583-        LOG_ERR("Failed to configure LPGPIO for button input");
+584-        return;
+585-    }
+586-
+587-    const uint8_t* modelPointer =
+588-        arm::app::polyu_heatstroke::GetModelPointer();
+589-    const size_t modelLength =
+590-        arm::app::polyu_heatstroke::GetModelLen();
+591-
+592-    if (modelPointer == nullptr || modelLength == 0U) {
+593-        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+594-        return;
+595-    }
+596-
+597-    LOG_INF("=====================");
+598-    LOG_INF("Combined model pointer: %p",
+599-            static_cast<const void*>(modelPointer));
+600-    LOG_INF("Combined model size: %u bytes",
+601-            static_cast<unsigned int>(modelLength));
+602-
+603-    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+604-    arm::app::fwk::iface::MemoryRegion modelMem{
+605-        const_cast<uint8_t*>(modelPointer), modelLength};
+606-
+607:    arm::app::fwk::iface::MemoryRegion computeMem{
+608:        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+609-
+610:    PolyUModel1 model;
+611-
+612:    if (!model.Init(computeMem, modelMem)) {
+613-        LOG_ERR("Failed to initialise combined heat-stress model");
+614-        return;
+615-    }
+616-
+617-    LOG_INF("Combined heat-stress model initialisation: OK");
+618-    LOG_INF("Contains Ethos-U operators: %s",
+619-            model.ContainsEthosUOperator() ? "yes" : "no");
+620-
+621-    if (!VerifyTensorInterface(model)) {
+622-        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+623-        return;
+624-    }
+625-
+626-    LOG_INF("Combined heat-stress model I/O contract verified.");
+627-    if (!RunHeatstrokeSmokeInference(model)) {
+628-        LOG_ERR("One-sample heat-stress inference failed");
+629-        return;
+630-    }
+631-    LOG_INF("One-sample heat-stress inference: COMPLETE.");
+632-}
+
+=== MLEK TFLM INITIALIZATION ===
+94-            return "Sram_Only/Shared_Sram";
+95-        }
+96-        return "Dedicated_Sram";
+97-    }
+98-
+99-    return {};
+100-}
+101-} /* anonymous namespace */
+102-
+103-TflmModel::TflmModel() {}
+104-
+105-/* Initialise the model */
+106:bool TflmModel::Init(iface::MemoryRegion& computeBuffer,
+107-                     iface::MemoryRegion& nnModel,
+108-                     const void* backendData)
+109-{
+110-    /* Following tf lite micro example:
+111-     * Map the model into a usable data structure. This doesn't involve any
+112-     * copying or parsing, it's a very lightweight operation. */
+113-    debug("loading model from @ 0x%p\n", nnModel.data);
+114-    debug("model size: %" PRIu32 " bytes.\n", nnModel.size);
+115-
+116-    /* Enable logging before we start interacting with the framework. */
+117-    EnableTFLMLog();
+118-
+119-    this->m_backendData.m_pModel = ::tflite::GetModel(nnModel.data);
+120-
+121-    if (this->m_backendData.m_pModel->version() != TFLITE_SCHEMA_VERSION) {
+122-        printf_err("Model's schema version %" PRIu32 " is not equal "
+123-                   "to supported version %d.",
+124-                   this->m_backendData.m_pModel->version(),
+125-                   TFLITE_SCHEMA_VERSION);
+126-        return false;
+127-    }
+128-
+129:    this->m_computeBuffer = computeBuffer;
+130-    this->m_modelBuffer   = nnModel;
+131-
+132-    /* Pull in only the operation implementations we need.
+133-     * This relies on a complete list of all the ops needed by this graph.
+134-     * An easier approach is to just use the AllOpsResolver, but this will
+135-     * incur some penalty in code space for op implementations that are not
+136-     * needed by this graph.
+137-     * static ::tflite::ops::micro::AllOpsResolver resolver; */
+138-    /* NOLINTNEXTLINE(runtime-global-variables) */
+139-    debug("loading op resolver\n");
+140-
+141-    this->EnlistOperations();
+142-
+143-    /** If backend data has been provided, re-use the allocator */
+144-    if (backendData) {
+145-        this->m_backendData.m_pAllocator =
+146-            reinterpret_cast<const TflmBackendData*>(backendData)->m_pAllocator;
+147-    }
+148-
+149-    /* Create allocator instance, if it doesn't exist */
+150-    if (!this->m_backendData.m_pAllocator) {
+151-        /* Create an allocator instance */
+152:        info("Creating allocator using tensor arena at 0x%p\n", computeBuffer.data);
+153-
+154-        this->m_backendData.m_pAllocator =
+155:            tflite::MicroAllocator::Create(computeBuffer.data, computeBuffer.size);
+156-
+157-        if (!this->m_backendData.m_pAllocator) {
+158-            printf_err("Failed to create allocator\n");
+159-            return false;
+160-        }
+161-        debug("Created new allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+162-    } else {
+163-        debug("Using existing allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+164-    }
+165-
+166-    this->m_backendData.m_pInterpreter = std::make_unique<tflite::MicroInterpreter>(
+167-        this->m_backendData.m_pModel, this->GetOpResolver(), this->m_backendData.m_pAllocator);
+168-
+169-    if (!this->m_backendData.m_pInterpreter) {
+170-        printf_err("Failed to allocate interpreter\n");
+171-        return false;
+172-    }
+173-
+174-    /* Allocate memory from the tensor_arena for the model's tensors. */
+175-    info("Allocating tensors\n");
+176:    TfLiteStatus allocate_status = this->m_backendData.m_pInterpreter->AllocateTensors();
+177-
+178-    if (allocate_status != kTfLiteOk) {
+179-        printf_err("tensor allocation failed!\n");
+180-        return false;
+181-    }
+182-
+183-    /* Get information about the memory area to use for the model's input. */
+184-    this->m_input.resize(this->GetNumInputs());
+185-    for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+186-        this->m_input[inIndex] =
+187-            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->input(inIndex));
+188-    }
+189-
+190-    this->m_output.resize(this->GetNumOutputs());
+191-    for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+192-        this->m_output[outIndex] =
+193-            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->output(outIndex));
+194-    }
+195-
+196-    if (this->m_input.empty() || this->m_output.empty()) {
+197-        printf_err("failed to get tensors\n");
+198-        return false;
+199-    } else {
+200-        this->m_type = this->m_input[0]->Type(); /* Input 0 should be the main input */
+201-
+202-        /* Clear the input & output tensors */
+203-        for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+204-            std::memset(this->m_input[inIndex]->GetData(), 0, this->m_input[inIndex]->Bytes());
+205-        }
+206-        for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+--
+260-
+261-    info("Model INPUT tensors: \n");
+262-    for (auto& input : this->m_input) {
+263-        this->LogTensorInfo(input);
+264-    }
+265-
+266-    info("Model OUTPUT tensors: \n");
+267-    for (auto& output : this->m_output) {
+268-        this->LogTensorInfo(output);
+269-    }
+270-
+271-    info("Activation buffer (a.k.a tensor arena) size used: %zu\n",
+272:         this->m_backendData.m_pInterpreter->arena_used_bytes());
+273-
+274-    /* We expect there to be only one subgraph. */
+275-    const uint32_t nOperators = tflite::NumSubgraphOperators(this->m_backendData.m_pModel, 0);
+276-    info("Number of operators: %" PRIu32 "\n", nOperators);
+277-
+278-    const tflite::SubGraph* subgraph = this->m_backendData.m_pModel->subgraphs()->Get(0);
+279-
+280-    auto* opcodes = this->m_backendData.m_pModel->operator_codes();
+281-
+282-    /* For each operator, display registration information. */
+283-    for (size_t i = 0; i < nOperators; ++i) {
+284-        const tflite::Operator* op         = subgraph->operators()->Get(i);
+285-        const tflite::OperatorCode* opcode = opcodes->Get(op->opcode_index());
+286-        const TFLMRegistration* reg        = nullptr;
+287-
+288-        tflite::GetRegistrationFromOpCode(opcode, this->GetOpResolver(), &reg);
+289-        std::string opName;
+290-
+291-        if (reg) {
+292-            if (tflite::BuiltinOperator_CUSTOM == reg->builtin_code) {
+293-                opName = std::string(reg->custom_name);
+294-            } else {
+295-                opName = std::string(
+296-                    EnumNameBuiltinOperator(tflite::BuiltinOperator(reg->builtin_code)));
+297-            }
+298-        }
+299-        info("\tOperator %zu: %s\n", i, opName.c_str());
+300-    }
+301-
+302-    if (this->ContainsEthosUOperator()) {
+--
+396-
+397-std::vector<size_t> TflmModel::GetOutputShape(size_t index) const
+398-{
+399-    if (index < this->GetNumOutputs()) {
+400-        return this->m_output.at(index)->Shape();
+401-    }
+402-    return std::vector<size_t>();
+403-}
+404-
+405-/** @brief   Gets a pointer to the backend's compute buffer. */
+406-const iface::MemoryRegion& TflmModel::GetComputeBuffer() const
+407-{
+408:    return std::ref(this->m_computeBuffer);
+409-}
+410-
+411-/** @brief      Gets the pointer to the NN model data array. */
+412-const iface::MemoryRegion& TflmModel::GetModelBuffer() const
+413-{
+414-    return std::ref(this->m_modelBuffer);
+415-}
+416-
+417-const TflmBackendData& TflmModel::GetBackendData() const
+418-{
+419-    return std::ref(this->m_backendData);
+420-}
+421-
+422-} /* namespace arm::app::fwk::tflm */
+
+=== TFLM ARENA ALLOCATOR INITIALIZATION ===
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-532-    IPersistentBufferAllocator* persistent_buffer_allocator,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-533-    INonPersistentBufferAllocator* non_persistent_buffer_allocator,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-534-    MicroMemoryPlanner* memory_planner)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-535-    : non_persistent_buffer_allocator_(non_persistent_buffer_allocator),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-536-      persistent_buffer_allocator_(persistent_buffer_allocator),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-537-      memory_planner_(memory_planner),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-538-      model_is_allocating_(false) {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-539-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-540-MicroAllocator::~MicroAllocator() {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-541-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:542:MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena, size_t arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-543-                                       MicroMemoryPlanner* memory_planner) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-544-  uint8_t* aligned_arena =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-545-      AlignPointerUp(tensor_arena, MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-546-  size_t aligned_arena_size = tensor_arena + arena_size - aligned_arena;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-547-  SingleArenaBufferAllocator* memory_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:548:      SingleArenaBufferAllocator::Create(aligned_arena, aligned_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-549-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-550-  return Create(memory_allocator, memory_planner);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-551-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-552-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:553:MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena, size_t arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-554-                                       MemoryPlannerType memory_planner_type) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-555-  uint8_t* aligned_arena =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-556-      AlignPointerUp(tensor_arena, MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-557-  size_t aligned_arena_size = tensor_arena + arena_size - aligned_arena;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-558-  SingleArenaBufferAllocator* memory_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:559:      SingleArenaBufferAllocator::Create(aligned_arena, aligned_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-560-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-561-  // By default create GreedyMemoryPlanner.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-562-  // If a different MemoryPlanner is needed, use the other api.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-563-  MicroMemoryPlanner* memory_planner =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-564-      CreateMemoryPlanner(memory_planner_type, memory_allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-565-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-566-  return Create(memory_allocator, memory_planner);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-567-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-568-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:569:MicroAllocator* MicroAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-570-    SingleArenaBufferAllocator* memory_allocator,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-571-    MicroMemoryPlanner* memory_planner) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-572-  TFLITE_DCHECK(memory_allocator != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-573-  TFLITE_DCHECK(memory_planner != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-574-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-575-  uint8_t* allocator_buffer = memory_allocator->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-576-      sizeof(MicroAllocator), alignof(MicroAllocator));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-577-  MicroAllocator* allocator = new (allocator_buffer)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-578-      MicroAllocator(memory_allocator, memory_allocator, memory_planner);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-579-  return allocator;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-580-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-581-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:582:MicroAllocator* MicroAllocator::Create(uint8_t* persistent_tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-583-                                       size_t persistent_arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-584-                                       uint8_t* non_persistent_tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-585-                                       size_t non_persistent_arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-586-                                       MemoryPlannerType memory_planner_type) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-587-  TFLITE_DCHECK(persistent_tensor_arena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-588-  TFLITE_DCHECK(non_persistent_tensor_arena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-589-  TFLITE_DCHECK(persistent_tensor_arena != non_persistent_tensor_arena);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-590-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-591-  IPersistentBufferAllocator* persistent_buffer_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-592-      CreatePersistentArenaAllocator(persistent_tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-593-                                     persistent_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-594-  INonPersistentBufferAllocator* non_persistent_buffer_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-595-      CreateNonPersistentArenaAllocator(non_persistent_tensor_arena,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-596-                                        non_persistent_arena_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-597-                                        persistent_buffer_allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-598-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-599-  // TODO(b/297821738): this should be changed to CreateMemoryPlanner if
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-600-  // possible once  it's figured out why it breaks the HifiMini Build
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-601-  uint8_t* memory_planner_buffer = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-602-  MicroMemoryPlanner* memory_planner = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-603-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-604-  if (memory_planner_type == MemoryPlannerType::kGreedy) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-605-    memory_planner_buffer =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-606-        persistent_buffer_allocator->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-607-            sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-608-    memory_planner = new (memory_planner_buffer) GreedyMemoryPlanner();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-609-  } else if (memory_planner_type == MemoryPlannerType::kLinear) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-610-    memory_planner_buffer =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-611-        persistent_buffer_allocator->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-612-            sizeof(LinearMemoryPlanner), alignof(LinearMemoryPlanner));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-613-    memory_planner = new (memory_planner_buffer) LinearMemoryPlanner();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-614-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-615-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-616-  uint8_t* micro_allocator_buffer =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-617-      persistent_buffer_allocator->AllocatePersistentBuffer(
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-729-  *buffer_idx = scratch_buffer_request_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-730-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-731-  // Bump the request count to prepare for the next request:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-732-  ++scratch_buffer_request_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-733-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-734-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-735-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-736-TfLiteStatus MicroAllocator::FinishPrepareNodeAllocations(int node_id) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-737-  // When a node has finished preparing, all temp allocations performed by the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-738-  // kernel should be cleaned up:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:739:  TF_LITE_ENSURE_STATUS(ResetTempAllocations());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-740-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-741-  // Find and update any new scratch buffer requests for the current node:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-742-  internal::ScratchBufferRequest* requests = GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-743-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-744-  for (size_t i = 0; i < scratch_buffer_request_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-745-    // A request with a node_idx of -1 is a sentinel value used to indicate this
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-746-    // was a new request for the current node. The allocator finally knows the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-747-    // node index at this point. Assign the value and update the list of new
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-748-    // requests so the head section can be adjusted to allow for the next kernel
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-749-    // to allocate at most kMaxScratchBuffersPerOp requests:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-750-    if (requests[i].node_idx == kUnassignedScratchBufferRequestIndex) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-751-      requests[i].node_idx = node_id;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-752-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-753-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-754-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-755-  // Ensure that the head is re-adjusted to allow for another at-most
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-756-  // kMaxScratchBuffersPerOp scratch buffer requests in the next operator:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-757-  TF_LITE_ENSURE_STATUS(non_persistent_buffer_allocator_->ResizeBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-758-      scratch_buffer_head_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-759-      sizeof(internal::ScratchBufferRequest) *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-760-          (scratch_buffer_request_count_ + kMaxScratchBuffersPerOp),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-761-      alignof(internal::ScratchBufferRequest)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-762-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-763-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-764-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-765-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-766-size_t MicroAllocator::used_bytes() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-767-  return non_persistent_buffer_allocator_->GetNonPersistentUsedBytes() +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-768-         persistent_buffer_allocator_->GetPersistentUsedBytes();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-769-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-770-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-771-TfLiteStatus MicroAllocator::AllocateNodeAndRegistrations(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-772-    const Model* model, SubgraphAllocations* subgraph_allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-773-  TFLITE_DCHECK(subgraph_allocations != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-774-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-899-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-900-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-901-uint8_t* MicroAllocator::AllocateTempBuffer(size_t size, size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-902-  return non_persistent_buffer_allocator_->AllocateTemp(size, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-903-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-904-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-905-void MicroAllocator::DeallocateTempBuffer(uint8_t* buffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-906-  non_persistent_buffer_allocator_->DeallocateTemp(buffer);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-907-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-908-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:909:TfLiteStatus MicroAllocator::ResetTempAllocations() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:910:  return non_persistent_buffer_allocator_->ResetTempAllocations();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-911-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-912-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-913-bool MicroAllocator::IsAllTempDeallocated() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-914-  return non_persistent_buffer_allocator_->IsAllTempDeallocated();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-915-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-916-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-917-#ifdef USE_TFLM_COMPRESSION
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-918-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-919-TfLiteStatus MicroAllocator::AllocateCompressedTensorsList(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-920-    const Model* model, SubgraphAllocations* subgraph_allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-921-  TFLITE_DCHECK(subgraph_allocations != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-922-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-923-  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-924-       subgraph_idx++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-925-    subgraph_allocations[subgraph_idx].compressed.tensors = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-926-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-927-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-928-  const tflite::micro::compression::Metadata* compression_metadata =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-929-      internal::GetCompressionMetadata(*model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-930-  if (compression_metadata == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-931-    // no compression metadata is available
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-932-    return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-933-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-934-  if (compression_metadata->subgraphs() == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-935-    MicroPrintf("Compression: invalid Subgraph vector");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-936-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-937-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-938-  if (compression_metadata->subgraphs()->size() == 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-939-    MicroPrintf("Compression: zero length Subgraph vector");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-940-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-941-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-942-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-943-  for (size_t subgraph_index = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-944-       subgraph_index < compression_metadata->subgraphs()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-945-       subgraph_index++) {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1167-  memory_planner_->Init(planner_arena, remaining_arena_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1168-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1169-      CreatePlan(memory_planner_, allocation_info, allocation_info_count));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1170-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1171-  // Commit the plan.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1172-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1173-      CommitPlan(memory_planner_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1174-                 non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1175-                 allocation_info, allocation_info_count));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1176-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1177:  // Reset all temp allocations used above:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1178-  builder.FreeAllocationInfo();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1179-  non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1180-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1181:      non_persistent_buffer_allocator_->ResetTempAllocations());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1182-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1183-      non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1184-          scratch_buffer_head_));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1185-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1186-#ifdef TF_LITE_SHOW_MEMORY_USE
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1187-  memory_planner_->PrintMemoryPlan();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1188-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1189-  head_usage = memory_planner_->GetMaximumMemorySize();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1190-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1191-  // The head is used to store memory plans for one model at a time during the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1192-  // model preparation stage, and is re-purposed to store scratch buffer handles
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1193-  // during model invocation. The head must be as large as the greater of the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1194-  // largest model memory plan's size and the total space required for all
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1195-  // scratch buffer handles.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1196-  if (max_head_buffer_usage_ < head_usage) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1197-    max_head_buffer_usage_ = head_usage;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1198-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1199-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1200-  // The head is used for storing scratch buffer allocations before finalizing a
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1201-  // memory plan in this function. Ensure that the head is set to the largest
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1202-  // memory plan sent through the allocator:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1203-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1204-      non_persistent_buffer_allocator_->ReserveNonPersistentOverlayMemory(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1205-          max_head_buffer_usage_, MicroArenaBufferAlignment()));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1206-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1207-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1208-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1209-TfLiteStatus MicroAllocator::AllocateScratchBufferHandles(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1210-    ScratchBufferHandle** scratch_buffer_handles, size_t handle_count) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1211-  TFLITE_DCHECK(scratch_buffer_handles != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1212-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1213-  if (scratch_buffer_request_count_ == 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1214-    // No scratch buffer requests were requested during model allocation.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1215-    return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1216-  }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-34-      buffer_tail_(buffer_tail),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-35-      head_(buffer_head),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-36-      tail_(buffer_tail),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-37-      temp_(buffer_head_) {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-38-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-39-SingleArenaBufferAllocator::SingleArenaBufferAllocator(uint8_t* buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-40-                                                       size_t buffer_size)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-41-    : SingleArenaBufferAllocator(buffer, buffer + buffer_size) {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-42-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-43-/* static */
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:44:SingleArenaBufferAllocator* SingleArenaBufferAllocator::Create(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-45-    uint8_t* buffer_head, size_t buffer_size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-46-  TFLITE_DCHECK(buffer_head != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-47-  SingleArenaBufferAllocator tmp =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-48-      SingleArenaBufferAllocator(buffer_head, buffer_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-49-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-50-  // Allocate enough bytes from the buffer to create a
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-51-  // SingleArenaBufferAllocator. The new instance will use the current adjusted
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-52-  // tail buffer from the tmp allocator instance.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-53-  uint8_t* allocator_buffer = tmp.AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-54-      sizeof(SingleArenaBufferAllocator), alignof(SingleArenaBufferAllocator));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-55-  // Use the default copy constructor to populate internal states.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-56-  return new (allocator_buffer) SingleArenaBufferAllocator(tmp);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-57-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-58-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-59-SingleArenaBufferAllocator::~SingleArenaBufferAllocator() {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-60-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-61-uint8_t* SingleArenaBufferAllocator::AllocateResizableBuffer(size_t size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-62-                                                             size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-63-  // Only supports one resizable buffer, which starts at the buffer head.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-64-  uint8_t* expect_resizable_buf = AlignPointerUp(buffer_head_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-65-  if (ResizeBuffer(expect_resizable_buf, size, alignment) == kTfLiteOk) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-66-    return expect_resizable_buf;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-67-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-68-  return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-69-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-70-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-71-TfLiteStatus SingleArenaBufferAllocator::DeallocateResizableBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-72-    uint8_t* resizable_buf) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-73-  return ResizeBuffer(resizable_buf, 0, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-74-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-75-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-76-TfLiteStatus SingleArenaBufferAllocator::ReserveNonPersistentOverlayMemory(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-77-    size_t size, size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-78-  uint8_t* expect_resizable_buf = AlignPointerUp(buffer_head_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-79-  return ResizeBuffer(expect_resizable_buf, size, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-80-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-81-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-82-TfLiteStatus SingleArenaBufferAllocator::ResizeBuffer(uint8_t* resizable_buf,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-83-                                                      size_t size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-84-                                                      size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-85-  // Only supports one resizable buffer, which starts at the buffer head.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-86-  uint8_t* expect_resizable_buf = AlignPointerUp(buffer_head_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-87-  if (head_ != temp_ || resizable_buf != expect_resizable_buf) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-88-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-89-        "Internal error: either buffer is not resizable or "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:90:        "ResetTempAllocations() is not called before ResizeBuffer().");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-91-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-92-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-93-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-94-  uint8_t* const aligned_result = AlignPointerUp(buffer_head_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-95-  const size_t available_memory = tail_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-96-  if (available_memory < size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-97-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-98-        "Failed to resize buffer. Requested: %u, available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-99-        size, available_memory, size - available_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-100-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-101-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-102-  head_ = aligned_result + size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-103-  temp_ = head_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-104-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-105-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-106-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-107-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-108-uint8_t* SingleArenaBufferAllocator::AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-109-    size_t size, size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-110-  uint8_t* const aligned_result = AlignPointerDown(tail_ - size, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-111-  if (aligned_result < head_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-112-#ifndef TF_LITE_STRIP_ERROR_STRINGS
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-113-    const size_t missing_memory = head_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-114-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-115-        "Failed to allocate tail memory. Requested: %u, "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-116-        "available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-117-        size, size - missing_memory, missing_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-118-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-119-    return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-120-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-121-  tail_ = aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-122-  return aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-123-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-124-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-125-uint8_t* SingleArenaBufferAllocator::AllocateTemp(size_t size,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-147-bool SingleArenaBufferAllocator::IsAllTempDeallocated() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-148-  if (temp_buffer_count_ != 0 || temp_buffer_ptr_check_sum_ != 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-149-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-150-        "Number of allocated temp buffers: %d. Checksum passing status: %d",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-151-        temp_buffer_count_, !temp_buffer_ptr_check_sum_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-152-    return false;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-153-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-154-  return true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-155-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-156-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:157:TfLiteStatus SingleArenaBufferAllocator::ResetTempAllocations() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-158-  // TODO(b/209453859): enable error check based on IsAllTempDeallocated after
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-159-  // all AllocateTemp have been paird with DeallocateTemp
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-160-  if (!IsAllTempDeallocated()) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-161-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:162:        "All temp buffers must be freed before calling ResetTempAllocations()");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-163-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-164-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-165-  temp_ = head_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-166-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-167-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-168-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-169-uint8_t* SingleArenaBufferAllocator::GetOverlayMemoryAddress() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-170-  return buffer_head_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-171-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-172-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-173-size_t SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-174-  return std::max(head_ - buffer_head_, temp_ - buffer_head_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-175-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-176-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-177-size_t SingleArenaBufferAllocator::GetPersistentUsedBytes() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-178-  return buffer_tail_ - tail_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-179-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-180-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-181-size_t SingleArenaBufferAllocator::GetAvailableMemory(size_t alignment) const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-182-  uint8_t* const aligned_temp = AlignPointerUp(temp_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-183-  uint8_t* const aligned_tail = AlignPointerDown(tail_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-184-  return aligned_tail - aligned_temp;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-185-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-186-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-187-size_t SingleArenaBufferAllocator::GetUsedBytes() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-188-  return GetPersistentUsedBytes() + GetNonPersistentUsedBytes();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-189-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-190-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-191-size_t SingleArenaBufferAllocator::GetBufferSize() const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-192-  return buffer_tail_ - buffer_head_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-193-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-194-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-195-uint8_t* SingleArenaBufferAllocator::head() const { return head_; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-196-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-197-uint8_t* SingleArenaBufferAllocator::tail() const { return tail_; }
+
+=== ALIF ETHOS-U CACHE CALLBACK IMPLEMENTATION ===
+/* SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (C) 2024 Alif Semiconductor.
+ */
+
+#include <stdint.h>
+#include <soc_memory_map.h>
+#include <cmsis_core.h>
+
+#define GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE (128 * 1024)
+
+typedef struct address_range {
+	uintptr_t base;
+	uintptr_t limit;
+} address_range_t;
+
+static const address_range_t no_need_to_invalidate_or_flush_areas[] = {
+	/* TCM is never cached */
+	{
+		.base = DT_REG_ADDR(DT_NODELABEL(itcm)),
+		.limit = DT_REG_ADDR(DT_NODELABEL(itcm)) + DT_REG_SIZE(DT_NODELABEL(itcm)) - 1,
+	},
+	{
+		.base = DT_REG_ADDR(DT_NODELABEL(dtcm)),
+		.limit = DT_REG_ADDR(DT_NODELABEL(dtcm)) + DT_REG_SIZE(DT_NODELABEL(dtcm)) - 1,
+	},
+	/* MRAM should never change while running */
+	{
+		.base = CONFIG_FLASH_BASE_ADDRESS,
+		.limit = CONFIG_FLASH_BASE_ADDRESS + (CONFIG_FLASH_SIZE * 1024) - 1,
+	}};
+
+
+static bool area_needs_invalidate_or_flush(const void *p, size_t bytes)
+{
+	if (bytes == 0) {
+		return false;
+	}
+
+	uintptr_t base = (uintptr_t)p;
+	uintptr_t limit = base + bytes - 1;
+	size_t nn_flush_size = ARRAY_SIZE(no_need_to_invalidate_or_flush_areas);
+
+	for (size_t i = 0; i < nn_flush_size; i++) {
+		if (base >= no_need_to_invalidate_or_flush_areas[i].base &&
+		    limit <= no_need_to_invalidate_or_flush_areas[i].limit) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+{
+	/* Passing NULL as p argument expects the whole cache to be flushed. */
+	if (!p) {
+		return true;
+	}
+
+	return area_needs_invalidate_or_flush(p, bytes);
+}
+
+bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+{
+	/* Passing NULL as p argument expects the whole cache to be flushed. */
+	if (!p) {
+		return true;
+	}
+
+	return area_needs_invalidate_or_flush(p, bytes);
+}
+
+uint64_t ethosu_address_remap(uint64_t address, int index)
+{
+	(void)index;
+
+	/* Double cast to avoid build warning about pointer/integer size mismatch */
+	return local_to_global((void *) (uint32_t) address);
+}
+
+void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+{
+	if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+			/*
+			 * For small ranges, do what we were told, but if excessively big,
+			 * faster to do a full cache operation
+			 */
+			SCB_CleanDCache_by_Addr(p, bytes);
+		} else {
+			SCB_CleanDCache();
+		}
+	} else {
+		__DSB();
+	}
+}
+
+void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+{
+	if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+			/*
+			 * For small ranges, do what we were told, but if excessively big,
+			 * faster to do a full cache operation
+			 */
+			SCB_InvalidateDCache_by_Addr(p, bytes);
+		} else {
+			/*
+			 * Not safe to globally invalidate without cleaning
+			 * unless we know there are no write-back areas in the system
+			 */
+			SCB_CleanInvalidateDCache();
+		}
+	} else {
+		__DSB();
+	}
+}
+
+=== ETHOS-U CACHE CALLBACK REGISTRATION AND CALL SITES ===
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:54:bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:64:bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:82:void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:84:	if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:99:void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:101:	if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:36:bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:48:bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const uint32_t *p, size_t bytes)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:60:void ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:64:        if (ethosu_area_needs_flush_dcache((void *)base_addr[i], base_addr_size[i])) {
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:97:void ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:101:        if (ethosu_area_needs_invalidate_dcache((void *)base_addr[i], base_addr_size[i])) {
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:109:         * See note in ethosu_flush_dcache function for why we clean the whole
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:38: * @brief   Precheck hook for ethosu_flush_dcache. Default weak implementation
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:45:bool ethosu_area_needs_flush_dcache(const uint32_t *p, size_t bytes);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:48: * @brief   Precheck hook for ethosu_invalidate_dcache. Default weak implementation
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:55:bool ethosu_area_needs_invalidate_dcache(const uint32_t *p, size_t bytes);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:69:void ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h:79:void ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:622:bool ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:632:bool ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+
+=== SRAM0 AND MPU CONFIGURATION REFERENCES ===
+/home/user/sdk-alif/modules/hal/alif/se_services/include/services_lib_api.h:369:	CLKEN_SRAM0,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:201:	MB_SRAM0 = 0,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:223:	MB_SRAM0_1_RET,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:224:	MB_SRAM0_2_RET,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:225:	MB_SRAM0_3_RET,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:226:	MB_SRAM0_4_RET,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:231:#define SRAM0_MASK      (1 << MB_SRAM0)       /* bit0 */
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:253:#define SRAM0_1_RET_MASK    (1 << MB_SRAM0_1_RET)    /* bit22 */
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:254:#define SRAM0_2_RET_MASK    (1 << MB_SRAM0_2_RET)    /* bit23 */
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:255:#define SRAM0_3_RET_MASK    (1 << MB_SRAM0_3_RET)    /* bit24 */
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:256:#define SRAM0_4_RET_MASK    (1 << MB_SRAM0_4_RET)    /* bit25 */
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:264:	MB_SRAM0 = 0,
+/home/user/sdk-alif/modules/hal/alif/se_services/include/aipm.h:288:#define SRAM0_MASK      (1 << MB_SRAM0)          /* bit0 */
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:90:			SCB_CleanDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:92:			SCB_CleanDCache();
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:107:			SCB_InvalidateDCache_by_Addr(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:113:			SCB_CleanInvalidateDCache();
+/home/user/sdk-alif/modules/hal/alif/ble/plf/sync_timer.c:57:#define UTIMER_SRC_TRIG12_FALLING ((uint32_t)0x02000000u)
+/home/user/sdk-alif/modules/hal/alif/ble/v1_2/include/common/co_bt_defines.h:1542:#define DATA_BUFFER_OVERFLOW_EVENT_FILTER                     0x02000000
+/home/user/sdk-alif/modules/hal/alif/ble/v1_2/include/common/co_utils.h:76:#define BIT25 0x02000000UL
+/home/user/sdk-alif/alif/subsys/bluetooth/common/power_mgr.c:33: * SRAM4 == SRAM0
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/camera/source/alif/source/hal_camera_alif.c:224:        SCB_CleanInvalidateDCache();
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/camera/source/alif/source/color_correction.c:111:		// Fetching two iterations ahead seems optimal for RTSS-HP fetching from SRAM0
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:73:         * @note We could choose to call the `SCB_CleanDCache_by_Addr` function
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:91:        SCB_CleanDCache();
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:114:        SCB_CleanInvalidateDCache();
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/peripheral_memmap.h:103:#define MPC_ISRAM0_BASE_S                0x50083000 /* Internal SRAM0 Memory Protection Controller Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:26:#define ISRAM0_SIZE           (0x00200000)     /* ISRAM0 size */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:38:#define ISRAM0_BASE_NS        (0x21000000)     /* Internal SRAM Area Non-Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:53:#define ISRAM0_BASE_S         (0x31000000)     /* Internal SRAM Area Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:82:/** ISRAM0 -- 2 MB*/
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:83:#define MPC_ISRAM0_RANGE_BASE_NS   (ISRAM0_BASE_NS)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:84:#define MPC_ISRAM0_RANGE_LIMIT_NS  (ISRAM0_BASE_NS + ISRAM0_SIZE-1)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:85:#define MPC_ISRAM0_RANGE_OFFSET_NS (0x0)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:86:#define MPC_ISRAM0_RANGE_BASE_S    (ISRAM0_BASE_S)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:87:#define MPC_ISRAM0_RANGE_LIMIT_S   (ISRAM0_BASE_S + ISRAM0_SIZE-1)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/mem_regions.h:88:#define MPC_ISRAM0_RANGE_OFFSET_S  (0x0)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/peripheral_memmap.h:103:#define MPC_ISRAM0_BASE_S                0x50083000 /* Internal SRAM0 Memory Protection Controller Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:26:#define ISRAM0_SIZE           (0x00200000)     /* ISRAM0 size */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:38:#define ISRAM0_BASE_NS        (0x21000000)     /* Internal SRAM Area Non-Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:53:#define ISRAM0_BASE_S         (0x31000000)     /* Internal SRAM Area Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:82:/** ISRAM0 -- 2 MB*/
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:83:#define MPC_ISRAM0_RANGE_BASE_NS   (ISRAM0_BASE_NS)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:84:#define MPC_ISRAM0_RANGE_LIMIT_NS  (ISRAM0_BASE_NS + ISRAM0_SIZE-1)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:85:#define MPC_ISRAM0_RANGE_OFFSET_NS (0x0)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:86:#define MPC_ISRAM0_RANGE_BASE_S    (ISRAM0_BASE_S)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:87:#define MPC_ISRAM0_RANGE_LIMIT_S   (ISRAM0_BASE_S + ISRAM0_SIZE-1)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/mem_regions.h:88:#define MPC_ISRAM0_RANGE_OFFSET_S  (0x0)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/source/platform_drivers.c:81:    SCB_EnableDCache();
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/peripheral_memmap.h:87:#define MPC_ISRAM0_BASE_S        (0x50083000)       /* ISRAM0 Memory Protection Controller Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/peripheral_memmap.h:145:#define MPC_ISRAM0_BASE_S        (0x50083000)       /* Internal SRAM 0 MPC */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/mem_regions.h:24:#define ISRAM0_SIZE           (0x00100000)     /* ISRAM0 size */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/mem_regions.h:35:#define ISRAM0_BASE_NS        (0x21000000)     /* Internal SRAM Area Non-Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/mem_regions.h:49:#define ISRAM0_BASE_S         (0x31000000)     /* Internal SRAM Area Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/peripheral_memmap.h:87:#define MPC_ISRAM0_BASE_S        (0x50083000)       /* ISRAM0 Memory Protection Controller Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/peripheral_memmap.h:147:#define MPC_ISRAM0_BASE_S        (0x50083000)       /* Internal SRAM 0 MPC */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/mem_regions.h:24:#define ISRAM0_SIZE           (0x00200000)     /* ISRAM0 size */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/mem_regions.h:35:#define ISRAM0_BASE_NS        (0x21000000)     /* Internal SRAM Area Non-Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/mem_regions.h:49:#define ISRAM0_BASE_S         (0x31000000)     /* Internal SRAM Area Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/source/platform_drivers.c:70:    SCB_EnableDCache();
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/services_lib_api.h:394:	CLKEN_SRAM0,   /**< CLKEN_SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:218:  MB_SRAM0 = 0,   // MB_SRAM0
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:240:  MB_SRAM0_1_RET, // MB_SRAM0_1_RET
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:241:  MB_SRAM0_2_RET, // MB_SRAM0_2_RET
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:242:  MB_SRAM0_3_RET, // MB_SRAM0_3_RET
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:243:  MB_SRAM0_4_RET, // MB_SRAM0_4_RET
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:248:#define SRAM0_MASK          (1 << MB_SRAM0)          // bit0
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:270:#define SRAM0_1_RET_MASK    (1 << MB_SRAM0_1_RET)    // bit22
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:271:#define SRAM0_2_RET_MASK    (1 << MB_SRAM0_2_RET)    // bit23
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:272:#define SRAM0_3_RET_MASK    (1 << MB_SRAM0_3_RET)    // bit24
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:273:#define SRAM0_4_RET_MASK    (1 << MB_SRAM0_4_RET)    // bit25
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:284:	MB_SRAM0 = 0,/**< MB_SRAM0 */   /**< MB_SRAM0 */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/services_lib/include/aipm.h:308:#define SRAM0_MASK      (1 << MB_SRAM0)          // bit0
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/cmsis-pack/AE822FA0E5597/alif_mem_config.h:21:#define ALIF_SRAM_BASE          0x02000000 /* Use Linear SRAMs */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:168:    // No following memories on E1C/B1: SRAM0_MASK | SRAM1_MASK | SRAM6A_MASK | SRAM6B_MASK | SRAM7_1_MASK | SRAM7_2_MASK | SRAM7_3_MASK | SRAM8_MASK | SRAM9_MASK
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:174:    default_runprof.memory_blocks   = SERAM_MASK | SRAM0_MASK | SRAM1_MASK | MRAM_MASK | FWRAM_MASK | BACKUP4K_MASK;
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:179:    default_runprof.memory_blocks   = SERAM_MASK | SRAM0_MASK | SRAM1_MASK | MRAM_MASK | FWRAM_MASK | BACKUP4K_MASK;
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:668:     { // ITCM (alias) at 01000000, SRAM0 at 02000000, SRAM1 at 08000000
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:714:    { // ITCM (alias) at 01000000, SRAM0 at 02000000, SRAM1 at 08000000
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/ospi_flash_is25wx.c:178:    SCB_InvalidateDCache_by_Addr((volatile void *) BOARD_OSPI_FLASH_BASE, len);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/ospi_flash_is25wx.c:216:    SCB_InvalidateDCache_by_Addr((volatile void *) BOARD_OSPI_FLASH_BASE, len);
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/simple/include/mem_regions.h:24:#define ISRAM0_SIZE           (0x00100000)     /* ISRAM0 size */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/simple/include/mem_regions.h:34:#define ISRAM0_BASE_NS        (0x21000000)     /* Internal SRAM Area Non-Secure base address */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/simple/include/mem_regions.h:48:#define ISRAM0_BASE_S         (0x31000000)     /* Internal SRAM Area Secure base address */
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:72:	__attribute__((section("SRAM0.audio_inf")));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:75:	__attribute__((section("SRAM0.audio_slab")));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:51: * SRAM4 == SRAM0
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:82:	 SERAM_MASK | SRAM0_1_RET_MASK | SRAM0_2_RET_MASK | SRAM0_3_RET_MASK | SRAM0_4_RET_MASK)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.c:188:		.memory_blocks = MEMORY_RETENTION_CONFIG | SRAM0_MASK | SRAM1_MASK,
+
+=== SRAM0 LINKER AND ZERO-INITIALIZATION REFERENCES ===
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-427-        /*
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-428-         * For performance, BSS section is assumed to be 4 byte aligned and
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-429-         * a multiple of 4 bytes
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-430-         */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-431-        . = ALIGN(4);
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld:432:	__bss_start = .;
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-433-	__kernel_ram_start = .;
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-434-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-435-	*(.bss)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-436-	*(".bss.*")
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-437-	*(COMMON)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-438-	*(".kernel_bss.*")
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-439-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-440-#ifdef CONFIG_CODE_DATA_RELOCATION
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-441-#include <linker_sram_bss_relocate.ld>
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-442-#endif
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-443-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-444-        /*
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-445-         * As memory is cleared in words only, it is simpler to ensure the BSS
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-446-         * section ends on a 4 byte boundary. This wastes a maximum of 3 bytes.
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-447-		 */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld:448:	__bss_end = ALIGN(4);
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-449-	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-450-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-451-#include <zephyr/linker/common-noinit.ld>
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-452-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-453-    /* Define linker symbols */
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-454-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-455-    __kernel_ram_end = RAM_ADDR + RAM_SIZE;
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-456-    __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-457-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-458-#include <zephyr/linker/ram-end.ld>
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-459-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-460-    GROUP_END(RAMABLE_REGION)
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-461-
+/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld-462-    }
+--
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-8-    IDT_LIST (wx) : ORIGIN = 0xFFFF7FFF, LENGTH = 32K
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-9-    }
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-10-ENTRY("__start")
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-11-SECTIONS {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-12-
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:13:.alif_sram0 (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-14- {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:15:KEEP(*(.alif_sram0))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:16:KEEP(*(".alif_sram0.*"))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-17-KEEP(*(.noinit.*kheap_buf_video_buffer_pool))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-18-KEEP(*(.bss.disk_buf_0))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-19- } > SRAM0
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-20-
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-21-
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-22-.alif_sram1 (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-23- {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-24-KEEP(*(.alif_sram1))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-25-KEEP(*(".alif_sram1.*"))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-26- } > SRAM1
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-27-
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-28-}
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-29-SECTIONS
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-30-    {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-31- .rel.plt :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-32- {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-33- *(.rel.plt)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-34- PROVIDE_HIDDEN (__rel_iplt_start = .);
+--
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-416-} > FLASH
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-417-_flash_used = LOADADDR(.last_section) + SIZEOF(.last_section) - __rom_region_start;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-418-    bss (NOLOAD) : ALIGN_WITH_INPUT
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-419- {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-420-        . = ALIGN(4);
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:421: __bss_start = .;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-422- __kernel_ram_start = .;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-423- *(.bss)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-424- *(".bss.*")
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-425- *(COMMON)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-426- *(".kernel_bss.*")
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:427: __bss_end = ALIGN(4);
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-428- } > RAM AT > RAM
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-429-noinit (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-430-{
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-431-        *(.noinit)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-432-        *(".noinit.*")
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-433-} > RAM AT > RAM
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-434-    __kernel_ram_end = 0x20000000 + (1024 * 1K);
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-435-    __kernel_ram_size = __kernel_ram_end - __kernel_ram_start;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-436-    .last_ram_section (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-437-    {
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-438- _image_ram_end = .;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-439- _image_ram_size = _image_ram_end - _image_ram_start;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-440- _end = .;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-441- z_mapped_end = .;
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-442-    } > RAM AT > RAM
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-443-   
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd-444-    }
