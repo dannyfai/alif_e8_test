@@ -1,0 +1,189 @@
+=== ACTIVATION SECTION KCONFIG DEFINITION ===
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	
+     9	source "Kconfig.zephyr"
+    10	
+    11	config USE_APP_MENU
+    12		bool "Use application menu to choose a test case"
+    13		default false
+    14	
+    15	config ACTIVATION_BUF_SECTION
+    16		string "Linker section where activation buffer (tensor arena) is placed"
+    17		default ".bss.activation_buf"
+    18	
+    19	config ACTIVATION_BUF_SZ
+    20		hex "Tensor arena size"
+    21		default 0x00091000
+    22	
+    23	config MODEL_IN_EXT_FLASH
+    24		bool "Put ML model to external flash"
+    25		select FLASH
+    26		select ALIF_OSPI_FLASH_XIP
+    27		help
+    28			Initialize OSPI controller to XIP mode. Initialize the onboard flash device. Link ML model data to external flash address space.
+    29			In addition to normal zephyr.bin output, ospi0/1.bin is generated. When enabled, the model memory section is set automatically (See BufAttributes.h)
+    30	
+    31	config MODEL_SECTION
+    32		string "Linker section where ML model is placed"
+    33		depends on !MODEL_IN_EXT_FLASH
+    34		default ".rodata.tflm_model"
+    35	
+    36	config ETHOS_U_AXI0_ONLY
+    37		bool "Only use AXI0 port on the Ethos"
+    38		default false
+    39	
+    40	config AUDIO_SAMPLES
+    41		int "Number of audio samples to store"
+    42		default 16000
+    43	
+    44	config AUDIO_STRIDE
+    45		int "Number of audio samples in a single stride"
+    46		default 8000
+    47	
+    48	config RESULTS_MEMORY
+    49		int "Number of inference results to keep in memory"
+    50		default 8
+    51	
+    52	config AUDIO_CHANNELS
+    53		int "Number of input audio channels"
+    54		default 2
+    55	
+
+=== APPLICATION PRJ.CONF ===
+3-     3	
+4-     4	# tflm
+5-     5	CONFIG_MLEK_EXAMPLES_LIB=y
+6-     6	CONFIG_TENSORFLOW_LITE_MICRO=y
+7:     7	CONFIG_ARM_ETHOS_U=y
+8-     8	
+9-     9	CONFIG_HEAP_MEM_POOL_SIZE=163840
+10-    10	CONFIG_LOG=y
+11-    11	CONFIG_LOG_MODE_IMMEDIATE=y
+--
+73-    73	CONFIG_GPIO=y
+74-    74	CONFIG_LPGPIO_M55_IRQ_ENABLED=y
+75-    75	
+76-    76	# ASR model is large, so we need to store it in external flash
+77:    77	CONFIG_MODEL_IN_EXT_FLASH=y
+78-    78	CONFIG_ALIF_OSPI_FLASH_XIP=y
+79-    79	CONFIG_OSPI_FLASH_IS25WX=y
+80-    80	CONFIG_OSPI=y
+81-    81	CONFIG_OSPI_FLASH=y
+
+=== HP BOARD CONFIG ===
+     1	CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+
+=== BOARD CONFIG FILE DISCOVERY IN ZEPHYR CMAKE ===
+/home/user/sdk-alif/zephyr/cmake/package_helper.cmake:32:#   $ cmake -DBOARD=<board> -B build -S samples/hello_world -DEXTRA_CONF_FILE=foo.conf
+/home/user/sdk-alif/zephyr/cmake/package_helper.cmake:35:#   $ cmake -DBOARD=<board> -B build -S samples/hello_world -DEXTRA_CONF_FILE=foo.conf \
+/home/user/sdk-alif/zephyr/cmake/package_helper.cmake:41:#          set(EXTRA_CONF_FILE foo.conf)
+/home/user/sdk-alif/zephyr/cmake/package_helper.cmake:43:#       the 'foo.conf' must be specified using '-DEXTRA_CONF_FILE=foo.conf'
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:79:  zephyr_file(CONF_FILES ${BOARD_DIRECTORIES} DEFCONFIG BOARD_DEFCONFIG)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:89:  if(EXISTS ${BOARD_DIR}/${board_rev_file}.conf)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:90:    message(DEPRECATION "Use of '${board_rev_file}.conf' is deprecated, please switch to '${board_rev_file}_defconfig'")
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:91:    set_ifndef(BOARD_REVISION_CONFIG ${BOARD_DIR}/${board_rev_file}.conf)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:104:if(EXTRA_CONF_FILE)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:105:  string(CONFIGURE "${EXTRA_CONF_FILE}" EXTRA_CONF_FILE_EXPANDED)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:106:  string(REPLACE " " ";" EXTRA_CONF_FILE_AS_LIST "${EXTRA_CONF_FILE_EXPANDED}")
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:107:  build_info(kconfig extra-user-files PATH ${EXTRA_CONF_FILE_AS_LIST})
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:110:zephyr_file(CONF_FILES ${BOARD_EXTENSION_DIRS} KCONF board_extension_conf_files SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:306:  ${EXTRA_CONF_FILE_AS_LIST}
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:104:    # Add board-specific .conf and .overlay files to their
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:106:    zephyr_file(CONF_FILES ${SHIELD_DIR_${s}}/boards
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:110:    zephyr_file(CONF_FILES ${SHIELD_DIR_${s}}/boards/${s}
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:14:# - EXTRA_CONF_FILE:        List of additional Kconfig fragments
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:42:  zephyr_file(CONF_FILES ${APPLICATION_CONFIG_DIR}/boards KCONF CONF_FILE SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:72:  zephyr_file(CONF_FILES ${APPLICATION_CONFIG_DIR}/boards DTS DTC_OVERLAY_FILE SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:95:zephyr_get(EXTRA_CONF_FILE SYSBUILD LOCAL VAR EXTRA_CONF_FILE OVERLAY_CONFIG MERGE REVERSE)
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:976:#                   of the form ``<board>_<revision>.conf`` in the board folder
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:1047:         ${BOARD_DIR}/${BOARD}_*.conf
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:1050:    set(file_revision_regex "${BOARD}_${underscore_revision_regex}.conf")
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:2881:                    "(${filename_1}) not allowed, use '<board>_<soc>.conf' naming"
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:160:  zephyr_file(CONF_FILES ${BOARD_DIRECTORIES} DTS DTS_SOURCE)
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:163:    CONF_FILES ${BOARD_DIRECTORIES}
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:182:zephyr_file(CONF_FILES ${BOARD_EXTENSION_DIRS} DTS board_extension_dts_files)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:79:  zephyr_file(CONF_FILES ${BOARD_DIRECTORIES} DEFCONFIG BOARD_DEFCONFIG)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:89:  if(EXISTS ${BOARD_DIR}/${board_rev_file}.conf)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:90:    message(DEPRECATION "Use of '${board_rev_file}.conf' is deprecated, please switch to '${board_rev_file}_defconfig'")
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:91:    set_ifndef(BOARD_REVISION_CONFIG ${BOARD_DIR}/${board_rev_file}.conf)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:104:if(EXTRA_CONF_FILE)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:105:  string(CONFIGURE "${EXTRA_CONF_FILE}" EXTRA_CONF_FILE_EXPANDED)
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:106:  string(REPLACE " " ";" EXTRA_CONF_FILE_AS_LIST "${EXTRA_CONF_FILE_EXPANDED}")
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:107:  build_info(kconfig extra-user-files PATH ${EXTRA_CONF_FILE_AS_LIST})
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:110:zephyr_file(CONF_FILES ${BOARD_EXTENSION_DIRS} KCONF board_extension_conf_files SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:306:  ${EXTRA_CONF_FILE_AS_LIST}
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:104:    # Add board-specific .conf and .overlay files to their
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:106:    zephyr_file(CONF_FILES ${SHIELD_DIR_${s}}/boards
+/home/user/sdk-alif/zephyr/cmake/modules/shields.cmake:110:    zephyr_file(CONF_FILES ${SHIELD_DIR_${s}}/boards/${s}
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:14:# - EXTRA_CONF_FILE:        List of additional Kconfig fragments
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:42:  zephyr_file(CONF_FILES ${APPLICATION_CONFIG_DIR}/boards KCONF CONF_FILE SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:72:  zephyr_file(CONF_FILES ${APPLICATION_CONFIG_DIR}/boards DTS DTC_OVERLAY_FILE SUFFIX ${FILE_SUFFIX})
+/home/user/sdk-alif/zephyr/cmake/modules/configuration_files.cmake:95:zephyr_get(EXTRA_CONF_FILE SYSBUILD LOCAL VAR EXTRA_CONF_FILE OVERLAY_CONFIG MERGE REVERSE)
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:976:#                   of the form ``<board>_<revision>.conf`` in the board folder
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:1047:         ${BOARD_DIR}/${BOARD}_*.conf
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:1050:    set(file_revision_regex "${BOARD}_${underscore_revision_regex}.conf")
+/home/user/sdk-alif/zephyr/cmake/modules/extensions.cmake:2881:                    "(${filename_1}) not allowed, use '<board>_<soc>.conf' naming"
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:160:  zephyr_file(CONF_FILES ${BOARD_DIRECTORIES} DTS DTS_SOURCE)
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:163:    CONF_FILES ${BOARD_DIRECTORIES}
+/home/user/sdk-alif/zephyr/cmake/modules/dts.cmake:182:zephyr_file(CONF_FILES ${BOARD_EXTENSION_DIRS} DTS board_extension_dts_files)
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_runner.py:2176:    extra_conf_files = ['extrafile1.conf', 'extrafile2.conf']
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_runner.py:2184:                                                     extra_conf_files,
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_runner.py:2214:    pb.testsuite.extra_conf_files = ['some', 'files1']
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_runner.py:2228:        pb.testsuite.extra_conf_files,
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_config_parser.py:100:        'extra_conf_files': [],
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_twister.py:71:            " Use extra_conf_files, extra_overlay_confs"
+/home/user/sdk-alif/zephyr/scripts/tests/twister/test_twister.py:80:    assert ";".join(scenario["extra_conf_files"]) == \
+/home/user/sdk-alif/zephyr/scripts/snippets.py:55:            if variable in ('SB_EXTRA_CONF_FILE', 'EXTRA_DTC_OVERLAY_FILE', 'EXTRA_CONF_FILE'):
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:50:                       "extra_conf_files": {"type": "list", "default": []},
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:178:                elif k not in ("extra_conf_files", "extra_overlay_confs",
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:203:        #  (2) common['extra_conf_files']
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:205:        #  (4) scenarios[name]['extra_conf_files']
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:206:        d["extra_conf_files"] = \
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:208:            self.common.get("extra_conf_files", []) + \
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:210:            self.scenarios[name].get("extra_conf_files", [])
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/config_parser.py:230:                "result in an error. Use extra_conf_files, extra_overlay_confs "
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/runner.py:1666:    def cmake_assemble_args(extra_args, handler, extra_conf_files, extra_overlay_confs,
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/runner.py:1678:        if extra_conf_files:
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/runner.py:1679:            args.append(f"CONF_FILE=\"{';'.join(extra_conf_files)}\"")
+/home/user/sdk-alif/zephyr/scripts/pylib/twister/twisterlib/runner.py:1726:            self.testsuite.extra_conf_files,
+/home/user/sdk-alif/zephyr/scripts/kconfig/kconfig.py:10:# files passed as arguments, e.g. board *_defconfig and application prj.conf
+/home/user/sdk-alif/zephyr/scripts/kconfig/kconfig.py:221:    # a choice selection from a board defconfig is overridden in a prj.conf,
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:159:        group.add_argument('--extra-conf', dest='extra_conf_files', metavar='EXTRA_CONF_FILE',
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:161:                           help='''add the argument to EXTRA_CONF_FILE; may be given
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:164:                           -DEXTRA_CONF_FILE... cmake arguments: the results are
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:246:                        self.args.shields or self.args.extra_conf_files or
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:297:            board, origin = self.config_board, 'configfile'
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:341:            extra_conf_files = []
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:350:                        'extra_conf_files',
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:383:                    elif data == 'extra_conf_files':
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:384:                        extra_conf_files.extend(arg_list)
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:405:            if extra_conf_files:
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:406:                args.append(f"CONF_FILE=\"{';'.join(extra_conf_files)}\"")
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:568:                         or self.args.board or self.config_board or
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:622:        if self.args.extra_conf_files:
+/home/user/sdk-alif/zephyr/scripts/west_commands/build.py:623:            cmake_opts.append(f'-DEXTRA_CONF_FILE={";".join(self.args.extra_conf_files)}')
+
+=== CMAKE CONFIG INPUT VARIABLES ===
+CONF_FILE:STRING=/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf
+
+=== GENERATED KCONFIG FRAGMENTS ===
+
+CONFIG_ARM_ETHOS_U55_256=y
+=== EFFECTIVE SECTION VALUE ===
+1834-# end of Compatibility
+1835-
+1836-# CONFIG_USE_APP_MENU is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1838-CONFIG_ACTIVATION_BUF_SZ=0x00091000
+1839-CONFIG_MODEL_IN_EXT_FLASH=y
+1840-# CONFIG_ETHOS_U_AXI0_ONLY is not set
+
+=== SRAM LINKER MEMORY ORIGIN DEFINITIONS ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld:51:  SRAM  (rwx)     : ORIGIN = ALIF_SRAM_BASE, LENGTH = ALIF_SRAM_SIZE
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld:53:  SRAM  (rwx)     : ORIGIN = ALIF_SRAM_BASE, LENGTH = ALIF_SRAM_SIZE
