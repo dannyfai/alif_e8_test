@@ -1,0 +1,160 @@
+===== CUSTOM BILSTM SCRATCH BUFFER USAGE =====
+SOURCE=/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc
+
+===== BUFFER REFERENCES AND SURROUNDING IMPLEMENTATION =====
+9-#include "tensorflow/lite/micro/kernels/kernel_util.h"
+10-#include "tensorflow/lite/micro/kernels/lstm_eval.h"
+11-#include "tensorflow/lite/micro/kernels/lstm_shared.h"
+12-#include "tensorflow/lite/micro/micro_log.h"
+13-
+14-namespace tflite {
+15-namespace {
+16-
+17-struct HeatstrokeBidirectionalLstmOpData {
+18-  OpDataLSTM forward;
+19-  OpDataLSTM backward;
+20-  TfLiteIntArray* staged_output_dims;
+21:  int reverse_input_buffer;
+22:  int stage_output_buffer;
+23-};
+24-
+25-TfLiteEvalTensor* GetInputEvalTensor(TfLiteContext* context,
+26-                                     TfLiteNode* node,
+27-                                     int input_position) {
+28-  if (input_position < 0 || input_position >= node->inputs->size) {
+29-    return nullptr;
+30-  }
+31-
+32-  const int tensor_index = node->inputs->data[input_position];
+33-  if (tensor_index < 0) {
+34-    return nullptr;
+--
+304-
+305-  const size_t reverse_bytes =
+306-      static_cast<size_t>(time_steps) * batch_size *
+307-      input_dimension * sizeof(float);
+308-
+309-  const size_t stage_bytes =
+310-      static_cast<size_t>(time_steps) * batch_size *
+311-      hidden * sizeof(float);
+312-
+313-  const size_t internal_bytes =
+314-      static_cast<size_t>(batch_size) * hidden * sizeof(float);
+315-
+316:  if (context->RequestScratchBufferInArena(
+317:          context, reverse_bytes, &op_data->reverse_input_buffer) !=
+318-          kTfLiteOk ||
+319:      context->RequestScratchBufferInArena(
+320:          context, stage_bytes, &op_data->stage_output_buffer) !=
+321-          kTfLiteOk) {
+322-    MicroPrintf("Heatstroke BiLSTM: scratch allocation failed");
+323-    return kTfLiteError;
+324-  }
+325-
+326-  // Match the four scratch buffers requested by TFLM's existing
+327-  // unidirectional FP32 LSTM implementation.
+328-  for (int i = 0; i < 4; ++i) {
+329:    if (context->RequestScratchBufferInArena(
+330-            context, internal_bytes,
+331:            &op_data->forward.buffer_indices[i]) != kTfLiteOk) {
+332-      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+333-      return kTfLiteError;
+334-    }
+335-
+336-    // Forward and backward passes execute sequentially, so they can
+337-    // safely reuse the same four evaluator scratch buffers.
+338:    op_data->backward.buffer_indices[i] =
+339:        op_data->forward.buffer_indices[i];
+340-  }
+341-
+342-  return kTfLiteOk;
+343-}
+344-
+345-void PopulateDirectionContents(TfLiteContext* context,
+346-                               TfLiteNode* node,
+347-                               int input_weight_base,
+348-                               int recurrent_weight_base,
+349-                               int bias_base,
+350-                               int hidden_state_position,
+351-                               int cell_state_position,
+--
+373-  // Optional peephole, projection, and layer-normalization tensors
+374-  // are not present in this model and remain nullptr.
+375-
+376-  contents->internal_tensors[18] =
+377-      GetInputEvalTensor(context, node, hidden_state_position);
+378-
+379-  contents->internal_tensors[19] =
+380-      GetInputEvalTensor(context, node, cell_state_position);
+381-
+382-  contents->output_tensor = staged_output;
+383-}
+384-
+385:TfLiteStatus HeatstrokeBidirectionalLstmEval(TfLiteContext* context,
+386-                                             TfLiteNode* node) {
+387-  if (node == nullptr || node->user_data == nullptr) {
+388-    return kTfLiteError;
+389-  }
+390-
+391-  const auto* op_data =
+392-      static_cast<const HeatstrokeBidirectionalLstmOpData*>(node->user_data);
+393-
+394-  const TfLiteEvalTensor* input =
+395-      GetInputEvalTensor(context, node, 0);
+396-
+397-  TfLiteEvalTensor* output =
+398-      context->GetEvalTensor(context, node->outputs->data[0]);
+399-
+400-  if (!IsFloatTensor(input) || !IsFloatTensor(output)) {
+401-    return kTfLiteError;
+402-  }
+403-
+404-  const int time_steps = op_data->forward.size_info.time_steps;
+405-  const int input_dimension = op_data->forward.size_info.input_dimension;
+406-  const int hidden = op_data->forward.size_info.state_dimension;
+407-
+408-  auto* reversed_input = static_cast<float*>(
+409-      context->GetScratchBuffer(
+410:          context, op_data->reverse_input_buffer));
+411-
+412-  auto* staged_output = static_cast<float*>(
+413-      context->GetScratchBuffer(
+414:          context, op_data->stage_output_buffer));
+415-
+416-  if (reversed_input == nullptr || staged_output == nullptr) {
+417-    MicroPrintf("Heatstroke BiLSTM: scratch buffer unavailable");
+418-    return kTfLiteError;
+419-  }
+420-
+421-  const float* input_data = input->data.f;
+422-  float* output_data = output->data.f;
+423-
+424-  // Reverse the time dimension for the backward direction.
+425-  for (int t = 0; t < time_steps; ++t) {
+426-    std::memcpy(
+--
+431-
+432-  TfLiteEvalTensor reversed_input_tensor = *input;
+433-  reversed_input_tensor.data.f = reversed_input;
+434-
+435-  TfLiteEvalTensor staged_output_tensor = *output;
+436-  staged_output_tensor.data.f = staged_output;
+437-  staged_output_tensor.dims = op_data->staged_output_dims;
+438-
+439-  LSTMKernelContents forward_contents{};
+440-  PopulateDirectionContents(context, node, 1, 5, 9, 25, 26, input, &staged_output_tensor, &forward_contents);
+441-
+442-  LSTMBuffers<float> buffers =
+443:      CreateLSTMBuffers<float>(context, op_data->forward.buffer_indices);
+444-
+445-  TfLiteStatus forward_status =
+446-      EvalLstm<float, float, float, float>(
+447-          op_data->forward, forward_contents, buffers);
+448-  if (forward_status != kTfLiteOk) {
+449-    return forward_status;
+450-  }
+451-
+452-  // Copy forward outputs into the first half of the merged output.
+453-  for (int t = 0; t < time_steps; ++t) {
+454-    std::memcpy(
+455-        output_data + t * (2 * hidden),
