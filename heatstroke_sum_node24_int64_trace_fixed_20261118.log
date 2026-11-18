@@ -1,0 +1,152 @@
+===== TFLITE OPERATORS 20-27 =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794978941.727154   34796 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794978941.727408   34796 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1794978941.761345   34796 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794978942.531377   34796 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794978942.531642   34796 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+NODE 20: QUANTIZE builtin=114 custom=None
+  INPUTS:
+    29: 'where_2' type=FLOAT32 shape=[1, 900, 6] buffer=0
+  OUTPUTS:
+    30: 'where_2_DequantizeLinear_Output' type=INT8 shape=[1, 900, 6] buffer=0
+
+NODE 21: CAST builtin=53 custom=None
+  INPUTS:
+    14: 'bitwise_not' type=BOOL shape=[1, 900, 6] buffer=0
+  OUTPUTS:
+    31: 'convert_element_type_default_1' type=INT64 shape=[1, 900, 6] buffer=0
+
+NODE 22: SUM builtin=74 custom=None
+  INPUTS:
+    31: 'convert_element_type_default_1' type=INT64 shape=[1, 900, 6] buffer=0
+    32: 'axes' type=INT32 shape=[1] buffer=9
+  OUTPUTS:
+    33: 'sum_1' type=INT64 shape=[1, 6] buffer=0
+
+NODE 23: MAXIMUM builtin=55 custom=None
+  INPUTS:
+    33: 'sum_1' type=INT64 shape=[1, 6] buffer=0
+    34: 'val_39' type=INT64 shape=[] buffer=10
+  OUTPUTS:
+    35: 'clamp' type=INT64 shape=[1, 6] buffer=0
+
+NODE 24: RESHAPE builtin=22 custom=None
+  INPUTS:
+    35: 'clamp' type=INT64 shape=[1, 6] buffer=0
+    36: 'new_shape' type=INT32 shape=[3] buffer=11
+  OUTPUTS:
+    37: 'unsqueeze' type=INT64 shape=[1, 1, 6] buffer=0
+
+NODE 25: MUL builtin=18 custom=None
+  INPUTS:
+    38: 'convert_element_type_default_2' type=INT64 shape=[1, 1800, 1] buffer=12
+    37: 'unsqueeze' type=INT64 shape=[1, 1, 6] buffer=0
+  OUTPUTS:
+    39: 'mul_1' type=INT64 shape=[1, 1800, 6] buffer=0
+
+NODE 26: FLOOR_MOD builtin=95 custom=None
+  INPUTS:
+    39: 'mul_1' type=INT64 shape=[1, 1800, 6] buffer=0
+    40: 'val_46' type=INT64 shape=[] buffer=13
+  OUTPUTS:
+    41: 'val_60' type=INT64 shape=[1, 1800, 6] buffer=0
+
+NODE 27: CAST builtin=53 custom=None
+  INPUTS:
+    41: 'val_60' type=INT64 shape=[1, 1800, 6] buffer=0
+  OUTPUTS:
+    42: 'val_61' type=BOOL shape=[1, 1800, 6] buffer=0
+
+===== TFLM SUM KERNEL FILE =====
+sum.cc not found; files at kernel directory top level:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum_test.cc
+
+===== APPLICATION SUM REGISTRATION =====
+6- */
+7-
+8-#include "PolyUModel1.hpp"
+9-
+10:#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+11-#include "heatstroke_int64_cast_sum.hpp"
+12-#endif
+13-
+14-#if defined(HEATSTROKE_INT64_MUL_EXPERIMENT)
+15-#include "heatstroke_int64_mul.hpp"
+16-#endif
+17-
+18-#if defined(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+--
+909-    HS_ADD_REQUIRED(AddAdd);
+910-#endif
+911-    HS_ADD_REQUIRED(AddBroadcastArgs);
+912-    HS_ADD_REQUIRED(AddBroadcastTo);
+913:#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+914-    {
+915-        const TFLMRegistration registration =
+916-            tflite::RegisterHeatstrokeCastKernel();
+917-
+918-        if (this->m_opResolver.AddBuiltin(
+919-                tflite::BuiltinOperator_CAST,
+920-                registration,
+921-                tflite::ParseCast) != kTfLiteOk) {
+--
+1019-    }
+1020-#else
+1021-    HS_ADD_REQUIRED(AddSub);
+1022-#endif
+1023:#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+1024-    {
+1025-        const TFLMRegistration registration =
+1026:            tflite::RegisterHeatstrokeSumKernel();
+1027-
+1028-        if (this->m_opResolver.AddBuiltin(
+1029:                tflite::BuiltinOperator_SUM,
+1030-                registration,
+1031-                tflite::ParseReducer) != kTfLiteOk) {
+1032:            printf_err("Failed to register heat-stress INT64 SUM.\n");
+1033-            return false;
+1034-        }
+1035-    }
+1036-#else
+1037:    HS_ADD_REQUIRED(AddSum);
+1038-#endif
+1039-    HS_ADD_REQUIRED(AddTopKV2);
+1040-
+1041-#undef HS_ADD_REQUIRED
+1042-
+1043-    /*
+1044-     * Custom SIGN registration under the built-in SIGN opcode.
+1045-     */
+--
+1130-        tflite::BuiltinOperator_BROADCAST_ARGS,
+1131-        tflite::BuiltinOperator_BROADCAST_TO,
+1132-        tflite::BuiltinOperator_CAST,
+1133-        tflite::BuiltinOperator_CONCATENATION,
+1134:        tflite::BuiltinOperator_CUMSUM,
+1135-        tflite::BuiltinOperator_DEQUANTIZE,
+1136-        tflite::BuiltinOperator_DIV,
+1137-        tflite::BuiltinOperator_EQUAL,
+1138-        tflite::BuiltinOperator_FLOOR_MOD,
+1139-        tflite::BuiltinOperator_GATHER,
+1140-        tflite::BuiltinOperator_GREATER,
+1141-        tflite::BuiltinOperator_LOGICAL_AND,
+1142-        tflite::BuiltinOperator_LOGICAL_NOT,
+--
+1153-        tflite::BuiltinOperator_SPLIT_V,
+1154-        tflite::BuiltinOperator_SQRT,
+1155-        tflite::BuiltinOperator_SQUARE,
+1156-        tflite::BuiltinOperator_SUB,
+1157:        tflite::BuiltinOperator_SUM,
+1158-        tflite::BuiltinOperator_TOPK_V2,
+1159-        tflite::BuiltinOperator_BIDIRECTIONAL_SEQUENCE_LSTM
+1160-    };
+1161-
+1162-    for (const auto op : required_ops) {
+1163-        if (this->m_opResolver.FindOp(op) == nullptr) {
+1164-            printf_err(
+1165-                "Required heat-stress builtin registration is missing: %d\n",
