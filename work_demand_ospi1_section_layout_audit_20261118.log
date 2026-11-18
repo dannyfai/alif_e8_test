@@ -1,0 +1,578 @@
+============================================================
+Work-Demand OSPI1 section and image layout audit
+2026-11-18T22:09:28+08:00
+============================================================
+
+=== 1. BufAttributes.hpp ===
+/*
+ * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+ * affiliates <open-source-office@arm.com>
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef BUF_ATTRIBUTES_HPP
+#define BUF_ATTRIBUTES_HPP
+
+#if defined(__cplusplus)
+extern "C" {
+#endif /* defined(__cplusplus) */
+
+#if defined(ARM_NPU)
+    /* When Arm NPU is defined, we use the config set by NPU mem parameters */
+    #include "ethosu_mem_config.h"
+    #define BYTE_ALIGNMENT              ETHOS_U_MEM_BYTE_ALIGNMENT
+#else /* defined(ARM_NPU) */
+    /* otherwise, we use the default ones here. */
+    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    #define BYTE_ALIGNMENT              16
+#endif /* defined(ARM_NPU) */
+
+#ifdef __has_attribute
+#define HAVE_ATTRIBUTE(x) __has_attribute(x)
+#else   /* __has_attribute */
+#define HAVE_ATTRIBUTE(x) 0
+#endif  /* __has_attribute */
+
+#if HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__))
+
+/* We want all buffers/sections to be aligned to 16 byte.  */
+#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+
+#if defined(MODEL_IN_EXT_FLASH)
+#define MODEL_SECTION               section("nn_model_ext_flash")
+#else
+#define MODEL_SECTION               section("nn_model")
+#endif
+
+/* Label section name */
+#define LABEL_SECTION               section("labels")
+
+#ifndef ACTIVATION_BUF_SZ
+    #warning  "ACTIVATION_BUF_SZ needs to be defined. Using default value"
+    #define ACTIVATION_BUF_SZ       0x00200000
+#endif  /* ACTIVATION_BUF_SZ */
+
+/* IFM section name. */
+#define IFM_BUF_SECTION             section("ifm")
+
+/* Form the attributes, alignment is mandatory. */
+#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+#define MODEL_SECTION_ATTRIBUTE      MAKE_ATTRIBUTE(MODEL_SECTION)
+#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+#define IFM_BUF_ATTRIBUTE           MAKE_ATTRIBUTE(IFM_BUF_SECTION)
+#define LABELS_ATTRIBUTE            MAKE_ATTRIBUTE(LABEL_SECTION)
+
+#else /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+
+#define MODEL_SECTION_ATTRIBUTE
+#define ACTIVATION_BUF_ATTRIBUTE
+#define IFM_BUF_ATTRIBUTE
+#define LABELS_ATTRIBUTE
+
+#endif /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+
+#if defined(__cplusplus)
+}
+#endif /* defined(__cplusplus) */
+
+#endif /* BUF_ATTRIBUTES_HPP */
+
+=== 2. Model C++ generator ===
+#  SPDX-FileCopyrightText:  Copyright 2021, 2023, 2026 Arm Limited and/or
+#  its affiliates <open-source-office@arm.com>
+#  SPDX-License-Identifier: Apache-2.0
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+"""
+Utility script to generate model c file that can be included in the
+project directly. This should be called as part of CMake framework
+should the models need to be generated at configuration stage.
+
+This script is intentionally thin: it delegates validation to
+format-specific modules and focuses on producing the .cc output.
+"""
+import binascii
+from argparse import ArgumentParser
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+
+from mlek_tools.gen.gen_utils import gen_header
+from mlek_tools.validation.npu_validation import NpuValidationArgs
+from mlek_tools.validation.pte_validator import validate_pte_model
+from mlek_tools.validation.tflite_validator import validate_tflite_model
+
+
+def get_model_data(model_path: str) -> list:
+    """
+    Reads a binary file and returns a C style array as a
+    list of strings.
+
+    Argument:
+        model_path:    path to the model.
+
+    Returns:
+        list of strings
+    """
+    # Read raw bytes so we can emit a C array initializer.
+    with open(model_path, 'rb') as model_file:
+        data = model_file.read()
+
+    bytes_per_line = 32
+    hex_digits_per_line = bytes_per_line * 2
+    hexstream = binascii.hexlify(data).decode('utf-8')
+    hexstring = '{'
+
+    for i in range(0, len(hexstream), 2):
+        if 0 == (i % hex_digits_per_line):
+            hexstring += "\n"
+        hexstring += '0x' + hexstream[i:i + 2] + ", "
+
+    hexstring += '};\n'
+    return [hexstring]
+
+
+def main():
+    """
+    Generate models .cpp
+    """
+    # pylint: disable=duplicate-code
+    parser = ArgumentParser()
+
+    parser.add_argument(
+        "--model_path",
+        help="Model path (.tflite or .pte)",
+        required=True
+    )
+
+    parser.add_argument(
+        "--output_dir",
+        help="Output directory",
+        required=True
+    )
+
+    parser.add_argument(
+        '-e',
+        '--expression',
+        action='append',
+        default=[],
+        dest="expr"
+    )
+
+    parser.add_argument(
+        '--header',
+        action='append',
+        default=[],
+        dest="headers"
+    )
+
+    parser.add_argument(
+        '-ns',
+        '--namespaces',
+        action='append',
+        default=[],
+        dest="namespaces"
+    )
+
+    parser.add_argument(
+        "--license_template",
+        type=str,
+        help="Header template file",
+        default="header_template.txt"
+    )
+
+    parser.add_argument(
+        "--ethos_u_memory_mode",
+        type=str,
+        help="Arm Ethos-U NPU Vela memory mode (Shared_Sram, Sram_Only, Dedicated_Sram). "
+             "If provided, model must be Arm Ethos-U NPU optimized.",
+        default=None
+    )
+
+    parser.add_argument(
+        "--ethos_u_config",
+        type=str,
+        help="Arm Ethos-U NPU accelerator config (e.g. ethos-u55-128). "
+             "If provided, model must be Arm Ethos-U NPU optimized.",
+        default=None
+    )
+
+    args = parser.parse_args()
+    # pylint: enable=duplicate-code
+
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'templates'),
+                      trim_blocks=True,
+                      lstrip_blocks=True)
+
+    # Resolve and validate input path early to fail fast.
+    model_path = Path(args.model_path)
+    if not model_path.is_file():
+        raise ValueError(f"{model_path} not found")
+
+    suffix = model_path.suffix.lower()
+
+    # Only validate Arm Ethos-U NPU metadata when those args are explicitly provided.
+    validation_args = NpuValidationArgs(
+        memory_mode=args.ethos_u_memory_mode,
+        config=args.ethos_u_config,
+    )
+    if suffix == ".tflite":
+        # TFLite validation runs only when args are set (it will early-return otherwise).
+        validate_tflite_model(model_path, validation_args)
+    elif suffix == ".pte":
+        # PTE validation runs only when args are set (it will early-return otherwise).
+        validate_pte_model(model_path, validation_args)
+    else:
+        raise ValueError(
+            f"Unsupported model type for {model_path}. Expected .tflite or .pte."
+        )
+
+    # Output filename mirrors the input model name with a .cc suffix.
+    cpp_filename = (Path(args.output_dir) / (model_path.name + ".cc")).resolve()
+    print(f"++ Converting {model_path.name} to\
+    {cpp_filename.name}")
+
+    cpp_filename.parent.mkdir(exist_ok=True)
+
+    hdr = gen_header(env, args.license_template, model_path.name)
+
+    env \
+        .get_template('tflite.cc.template') \
+        .stream(common_template_header=hdr,
+                model_data=get_model_data(str(model_path)),
+                expressions=args.expr,
+                additional_headers=args.headers,
+                namespaces=args.namespaces).dump(str(cpp_filename))
+
+
+if __name__ == '__main__':
+    main()
+
+=== 3. Exact linker script files ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-TCM.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-TCM.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP.ld
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE1C1F4051920/rtss_he/RTSS-HE-TCM.ld
+
+=== 4. Linker script external-flash section definitions ===
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld ---
+279-    *(nn_model)
+280-    *(labels)
+281-    *(ifm)
+282-
+283-    KEEP(*(.eh_frame*))
+284-  } > MRAM
+285-
+286-#ifdef BOARD_OSPI_FLASH_BASE
+287:  .readonly.at_ext_flash : ALIGN(8)
+288-  {
+289-    *(nn_model_ext_flash)
+290-  } > OSPI_FLASH
+291-#endif
+292-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld ---
+244-    *(nn_model)
+245-    *(labels)
+246-    *(ifm)
+247-
+248-    KEEP(*(.eh_frame*))
+249-  } > MRAM
+250-
+251-#ifdef BOARD_OSPI_FLASH_BASE
+252:  .readonly.at_ext_flash : ALIGN(8)
+253-  {
+254-    *(nn_model_ext_flash)
+255-  } > OSPI_FLASH
+256-#endif
+257-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld ---
+244-    *(nn_model)
+245-    *(labels)
+246-    *(ifm)
+247-
+248-    KEEP(*(.eh_frame*))
+249-  } > MRAM
+250-
+251-#ifdef BOARD_OSPI_FLASH_BASE
+252:  .readonly.at_ext_flash : ALIGN(8)
+253-  {
+254-    *(nn_model_ext_flash)
+255-  } > OSPI_FLASH
+256-#endif
+257-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld ---
+290-    *(nn_model)
+291-    *(labels)
+292-    *(ifm)
+293-
+294-    KEEP(*(.eh_frame*))
+295-  } > MRAM
+296-
+297-#ifdef BOARD_OSPI_FLASH_BASE
+298:  .readonly.at_ext_flash : ALIGN(8)
+299-  {
+300-    *(nn_model_ext_flash)
+301-  } > OSPI_FLASH
+302-#endif
+303-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld ---
+247-
+248-    *(nn_model)
+249-    *(labels)
+250-    *(ifm)
+251-
+252-    KEEP(*(.eh_frame*))
+253-  } > MRAM
+254-
+255:  .readonly.at_ext_flash : ALIGN(8)
+256-  {
+257-    *(nn_model_ext_flash)
+258-  } > OSPI_FLASH
+259-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld ---
+252-    *(.rodata*)
+253-    *(nn_model)
+254-    *(labels)
+255-    *(ifm)
+256-
+257-    KEEP(*(.eh_frame*))
+258-  } > MRAM
+259-
+260:  .readonly.at_ext_flash : ALIGN(8)
+261-  {
+262-    *(nn_model_ext_flash)
+263-  } > OSPI_FLASH
+264-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld ---
+217-
+218-    *(nn_model)
+219-    *(labels)
+220-    *(ifm)
+221-
+222-    KEEP(*(.eh_frame*))
+223-  } > MRAM
+224-
+225:  .readonly.at_ext_flash : ALIGN(8)
+226-  {
+227-    *(nn_model_ext_flash)
+228-  } > OSPI_FLASH
+229-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld ---
+253-
+254-    *(nn_model)
+255-    *(labels)
+256-    *(ifm)
+257-
+258-    KEEP(*(.eh_frame*))
+259-  } > MRAM
+260-
+261:  .readonly.at_ext_flash : ALIGN(8)
+262-  {
+263-    *(nn_model_ext_flash)
+264-  } > OSPI_FLASH
+265-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld ---
+216-
+217-    *(nn_model)
+218-    *(labels)
+219-    *(ifm)
+220-
+221-    KEEP(*(.eh_frame*))
+222-  } > MRAM
+223-
+224:  .readonly.at_ext_flash : ALIGN(8)
+225-  {
+226-    *(nn_model_ext_flash)
+227-  } > OSPI_FLASH
+228-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP.ld ---
+259-    *(.rodata*)
+260-    *(nn_model)
+261-    *(labels)
+262-    *(ifm)
+263-
+264-    KEEP(*(.eh_frame*))
+265-  } > MRAM
+266-
+267:  .readonly.at_ext_flash : ALIGN(8)
+268-  {
+269-    *(nn_model_ext_flash)
+270-  } > OSPI_FLASH
+271-}
+
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE1C1F4051920/rtss_he/RTSS-HE-TCM.ld ---
+236-    *(nn_model)
+237-    *(labels)
+238-    *(ifm)
+239-
+240-    KEEP(*(.eh_frame*))
+241-  } > MRAM
+242-
+243-#ifdef BOARD_OSPI_FLASH_BASE
+244:  .readonly.at_ext_flash : ALIGN(8)
+245-  {
+246-    *(nn_model_ext_flash)
+247-  } > OSPI_FLASH
+248-#endif
+249-}
+
+=== 5. Existing linker map OSPI1 memory declaration ===
+17019-FLASH            0x0000000080200000 0x0000000000380000 xr
+17020-RAM              0x0000000020000000 0x0000000000100000 xw
+17021-SRAM0            0x0000000002000000 0x0000000000400000 rw
+17022-HOST_PERIPHERAL  0x000000001a000000 0x0000000001000000 rw
+17023-SRAM1            0x0000000002400000 0x0000000000400000 rw
+17024:OSPI1            0x00000000c0000000 0x0000000004000000 rw
+17025-IDT_LIST         0x00000000ffff7fff 0x0000000000008000 xw
+17026-*default*        0x0000000000000000 0xffffffffffffffff
+17027-
+17028-Linker script and memory map
+17029-
+17030-LOAD zephyr/CMakeFiles/zephyr_final.dir/misc/empty_file.c.obj
+17031-LOAD zephyr/CMakeFiles/zephyr_final.dir/device_deps.c.obj
+17032-LOAD zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+17033-LOAD zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+17034-LOAD app/libapp.a
+17035-LOAD zephyr/libzephyr.a
+17036-LOAD zephyr/arch/common/libarch__common.a
+--
+27235- *(SORT_BY_ALIGNMENT(SRAM1.*))
+27236-                0x0000000002400000                __SRAM1_end = .
+27237-                0x0000000000000000                __SRAM1_size = (__SRAM1_end - __SRAM1_start)
+27238-                0x0000000002400000                __SRAM1_load_start = LOADADDR (SRAM1)
+27239-
+27240:OSPI1           0x00000000c0a83f20        0x0
+27241-                0x00000000c0a83f20                __OSPI1_start = .
+27242- *(SORT_BY_ALIGNMENT(OSPI1))
+27243- *(SORT_BY_ALIGNMENT(OSPI1.*))
+27244-                0x00000000c0a83f20                __OSPI1_end = .
+27245-                0x0000000000000000                __OSPI1_size = (__OSPI1_end - __OSPI1_start)
+27246-                0x00000000c0a83f20                __OSPI1_load_start = LOADADDR (OSPI1)
+27247-
+27248-.last_section   0x0000000080262c10        0x4
+27249-                0x0000000080262c10        0x4 LONG 0xe015e015
+27250-                0x0000000000062c14                _flash_used = ((LOADADDR (.last_section) + SIZEOF (.last_section)) - __rom_region_start)
+27251-
+27252-bss             0x0000000020000d40      0xe78
+
+--- OSPI1 model section ---
+23651-.gcc_except_table
+23652- *(SORT_BY_ALIGNMENT(.gcc_except_table) SORT_BY_ALIGNMENT(.gcc_except_table.*))
+23653-                0x0000000020000d28                __data_region_end = .
+23654-
+23655-ospi1           0x00000000c0000000   0xa83f20
+23656: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23657: .alif_extflash_OSPI1
+23658-                0x00000000c0000000   0xa83f20 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+23659: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+23660-
+23661-/DISCARD/
+23662- *(SORT_BY_ALIGNMENT(.irq_info*))
+23663- *(SORT_BY_ALIGNMENT(.intList*))
+23664-
+23665-.stab
+23666- *(SORT_BY_ALIGNMENT(.stab))
+23667-
+23668-.stabstr
+23669- *(SORT_BY_ALIGNMENT(.stabstr))
+23670-
+23671-.stab.excl
+
+=== 6. External flash image binaries ===
+
+=== 7. Sector/image generation implementation ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/build_configuration.cmake:107:    add_bin_generation_command(
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/build_configuration.cmake:111:            SECTION_PATTERNS    "${LINKER_SECTION_TAGS}"
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/build_configuration.cmake:105:    add_bin_generation_command(
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/build_configuration.cmake:109:            SECTION_PATTERNS    "${LINKER_SECTION_TAGS}"
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:268:        list(APPEND LINKER_SECTION_TAGS "*.at_ext_flash")
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:269:        list(APPEND LINKER_OUTPUT_BIN_TAGS "ext_flash.bin")
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:272:    add_bin_generation_command(
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:276:            SECTION_PATTERNS    "${LINKER_SECTION_TAGS}"
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/build_configuration.cmake:68:    add_bin_generation_command(
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/build_configuration.cmake:72:        SECTION_PATTERNS    "${LINKER_SECTION_TAGS}"
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-armclang.cmake:167:function(add_bin_generation_command)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-armclang.cmake:169:    set(multiValueArgs SECTION_PATTERNS OUTPUT_BIN_NAMES)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:153:function(add_bin_generation_command)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:155:    set(multiValueArgs SECTION_PATTERNS OUTPUT_BIN_NAMES)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:159:    list(LENGTH PARSED_SECTION_PATTERNS N_SECTION_PATTERNS)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:162:    if (NOT ${N_SECTION_PATTERNS} STREQUAL ${N_OUTPUT_BIN_NAMES})
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:167:    message(STATUS "${TRIPLET}-objcopy requested to generate "
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:170:    math(EXPR MAX_IDX "${N_SECTION_PATTERNS} - 1")
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:175:        list(GET PARSED_SECTION_PATTERNS ${IDX} SECTION_PATTERN)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:179:            COMMAND llvm-objcopy -O binary
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-llvm.cmake:180:            --only-section ${SECTION_PATTERN} ${PARSED_AXF_PATH}
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:153:function(add_bin_generation_command)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:155:    set(multiValueArgs SECTION_PATTERNS OUTPUT_BIN_NAMES)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:159:    list(LENGTH PARSED_SECTION_PATTERNS N_SECTION_PATTERNS)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:162:    if (NOT ${N_SECTION_PATTERNS} STREQUAL ${N_OUTPUT_BIN_NAMES})
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:167:    message(STATUS "${TRIPLET}-objcopy requested to generate "
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:170:    math(EXPR MAX_IDX "${N_SECTION_PATTERNS} - 1")
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:175:        list(GET PARSED_SECTION_PATTERNS ${IDX} SECTION_PATTERN)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:179:            COMMAND ${TRIPLET}-objcopy -O binary
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/toolchains/bare-metal-gcc.cmake:180:            --only-section ${SECTION_PATTERN} ${PARSED_AXF_PATH}
+
+=== 8. Existing OSPI1 section size calculation ===
+OSPI1 base:             0xC0000000
+OSPI1 total size:       67,108,864 bytes (64.00 MiB)
+Heat-Stroke model size: 11,026,208 bytes
+Heat-Stroke end:       0xC0A83F20
+Nominal remaining:     56,082,656 bytes
+Nominal free end:      0xC4000000
+1 FP32 stage(s): Work-Demand=20,027,936 bytes; with Heat-Stroke=31,054,144; fits nominal 64 MiB region=True
+2 FP32 stage(s): Work-Demand=40,055,872 bytes; with Heat-Stroke=51,082,080; fits nominal 64 MiB region=True
+3 FP32 stage(s): Work-Demand=60,083,808 bytes; with Heat-Stroke=71,110,016; fits nominal 64 MiB region=False
+4 FP32 stage(s): Work-Demand=80,111,744 bytes; with Heat-Stroke=91,137,952; fits nominal 64 MiB region=False
+
+=== 9. Current Heat-Stroke model integrity (read-only) ===
+Model file size: 11026208 bytes
+b8056848e68ecdb1fc1cd35f65639db6f836b53abf603033f58f90ec7f1003b3  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite
+
+=== FINISHED ===
+Log: /home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_ospi1_section_layout_audit_20261118.log
+No firmware, source, model, linker or flash data modified.
+No build or flash programming was performed.
