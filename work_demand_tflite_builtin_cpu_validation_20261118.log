@@ -1,0 +1,114 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795009917.638007   56179 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795009917.638193   56179 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795009917.666985   56179 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795009918.368605   56179 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795009918.368799   56179 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+Work-Demand TFLite built-in CPU validation
+Default delegates disabled.
+Synthetic smoke vectors ONLY; NOT calibration data.
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+TensorFlow: 2.21.0
+NumPy: 2.5.4
+Input vectors: (7, 3, 512)
+
+======================================================================
+STAGE: stage1
+Input: acc_window [  1   3 512] <class 'numpy.float32'>
+Output: logits [1 2] <class 'numpy.float32'>
+
+Numerical comparison against ONNX Runtime:
+  Max absolute error: 5.96046448e-07
+  Mean absolute error: 3.25696817e-07
+  RMSE: 3.6613045e-07
+  Result: PASS
+
+Built-in TFLite operators:
+  ADD: 5
+  CONV_2D: 14
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+======================================================================
+STAGE: stage2
+Input: acc_window [  1   3 512] <class 'numpy.float32'>
+Output: logits [1 2] <class 'numpy.float32'>
+
+Numerical comparison against ONNX Runtime:
+  Max absolute error: 1.1920929e-06
+  Mean absolute error: 5.72630313e-07
+  RMSE: 6.36253901e-07
+  Result: PASS
+
+Built-in TFLite operators:
+  ADD: 5
+  CONV_2D: 14
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+======================================================================
+STAGE: stage3a
+Input: acc_window [  1   3 512] <class 'numpy.float32'>
+Output: logits [1 2] <class 'numpy.float32'>
+
+Numerical comparison against ONNX Runtime:
+  Max absolute error: 3.91900539e-06
+  Mean absolute error: 4.85352132e-07
+  RMSE: 1.19624997e-06
+  Result: PASS
+
+Built-in TFLite operators:
+  ADD: 5
+  CONV_2D: 14
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+======================================================================
+STAGE: stage3b
+Input: acc_window [  1   3 512] <class 'numpy.float32'>
+Output: logits [1 2] <class 'numpy.float32'>
+
+Numerical comparison against ONNX Runtime:
+  Max absolute error: 7.15255737e-07
+  Mean absolute error: 2.04890966e-07
+  RMSE: 3.05597098e-07
+  Result: PASS
+
+Built-in TFLite operators:
+  ADD: 5
+  CONV_2D: 14
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+======================================================================
+FINAL SUMMARY
+stage1 : PASS
+stage2 : PASS
+stage3a : PASS
+stage3b : PASS
+JSON: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_tflite_builtin_cpu_validation.json
+[PASS] All four models passed built-in CPU validation.
