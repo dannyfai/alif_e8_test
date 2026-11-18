@@ -1,0 +1,260 @@
+=== Work-Demand FP32 ONNX audit and TFLite conversion ===
+2026-11-18T21:37:30+08:00
+APP=/home/user/sdk-alif/beeinventor/test_heatstroke
+OUT=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion
+ONNX_DIR=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/onnx
+TFLITE_DIR=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_fp32_tflite_conversion_20261118.log
+
+=== Python / ONNX dependencies ===
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+NumPy: 2.2.6
+ONNX: 1.16.2
+ONNX Runtime: 1.20.1
+Synthetic test vectors: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/synthetic_test_vectors_NOT_FOR_CALIBRATION.npy
+NOTE: these are smoke-test vectors only, NOT calibration data.
+
+=== 1. Structural ONNX graph audit ===
+WORK-DEMAND ONNX GRAPH AUDIT
+FP32 / opset 17
+
+NOTE: operator counts are structural inventory only; they do not prove TFLM or Ethos-U kernel support.
+
+=== stage1 ===
+File bytes: 20,022,187
+ONNX IR: 8
+Opsets: [{'domain': 'ai.onnx', 'version': 17}]
+Shape inference: passed
+Nodes: 36
+Initializers: 32
+Initializer bytes: 20,016,136
+Initializer elements: 5,004,034
+Inputs: [{'name': 'acc_window', 'dtype': 'FLOAT', 'shape': [1, 3, 512]}]
+Outputs: [{'name': 'logits', 'dtype': 'FLOAT', 'shape': [1, 2]}]
+Nonstandard domains: []
+Operator counts:
+  ai.onnx::Add: 5
+  ai.onnx::Constant: 1
+  ai.onnx::Conv: 14
+  ai.onnx::Gemm: 2
+  ai.onnx::GlobalAveragePool: 1
+  ai.onnx::Relu: 12
+  ai.onnx::Squeeze: 1
+Largest initializers:
+  onnx::Conv_167: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_170: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_173: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_176: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_179: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_164: [512, 256, 3] FLOAT 1,572,864 B
+  onnx::Conv_158: [256, 256, 3] FLOAT 786,432 B
+  classifier.0.weight: [256, 512] FLOAT 524,288 B
+
+=== stage2 ===
+File bytes: 20,022,187
+ONNX IR: 8
+Opsets: [{'domain': 'ai.onnx', 'version': 17}]
+Shape inference: passed
+Nodes: 36
+Initializers: 32
+Initializer bytes: 20,016,136
+Initializer elements: 5,004,034
+Inputs: [{'name': 'acc_window', 'dtype': 'FLOAT', 'shape': [1, 3, 512]}]
+Outputs: [{'name': 'logits', 'dtype': 'FLOAT', 'shape': [1, 2]}]
+Nonstandard domains: []
+Operator counts:
+  ai.onnx::Add: 5
+  ai.onnx::Constant: 1
+  ai.onnx::Conv: 14
+  ai.onnx::Gemm: 2
+  ai.onnx::GlobalAveragePool: 1
+  ai.onnx::Relu: 12
+  ai.onnx::Squeeze: 1
+Largest initializers:
+  onnx::Conv_167: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_170: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_173: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_176: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_179: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_164: [512, 256, 3] FLOAT 1,572,864 B
+  onnx::Conv_158: [256, 256, 3] FLOAT 786,432 B
+  classifier.0.weight: [256, 512] FLOAT 524,288 B
+
+=== stage3a ===
+File bytes: 20,022,187
+ONNX IR: 8
+Opsets: [{'domain': 'ai.onnx', 'version': 17}]
+Shape inference: passed
+Nodes: 36
+Initializers: 32
+Initializer bytes: 20,016,136
+Initializer elements: 5,004,034
+Inputs: [{'name': 'acc_window', 'dtype': 'FLOAT', 'shape': [1, 3, 512]}]
+Outputs: [{'name': 'logits', 'dtype': 'FLOAT', 'shape': [1, 2]}]
+Nonstandard domains: []
+Operator counts:
+  ai.onnx::Add: 5
+  ai.onnx::Constant: 1
+  ai.onnx::Conv: 14
+  ai.onnx::Gemm: 2
+  ai.onnx::GlobalAveragePool: 1
+  ai.onnx::Relu: 12
+  ai.onnx::Squeeze: 1
+Largest initializers:
+  onnx::Conv_167: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_170: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_173: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_176: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_179: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_164: [512, 256, 3] FLOAT 1,572,864 B
+  onnx::Conv_158: [256, 256, 3] FLOAT 786,432 B
+  classifier.0.weight: [256, 512] FLOAT 524,288 B
+
+=== stage3b ===
+File bytes: 20,022,187
+ONNX IR: 8
+Opsets: [{'domain': 'ai.onnx', 'version': 17}]
+Shape inference: passed
+Nodes: 36
+Initializers: 32
+Initializer bytes: 20,016,136
+Initializer elements: 5,004,034
+Inputs: [{'name': 'acc_window', 'dtype': 'FLOAT', 'shape': [1, 3, 512]}]
+Outputs: [{'name': 'logits', 'dtype': 'FLOAT', 'shape': [1, 2]}]
+Nonstandard domains: []
+Operator counts:
+  ai.onnx::Add: 5
+  ai.onnx::Constant: 1
+  ai.onnx::Conv: 14
+  ai.onnx::Gemm: 2
+  ai.onnx::GlobalAveragePool: 1
+  ai.onnx::Relu: 12
+  ai.onnx::Squeeze: 1
+Largest initializers:
+  onnx::Conv_167: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_170: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_173: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_176: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_179: [512, 512, 3] FLOAT 3,145,728 B
+  onnx::Conv_164: [512, 256, 3] FLOAT 1,572,864 B
+  onnx::Conv_158: [256, 256, 3] FLOAT 786,432 B
+  classifier.0.weight: [256, 512] FLOAT 524,288 B
+
+
+[AUDIT] JSON: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_onnx_graph_audit.json
+[AUDIT] TXT:  /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_onnx_graph_audit.txt
+
+=== 2. Resolve NXP onnx2tflite converter ===
+Converter: /home/user/onnx2tflite_env/bin/onnx2tflite
+usage: onnx2tflite [-h]
+                   [--allow-inputs-stripping | --no-allow-inputs-stripping]
+                   [--keep-io-tensors-format | --no-keep-io-tensors-format]
+                   [--skip-shape-inference | --no-skip-shape-inference]
+                   [--qdq-aware-conversion | --no-qdq-aware-conversion]
+                   [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                   [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                   [--dont-skip-nodes-with-known-outputs | --no-dont-skip-nodes-with-known-outputs]
+                   [--allow-select-ops | --no-allow-select-ops]
+                   [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                   [--duplicate-dequantize-linear | --no-duplicate-dequantize-linear]
+                   [--guarantee-non-negative-indices | --no-guarantee-non-negative-indices]
+                   [--cast-int64-to-int32 | --no-cast-int64-to-int32]
+                   [--accept-resize-rounding-error | --no-accept-resize-rounding-error]
+                   [--skip-opset-version-check | --no-skip-opset-version-check]
+                   [-o out] [-v]
+                   onnx_file
+
+Convert a '.onnx' DNN model to an equivalent '.tflite' model. By default the
+output '.tflite' file will be generated in the current working directory and
+have the same name as the input '.onnx' file.
+
+positional arguments:
+  onnx_file             Path to ONNX (*.onnx) model.
+
+options:
+  -h, --help            show this help message and exit
+  --allow-inputs-stripping, --no-allow-inputs-stripping
+
+Name: eiq-onnx2tflite
+Version: 0.11.0
+Summary: ONNX2TFLite project offers tools for ONNX models quantization and their conversion into TFLite
+Home-page: 
+Author: NXP
+Author-email: 
+License: PROPRIETARY
+Location: /home/user/onnx2tflite_env/lib/python3.12/site-packages
+=== 3. Convert each FP32 ONNX model independently ===
+--- stage1 ---
+[2026-11-18 21:37:33,982] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:33,983] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:33,983] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:33,984] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:33,984] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-18 21:37:33,986] [INFO] Permuting the `weights`(classifier.0.weight) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-18 21:37:34,041] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/onnx/stage1_fp32_opset17.onnx' model to '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage1_fp32.tflite'.
+[TFLITE PASS] /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage1_fp32.tflite (20027936 bytes; FlatBuffer TFL3)
+--- stage2 ---
+[2026-11-18 21:37:35,619] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:35,619] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:35,620] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:35,620] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:35,621] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-18 21:37:35,623] [INFO] Permuting the `weights`(classifier.0.weight) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-18 21:37:35,677] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/onnx/stage2_fp32_opset17.onnx' model to '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage2_fp32.tflite'.
+[TFLITE PASS] /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage2_fp32.tflite (20027936 bytes; FlatBuffer TFL3)
+--- stage3a ---
+[2026-11-18 21:37:37,336] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:37,337] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:37,337] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:37,338] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:37,338] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-18 21:37:37,340] [INFO] Permuting the `weights`(classifier.0.weight) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-18 21:37:37,400] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/onnx/stage3a_fp32_opset17.onnx' model to '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3a_fp32.tflite'.
+[TFLITE PASS] /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3a_fp32.tflite (20027936 bytes; FlatBuffer TFL3)
+--- stage3b ---
+[2026-11-18 21:37:38,943] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:38,943] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:38,944] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:38,944] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-18 21:37:38,945] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-18 21:37:38,946] [INFO] Permuting the `weights`(classifier.0.weight) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-18 21:37:39,001] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/onnx/stage3b_fp32_opset17.onnx' model to '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3b_fp32.tflite'.
+[TFLITE PASS] /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3b_fp32.tflite (20027936 bytes; FlatBuffer TFL3)
+
+=== 4. Generate ONNX Runtime references for smoke vectors ===
+Synthetic smoke windows: 7; shape per window: (1, 3, 512)
+[ORT REF] stage1: (7, 1, 2), /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference/stage1_ort_reference_NOT_FOR_CALIBRATION.npy
+[ORT REF] stage2: (7, 1, 2), /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference/stage2_ort_reference_NOT_FOR_CALIBRATION.npy
+[ORT REF] stage3a: (7, 1, 2), /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference/stage3a_ort_reference_NOT_FOR_CALIBRATION.npy
+[ORT REF] stage3b: (7, 1, 2), /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference/stage3b_ort_reference_NOT_FOR_CALIBRATION.npy
+Reference outputs are for conversion equivalence smoke testing only, NOT calibration or accuracy evaluation.
+
+=== 5. Optional TFLite interpreter validation ===
+[SKIP] No Python environment with tensorflow or tflite_runtime found. TFLite files passed FlatBuffer identifier checks; runtime comparison remains to be run.
+
+=== 6. Output inventory and checksums ===
+-rw-rw-r-- 1 user user 20M Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage1_fp32.tflite
+-rw-rw-r-- 1 user user 20M Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage2_fp32.tflite
+-rw-rw-r-- 1 user user 20M Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3a_fp32.tflite
+-rw-rw-r-- 1 user user 20M Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3b_fp32.tflite
+b47e71c401a075c44c8e66257e0bd740a5d5f1a31156096f2b9b4547d56bc625  /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage1_fp32.tflite
+e97ad51ed54427213e732f2197db2a54333b08e5c99e7404c2814c5ce73f95ca  /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage2_fp32.tflite
+b1fdeb3fe7b36941cb0bd12fcf58cfc708ba32854e57fe5eadab80cb4ba32b4a  /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3a_fp32.tflite
+323f8908d09a6854e32f6d2ad9d649d9cae746bd178b795cc276c26f4577158d  /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3b_fp32.tflite
+
+=== ONNX graph audit summary files ===
+-rw-rw-r-- 1 user user  16K Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_onnx_graph_audit.json
+-rw-rw-r-- 1 user user 4.0K Nov 18 21:37 /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_onnx_graph_audit.txt
+
+=== DONE ===
+TFLite output: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32
+Audit: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_onnx_graph_audit.txt
+Validation references: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference
