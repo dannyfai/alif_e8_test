@@ -1,0 +1,269 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795009773.765080   56088 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795009773.765264   56088 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795009773.793511   56088 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795009774.522316   56088 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795009774.522505   56088 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+Work-Demand FP32 TFLite runtime validation
+Synthetic smoke vectors ONLY; NOT calibration data.
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+NumPy: 2.5.4
+Model directory: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32
+Reference directory: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/ort_fp32_reference
+Runtime: TensorFlow 2.21.0
+Synthetic vector file shape: (7, 3, 512)
+Windows: 7; one input shape: (1, 3, 512)
+
+========================================================================
+STAGE: stage1
+Model: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage1_fp32.tflite
+File size: 20,027,936 bytes
+SHA256: b47e71c401a075c44c8e66257e0bd740a5d5f1a31156096f2b9b4547d56bc625
+Input tensor: acc_window
+Input shape: [1, 3, 512]
+Input dtype: <class 'numpy.float32'>
+Output tensor: logits
+Output shape: [1, 2]
+Output dtype: <class 'numpy.float32'>
+  Window 1/7: output=[ 0.16058196 -0.13189282]
+  Window 2/7: output=[ 0.28535283 -0.19148058]
+  Window 3/7: output=[ 1.2837973 -1.1050106]
+  Window 4/7: output=[ 1.0155793  -0.81001997]
+  Window 5/7: output=[-0.7171692   0.81270283]
+  Window 6/7: output=[-1.6962906  1.8369775]
+  Window 7/7: output=[ 1.2467443 -1.295487 ]
+
+Numerical comparison: TFLite vs ONNX Runtime
+  Maximum absolute error: 8.34465027e-07
+  Mean absolute error:    3.91687678e-07
+  RMSE:                   4.58697201e-07
+  Worst element:          (np.int64(6), np.int64(1))
+  ONNX value:             -1.29548788
+  TFLite value:           -1.29548705
+  Tolerance:              atol=0.0001, rtol=0.0001
+  Result:                 PASS
+
+TFLite operators: 63
+  ADD: 5
+  CONV_2D: 14
+  DELEGATE: 1
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+Largest TFLite tensors (individual payload size):
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_167
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_170
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_173
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_176
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_179
+     1,572,864 B  float32  [512, 3, 1, 256]       onnx::Conv_164
+       786,432 B  float32  [256, 3, 1, 256]       onnx::Conv_158
+       524,288 B  float32  [512, 1, 1, 256]       onnx::Conv_161
+       524,288 B  float32  [256, 512]             classifier.0.weight00
+       393,216 B  float32  [256, 3, 1, 128]       onnx::Conv_155
+       196,608 B  float32  [128, 3, 1, 128]       onnx::Conv_149
+       131,072 B  float32  [256, 1, 1, 128]       onnx::Conv_152
+        98,304 B  float32  [128, 3, 1, 64]        onnx::Conv_146
+        67,584 B  float32  [1, 66, 1, 256]        /block2/Relu_1_output_0_4D_0_padded
+        66,560 B  float32  [1, 130, 1, 128]       /block1/Relu_1_output_0_4D_0_padded
+
+NOTE: Individual tensor sizes do not equal the TFLM activation arena requirement or peak simultaneous live memory.
+
+========================================================================
+STAGE: stage2
+Model: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage2_fp32.tflite
+File size: 20,027,936 bytes
+SHA256: e97ad51ed54427213e732f2197db2a54333b08e5c99e7404c2814c5ce73f95ca
+Input tensor: acc_window
+Input shape: [1, 3, 512]
+Input dtype: <class 'numpy.float32'>
+Output tensor: logits
+Output shape: [1, 2]
+Output dtype: <class 'numpy.float32'>
+  Window 1/7: output=[ 1.8659521 -1.5406369]
+  Window 2/7: output=[ 0.4391398  -0.36373943]
+  Window 3/7: output=[-1.0057474   0.95683837]
+  Window 4/7: output=[-1.7763789  1.7292501]
+  Window 5/7: output=[ 3.3573613 -2.3807964]
+  Window 6/7: output=[ 2.2500696 -1.7904625]
+  Window 7/7: output=[ 1.5433012 -1.3760638]
+
+Numerical comparison: TFLite vs ONNX Runtime
+  Maximum absolute error: 4.76837158e-07
+  Mean absolute error:    2.12873729e-07
+  RMSE:                   2.48579653e-07
+  Worst element:          (np.int64(0), np.int64(0))
+  ONNX value:             1.86595261
+  TFLite value:           1.86595213
+  Tolerance:              atol=0.0001, rtol=0.0001
+  Result:                 PASS
+
+TFLite operators: 63
+  ADD: 5
+  CONV_2D: 14
+  DELEGATE: 1
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+Largest TFLite tensors (individual payload size):
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_167
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_170
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_173
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_176
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_179
+     1,572,864 B  float32  [512, 3, 1, 256]       onnx::Conv_164
+       786,432 B  float32  [256, 3, 1, 256]       onnx::Conv_158
+       524,288 B  float32  [512, 1, 1, 256]       onnx::Conv_161
+       524,288 B  float32  [256, 512]             classifier.0.weight00
+       393,216 B  float32  [256, 3, 1, 128]       onnx::Conv_155
+       196,608 B  float32  [128, 3, 1, 128]       onnx::Conv_149
+       131,072 B  float32  [256, 1, 1, 128]       onnx::Conv_152
+        98,304 B  float32  [128, 3, 1, 64]        onnx::Conv_146
+        67,584 B  float32  [1, 66, 1, 256]        /block2/Relu_1_output_0_4D_0_padded
+        66,560 B  float32  [1, 130, 1, 128]       /block1/Relu_1_output_0_4D_0_padded
+
+NOTE: Individual tensor sizes do not equal the TFLM activation arena requirement or peak simultaneous live memory.
+
+========================================================================
+STAGE: stage3a
+Model: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3a_fp32.tflite
+File size: 20,027,936 bytes
+SHA256: b1fdeb3fe7b36941cb0bd12fcf58cfc708ba32854e57fe5eadab80cb4ba32b4a
+Input tensor: acc_window
+Input shape: [1, 3, 512]
+Input dtype: <class 'numpy.float32'>
+Output tensor: logits
+Output shape: [1, 2]
+Output dtype: <class 'numpy.float32'>
+  Window 1/7: output=[ 0.3973164  -0.87595826]
+  Window 2/7: output=[-0.27548748 -0.33978713]
+  Window 3/7: output=[ 0.52526987 -1.3195903 ]
+  Window 4/7: output=[ 0.2404989 -0.8352843]
+  Window 5/7: output=[ 0.18162265 -0.21805851]
+  Window 6/7: output=[ 0.44206935 -1.457272  ]
+  Window 7/7: output=[ 0.16514263 -0.5137412 ]
+
+Numerical comparison: TFLite vs ONNX Runtime
+  Maximum absolute error: 2.47359276e-06
+  Mean absolute error:    4.71515307e-07
+  RMSE:                   8.47637182e-07
+  Worst element:          (np.int64(3), np.int64(0))
+  ONNX value:             0.240496427
+  TFLite value:           0.2404989
+  Tolerance:              atol=0.0001, rtol=0.0001
+  Result:                 PASS
+
+TFLite operators: 63
+  ADD: 5
+  CONV_2D: 14
+  DELEGATE: 1
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+Largest TFLite tensors (individual payload size):
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_167
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_170
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_173
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_176
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_179
+     1,572,864 B  float32  [512, 3, 1, 256]       onnx::Conv_164
+       786,432 B  float32  [256, 3, 1, 256]       onnx::Conv_158
+       524,288 B  float32  [512, 1, 1, 256]       onnx::Conv_161
+       524,288 B  float32  [256, 512]             classifier.0.weight00
+       393,216 B  float32  [256, 3, 1, 128]       onnx::Conv_155
+       196,608 B  float32  [128, 3, 1, 128]       onnx::Conv_149
+       131,072 B  float32  [256, 1, 1, 128]       onnx::Conv_152
+        98,304 B  float32  [128, 3, 1, 64]        onnx::Conv_146
+        67,584 B  float32  [1, 66, 1, 256]        /block2/Relu_1_output_0_4D_0_padded
+        66,560 B  float32  [1, 130, 1, 128]       /block1/Relu_1_output_0_4D_0_padded
+
+NOTE: Individual tensor sizes do not equal the TFLM activation arena requirement or peak simultaneous live memory.
+
+========================================================================
+STAGE: stage3b
+Model: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tflite_fp32/stage3b_fp32.tflite
+File size: 20,027,936 bytes
+SHA256: 323f8908d09a6854e32f6d2ad9d649d9cae746bd178b795cc276c26f4577158d
+Input tensor: acc_window
+Input shape: [1, 3, 512]
+Input dtype: <class 'numpy.float32'>
+Output tensor: logits
+Output shape: [1, 2]
+Output dtype: <class 'numpy.float32'>
+  Window 1/7: output=[ 0.516666  -1.4584802]
+  Window 2/7: output=[ 0.48420915 -0.7882142 ]
+  Window 3/7: output=[ 0.62370175 -1.1990112 ]
+  Window 4/7: output=[ 0.59198403 -1.1250514 ]
+  Window 5/7: output=[ 0.42439747 -0.38579726]
+  Window 6/7: output=[-0.33716106 -0.250909  ]
+  Window 7/7: output=[-0.89167607  0.00210299]
+
+Numerical comparison: TFLite vs ONNX Runtime
+  Maximum absolute error: 1.54972076e-06
+  Mean absolute error:    3.56846215e-07
+  RMSE:                   5.60259252e-07
+  Worst element:          (np.int64(2), np.int64(1))
+  ONNX value:             -1.19900966
+  TFLite value:           -1.19901121
+  Tolerance:              atol=0.0001, rtol=0.0001
+  Result:                 PASS
+
+TFLite operators: 63
+  ADD: 5
+  CONV_2D: 14
+  DELEGATE: 1
+  FULLY_CONNECTED: 2
+  PAD: 4
+  RELU: 6
+  RESHAPE: 29
+  SUM: 1
+  TRANSPOSE: 1
+
+Largest TFLite tensors (individual payload size):
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_167
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_170
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_173
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_176
+     3,145,728 B  float32  [512, 3, 1, 512]       onnx::Conv_179
+     1,572,864 B  float32  [512, 3, 1, 256]       onnx::Conv_164
+       786,432 B  float32  [256, 3, 1, 256]       onnx::Conv_158
+       524,288 B  float32  [512, 1, 1, 256]       onnx::Conv_161
+       524,288 B  float32  [256, 512]             classifier.0.weight00
+       393,216 B  float32  [256, 3, 1, 128]       onnx::Conv_155
+       196,608 B  float32  [128, 3, 1, 128]       onnx::Conv_149
+       131,072 B  float32  [256, 1, 1, 128]       onnx::Conv_152
+        98,304 B  float32  [128, 3, 1, 64]        onnx::Conv_146
+        67,584 B  float32  [1, 66, 1, 256]        /block2/Relu_1_output_0_4D_0_padded
+        66,560 B  float32  [1, 130, 1, 128]       /block1/Relu_1_output_0_4D_0_padded
+
+NOTE: Individual tensor sizes do not equal the TFLM activation arena requirement or peak simultaneous live memory.
+
+========================================================================
+FINAL SUMMARY
+  stage1: PASS
+  stage2: PASS
+  stage3a: PASS
+  stage3b: PASS
+JSON report: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/validation/work_demand_tflite_fp32_runtime_validation.json
+[PASS] All four TFLite models match ONNX Runtime within tolerance.
