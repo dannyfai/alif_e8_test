@@ -1,0 +1,1360 @@
+===== ALLOCATION INFO HEADER =====
+/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+#ifndef TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+#define TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+
+#include "tensorflow/lite/c/common.h"
+#include "tensorflow/lite/micro/compatibility.h"
+#include "tensorflow/lite/micro/flatbuffer_utils.h"
+#include "tensorflow/lite/micro/micro_allocator.h"
+#include "tensorflow/lite/schema/schema_generated.h"
+
+namespace tflite {
+
+// Used to hold information used during allocation calculations.
+struct AllocationInfo {
+  size_t bytes;
+  void** output_ptr;
+  int first_created;
+  int last_used;
+  int32_t offline_offset;
+  bool needs_allocating;
+};
+
+// Used to hold the allocation info list and related metadata for the entire
+// graph (including subgraphs). Since all subgraphs are planned together, the
+// allocation info list contains allocations for all subgraphs. Track the offset
+// into this list for each subgraph then reserve space to track all allocations.
+//
+// The AllocationInfo list is a contiguous list of allocations across all
+// subgraphs and scratch buffers. Each element here is marked as
+// s<subgraph index>t<tensor index>. The following is a possible
+// AllocationInfo list:
+// [s0t0, s0t1, s1t0, s2t1, s1t2, s3t0, s3t1, scratch0, scratch1, scratch2]
+//
+// For this example, the subgraph offsets would be [0, 2, 5] and the scratch
+// offset would be 7.
+struct GraphAllocationInfo {
+  AllocationInfo* allocation_info;
+  size_t allocation_info_count;
+  size_t* subgraph_offsets;
+  size_t scratch_offset;
+  size_t tensor_count;
+  size_t scratch_buffer_count;
+};
+
+// A helper class to construct AllocationInfo array. This array contains the
+// lifetime of tensors / scratch_buffer and will be used to calculate the memory
+// plan. Methods need to be called in order from `Create`, Init`, `Add*`, to
+// `Finish`.
+class AllocationInfoBuilder {
+ public:
+  AllocationInfoBuilder(const Model* model,
+                        INonPersistentBufferAllocator* non_persistent_allocator)
+      : model_(model), non_persistent_allocator_(non_persistent_allocator) {}
+
+  // Check if model contains offline planned buffer offsets.
+  //  - If there's no metadata available, offline_planner_offsets is not set
+  //  - If there's metadata available, offline_planner_offsets will point to the
+  //    first offset in the metadata buffer list.
+  TfLiteStatus GetOfflinePlannedOffsets(
+      const int32_t** offline_planner_offsets);
+
+  // Allocate memory for the allocation info array as well as offsets into that
+  // array for each subgraph.
+  TfLiteStatus CreateAllocationInfo(int scratch_buffer_request_count);
+
+  // Release memory used for the allocation info array.
+  TfLiteStatus FreeAllocationInfo();
+
+  // Initialize AllocationInfo for all tensors and scratch buffers in the graph.
+  TfLiteStatus InitializeAllocationInfo(const int32_t* offline_offsets,
+                                        SubgraphAllocations* allocations);
+
+  // Mark the scope of each tensor and scratch buffer across the graph. Enter
+  // all possible subgraphs invoked by each control flow operator. This method
+  // marks the maximum lifetime of each buffer so that tensors are correctly
+  // planned for all valid invocation flows.
+  TfLiteStatus MarkAllocationLifetimes(
+      int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_request,
+      ScratchBufferHandle* scratch_buffer_handles,
+      SubgraphAllocations* allocations);
+
+  // Identify control flow operators and recursively mark all subgraphs which
+  // that operator can invoke. The lifetime of all tensors within a subgraph
+  // can only be extended. The order of subgraph invocation does not matter
+  // since subgraphs within the same control flow operator are executed
+  // within their own allocation scope (planned buffers in a subgraph cannot
+  // persist beyond the end of that subgraph's invocation).
+  TfLiteStatus MarkSubgraphLifetimesIfNecessary(
+      const Operator* op,
+      internal::ScratchBufferRequest* scratch_buffer_requests,
+      ScratchBufferHandle* scratch_buffer_handles,
+      SubgraphAllocations* allocations);
+
+  // Returns the number of allocations.
+  int AllocationCount() const { return info_.allocation_info_count; }
+
+  // Returns a pointer to the built AllocationInfo array.
+  AllocationInfo* Finish() const { return info_.allocation_info; }
+
+ private:
+  // Mark the given Allocation info as first created at the specified allocation
+  // scope count. Only the first creation must be recorded since the allocation
+  // scope count monotonically increases throughout the lifetime marking
+  // process.
+  void UpdateFirstCreated(AllocationInfo* current, int allocation_scope_count);
+
+  // Mark the given AllocationInfo as last used at the specified allocation
+  // scope
+  // count. Update the last used marker every time, since the allocation scope
+  // count monotonically increases through the lifetime marking process.
+  void UpdateLastUsed(AllocationInfo* current, int allocation_scope_count);
+
+  // Validate if a subgraph satisfies assumptions.
+  TfLiteStatus ValidateSubgraph(const SubGraph* subgraph,
+                                TfLiteEvalTensor* eval_tensors);
+
+  const tflite::Model* model_ = nullptr;
+  INonPersistentBufferAllocator* non_persistent_allocator_ = nullptr;
+  GraphAllocationInfo info_ =
+      {};  // Prevents problems caused by accessing uninitialized memory.
+  int allocation_scope_count_ = 0;
+};
+
+}  // namespace tflite
+
+#endif  // TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+
+===== ALLOCATION INFO IMPLEMENTATION =====
+/* Copyright 2023 The TensorFlow Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+#include "tensorflow/lite/micro/micro_allocation_info.h"
+
+#include <algorithm>
+
+#include "tensorflow/lite/c/c_api_types.h"
+#include "tensorflow/lite/kernels/internal/compatibility.h"
+#include "tensorflow/lite/kernels/kernel_util.h"
+#include "tensorflow/lite/micro/memory_helpers.h"
+#include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+#include "tensorflow/lite/micro/micro_log.h"
+
+namespace tflite {
+
+namespace {
+constexpr char kOfflineMemAllocMetadata[] = "OfflineMemoryAllocation";
+constexpr int kUninitializedLifetime = -1;
+}  // namespace
+
+// Mark the given Allocation info as first created at the specified allocation
+// scope count. Only the first creation must be recorded since the allocation
+// scope count monotonically increases throughout the lifetime marking process.
+void AllocationInfoBuilder::UpdateFirstCreated(AllocationInfo* current,
+                                               int allocation_scope_count) {
+  TFLITE_DCHECK(current->first_created <= allocation_scope_count);
+  if (current->first_created == kUninitializedLifetime) {
+    current->first_created = allocation_scope_count;
+  }
+}
+
+// Mark the given AllocationInfo as last used at the specified allocation scope
+// count. Update the last used marker every time, since the allocation scope
+// count monotonically increases through the lifetime marking process.
+void AllocationInfoBuilder::UpdateLastUsed(AllocationInfo* current,
+                                           int allocation_scope_count) {
+  TFLITE_DCHECK(current->last_used <= allocation_scope_count);
+  current->last_used = allocation_scope_count;
+}
+
+TfLiteStatus AllocationInfoBuilder::MarkSubgraphLifetimesIfNecessary(
+    const Operator* op, internal::ScratchBufferRequest* scratch_buffer_requests,
+    ScratchBufferHandle* scratch_buffer_handles,
+    SubgraphAllocations* allocations) {
+  int first_subgraph_index = -1;
+  int second_subgraph_index = -1;
+  const OperatorCode* opcode =
+      model_->operator_codes()->Get(op->opcode_index());
+  switch (opcode->builtin_code()) {
+    case BuiltinOperator_IF: {
+      first_subgraph_index =
+          op->builtin_options_as_IfOptions()->then_subgraph_index();
+      second_subgraph_index =
+          op->builtin_options_as_IfOptions()->else_subgraph_index();
+      break;
+    }
+    case BuiltinOperator_CALL_ONCE: {
+      first_subgraph_index =
+          op->builtin_options_as_CallOnceOptions()->init_subgraph_index();
+      break;
+    }
+    case BuiltinOperator_WHILE: {
+      first_subgraph_index =
+          op->builtin_options_as_WhileOptions()->cond_subgraph_index();
+      second_subgraph_index =
+          op->builtin_options_as_WhileOptions()->body_subgraph_index();
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  if (first_subgraph_index != -1) {
+    // Enter a new allocation scope for each subgraph.
+    allocation_scope_count_++;
+    TF_LITE_ENSURE_STATUS(
+        MarkAllocationLifetimes(first_subgraph_index, scratch_buffer_requests,
+                                scratch_buffer_handles, allocations));
+  }
+  if (second_subgraph_index != -1) {
+    // Enter a new allocation scope for each subgraph.
+    allocation_scope_count_++;
+    TF_LITE_ENSURE_STATUS(
+        MarkAllocationLifetimes(second_subgraph_index, scratch_buffer_requests,
+                                scratch_buffer_handles, allocations));
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus AllocationInfoBuilder::CreateAllocationInfo(
+    int scratch_buffer_request_count) {
+  size_t subgraph_offsets_length = model_->subgraphs()->size() * sizeof(size_t);
+  info_.subgraph_offsets =
+      reinterpret_cast<size_t*>(non_persistent_allocator_->AllocateTemp(
+          subgraph_offsets_length, alignof(size_t)));
+  if (info_.subgraph_offsets == nullptr) {
+    MicroPrintf(
+        "Failed to allocate memory for memory planning, %d bytes required",
+        subgraph_offsets_length);
+    return kTfLiteError;
+  }
+  size_t tensor_count = 0;
+  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+       subgraph_idx++) {
+    // Add all tensors in each subgraph to the AllocationInfo array. Even weight
+    // tensors are added but marked with needs_allocating = false. Including all
+    // tensors in the graph here simplifies logic.
+    info_.subgraph_offsets[subgraph_idx] = tensor_count;
+    tensor_count += model_->subgraphs()->Get(subgraph_idx)->tensors()->size();
+  }
+  info_.tensor_count = tensor_count;
+
+  // Scratch buffer allocations follow tensor allocations, so the scratch offset
+  // is equal to the number of tensor allocations.
+  info_.scratch_offset = tensor_count;
+  info_.allocation_info_count = tensor_count + scratch_buffer_request_count;
+  info_.scratch_buffer_count = scratch_buffer_request_count;
+  size_t bytes = sizeof(AllocationInfo) * info_.allocation_info_count;
+
+  // Allocate an array of AllocationInfo structs from the temp section. This
+  // struct will be used by AllocationInfoBuilder to find buffer usage.
+  info_.allocation_info = reinterpret_cast<AllocationInfo*>(
+      non_persistent_allocator_->AllocateTemp(bytes, alignof(AllocationInfo)));
+  if (info_.allocation_info == nullptr) {
+    MicroPrintf(
+        "Failed to allocate memory for memory planning, %d bytes required",
+        bytes);
+    return kTfLiteError;
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus AllocationInfoBuilder::FreeAllocationInfo() {
+  non_persistent_allocator_->DeallocateTemp(
+      reinterpret_cast<uint8_t*>(info_.allocation_info));
+  non_persistent_allocator_->DeallocateTemp(
+      reinterpret_cast<uint8_t*>(info_.subgraph_offsets));
+  return kTfLiteOk;
+}
+
+TfLiteStatus AllocationInfoBuilder::ValidateSubgraph(
+    const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors) {
+  uint32_t operators_size = NumSubgraphOperators(subgraph);
+
+  for (uint32_t i = 0; i < operators_size; i++) {
+    const auto op = subgraph->operators()->Get(i);
+    for (size_t n = 0;
+         op->intermediates() != nullptr && n < op->intermediates()->size();
+         n++) {
+      const int tensor_index = op->intermediates()->Get(n);
+      size_t tensor_size = -1;
+      TF_LITE_ENSURE_STATUS(TfLiteEvalTensorByteLength(
+          &eval_tensors[tensor_index], &tensor_size));
+      if (tensor_size != 0) {
+        MicroPrintf(
+            "Does not support intermediate tensor with non-zero size: %d",
+            tensor_size);
+        return kTfLiteError;
+      }
+    }
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus AllocationInfoBuilder::InitializeAllocationInfo(
+    const int32_t* offline_offsets, SubgraphAllocations* allocations) {
+  AllocationInfo* allocation_info = info_.allocation_info;
+  // Initialize allocation info for every tensor in every subgraph.
+  int offline_index = 0;
+  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+       subgraph_idx++) {
+    const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+    TfLiteEvalTensor* eval_tensors = allocations[subgraph_idx].tensors;
+    AllocationInfo* subgraph_allocation_info =
+        &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+
+    // Ensure constraints are met.
+    TF_LITE_ENSURE_STATUS(ValidateSubgraph(subgraph, eval_tensors));
+
+    for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+      AllocationInfo* current = &subgraph_allocation_info[i];
+      current->output_ptr = &(eval_tensors[i].data.data);
+
+      TF_LITE_ENSURE_STATUS(
+          TfLiteEvalTensorByteLength(&eval_tensors[i], &current->bytes));
+
+      current->first_created = kUninitializedLifetime;
+      current->last_used = kUninitializedLifetime;
+      current->needs_allocating =
+          (eval_tensors[i].data.data == nullptr) &&
+          (!subgraph->tensors()->Get(i)->is_variable()) &&
+          (current->bytes != 0);
+      if (offline_offsets) {
+        current->offline_offset = offline_offsets[offline_index++];
+
+        // Mark offline planned variable tensors so they can get an offline
+        // offset and be handled offline.
+        if (subgraph->tensors()->Get(i)->is_variable() &&
+            current->offline_offset != kOnlinePlannedBuffer) {
+          current->needs_allocating = true;
+        }
+      } else {
+        current->offline_offset = kOnlinePlannedBuffer;
+      }
+    }
+  }
+  // Initialize allocation info for every scratch buffer.
+  AllocationInfo* scratch_allocation_info =
+      &allocation_info[info_.scratch_offset];
+  for (size_t i = 0; i < info_.scratch_buffer_count; i++) {
+    AllocationInfo* current = &scratch_allocation_info[i];
+    current->first_created = kUninitializedLifetime;
+    current->last_used = kUninitializedLifetime;
+    current->needs_allocating = true;
+    current->offline_offset = kOnlinePlannedBuffer;
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus AllocationInfoBuilder::MarkAllocationLifetimes(
+    int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_requests,
+    ScratchBufferHandle* scratch_buffer_handles,
+    SubgraphAllocations* allocations) {
+  const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+
+  AllocationInfo* allocation_info = info_.allocation_info;
+  // Each subgraph's tensor allocations are in a contiguous block starting at
+  // subgraph_offsets_[subgraph index] with one entry per tensor.
+  AllocationInfo* subgraph_allocation_info =
+      &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+
+  uint32_t operators_size = NumSubgraphOperators(subgraph);
+  // Mark all inputs as created at the start of the subgraph invocation.
+  for (size_t i = 0;
+       subgraph->inputs() != nullptr && i < subgraph->inputs()->size(); ++i) {
+    const int tensor_index = subgraph->inputs()->Get(i);
+    AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+    UpdateFirstCreated(current, allocation_scope_count_);
+    // This will ensure that the tensors that are inputs to the subgraphs
+    // but not used in any ops also have a reasonable lifetime.
+    UpdateLastUsed(current, allocation_scope_count_);
+  }
+
+  for (uint32_t i = 0; i < operators_size; i++) {
+    // Each operator has a new allocation scope.
+    allocation_scope_count_++;
+    const auto* op = subgraph->operators()->Get(i);
+    // Figure out when the first creation and use of each tensor is.
+    for (size_t n = 0; op->outputs() != nullptr && n < op->outputs()->size();
+         ++n) {
+      const int tensor_index = op->outputs()->Get(n);
+      AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+      UpdateFirstCreated(current, allocation_scope_count_);
+    }
+
+    // Keep track of scope count before any subgraphs, so that scratch buffers'
+    // lifetime within a control flow op properly overlaps with all subgraphs.
+    int start_allocation_scope_count = allocation_scope_count_;
+
+    // Control flow operators can invoke subgraphs. Plan these subgraphs
+    // before continuing on to the rest of the graph.
+    MarkSubgraphLifetimesIfNecessary(op, scratch_buffer_requests,
+                                     scratch_buffer_handles, allocations);
+
+    // Figure out when the last use of each tensor is.
+    for (size_t n = 0; op->inputs() != nullptr && n < op->inputs()->size();
+         ++n) {
+      const int tensor_index = op->inputs()->Get(n);
+      // Optional bias tensors can have an index of -1 when they are omitted.
+      if (tensor_index >= 0) {
+        AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+        // No need to update creation since it is either marked by the subgraph
+        // or producer op, or it is not part of the memory plan (weight, bias
+        // tensor).
+        UpdateLastUsed(current, allocation_scope_count_);
+      }
+    }
+    for (size_t n = 0; op->outputs() != nullptr && n < op->outputs()->size();
+         ++n) {
+      const int tensor_index = op->outputs()->Get(n);
+      AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+      UpdateLastUsed(current, allocation_scope_count_);
+    }
+
+    // Mark thse lifetime of scratch buffers belonging to the current node. This
+    // operation is O(N * M) where N is the total number of visited nodes and M
+    // is the total number of scratch buffers.
+    // TODO(b/217794030): Optimize this memory planning code.
+    AllocationInfo* scratch_allocation_info =
+        &allocation_info[info_.scratch_offset];
+    for (size_t scratch_idx = 0; scratch_idx < info_.scratch_buffer_count;
+         scratch_idx++) {
+      internal::ScratchBufferRequest request =
+          scratch_buffer_requests[scratch_idx];
+      AllocationInfo* current = &scratch_allocation_info[scratch_idx];
+      if (request.node_idx == static_cast<int>(i) &&
+          request.subgraph_idx == static_cast<int>(subgraph_idx)) {
+        ScratchBufferHandle* current_handle =
+            &(scratch_buffer_handles[scratch_idx]);
+        current->output_ptr = reinterpret_cast<void**>(&current_handle->data);
+        current->bytes = request.bytes;
+        UpdateFirstCreated(current, start_allocation_scope_count);
+        UpdateLastUsed(current, allocation_scope_count_);
+      }
+    }
+  }
+
+  // Mark all outputs as persistent to the end of the subgraph invocation.
+  for (size_t i = 0;
+       subgraph->outputs() != nullptr && i < subgraph->outputs()->size(); ++i) {
+    const int tensor_index = subgraph->outputs()->Get(i);
+    AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+    // Make sure to assign the First created value of the subgraph output
+    // This will handle the case where the subgraph is empty. This helps
+    // ensure all tensors have valid lifetimes before those are used by the
+    // memory planner.
+    UpdateFirstCreated(current, allocation_scope_count_);
+    UpdateLastUsed(current, allocation_scope_count_);
+  }
+  return kTfLiteOk;
+}
+
+// Get offline tensors allocation plan. See
+// micro/docs/memory_management.md for more info.
+TfLiteStatus AllocationInfoBuilder::GetOfflinePlannedOffsets(
+    const int32_t** offline_planner_offsets) {
+  if (model_->metadata()) {
+    for (size_t i = 0; i < model_->metadata()->size(); ++i) {
+      auto metadata = model_->metadata()->Get(i);
+
+      if (metadata->name()) {
+        const size_t metadata_name_size = metadata->name()->size();
+
+        if ((strncmp(metadata->name()->c_str(), kOfflineMemAllocMetadata,
+                     std::min(metadata_name_size,
+                              strlen(kOfflineMemAllocMetadata))) == 0) &&
+            metadata_name_size == strlen(kOfflineMemAllocMetadata)) {
+          const flatbuffers::Vector<flatbuffers::Offset<Buffer>>* buffers =
+              model_->buffers();
+          auto* buffer = (*buffers)[metadata->buffer()];
+          auto* array = buffer->data();
+          const uint32_t* metadata_buffer =
+              reinterpret_cast<const uint32_t*>(array->data());
+          const size_t nbr_tensors = static_cast<size_t>(metadata_buffer[2]);
+          *offline_planner_offsets =
+              reinterpret_cast<const int32_t*>(&metadata_buffer[3]);
+
+          if (info_.tensor_count != nbr_tensors) {
+            MicroPrintf(
+                "Nbr of offline buffer offsets (%d) in metadata "
+                "not equal nbr tensors (%d)\n",
+                nbr_tensors, info_.tensor_count);
+            return kTfLiteError;
+          }
+        }
+      }
+    }
+  }
+  return kTfLiteOk;
+}
+
+}  // namespace tflite
+
+===== ALLOCATOR: TENSOR REGISTRATION AND PLANNER ID ORDER =====
+94-      break;
+95-    }
+96-    case MemoryPlannerType::kGreedy: {
+97-      memory_planner_buffer = memory_allocator->AllocatePersistentBuffer(
+98-          sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
+99-      memory_planner = new (memory_planner_buffer) GreedyMemoryPlanner();
+100-      break;
+101-    }
+102-  }
+103-  return memory_planner;
+104-}
+105-
+106-TfLiteStatus CreatePlan(MicroMemoryPlanner* planner,
+107-                        const AllocationInfo* allocation_info,
+108-                        size_t allocation_info_size) {
+109-  // Add the tensors to our allocation plan.
+110-  for (size_t i = 0; i < allocation_info_size; ++i) {
+111-    const AllocationInfo* current = &allocation_info[i];
+112:    if (current->needs_allocating) {
+113-      size_t aligned_bytes_required =
+114-          AlignSizeUp(current->bytes, MicroArenaBufferAlignment());
+115-      if (current->offline_offset == kOnlinePlannedBuffer) {
+116:        TF_LITE_ENSURE_STATUS(planner->AddBuffer(aligned_bytes_required,
+117-                                                 current->first_created,
+118-                                                 current->last_used));
+119-      } else {
+120-        TF_LITE_ENSURE_STATUS(
+121:            planner->AddBuffer(aligned_bytes_required, current->first_created,
+122-                               current->last_used, current->offline_offset));
+123-      }
+124-    }
+125-  }
+126-  return kTfLiteOk;
+127-}
+128-
+129-TfLiteStatus CommitPlan(MicroMemoryPlanner* planner, uint8_t* starting_point,
+130-                        const AllocationInfo* allocation_info,
+131-                        size_t allocation_info_size) {
+132-  // Figure out the actual memory addresses for each buffer, based on the plan.
+133-  int planner_index = 0;
+134-  for (size_t i = 0; i < allocation_info_size; ++i) {
+135-    const AllocationInfo* current = &allocation_info[i];
+136:    if (current->needs_allocating) {
+137-      int offset = -1;
+138-      TF_LITE_ENSURE_STATUS(
+139-          planner->GetOffsetForBuffer(planner_index, &offset));
+140-      *current->output_ptr = reinterpret_cast<void*>(starting_point + offset);
+141-      ++planner_index;
+142-    }
+143-  }
+144-  return kTfLiteOk;
+145-}
+146-
+147-IPersistentBufferAllocator* CreatePersistentArenaAllocator(uint8_t* buffer_head,
+148-                                                           size_t buffer_size) {
+149-  // Align the actually used area by the tail because persistent buffer grows
+150-  // from the bottom to top.
+151-  uint8_t* aligned_buffer_tail =
+152-      AlignPointerDown(buffer_head + buffer_size, MicroArenaBufferAlignment());
+153-  size_t aligned_buffer_size = aligned_buffer_tail - buffer_head;
+154-  PersistentArenaBufferAllocator tmp =
+--
+417-          return nullptr;
+418-        }
+419-
+420-        return compression_metadata;
+421-      }
+422-    }
+423-  }
+424-
+425-  return nullptr;
+426-}
+427-
+428-TfLiteStatus InitializeCompressionTensorDataFromFlatbuffer(
+429-    const Model& model, const size_t subgraph_index,
+430-    const tflite::micro::compression::LutTensor& lut_tensor,
+431-    CompressionTensorData* ctd) {
+432-  // TODO(ddavis-2015): support multiple compression schemes
+433-  ctd->scheme = CompressionScheme::kBinQuant;
+434-
+435:  const size_t tensor_index = lut_tensor.tensor();
+436-  auto tensors = model.subgraphs()->Get(subgraph_index)->tensors();
+437:  if (tensor_index >= tensors->size()) {
+438-    MicroPrintf("Compression: invalid tensor index %u in LutTensor",
+439:                tensor_index);
+440-    return kTfLiteError;
+441-  }
+442-  const size_t index_bit_width = lut_tensor.index_bitwidth();
+443-  if (index_bit_width > LookupTableData::kMaxBitWidth) {
+444-    MicroPrintf("Compression: invalid bit width %u in LutTensor",
+445-                index_bit_width);
+446-    return kTfLiteError;
+447-  }
+448-  ctd->data.lut_data->compressed_bit_width = index_bit_width;
+449-  const size_t value_buffer_index = lut_tensor.value_buffer();
+450-  if (value_buffer_index >= model.buffers()->size()) {
+451-    MicroPrintf("Compression: invalid value_buffer %u in LutTensor",
+452-                value_buffer_index);
+453-    return kTfLiteError;
+454-  }
+455-  auto value_buffer = model.buffers()->Get(value_buffer_index)->data();
+456-  if (value_buffer == nullptr || value_buffer->data() == nullptr) {
+457-    MicroPrintf("Compression: invalid value table for value_buffer %u",
+458-                value_buffer_index);
+459-    return kTfLiteError;
+460-  }
+461-  ctd->data.lut_data->value_table = value_buffer->data();
+462-  auto tensor =
+463:      model.subgraphs()->Get(subgraph_index)->tensors()->Get(tensor_index);
+464-  if (tensor->shape() == nullptr) {
+465-    MicroPrintf("Compression: scalar tensors not supported");
+466-    return kTfLiteError;
+467-  }
+468-  TfLiteType tensor_type = kTfLiteNoType;
+469-  TfLiteStatus status = ConvertTensorType(tensor->type(), &tensor_type);
+470-  if (status != kTfLiteOk) {
+471-    MicroPrintf("Compression: failed to convert tensor type");
+472-    return kTfLiteError;
+473-  }
+474-  size_t tensor_type_size = 0;
+475-  status = TfLiteTypeSizeOf(tensor_type, &tensor_type_size);
+476-  if (status != kTfLiteOk) {
+477-    MicroPrintf("Compression: failed to get tensor type size");
+478-    return kTfLiteError;
+479-  }
+480-  if (tensor->quantization() != nullptr &&
+481-      tensor->quantization()->scale() != nullptr &&
+--
+780-    uint32_t operators_size = NumSubgraphOperators(subgraph);
+781-
+782-    // Initialize NodeAndRegistrations for the subgraph.
+783-    NodeAndRegistration* output = reinterpret_cast<NodeAndRegistration*>(
+784-        persistent_buffer_allocator_->AllocatePersistentBuffer(
+785-            sizeof(NodeAndRegistration) * operators_size,
+786-            alignof(NodeAndRegistration)));
+787-    if (output == nullptr) {
+788-      MicroPrintf("Failed to allocate memory for node_and_registrations.");
+789-      return kTfLiteError;
+790-    }
+791-    subgraph_allocations[subgraph_idx].node_and_registrations = output;
+792-  }
+793-  return kTfLiteOk;
+794-}
+795-
+796-TfLiteTensor* MicroAllocator::AllocatePersistentTfLiteTensor(
+797-    const Model* model, const SubgraphAllocations* subgraph_allocations,
+798:    int tensor_index, int subgraph_index) {
+799-  const SubGraph* subgraph = model->subgraphs()->Get(subgraph_index);
+800-  TFLITE_DCHECK(subgraph != nullptr);
+801-
+802-  // This value is allocated from persistent arena space. It is guaranteed to be
+803-  // around for the lifetime of the application.
+804-  TfLiteTensor* tensor = AllocatePersistentTfLiteTensorInternal();
+805-
+806-  if (tensor == nullptr) {
+807-    MicroPrintf("Failed to allocate memory for persistent TfLiteTensor");
+808-    return nullptr;
+809-  }
+810-
+811-  // Populate any fields from the flatbuffer, since this TfLiteTensor struct is
+812-  // allocated in the persistent section of the arena, ensure that additional
+813-  // allocations also take place in that section of the arena.
+814-  if (PopulateTfLiteTensorFromFlatbuffer(
+815:          model, tensor, tensor_index, subgraph_index,
+816-          /*allocate_temp=*/false) != kTfLiteOk) {
+817-    MicroPrintf(
+818-        "Failed to populate a persistent TfLiteTensor struct "
+819-        "from flatbuffer data!");
+820-    return nullptr;
+821-  }
+822-
+823-  if (subgraph_allocations != nullptr) {
+824-    // Tensor buffers that are allocated at runtime (e.g. non-weight buffers)
+825-    // and not located in the flatbuffer are stored on the pre-allocated list of
+826-    // TfLiteEvalTensors structs. These structs are the source of truth, simply
+827-    // point the corresponding buffer to the new TfLiteTensor data value.
+828-    tensor->data.data =
+829:        subgraph_allocations[subgraph_index].tensors[tensor_index].data.data;
+830-    // TfLiteEvalTensor structs must also be the source of truth for the
+831-    // TfLiteTensor dims.
+832-    tensor->dims =
+833:        subgraph_allocations[subgraph_index].tensors[tensor_index].dims;
+834-  }
+835-  return tensor;
+836-}
+837-
+838-void MicroAllocator::DeallocateTempTfLiteTensor(TfLiteTensor* tensor) {
+839-  TFLITE_DCHECK(tensor != nullptr);
+840-
+841-  if (tensor->quantization.type == kTfLiteAffineQuantization) {
+842-    TFLITE_DCHECK(tensor->quantization.params != nullptr);
+843-    TfLiteAffineQuantization* quantization =
+844-        reinterpret_cast<TfLiteAffineQuantization*>(
+845-            tensor->quantization.params);
+846-
+847-    non_persistent_buffer_allocator_->DeallocateTemp(
+848-        reinterpret_cast<uint8_t*>(quantization->zero_point));
+849-    non_persistent_buffer_allocator_->DeallocateTemp(
+850-        reinterpret_cast<uint8_t*>(quantization));
+851-  }
+852-
+853-  // Clear the data in case someone still access tensor arena by mistake
+854-  tensor->quantization.type = kTfLiteNoQuantization;
+855-  tensor->quantization.params = nullptr;
+856-  tensor->data.data = nullptr;
+857-  tensor->dims = nullptr;
+858-  non_persistent_buffer_allocator_->DeallocateTemp(
+859-      reinterpret_cast<uint8_t*>(tensor));
+860-}
+861-
+862-TfLiteTensor* MicroAllocator::AllocateTempTfLiteTensor(
+863-    const Model* model, const SubgraphAllocations* subgraph_allocations,
+864:    int tensor_index, int subgraph_index) {
+865-  const SubGraph* subgraph = model->subgraphs()->Get(subgraph_index);
+866-  TFLITE_DCHECK(subgraph != nullptr);
+867-
+868-  // This value is allocated from temporary arena space. It is guaranteed to be
+869-  // around for at least the scope of the calling function. Since this struct
+870-  // allocation takes place in temp space, no need to own or cleanup.
+871-  TfLiteTensor* tensor = reinterpret_cast<TfLiteTensor*>(
+872-      non_persistent_buffer_allocator_->AllocateTemp(sizeof(TfLiteTensor),
+873-                                                     alignof(TfLiteTensor)));
+874-
+875-  // Populate any fields from the flatbuffer, since this TfLiteTensor struct is
+876-  // allocated in the temp section of the arena, ensure that additional
+877-  // allocations also take place in that section of the arena.
+878:  if (PopulateTfLiteTensorFromFlatbuffer(model, tensor, tensor_index,
+879-                                         subgraph_index,
+880-                                         /*allocate_temp=*/true) != kTfLiteOk) {
+881-    MicroPrintf(
+882-        "Failed to populate a temp TfLiteTensor struct from flatbuffer data!");
+883-    return nullptr;
+884-  }
+885-
+886-  if (subgraph_allocations != nullptr) {
+887-    // Tensor buffers that are allocated at runtime (e.g. non-weight buffers)
+888-    // and not located in the flatbuffer are stored on the pre-allocated list of
+889-    // TfLiteEvalTensors structs. These structs are the source of truth, simply
+890-    // point the corresponding buffer to the new TfLiteTensor data value.
+891-    tensor->data.data =
+892:        subgraph_allocations[subgraph_index].tensors[tensor_index].data.data;
+893-    // TfLiteEvalTensor structs must also be the source of truth for the
+894-    // TfLiteTensor dims.
+895-    tensor->dims =
+896:        subgraph_allocations[subgraph_index].tensors[tensor_index].dims;
+897-  }
+898-  return tensor;
+899-}
+900-
+901-uint8_t* MicroAllocator::AllocateTempBuffer(size_t size, size_t alignment) {
+902-  return non_persistent_buffer_allocator_->AllocateTemp(size, alignment);
+903-}
+904-
+905-void MicroAllocator::DeallocateTempBuffer(uint8_t* buffer) {
+906-  non_persistent_buffer_allocator_->DeallocateTemp(buffer);
+907-}
+908-
+909-TfLiteStatus MicroAllocator::ResetTempAllocations() {
+910-  return non_persistent_buffer_allocator_->ResetTempAllocations();
+911-}
+912-
+913-bool MicroAllocator::IsAllTempDeallocated() {
+914-  return non_persistent_buffer_allocator_->IsAllTempDeallocated();
+--
+996-            model->subgraphs()->Get(subgraph_index)->tensors()->size();
+997-        const CompressionTensorData** tensors =
+998-            reinterpret_cast<const CompressionTensorData**>(
+999-                persistent_buffer_allocator_->AllocatePersistentBuffer(
+1000-                    sizeof(CompressionTensorData*) * alloc_count,
+1001-                    alignof(CompressionTensorData*)));
+1002-        if (tensors == nullptr) {
+1003-          MicroPrintf(
+1004-              "Compression: failed to allocate memory for compression tensor "
+1005-              "list, %d bytes required",
+1006-              sizeof(CompressionTensorData*) * alloc_count);
+1007-          return kTfLiteError;
+1008-        }
+1009-
+1010-        subgraph_allocations[subgraph_index].compressed.tensors = tensors;
+1011-        std::fill(tensors, tensors + alloc_count, nullptr);
+1012-      }
+1013-
+1014:      const size_t tensor_index = lut_tensor->tensor();
+1015-      if (subgraph_allocations[subgraph_index]
+1016:              .compressed.tensors[tensor_index] != nullptr) {
+1017-        MicroPrintf("Compression: duplicate LutTensor subgraph %u tensor %u",
+1018:                    subgraph_index, tensor_index);
+1019-        return kTfLiteError;
+1020-      } else {
+1021:        subgraph_allocations[subgraph_index].compressed.tensors[tensor_index] =
+1022-            ctd;
+1023-      }
+1024-    }
+1025-  }
+1026-
+1027-  return kTfLiteOk;
+1028-}
+1029-
+1030-#endif  // USE_TFLM_COMPRESSION
+1031-
+1032-TfLiteStatus MicroAllocator::AllocateTfLiteEvalTensors(
+1033-    const Model* model, SubgraphAllocations* subgraph_allocations) {
+1034-  TFLITE_DCHECK(subgraph_allocations != nullptr);
+1035-
+1036-  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+1037-       subgraph_idx++) {
+1038-    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+1039-    TFLITE_DCHECK(subgraph != nullptr);
+--
+1082-        if (eval_tensors[i].data.data == nullptr) {
+1083-          MicroPrintf("Failed to allocate variable tensor of size %d",
+1084-                      buffer_size);
+1085-          return kTfLiteError;
+1086-        }
+1087-      }
+1088-    }
+1089-  }
+1090-  return kTfLiteOk;
+1091-}
+1092-
+1093-TfLiteTensor* MicroAllocator::AllocatePersistentTfLiteTensorInternal() {
+1094-  return reinterpret_cast<TfLiteTensor*>(
+1095-      persistent_buffer_allocator_->AllocatePersistentBuffer(
+1096-          sizeof(TfLiteTensor), alignof(TfLiteTensor)));
+1097-}
+1098-
+1099-TfLiteStatus MicroAllocator::PopulateTfLiteTensorFromFlatbuffer(
+1100:    const Model* model, TfLiteTensor* tensor, int tensor_index,
+1101-    int subgraph_idx, bool allocate_temp) {
+1102-  // TODO(b/162311891): This method serves as a stub to ensure quantized
+1103-  // allocations in the tail can be recorded. Once the interpreter has APIs for
+1104-  // accessing buffers on TfLiteEvalTensor this method can be dropped.
+1105-  return internal::InitializeTfLiteTensorFromFlatbuffer(
+1106-      persistent_buffer_allocator_, non_persistent_buffer_allocator_,
+1107-      allocate_temp,
+1108:      *model->subgraphs()->Get(subgraph_idx)->tensors()->Get(tensor_index),
+1109-      model->buffers(), tensor);
+1110-}
+1111-
+1112-TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
+1113-    const Model* model, SubgraphAllocations* allocations,
+1114-    ScratchBufferHandle* scratch_buffer_handles) {
+1115-  size_t head_usage = 0;
+1116-  // Create static memory plan
+1117-  // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+1118-  // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+1119-  // 3. Static memory planning using the planner.
+1120-  // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+1121-  //
+1122-  // Note that AllocationInfo is only needed for creating the plan. It will be
+1123-  // allocated from the temp section and cleaned up at the bottom of this
+1124-  // function.
+1125-
+1126:  // Use the AllocationInfoBuilder class to help determine where buffers are
+1127-  // used in the subgraph.
+1128:  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+1129-  TF_LITE_ENSURE_STATUS(
+1130:      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+1131-
+1132-  const int32_t* offline_planner_offsets = nullptr;
+1133-  TF_LITE_ENSURE_STATUS(
+1134-      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+1135-
+1136-  // We allocate buffers for variable tensors here since the offline planner
+1137-  // offsets are conviently available here.
+1138-  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+1139-       subgraph_idx++) {
+1140-    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+1141-    TFLITE_DCHECK(subgraph != nullptr);
+1142-    TF_LITE_ENSURE_STATUS(AllocateVariables(
+1143-        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+1144-  }
+1145-
+1146-  TF_LITE_ENSURE_STATUS(
+1147-      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+1148-
+
+===== PLANNER: -1 LIFETIME SEMANTICS =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-70-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-71-  unsigned char* next_free = scratch_buffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-72-  requirements_ = reinterpret_cast<BufferRequirements*>(next_free);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-73-  next_free += sizeof(BufferRequirements) * max_buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-74-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-75-  buffer_sizes_sorted_ = reinterpret_cast<int*>(next_free);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-76-  next_free += sizeof(int) * max_buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-77-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-78-  buffer_ids_sorted_ = reinterpret_cast<int*>(next_free);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-79-  next_free += sizeof(int) * max_buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-80-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-81-  buffers_sorted_by_offset_ = reinterpret_cast<ListEntry*>(next_free);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-82-  next_free += sizeof(ListEntry) * max_buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-83-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-84-  buffer_offsets_ = reinterpret_cast<int*>(next_free);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-85-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-86-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-87-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-88-GreedyMemoryPlanner::~GreedyMemoryPlanner() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-89-  // We don't own the scratch buffer, so don't deallocate anything.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-90-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-91-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:92:TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:93:                                            int last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-94-  if (buffer_count_ >= max_buffer_count_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-95-    MicroPrintf("Too many buffers (max is %d)", max_buffer_count_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-96-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-97-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-98-  BufferRequirements* current = &requirements_[buffer_count_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-99-  current->size = size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:100:  current->first_time_used = first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:101:  current->last_time_used = last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-102-  current->offline_offset = kOnlinePlannedBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-103-  ++buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-104-  need_to_calculate_offsets_ = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-105-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-106-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-107-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:108:TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:109:                                            int last_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-110-                                            int offline_offset) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-111-  BufferRequirements* current = &requirements_[buffer_count_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:112:  if (AddBuffer(size, first_time_used, last_time_used) != kTfLiteOk) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-113-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-114-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-115-  current->offline_offset = offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-116-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-117-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-118-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-119-bool GreedyMemoryPlanner::DoesEntryOverlapInTime(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:120:    const GreedyMemoryPlanner::ListEntry* entry, const int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:121:    const int last_time_used) const {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-122-  const BufferRequirements* entry_requirements =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-123-      &requirements_[entry->requirements_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:124:  if (entry_requirements->first_time_used > last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-125-    return false;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-126-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:127:  if (first_time_used > entry_requirements->last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-128-    return false;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-129-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-130-  return true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-131-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-132-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-133-GreedyMemoryPlanner::ListEntry*
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-134-GreedyMemoryPlanner::NextSimultaneouslyActiveBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:135:    const GreedyMemoryPlanner::ListEntry* start, const int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:136:    const int last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-137-  ListEntry* result = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-138-  ListEntry* candidate_next_entry;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-139-  if (start == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-140-    candidate_next_entry = &buffers_sorted_by_offset_[first_entry_index_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-141-  } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-142-    if (start->next_entry_index == -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-143-      return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-144-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-145-    candidate_next_entry = &buffers_sorted_by_offset_[start->next_entry_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-146-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-147-  do {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:148:    if (DoesEntryOverlapInTime(candidate_next_entry, first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:149:                               last_time_used)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-150-      result = candidate_next_entry;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-151-      break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-152-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-153-    if (candidate_next_entry->next_entry_index == -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-154-      break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-155-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-156-    candidate_next_entry =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-157-        &buffers_sorted_by_offset_[candidate_next_entry->next_entry_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-158-  } while (true);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-159-  return result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-160-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-161-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-162-void GreedyMemoryPlanner::CalculateOffsetsIfNeeded() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-163-  if (!need_to_calculate_offsets_ || (buffer_count_ == 0)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-164-    return;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-165-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-166-  need_to_calculate_offsets_ = false;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-167-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-168-  // Start off by ordering the buffers in descending order of size.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-169-  // This helps find a more compact layout. Intuitively, you can think
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-170-  // about putting the large buffers in place first, and then the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-171-  // smaller buffers can fit in the gaps, rather than fragmenting the
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-198-  //   - If there are no offline planned offsets, the largest buffer will be
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-199-  //     first, and the buffers will be handled in size order.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-200-  //   - If offline offsets are present, these will be handled first in order
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-201-  //     for the greedy algorithm to utilized gaps in the offline plan.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-202-  first_entry_index_ = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-203-  next_free_entry_ = 1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-204-  ListEntry* first_entry = &buffers_sorted_by_offset_[first_entry_index_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-205-  first_entry->next_entry_index = -1;  // to mark the entry as end of list
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-206-  int buffer_id = buffer_ids_sorted_[0];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-207-  first_entry->requirements_index = buffer_id;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-208-  if (requirements_[buffer_id].offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-209-    buffer_offsets_[buffer_id] = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-210-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-211-  first_entry->offset = buffer_offsets_[buffer_id];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-212-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-213-  // Work through the rest of the buffers to find a good gap to place each one.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-214-  for (int i = 1; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-215-    // The id is the order the buffer was originally added by the client.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-216-    buffer_id = buffer_ids_sorted_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-217-    // Look at what size and time range the buffer needs to be active.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-218-    BufferRequirements* wanted_requirements = &requirements_[buffer_id];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-219-    const int wanted_size = wanted_requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:220:    const int wanted_first_time_used = wanted_requirements->first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:221:    const int wanted_last_time_used = wanted_requirements->last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-222-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-223-    // Find the first buffer that's active in our time range. All placed
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-224-    // buffers are stored in the order of their starting position in the arena
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-225-    // so that it's easy to find the next buffer in memory, and so the gap.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-226-    // The candidate_entry variable holds the buffer that we're considering
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-227-    // placing the current buffer after.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-228-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-229-    int candidate_offset = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-230-    // Loop through the offset-ordered list of buffers, looking for gaps.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-231-    if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-232-      ListEntry* prior_entry = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-233-      while (true) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-234-        // Find out what the next active buffer is.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-235-        ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:236:            prior_entry, wanted_first_time_used, wanted_last_time_used);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-237-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-238-        if (prior_entry) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-239-          BufferRequirements* candidate_requirements =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-240-              &requirements_[prior_entry->requirements_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-241-          const int prior_entry_offset =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-242-              prior_entry->offset + candidate_requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-243-          if (prior_entry_offset > candidate_offset) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-244-            candidate_offset = prior_entry_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-245-          }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-246-        }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-247-        if (next_entry == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-248-          // We're at the end of the list, so we can always append the buffer
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-249-          // here.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-250-          break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-251-        }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-252-        // Find out how much space there is between us and the next buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-253-        const int gap = next_entry->offset - candidate_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-254-        if (gap >= wanted_size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-255-          // This entry has a big enough gap between it and the next, so
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-256-          // use it!
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-257-          break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-258-        }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-317-  ListEntry* entry = &buffers_sorted_by_offset_[first_entry_index_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-318-  size_t max_size = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-319-  while (entry) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-320-    BufferRequirements* requirements =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-321-        &requirements_[entry->requirements_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-322-    const size_t current_size = entry->offset + requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-323-    if (current_size > max_size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-324-      max_size = current_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-325-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-326-    if (entry->next_entry_index == -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-327-      break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-328-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-329-    entry = &buffers_sorted_by_offset_[entry->next_entry_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-330-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-331-  return max_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-332-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-333-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-334-void GreedyMemoryPlanner::PrintMemoryPlan() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-335-  CalculateOffsetsIfNeeded();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-336-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-337-  for (int i = 0; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-338-    char c = '*';
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:339:    if (requirements_[i].first_time_used != requirements_[i].last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-340-      // not a scratch buffer nor subgraph output tensor
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-341-      c = GetOrdinalCharacter(i);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-342-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:343:    MicroPrintf("%c (id=%d): size=%d, offset=%d, first_used=%d last_used=%d", c,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-344-                i, requirements_[i].size, buffer_offsets_[i],
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:345:                requirements_[i].first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:346:                requirements_[i].last_time_used);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-347-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-348-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-349-  constexpr int kLineWidth = 80;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-350-  int max_size = kLineWidth;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-351-  int max_time = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-352-  for (int i = 0; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-353-    BufferRequirements* requirements = &requirements_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-354-    const int offset = buffer_offsets_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:355:    const int last_time_used = requirements->last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-356-    const int size = offset + requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-357-    if (size > max_size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-358-      max_size = size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-359-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:360:    if (last_time_used > max_time) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:361:      max_time = last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-362-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-363-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-364-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-365-  char line[kLineWidth + 1];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-366-  for (int t = 0; t <= max_time; ++t) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-367-    for (int c = 0; c < kLineWidth; ++c) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-368-      line[c] = '.';
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-369-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-370-    int memory_use = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-371-    for (int i = 0; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-372-      BufferRequirements* requirements = &requirements_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:373:      if ((t < requirements->first_time_used) ||
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:374:          (t > requirements->last_time_used)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-375-        continue;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-376-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-377-      const int offset = buffer_offsets_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-378-      if (offset == -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-379-        continue;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-380-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-381-      const int size = requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-382-      memory_use += size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-383-      const int line_start = (offset * kLineWidth) / max_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-384-      const int line_end = ((offset + size) * kLineWidth) / max_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-385-      for (int n = line_start; n < line_end; ++n) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-386-        if (line[n] == '.') {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:387:          if (requirements->first_time_used == requirements->last_time_used) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-388-            // scratch buffer or subgraph output tensor
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-389-            line[n] = '*';
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-390-          } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-391-            line[n] = GetOrdinalCharacter(i);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-392-          }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-393-        } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-394-          line[n] = '!';
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-395-        }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-396-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-397-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-398-    line[kLineWidth] = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-399-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-400-    MicroPrintf("%4d: %s (%dk)", t, (const char*)line,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-401-                (memory_use + 1023) / 1024);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-402-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-403-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-404-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-405-int GreedyMemoryPlanner::GetBufferCount() { return buffer_count_; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-406-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-407-TfLiteStatus GreedyMemoryPlanner::GetOffsetForBuffer(int buffer_index,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-408-                                                     int* offset) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-409-  CalculateOffsetsIfNeeded();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-410-  if ((buffer_index < 0) || (buffer_index >= buffer_count_)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-411-    MicroPrintf("buffer index %d is outside range 0 to %d", buffer_index,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-412-                buffer_count_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-413-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-414-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-415-  *offset = buffer_offsets_[buffer_index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-416-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-417-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-418-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-419-bool GreedyMemoryPlanner::DoAnyBuffersOverlap() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-420-  CalculateOffsetsIfNeeded();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:421:  bool were_overlaps_found = false;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-422-  for (int i = 0; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-423-    BufferRequirements* a_requirements = &requirements_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-424-    const int a_start_offset = buffer_offsets_[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:425:    const int a_first_time_used = a_requirements->first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:426:    const int a_last_time_used = a_requirements->last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-427-    const int a_end_offset = a_start_offset + a_requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-428-    for (int j = 0; j < buffer_count_; ++j) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-429-      if (i == j) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-430-        continue;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-431-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-432-      BufferRequirements* b_requirements = &requirements_[j];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-433-      const int b_start_offset = buffer_offsets_[j];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:434:      const int b_first_time_used = b_requirements->first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:435:      const int b_last_time_used = b_requirements->last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-436-      const int b_end_offset = b_start_offset + b_requirements->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:437:      if ((a_first_time_used > b_last_time_used) ||
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:438:          (b_first_time_used > a_last_time_used)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:439:        // Buffers don't overlap in time.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-440-        continue;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-441-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-442-      if ((a_start_offset >= b_end_offset) ||
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-443-          (b_start_offset >= a_end_offset)) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:444:        // No overlap in memory.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-445-        continue;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-446-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:447:      were_overlaps_found = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-448-      MicroPrintf("Overlap: %d (%d=>%d, %d->%d) vs %d (%d=>%d, %d->%d)", i,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:449:                  a_first_time_used, a_last_time_used, a_start_offset,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:450:                  a_end_offset, j, b_first_time_used, b_last_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-451-                  b_start_offset, b_end_offset);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-452-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-453-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:454:  return were_overlaps_found;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-455-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-456-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-457-}  // namespace tflite
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-8-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-9-Unless required by applicable law or agreed to in writing, software
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-10-distributed under the License is distributed on an "AS IS" BASIS,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-11-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-12-See the License for the specific language governing permissions and
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-13-limitations under the License.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-14-==============================================================================*/
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-15-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-16-#ifndef TENSORFLOW_LITE_MICRO_MEMORY_PLANNER_GREEDY_MEMORY_PLANNER_H_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-17-#define TENSORFLOW_LITE_MICRO_MEMORY_PLANNER_GREEDY_MEMORY_PLANNER_H_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-18-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-19-#include "tensorflow/lite/micro/compatibility.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-20-#include "tensorflow/lite/micro/memory_planner/micro_memory_planner.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-21-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-22-namespace tflite {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-23-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-24-constexpr int kOnlinePlannedBuffer = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-25-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-26-// A memory planner that uses a greedy algorithm to arrange buffers in memory
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-27-// to minimize the overall arena size needed.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-28-//
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-29-// The algorithm works like this:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:30://  - The client enters the buffer information through AddBuffer().
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-31-//  - When a function like GetOffsetForBuffer() is called, the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-32-//    CalculateOffsetsIfNeeded() method is invoked.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-33-//  - If an up to date plan is not already present, one will be calculated.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-34-//  - The buffers are sorted in descending order of size.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-35-//  - The largest buffer is placed at offset zero.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-36-//  - The rest of the buffers are looped through in descending size order.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-37-//  - The other buffers that need to be in memory at the same time are found.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-38-//  - The first gap between simultaneously active buffers that the current
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-39-//    buffer fits into will be used.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-40-//  - If no large-enough gap is found, the current buffer is placed after the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-41-//    last buffer that's simultaneously active.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-42-//  - This continues until all buffers are placed, and the offsets stored.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-43-//
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-44-// This is not guaranteed to produce the best placement, since that's an
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-45-// NP-Complete problem, but in practice it should produce one that's decent.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-46-class GreedyMemoryPlanner : public MicroMemoryPlanner {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-47- public:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-48-  GreedyMemoryPlanner();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-49-  ~GreedyMemoryPlanner() override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-50-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-51-  // You need to pass in an area of memory to be used for planning. The client
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-52-  // should ensure the validity of the memory when it needs to use this object.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-53-  // This memory isn't owned by this object, so management should be handled by
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-54-  // the client. This is so it can be stack or globally allocated if necessary
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-55-  // on devices without dynamic memory allocation. How many buffers can be
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-56-  // planned for will depend on the size of this scratch memory, so you should
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:57:  // enlarge it if you see an error when calling AddBuffer(). The memory can be
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-58-  // reused once you're done with the planner, as long as you copy the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-59-  // calculated offsets to another location. Each buffer requires about 36 bytes
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-60-  // of scratch.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-61-  TfLiteStatus Init(unsigned char* scratch_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-62-                    int scratch_buffer_size) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-63-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-64-  // Record details of a buffer we want to place.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:65:  TfLiteStatus AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:66:                         int last_time_used) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-67-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-68-  // Record details of an offline planned buffer offset we want to place.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-69-  // offline_offset is the buffer offset from the start of the arena.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:70:  TfLiteStatus AddBuffer(int size, int first_time_used, int last_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-71-                         int offline_offset) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-72-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-73-  // Returns the high-water mark of used memory. This is the minimum size of a
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-74-  // memory arena you'd need to allocate to hold these buffers.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-75-  size_t GetMaximumMemorySize() override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-76-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-77-  // How many buffers have been recorded.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-78-  int GetBufferCount() override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-79-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-80-  // Where a given buffer should be placed in the memory arena.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-81-  // This information is stored in the memory arena itself, so once the arena
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-82-  // is used for inference, it will be overwritten.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-83-  TfLiteStatus GetOffsetForBuffer(int buffer_index, int* offset) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-84-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-85-  // Prints an ascii-art diagram of the buffer layout plan.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-86-  void PrintMemoryPlan() override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-87-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:88:  // Debug method to check whether any buffer allocations are overlapping. This
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-89-  // is an O(N^2) complexity operation, so only use for testing.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-90-  bool DoAnyBuffersOverlap();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-91-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-92-  // Used to store a list of buffers ordered by their offset.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-93-  struct ListEntry {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-94-    int offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-95-    int requirements_index;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-96-    int next_entry_index;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-97-  };
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-98-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-99-  // Number of bytes required in order to plan a buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-100-  static size_t per_buffer_size() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-101-    const int per_buffer_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-102-        sizeof(BufferRequirements) +  // requirements_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-103-        sizeof(int) +                 // buffer_sizes_sorted_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-104-        sizeof(int) +                 // buffer_ids_sorted_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-105-        sizeof(ListEntry) +           // buffers_sorted_by_offset_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-106-        sizeof(int);                  // buffer_offsets_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-107-    return per_buffer_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-108-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-109-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-110-  // Returns False because the GreedyMemoryPlanner doesn't preserves all tensors
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-111-  // after invocation. Do to the fact that tensors that tensor data for tensors
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-112-  // that aren't being used during a phase of invocation are overwritten.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-113-  bool preserves_all_tensors() const override { return false; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-114-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-115- private:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-116-  // Whether a buffer is active in a given time range.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:117:  bool DoesEntryOverlapInTime(const ListEntry* entry, const int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:118:                              const int last_time_used) const;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-119-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-120-  // Walks the list to return the next buffer that is active in a given time
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-121-  // range, or a null pointer if there are none.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-122-  ListEntry* NextSimultaneouslyActiveBuffer(const ListEntry* start,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:123:                                            const int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:124:                                            const int last_time_used);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-125-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-126-  // If there isn't an up to date plan, calculate a new one.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-127-  void CalculateOffsetsIfNeeded();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-128-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-129-  // How many buffers we can plan for, based on the arena size we're given in
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-130-  // the constructor.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-131-  int max_buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-132-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-133-  // The number of buffers added so far.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-134-  int buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-135-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-136-  // Records the client-provided information about each buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-137-  struct BufferRequirements {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-138-    int size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-139-    int offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:140:    int first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:141:    int last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-142-  };
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-143-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-144-  // Working arrays used during the layout algorithm.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-145-  BufferRequirements* requirements_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-146-  // buffer_sizes_sorted_ and buffer_ids_sorted_ are sorted according to:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-147-  //   {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-148-  //     offline planned buffers,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-149-  //     online planned buffers sorted by size
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-150-  //   }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-151-  int* buffer_sizes_sorted_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-152-  int* buffer_ids_sorted_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-153-  ListEntry* buffers_sorted_by_offset_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-154-  int next_free_entry_;    // Index of the next free entry of
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-155-                           // buffers_sorted_by_offset_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-156-  int first_entry_index_;  // Index of the first entry (smallest offset) of
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-157-                           // buffers_sorted_by_offset_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-158-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-159-  // Stores the outcome of the plan, the location of each buffer in the arena.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-160-  int* buffer_offsets_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-161-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-162-  // Whether buffers have been added since the last plan was calculated.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-163-  bool need_to_calculate_offsets_;
