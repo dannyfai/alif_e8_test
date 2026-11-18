@@ -1,0 +1,524 @@
+===== ALL APPLICATION ARENA DEFINITIONS =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:447:            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:451:        LOG_INF("MicroInterpreter::Reset: SUCCESS");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:570:                static_cast<unsigned int>(model.GetModelBuffer().size));
+
+===== MAINLOOP INTERPRETER CONSTRUCTION =====
+     1	/* This file was ported to work on Alif Semiconductor devices. */
+     2	
+     3	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     4	 * Use, distribution and modification of this code is permitted under the
+     5	 * terms stated in the Alif Semiconductor Software License Agreement
+     6	 *
+     7	 * You should have received a copy of the Alif Semiconductor Software
+     8	 * License Agreement with this file. If not, please write to:
+     9	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+    10	 *
+    11	 */
+    12	
+    13	/*
+    14	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+    15	 * affiliates <open-source-office@arm.com>
+    16	 * SPDX-License-Identifier: Apache-2.0
+    17	 *
+    18	 * Licensed under the Apache License, Version 2.0 (the "License");
+    19	 * you may not use this file except in compliance with the License.
+    20	 * You may obtain a copy of the License at
+    21	 *
+    22	 *     http://www.apache.org/licenses/LICENSE-2.0
+    23	 *
+    24	 * Unless required by applicable law or agreed to in writing, software
+    25	 * distributed under the License is distributed on an "AS IS" BASIS,
+    26	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    27	 * See the License for the specific language governing permissions and
+    28	 * limitations under the License.
+    29	 */
+    30	#include "BufAttributes.hpp"
+    31	#include "PolyUModel1.hpp"
+    32	#include "heatstroke_smoke_test_vector.hpp"
+    33	#include "mlek/fwk/iface/Tensor.hpp"
+    34	
+    35	#include <cstddef>
+    36	#include <cstdint>
+    37	#include <cstring>
+    38	#include <cmath>
+    39	#include <memory>
+    40	#include <vector>
+    41	
+    42	using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+    43	
+    44	#include "power_mgr.h"             /* power management APIs */
+    45	#include <zephyr/logging/log.h>
+    46	#include <zephyr/kernel.h>
+    47	#include <zephyr/drivers/gpio.h>
+    48	#include <cmsis_core.h>
+    49	#include <zephyr/sys/printk.h>
+    50	
+    51	LOG_MODULE_REGISTER(MainLoop);
+    52	
+    53	
+    54	/*
+    55	 * Application-local Ethos-U runtime diagnostic.
+    56	 * Reads NPU STATUS and NVIC IRQ 55 only; does not alter either.
+    57	 */
+    58	namespace {
+    59	
+    60	constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+    61	constexpr IRQn_Type kHeatstrokeEthosuIrq =
+    62	    static_cast<IRQn_Type>(55);
+    63	
+    64	struct k_work g_heatstrokeEthosuMonitorWork;
+    65	struct k_timer g_heatstrokeEthosuMonitorTimer;
+    66	
+    67	void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+    68	{
+    69	    (void)work;
+    70	
+    71	    const auto* statusRegister =
+    72	        reinterpret_cast<volatile const std::uint32_t*>(
+    73	            kHeatstrokeEthosuStatusAddress);
+    74	    const std::uint32_t status = *statusRegister;
+    75	
+    76	    const unsigned int enabled = static_cast<unsigned int>(
+    77	        NVIC_GetEnableIRQ(kHeatstrokeEthosuIrq));
+    78	    const unsigned int pending = static_cast<unsigned int>(
+    79	        NVIC_GetPendingIRQ(kHeatstrokeEthosuIrq));
+    80	    const unsigned int active = static_cast<unsigned int>(
+    81	        NVIC_GetActive(kHeatstrokeEthosuIrq));
+    82	
+    83	    LOG_INF(
+    84	        "ETHOSU_DIAG: status=0x%08x run=%u irq=%u bus=%u reset=%u "
+    85	        "parse=%u end=%u pmu=%u wd=%u ecc=%u "
+    86	        "IRQ55[en=%u pend=%u active=%u]",
+    87	        static_cast<unsigned int>(status),
+    88	        static_cast<unsigned int>((status >> 0U) & 1U),
+    89	        static_cast<unsigned int>((status >> 1U) & 1U),
+    90	        static_cast<unsigned int>((status >> 2U) & 1U),
+    91	        static_cast<unsigned int>((status >> 3U) & 1U),
+    92	        static_cast<unsigned int>((status >> 4U) & 1U),
+    93	        static_cast<unsigned int>((status >> 5U) & 1U),
+    94	        static_cast<unsigned int>((status >> 6U) & 1U),
+    95	        static_cast<unsigned int>((status >> 7U) & 1U),
+    96	        static_cast<unsigned int>((status >> 8U) & 1U),
+    97	        enabled, pending, active);
+    98	}
+    99	
+   100	void HeatstrokeEthosuMonitorTimerHandler(struct k_timer* timer)
+   101	{
+   102	    (void)timer;
+   103	    (void)k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   104	}
+   105	
+   106	void StartHeatstrokeEthosuMonitor()
+   107	{
+   108	    k_work_init(
+   109	        &g_heatstrokeEthosuMonitorWork,
+   110	        HeatstrokeEthosuMonitorWorkHandler);
+   111	
+   112	    k_timer_init(
+   113	        &g_heatstrokeEthosuMonitorTimer,
+   114	        HeatstrokeEthosuMonitorTimerHandler,
+   115	        nullptr);
+   116	
+   117	    const int initialSubmit =
+   118	        k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   119	
+   120	    if (initialSubmit < 0) {
+   121	        LOG_WRN("ETHOSU_DIAG: initial snapshot submission failed: %d",
+   122	                initialSubmit);
+   123	    }
+   124	
+   125	    k_timer_start(
+   126	        &g_heatstrokeEthosuMonitorTimer,
+   127	        K_SECONDS(1),
+   128	        K_SECONDS(1));
+   129	
+   130	    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+   131	}
+   132	
+   133	void StopHeatstrokeEthosuMonitor()
+   134	{
+   135	    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+   136	    LOG_INF("ETHOSU_DIAG: runtime monitor stopped");
+   137	}
+   138	
+   139	} /* namespace */
+   140	
+   141	#define LPGPIO_NODE           DT_NODELABEL(lpgpio)
+   142	#define LPGPIO_WAKEUP_ENABLED DT_NODE_HAS_STATUS_OKAY(LPGPIO_NODE)
+   143	
+   144	#if LPGPIO_WAKEUP_ENABLED
+   145	/* LPGPIO wake up source is used */
+   146	#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+   147	
+   148	#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+   149	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+   150	#elif CONFIG_LPGPIO_WAKEUP_SOURCE == 1
+   151	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+   152	#else
+   153	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO0
+   154	#endif
+   155	#else
+   156	#define LPGPIO_EWIC_CFG 0
+   157	#define LPGPIO_WAKEUP_EVENT 0
+   158	#endif
+   159	
+   160	namespace arm {
+   161	namespace app {
+   162	    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+   163	
+   164	    namespace polyu_heatstroke {
+   165	extern const uint8_t* GetModelPointer();
+   166	extern size_t GetModelLen();
+   167	} /* namespace polyu_heatstroke */
+   168	
+   169	} /* namespace app */
+   170	} /* namespace arm */
+   171	
+   172	
+   173	#if LPGPIO_WAKEUP_ENABLED
+   174	static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+   175		DT_NODELABEL(wakeup_pins), lpgpios, 0, {0});
+   176	#endif
+   177	
+   178	
+   179	volatile uint8_t button_pressed = 0U;
+   180	static struct gpio_callback button_cb_data;
+   181	static bool por_boot;
+   182	static struct k_sem button_wait_sem;
+   183	
+   184	static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+   185	{
+   186		ARG_UNUSED(dev);
+   187		ARG_UNUSED(cb);
+   188		ARG_UNUSED(pins);
+   189	
+   190		if (por_boot) {
+   191			/* Ignore button press event if it's from POR boot, as the button state may be unstable during POR. */
+   192			return;
+   193		}
+   194	
+   195		int val = gpio_pin_get_dt(&lpgpio_config);  // 1 = pressed, 0 = released
+   196	    if (val < 0) {
+   197	        LOG_ERR("Failed to read pin: %d", val);
+   198	        return;
+   199	    }
+   200	
+   201	    button_pressed = (val == 1);
+   202	    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+   203	
+   204		if (!k_sem_count_get(&button_wait_sem) && button_pressed) {
+   205			k_sem_give(&button_wait_sem);
+   206		}
+   207	}
+   208	
+   209	/**
+   210	 * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+   211	 * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+   212	 * With B1/E1C devkit you need to also remove resistor R64. */
+   213	static int configure_lpgpio(void)
+   214	{
+   215		int ret;
+   216		const struct gpio_dt_spec *spec = &lpgpio_config;
+   217	
+   218		if (!spec || !spec->port) {
+   219			/* Just ignore */
+   220			LOG_ERR("lpgpio invalid");
+   221			return -ENODEV;
+   222		}
+   223	
+   224		/* Configure LPGPIO0 for wakeup */
+   225		if (!gpio_is_ready_dt(spec)) {
+   226			LOG_ERR("LPGPIO0 device is not ready");
+   227			return -ENODEV;
+   228		}
+   229	
+   230		ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+   231		if (ret != 0) {
+   232			LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+   233			return ret;
+   234		}
+   235	
+   236		ret = gpio_pin_interrupt_configure_dt(spec,
+   237						      GPIO_INT_EDGE_BOTH);
+   238		if (ret != 0) {
+   239			LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+   240			return ret;
+   241		}
+   242	
+   243		gpio_init_callback(&button_cb_data, button_callback, BIT(spec->pin));
+   244		ret = gpio_add_callback(spec->port, &button_cb_data);
+   245		if (ret != 0) {
+   246			LOG_ERR("Failed to add button callback: %d", ret);
+   247			return ret;
+   248		}
+   249	
+   250		LOG_INF("LPGPIO%d configured", spec->pin);
+   251	
+   252		return 0;
+   253	}
+   254	
+   255	/** @brief   Verify input and output tensor are of certain min dimensions. */
+   256	
+   257	static bool VerifyOneTensor(
+   258	    const char* label,
+   259	    size_t index,
+   260	    const std::shared_ptr<arm::app::fwk::iface::TensorIface>& tensor,
+
+===== MAINLOOP MODEL INITIALIZATION =====
+   260	    const std::shared_ptr<arm::app::fwk::iface::TensorIface>& tensor,
+   261	    const std::vector<size_t>& expectedShape)
+   262	{
+   263	    using arm::app::fwk::iface::TensorType;
+   264	
+   265	    if (!tensor) {
+   266	        LOG_ERR("%s[%u] tensor handle is null",
+   267	                label, static_cast<unsigned int>(index));
+   268	        return false;
+   269	    }
+   270	
+   271	    const std::vector<size_t> actualShape = tensor->Shape();
+   272	    if (actualShape != expectedShape) {
+   273	        LOG_ERR("%s[%u] shape mismatch",
+   274	                label, static_cast<unsigned int>(index));
+   275	        return false;
+   276	    }
+   277	
+   278	    if (tensor->Type() != TensorType::FP32) {
+   279	        LOG_ERR("%s[%u] must be FP32; got %s",
+   280	                label,
+   281	                static_cast<unsigned int>(index),
+   282	                arm::app::fwk::iface::GetTensorDataTypeName(tensor->Type()));
+   283	        return false;
+   284	    }
+   285	
+   286	    size_t expectedElements = 1U;
+   287	    for (const size_t dimension : expectedShape) {
+   288	        expectedElements *= dimension;
+   289	    }
+   290	
+   291	    if (tensor->GetNumElements() != expectedElements ||
+   292	        tensor->Bytes() != expectedElements * sizeof(float) ||
+   293	        tensor->GetData() == nullptr) {
+   294	        LOG_ERR("%s[%u] element count, byte size, or data pointer is invalid",
+   295	                label, static_cast<unsigned int>(index));
+   296	        return false;
+   297	    }
+   298	
+   299	    LOG_INF("%s[%u]: FP32, elements=%u, bytes=%u",
+   300	            label,
+   301	            static_cast<unsigned int>(index),
+   302	            static_cast<unsigned int>(tensor->GetNumElements()),
+   303	            static_cast<unsigned int>(tensor->Bytes()));
+   304	
+   305	    return true;
+   306	}
+   307	
+   308	static bool VerifyTensorInterface(const arm::app::fwk::iface::Model& model)
+   309	{
+   310	    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+   311	        LOG_ERR("Model I/O count mismatch: inputs=%u outputs=%u; expected 4/2",
+   312	                static_cast<unsigned int>(model.GetNumInputs()),
+   313	                static_cast<unsigned int>(model.GetNumOutputs()));
+   314	        return false;
+   315	    }
+   316	
+   317	    const std::vector<std::vector<size_t>> expectedInputs = {
+   318	        {1U, 900U, 6U},  /* x_values */
+   319	        {1U, 900U, 6U},  /* missing_mask */
+   320	        {1U, 900U, 3U},  /* x_mark */
+   321	        {1U, 30U}        /* worker_features */
+   322	    };
+   323	
+   324	    const char* inputNames[] = {
+   325	        "x_values", "missing_mask", "x_mark", "worker_features"
+   326	    };
+   327	
+   328	    for (size_t i = 0; i < expectedInputs.size(); ++i) {
+   329	        if (!VerifyOneTensor(
+   330	                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+   331	            LOG_ERR("Input contract failed for %s", inputNames[i]);
+   332	            return false;
+   333	        }
+   334	    }
+   335	
+   336	    const std::vector<std::vector<size_t>> expectedOutputs = {
+   337	        {1U, 4U},  /* rpe_logits */
+   338	        {1U, 4U}   /* psi_logits */
+   339	    };
+   340	
+   341	    const char* outputNames[] = {"rpe_logits", "psi_logits"};
+   342	
+   343	    for (size_t i = 0; i < expectedOutputs.size(); ++i) {
+   344	        if (!VerifyOneTensor(
+   345	                "Output", i, model.GetOutputTensor(i), expectedOutputs[i])) {
+   346	            LOG_ERR("Output contract failed for %s", outputNames[i]);
+   347	            return false;
+   348	        }
+   349	    }
+   350	
+   351	    return true;
+   352	}
+   353	
+   354	
+   355	static bool BindSmokeInputTensor(
+   356	    PolyUModel1& model,
+   357	    size_t index,
+   358	    const char* name,
+   359	    const std::uint32_t* sourceBits,
+   360	    size_t sourceBytes,
+   361	    const std::vector<size_t>& expectedShape)
+   362	{
+   363	    auto tensor = model.GetInputTensor(index);
+   364	    if (!VerifyOneTensor(name, index, tensor, expectedShape)) {
+   365	        return false;
+   366	    }
+   367	
+   368	    if (tensor->Bytes() != sourceBytes || sourceBits == nullptr) {
+   369	        LOG_ERR("%s[%u] input payload size mismatch",
+   370	                name, static_cast<unsigned int>(index));
+   371	        return false;
+   372	    }
+   373	
+   374	    std::memcpy(tensor->GetData(), sourceBits, sourceBytes);
+   375	    LOG_INF("%s[%u] bound: %u bytes",
+   376	            name,
+   377	            static_cast<unsigned int>(index),
+   378	            static_cast<unsigned int>(sourceBytes));
+   379	    return true;
+   380	}
+   381	
+   382	static float DecodeSmokeReference(const std::uint32_t bits)
+   383	{
+   384	    float value = 0.0F;
+   385	    std::memcpy(&value, &bits, sizeof(value));
+   386	    return value;
+   387	}
+   388	
+   389	static int SmokeFloatToMicro(const float value)
+   390	{
+   391	    const double scaled = static_cast<double>(value) * 1000000.0;
+   392	    if (scaled > 2147483647.0) {
+   393	        return 2147483647;
+   394	    }
+   395	    if (scaled < -2147483648.0) {
+   396	        return (-2147483647 - 1);
+   397	    }
+   398	    return static_cast<int>(scaled >= 0.0 ? scaled + 0.5 : scaled - 0.5);
+   399	}
+   400	
+   401	static unsigned int SmokeArgMax4(const float* values)
+   402	{
+   403	    unsigned int best = 0U;
+   404	    for (unsigned int i = 1U; i < 4U; ++i) {
+   405	        if (values[i] > values[best]) {
+   406	            best = i;
+   407	        }
+   408	    }
+   409	    return best;
+   410	}
+   411	
+   412	
+   413	static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+   414	{
+   415	    static_assert(sizeof(float) == sizeof(std::uint32_t),
+   416	                  "Smoke test requires 32-bit FP32");
+   417	
+   418	    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+   419	    LOG_INF("Multi-sample vector count: %u",
+   420	            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+   421	
+   422	    const auto& backendData = model.GetBackendData();
+   423	    if (!backendData.m_pInterpreter) {
+   424	        LOG_ERR("TFLM backend interpreter pointer is null");
+   425	        return false;
+   426	    }
+   427	
+   428	    for (std::uint32_t slot = 0U;
+   429	         slot < heatstroke_smoke::kSampleCount; ++slot) {
+   430	        const auto& sample = heatstroke_smoke::kSamples[slot];
+   431	
+   432	        LOG_INF("=== SAMPLE %u / %u ===",
+   433	                static_cast<unsigned int>(slot + 1U),
+   434	                static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+   435	        LOG_INF("Dataset position: %u; sample ID: %u",
+   436	                static_cast<unsigned int>(sample.dataset_position),
+   437	                static_cast<unsigned int>(sample.dataset_sample_id));
+   438	        LOG_INF("Missing positions: %u",
+   439	                static_cast<unsigned int>(sample.missing_count));
+   440	        LOG_INF("Ground-truth labels RPE=%u PSI=%u",
+   441	                static_cast<unsigned int>(sample.rpe_label),
+   442	                static_cast<unsigned int>(sample.psi_label));
+   443	        LOG_INF("Input-vector SHA256: %s", sample.input_sha256);
+   444	
+   445	        const auto resetStatus = backendData.m_pInterpreter->Reset();
+   446	        if (resetStatus != kTfLiteOk) {
+   447	            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+   448	                    static_cast<int>(resetStatus));
+   449	            return false;
+   450	        }
+
+===== TFLM NON-PERSISTENT RESIZE CONTEXT =====
+    85	  uint8_t* expected_resizable_buf = AlignPointerUp(buffer_head_, alignment);
+    86	
+    87	  if (resizable_buffer_allocated_) {
+    88	    MicroPrintf(
+    89	        "Cannot allocate a new resizable buffer when one is already allocated");
+    90	    return nullptr;
+    91	  }
+    92	
+    93	  if (ResizeBuffer(expected_resizable_buf, size, alignment) == kTfLiteOk) {
+    94	    resizable_buffer_allocated_ = true;
+    95	    return expected_resizable_buf;
+    96	  }
+    97	  return nullptr;
+    98	}
+    99	
+   100	// Resizes a buffer that is previously returned by the AllocateResizableBuffer.
+   101	// Note that ResizeBuffer(old_resizable_buf, 0, 1) effectively deallocates
+   102	// a previous allocated resizable buffer.
+   103	TfLiteStatus NonPersistentArenaBufferAllocator::ResizeBuffer(
+   104	    uint8_t* resizable_buf, size_t size, size_t alignment) {
+   105	  // Only supports one resizable buffer, which starts at the buffer head.
+   106	  uint8_t* expect_resizable_buf = AlignPointerUp(buffer_head_, alignment);
+   107	  if (resizable_buf != expect_resizable_buf) {
+   108	    MicroPrintf("Internal error: buffer is not resizable");
+   109	    return kTfLiteError;
+   110	  }
+   111	  if (head_temp_ != next_temp_) {
+   112	    MicroPrintf("ResetTempAllocations() is not called before ResizeBuffer().");
+   113	    return kTfLiteError;
+   114	  }
+   115	
+   116	  const size_t available_memory = buffer_tail_ - expect_resizable_buf;
+   117	  if (available_memory < size) {
+   118	    MicroPrintf(
+   119	        "Failed to resize buffer. Requested: %u, available %u, missing: %u",
+   120	        size, available_memory, size - available_memory);
+   121	    return kTfLiteError;
+   122	  }
+   123	  head_temp_ = expect_resizable_buf + size;
+   124	  next_temp_ = head_temp_;
+   125	
+   126	  return kTfLiteOk;
+   127	}
+   128	
+   129	// Frees up the memory occupied by the resizable buffer.
+   130	TfLiteStatus NonPersistentArenaBufferAllocator::DeallocateResizableBuffer(
+   131	    uint8_t* resizable_buf) {
+   132	  TfLiteStatus status = ResizeBuffer(resizable_buf, 0, 1);
+   133	  if (status == kTfLiteOk) {
+   134	    resizable_buffer_allocated_ = false;
+   135	  }
+   136	  return status;
+   137	}
+   138	
+   139	// Returns a pointer pointing to the start of the overlay memory, which is
+   140	// used for activation tensors and scratch buffers by kernels at Invoke stage.
+   141	uint8_t* NonPersistentArenaBufferAllocator::GetOverlayMemoryAddress() const {
+   142	  return buffer_head_;
+   143	}
+   144	
+   145	// Reserves the size of the overlay memory. This overlay is reserved for the
+
+===== TFLM MEMORY PLANNER IMPLEMENTATIONS =====
