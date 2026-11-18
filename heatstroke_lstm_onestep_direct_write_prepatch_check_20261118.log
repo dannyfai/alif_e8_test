@@ -1,0 +1,170 @@
+===== LSTM TIME-STEP OFFSET UPDATES =====
+   237	// Increment the data offset so the sigle time step invocation call can access
+   238	// the corresponding input/output tensor data at the time step
+   239	void LstmStepManager::UpdateTime() {
+   240	  current_time_ += 1;
+   241	  TFLITE_DCHECK_LE(current_time_, size_info_.time_steps);
+   242	  // default as one batch per inference
+   243	  int input_step = size_info_.input_dimension;
+   244	  int output_step = size_info_.state_dimension;
+   245	  // time major: batch inference
+   246	  if (size_info_.time_major) {
+   247	    input_step = input_step * size_info_.batch_size;
+   248	    output_step = output_step * size_info_.batch_size;
+   249	  }
+   250	
+   251	  input_offset_ += input_step;
+   252	  output_offset_ += output_step;
+   253	}
+   254	
+   255	// Increment the data offset so the sigle time step invocation call can access
+   256	// the corresponding hidden/cell state tensor data at the time step (for single
+   257	// batch inference only)
+   258	void LstmStepManager::UpdateBatch() {
+   259	  current_batch_ += 1;
+   260	  TFLITE_DCHECK_LE(current_batch_, size_info_.batch_size);
+   261	  // batch inference for time major: no action needed
+   262	  if (size_info_.time_major) {
+   263	    return;
+   264	  }
+   265	  // otherwise: singe batch inference, go to the next batch
+   266	  hidden_state_offset_ += size_info_.state_dimension;
+   267	  cell_state_offset_ += size_info_.state_dimension;
+   268	}
+   269	
+   270	// Input shape for each single time LSTM invocation.
+   271	// Multi-batch for time_major input
+   272	RuntimeShape LstmStepManager::InputShape() const {
+   273	  int batch_size = 1;
+   274	  if (size_info_.time_major) {
+   275	    batch_size = size_info_.batch_size;
+   276	  }
+   277	  const int dims[2] = {batch_size, size_info_.input_dimension};
+   278	  const int32_t* dims_data = reinterpret_cast<const int32_t*>(dims);
+   279	  return RuntimeShape(2, dims_data);
+   280	}
+   281	
+   282	// State shape (both hidden and cell) for each single time LSTM invocation.
+   283	// Multi-batch for time_major input
+   284	RuntimeShape LstmStepManager::StateShape() const {
+   285	  int batch_size = 1;
+   286	  if (size_info_.time_major) {
+   287	    batch_size = size_info_.batch_size;
+   288	  }
+   289	  const int dims[2] = {batch_size, size_info_.state_dimension};
+   290	  const int32_t* dims_data = reinterpret_cast<const int32_t*>(dims);
+
+===== OP DATA AND SIZE INFO DEFINITIONS =====
+76-struct InterGateParameters {
+77-  ArithmeticParams forget_cell_mul_params;
+78-  ArithmeticParams input_mul_params;
+79-  ArithmeticParams output_mul_params;
+80-};
+81-
+82-// Size information about the LSTM kernel, which is deduced from tensors stored
+83-// in the flat buffer file.
+84:struct LstmSizeInfo {
+85-  bool time_major;
+86-  int batch_size;
+87-  int time_steps;
+88-  int input_dimension;
+89-  int state_dimension;
+90-};
+91-
+92-// Contains information about the cell state tensor
+93-struct CellStateInfo {
+94-  float cell_clip;
+95-  // clipping range for cell state only 16 bits cell is supported (could be
+96-  // generalized through templatation)
+97-  int16_t quantized_cell_clip;
+98-  // 2^-cell_state_scale_power = cell state scale, required by integer tanh
+99-  // computation
+100-  int32_t cell_state_scale_power;
+101-};
+102-
+103-// Contains required computation information for LSTM kernel evaluation.
+104-// Specifically, it includes shape and quantization settings for the LSTM
+105-// internal operations. Formatted to support operations defined in the
+106-// tensorflow/lite/kernels/internal/reference/integer_ops
+107-// Should be constructed during the preparation phase
+108:struct OpDataLSTM {
+109-  LstmSizeInfo size_info;
+110-  CellStateInfo cell_state_info;
+111-  TfLiteFusedActivation cell_gate_nonlinear_type;
+112-  GateParameters forget_gate_parameters;
+113-  GateParameters input_gate_parameters;
+114-  GateParameters cell_gate_parameters;
+115-  GateParameters output_gate_parameters;
+116-  InterGateParameters inter_gate_parameters;
+117-  int buffer_indices[4];  // TFLM only
+118-};
+119-
+120-// Provide an interface to access the internal tensors and buffers used for LSTM
+121-// invocation. Constructed during the invocation phase
+122-struct LSTMKernelContents {
+123- public:
+124-  // Internal tensors, fixed (const). see lstm_shared.h for tensor names
+125-  const TfLiteEvalTensor* GetInternalTensor(const int tensor_index) const {
+126-    return internal_tensors[tensor_index];
+127-  }
+128-  // Variable tensors (will be changed, can not be const)
+129-  TfLiteEvalTensor* HiddenStateTensor() {
+130-    return internal_tensors[kLstmOutputStateTensor];
+131-  }
+132-  TfLiteEvalTensor* CellStateTensor() {
+133-    return internal_tensors[kLstmCellStateTensor];
+134-  }
+135-  // Node internal tensors with indexes defined at the beginning of the file
+136-  TfLiteEvalTensor* internal_tensors[24];
+137-  TfLiteEvalTensor* output_tensor;
+138-};
+139-
+140-template <typename CellType>
+141-struct LSTMBuffers {
+142-  // TFLM buffers requires buffer index from LstmOpData.
+143-  CellType* buffer0;
+144-  CellType* buffer1;
+145-  CellType* buffer2;
+146-  CellType* buffer3;
+147-};
+148-
+149-}  // namespace tflite
+150-#endif  // TENSORFLOW_LITE_MICRO_KERNELS_LSTM_SHARED_H_
+
+===== EVAL LSTM LOOP =====
+   505	
+   506	// Evaulate the LSTM kernel with (potential) multi-steps and multi-batch input
+   507	// Since
+   508	template <typename ActivationType, typename WeightType, typename CellType,
+   509	          typename BiasType>
+   510	TfLiteStatus EvalLstm(const OpDataLSTM& op_data,
+   511	                      LSTMKernelContents& kernel_content,
+   512	                      const LSTMBuffers<CellType>& buffers) {
+   513	  lstm_internal::LstmStepManager step_info(&op_data.size_info);
+   514	  const auto& size_info = op_data.size_info;
+   515	  // time is the first dimention, enable batch computation
+   516	  if (size_info.time_major) {
+   517	    for (int t = 0; t < size_info.time_steps; t++) {
+   518	      lstm_internal::LstmStep<ActivationType, WeightType, CellType, BiasType>(
+   519	          step_info, op_data, kernel_content, buffers);
+   520	      // prepare for the next time step
+   521	      step_info.UpdateTime();
+   522	    }
+   523	  } else {
+   524	    // batch first, unable to size the input data. single batch inference
+   525	    for (int b = 0; b < size_info.batch_size; b++) {
+   526	      for (int t = 0; t < size_info.time_steps; t++) {
+   527	        lstm_internal::LstmStep<ActivationType, WeightType, CellType, BiasType>(
+   528	            step_info, op_data, kernel_content, buffers);
+   529	        // prepare for the next time step
+   530	        step_info.UpdateTime();
+   531	      }
+   532	      // prepare for the next batch
+   533	      step_info.UpdateBatch();
+   534	      step_info.ResetTime();
+   535	    }
+   536	  }
+   537	  return kTfLiteOk;
+   538	}
+   539	}  // namespace tflite
+   540	
