@@ -1,0 +1,1123 @@
+============================================================
+Work-Demand external-flash model generator audit
+2026-11-18T22:06:48+08:00
+============================================================
+
+=== 1. Inspect generate_model_code implementation ===
+--- /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/source_gen_utils.cmake ---
+#----------------------------------------------------------------------------
+#  SPDX-FileCopyrightText: Copyright 2021, 2024, 2026 Arm Limited and/or its
+#  affiliates <open-source-office@arm.com>
+#  SPDX-License-Identifier: Apache-2.0
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#----------------------------------------------------------------------------
+include_guard()
+
+set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+
+##############################################################################
+# This function generates C++ files for images located in the directory it is
+# pointed at. NOTE: uses python
+##############################################################################
+function(generate_images_code input_dir gen_dir img_size)
+
+    # Absolute paths for passing into python script
+    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    get_filename_component(gen_out_abs ${gen_dir} ABSOLUTE)
+
+    message(STATUS "Generating image files from ${input_dir_abs}")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env
+            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+            ${PYTHON} -m mlek_tools.gen.gen_rgb_cpp
+            --image_path ${input_dir_abs}
+            --package_gen_dir ${gen_out_abs}
+            --image_size ${img_size} ${img_size}
+        RESULT_VARIABLE return_code
+    )
+    if (NOT return_code EQUAL "0")
+        message(FATAL_ERROR "Failed to generate image files.")
+    endif ()
+
+endfunction()
+
+##############################################################################
+# This function generates C++ files for audio files located in the directory it is
+# pointed at. NOTE: uses python
+##############################################################################
+function(generate_audio_code input_dir gen_dir s_rate_opt mono_opt off_opt duration_opt res_type_opt min_sample_opt)
+
+    # Absolute paths for passing into python script
+    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    get_filename_component(gen_dir_abs ${gen_dir} ABSOLUTE)
+
+    to_py_bool(mono_opt mono_opt_py)
+
+    message(STATUS "Generating audio files from ${input_dir_abs}")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env
+            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+            ${PYTHON} -m mlek_tools.gen.gen_audio_cpp
+            --audio_path ${input_dir_abs}
+            --package_gen_dir ${gen_dir_abs}
+            --sampling_rate ${s_rate_opt}
+            --mono ${mono_opt_py}
+            --offset ${off_opt}
+            --duration ${duration_opt}
+            --res_type ${res_type_opt}
+            --min_samples ${min_sample_opt}
+        RESULT_VARIABLE return_code
+    )
+    if (NOT return_code EQUAL "0")
+        message(FATAL_ERROR "Failed to generate audio files.")
+    endif ()
+
+endfunction()
+
+##############################################################################
+# This function generates C++ files for tflite NN model files.
+# @param[in]    MODEL_PATH      path to a tflite file
+# @param[in]    DESTINATION     directory in which the output cc must be
+#                               placed
+# @param[in]    EXPRESSIONS     C++ code expressions to add to the generated file
+# @param[in]    NAMESPACE       model name space
+# NOTE: Uses python
+##############################################################################
+function(generate_model_code)
+
+    set(multiValueArgs EXPRESSIONS NAMESPACE)
+    set(oneValueArgs MODEL_PATH DESTINATION)
+    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    # Absolute paths for passing into python script
+    get_filename_component(ABS_MODEL_PATH ${PARSED_MODEL_PATH} ABSOLUTE)
+    get_filename_component(ABS_DESTINATION ${PARSED_DESTINATION} ABSOLUTE)
+
+    if (EXISTS ${ABS_MODEL_PATH})
+        message(STATUS "Using ${ABS_MODEL_PATH}")
+    else ()
+        message(FATAL_ERROR "${ABS_MODEL_PATH} not found!")
+    endif ()
+
+
+    foreach(expression ${PARSED_EXPRESSIONS})
+        set(py_arg_exp ${py_arg_exp} --expression=${expression})
+    endforeach()
+
+    foreach(name ${PARSED_NAMESPACE})
+        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+    endforeach()
+
+    # Pass optional Arm Ethos-U NPU validation args if NPU is enabled.
+    if (ETHOS_U_NPU_ENABLED)
+        if (DEFINED ETHOS_U_NPU_MEMORY_MODE)
+            set(py_arg_exp ${py_arg_exp} --ethos_u_memory_mode=${ETHOS_U_NPU_MEMORY_MODE})
+        endif()
+        if (DEFINED ETHOS_U_NPU_CONFIG_ID)
+            # gen_model_cpp.py accepts short forms like H128/Y256/Z256 directly.
+            set(py_arg_exp ${py_arg_exp} --ethos_u_config=${ETHOS_U_NPU_CONFIG_ID})
+        endif()
+    endif()
+
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env
+            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+            ${PYTHON} -m mlek_tools.gen.gen_model_cpp
+            --model_path ${ABS_MODEL_PATH}
+            --output_dir ${ABS_DESTINATION} ${py_arg_exp}
+        RESULT_VARIABLE return_code
+    )
+    if (NOT return_code EQUAL "0")
+        message(FATAL_ERROR "Failed to generate model files.")
+    endif ()
+endfunction()
+
+
+##############################################################################
+# This function generates C++ file for a given labels' text file.
+# @param[in]    INPUT          Path to the label text file
+# @param[in]    DESTINATION_SRC directory in which the output cc must be
+#                               placed
+# @param[in]    DESTINATION_HDR directory in which the output h file must be
+#                               placed
+# @param[in]    OUTPUT_FILENAME    Path to required output file
+# @param[in]    NAMESPACE       data name space
+# NOTE: Uses python
+##############################################################################
+function(generate_labels_code)
+
+    set(multiValueArgs NAMESPACE)
+    set(oneValueArgs INPUT DESTINATION_SRC DESTINATION_HDR OUTPUT_FILENAME)
+    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    # Absolute paths for passing into python script
+    get_filename_component(input_abs ${PARSED_INPUT} ABSOLUTE)
+    get_filename_component(src_out_abs ${PARSED_DESTINATION_SRC} ABSOLUTE)
+    get_filename_component(hdr_out_abs ${PARSED_DESTINATION_HDR} ABSOLUTE)
+
+    message(STATUS "Generating labels file from ${PARSED_INPUT}")
+    file(REMOVE "${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp")
+    file(REMOVE "${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+
+    foreach(name ${PARSED_NAMESPACE})
+        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+    endforeach()
+
+    message(STATUS "writing to ${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp and ${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env
+            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+            ${PYTHON} -m mlek_tools.gen.gen_labels_cpp
+            --labels_file ${input_abs}
+            --source_folder_path ${src_out_abs}
+            --header_folder_path ${hdr_out_abs}
+            --output_file_name ${PARSED_OUTPUT_FILENAME} ${py_arg_exp}
+        RESULT_VARIABLE return_code
+    )
+    if (NOT return_code EQUAL "0")
+        message(FATAL_ERROR "Failed to generate label files.")
+    endif ()
+endfunction()
+
+
+##############################################################################
+# This function generates C++ data files for test located in the directory it is
+# pointed at.
+# @param[in]    INPUT_DIR       directory in which are the npy files
+# @param[in]    DESTINATION_SRC directory in which the output cc must be
+#                               placed
+# @param[in]    DESTINATION_HDR directory in which the output h file must be
+#                               placed
+# @param[in]    NAMESPACE       data name space
+# NOTE: Uses python
+##############################################################################
+function(generate_test_data_code)
+
+    set(multiValueArgs NAMESPACE INPUT_DIR)
+    set(oneValueArgs DESTINATION_SRC DESTINATION_HDR)
+    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    list(LENGTH PARSED_INPUT_DIR input_dir_length)
+
+    if (${input_dir_length} GREATER 1)
+        set(add_extra_namespace TRUE)
+    else()
+        set(add_extra_namespace FALSE)
+    endif()
+
+    foreach(input_dir ${PARSED_INPUT_DIR})
+        unset(py_arg_exp)
+        file(GLOB_RECURSE input_data_files
+                "${input_dir}/*.npy"
+                )
+        # no input NPY data found => skip code generation.
+        if(NOT input_data_files)
+            message(WARNING "No files were found to generate input data: ${input_dir}")
+            break()
+        endif()
+
+        # Absolute paths for passing into python script
+        get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+        get_filename_component(input_dir_name ${input_dir} NAME)
+        get_filename_component(src_out_abs ${PARSED_DESTINATION_SRC} ABSOLUTE)
+        get_filename_component(hdr_out_abs ${PARSED_DESTINATION_HDR} ABSOLUTE)
+
+        foreach(name ${PARSED_NAMESPACE})
+            set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+        endforeach()
+
+        if (${add_extra_namespace})
+            set(py_arg_exp ${py_arg_exp} --namespaces=${input_dir_name})
+        endif()
+
+        message(STATUS "Generating test ifm and ofm files from ${input_dir_abs}")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E env
+                PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+
+=== 2. Inspect MODEL_IN_EXT_FLASH build configuration ===
+                CACHE FILEPATH "Toolchain file")
+    endif()
+
+    set(LINKER_SCRIPT_NAME "${TARGET_SUBSYSTEM}" CACHE STRING "Linker script name")
+    set(PLATFORM_DRIVERS_DIR "${MLEK_HAL_PLATFORM_DIR}/alif" PARENT_SCOPE)
+
+    if (TARGET_SUBSYSTEM STREQUAL RTSS-HP)
+        set(ALIF_CORE "RTSS_HP")
+    else()
+        set(ALIF_CORE "RTSS_HE")
+    endif()
+    set(ALIF_CORE "${ALIF_CORE}" PARENT_SCOPE)
+    set(ALIF_DEVICE_SKU "${ALIF_DEVICE_SKU}" PARENT_SCOPE)
+    set(IS_BALLETTO_DEVICE ${IS_BALLETTO_DEVICE} PARENT_SCOPE)
+
+    add_compile_definitions(
+        ${ALIF_CORE}
+        )
+
+    if (ETHOS_U_NPU_ID STREQUAL "U55")
+        set(ETHOS_U_BASE_ADDR    "0x400E1000"   CACHE STRING "Ethos-U NPU base address")
+        set(ETHOS_U_IRQN         "55"           CACHE STRING "Ethos-U55 Interrupt")
+    else()
+        set(ETHOS_U_BASE_ADDR    "0x49042000"   CACHE STRING "Ethos-U NPU base address")
+        set(ETHOS_U_IRQN         "366"          CACHE STRING "Ethos-U85 Interrupt")
+    endif()
+    set(ETHOS_U_SEC_ENABLED  "1"            CACHE STRING "Ethos-U NPU Security enable")
+    set(ETHOS_U_PRIV_ENABLED "1"            CACHE STRING "Ethos-U NPU Privilege enable")
+
+endfunction()
+
+function(platform_custom_post_build)
+    set(oneValueArgs TARGET_NAME MODEL_IN_EXT_FLASH)
+    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "" ${ARGN} )
+
+    set_target_properties(${PARSED_TARGET_NAME} PROPERTIES SUFFIX ".axf")
+
+    string(TOLOWER "${ALIF_CORE}" ALIF_CORE_STRING)
+
+    #####################################################
+    ## Support for linker file to include header start ##
+    #####################################################
+    add_library(${PARSED_TARGET_NAME}_linkerfile OBJECT)
+
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_options(${PARSED_TARGET_NAME}
+            PRIVATE
+            -T $<TARGET_OBJECTS:${PARSED_TARGET_NAME}_linkerfile>
+            "SHELL:-Xlinker -Map=bin/${target}.map"
+        )
+
+        target_sources(${PARSED_TARGET_NAME}_linkerfile
+            PRIVATE
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.ld
+        )
+        set_source_files_properties(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.ld
+            PROPERTIES
+            LANGUAGE C
+        )
+
+        message(STATUS "Using Linker file: ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.ld")
+
+        target_compile_options(${PARSED_TARGET_NAME}_linkerfile
+            PRIVATE
+                -E
+                -P
+                -xc
+        )
+    else()
+        target_link_options(${PARSED_TARGET_NAME}
+            PRIVATE
+            --scatter=$<TARGET_OBJECTS:${PARSED_TARGET_NAME}_linkerfile>
+        )
+        target_sources(${PARSED_TARGET_NAME}_linkerfile
+        PRIVATE
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.sct
+        )
+
+        set_source_files_properties(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.sct
+            PROPERTIES
+            LANGUAGE C
+        )
+
+        message(STATUS "Using Linker file: ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}/${LINKER_SCRIPT_NAME}.sct")
+
+        target_compile_options(${PARSED_TARGET_NAME}_linkerfile
+            PRIVATE
+                -E
+                -xc
+        )
+    endif()
+
+    add_dependencies(${PARSED_TARGET_NAME}
+        ${PARSED_TARGET_NAME}_linkerfile
+    )
+
+    set_target_properties(${PARSED_TARGET_NAME} PROPERTIES LINK_DEPENDS $<TARGET_OBJECTS:${PARSED_TARGET_NAME}_linkerfile>)
+
+    # Link rte_components so linker files can use the alif_mem_config.h
+    target_link_libraries(${PARSED_TARGET_NAME}_linkerfile
+        rte_components
+    )
+
+    # Add link options for the linker script to be used:
+    # add_linker_script(
+    #     ${PARSED_TARGET_NAME}                                                       # Target
+    #     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/${ALIF_DEVICE_SKU}/${ALIF_CORE_STRING}   # Directory path
+    #     ${LINKER_SCRIPT_NAME})                                                      # Name of the file without suffix
+
+    #####################################################
+    ## Support for linker file to include header end ####
+    #####################################################
+
+    add_target_map_file(
+        ${PARSED_TARGET_NAME}
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PARSED_TARGET_NAME}.map)
+
+    set(SECTORS_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sectors)
+    set(SECTORS_BIN_DIR ${SECTORS_DIR}/${use_case})
+
+    file(REMOVE_RECURSE ${SECTORS_BIN_DIR})
+    file(MAKE_DIRECTORY ${SECTORS_BIN_DIR})
+
+    set(LINKER_SECTION_TAGS     "*.at_mram")
+    set(LINKER_OUTPUT_BIN_TAGS  "mram.bin")
+
+    # Create the ospi flash binaries if enabled
+    if(PARSED_MODEL_IN_EXT_FLASH)
+        list(APPEND LINKER_SECTION_TAGS "*.at_ext_flash")
+        list(APPEND LINKER_OUTPUT_BIN_TAGS "ext_flash.bin")
+    endif()
+
+    add_bin_generation_command(
+            TARGET_NAME ${PARSED_TARGET_NAME}
+            OUTPUT_DIR  ${SECTORS_BIN_DIR}
+            AXF_PATH    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PARSED_TARGET_NAME}.axf
+            SECTION_PATTERNS    "${LINKER_SECTION_TAGS}"
+            OUTPUT_BIN_NAMES    "${LINKER_OUTPUT_BIN_TAGS}")
+endfunction()
+
+=== 3. Find model data placement definitions ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/gen/gen_model_cpp.py:37:def get_model_data(model_path: str) -> list:
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/gen/gen_model_cpp.py:173:                model_data=get_model_data(str(model_path)),
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:172:    set(oneValueArgs TARGET_NAME MODEL_IN_EXT_FLASH)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake:267:    if(PARSED_MODEL_IN_EXT_FLASH)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/kws_asr/usecase.cmake:33:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection/usecase.cmake:40:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_asr/usecase.cmake:55:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:31:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/asr/usecase.cmake:45:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/alif_object_detection_power/usecase.cmake:40:USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:48:#if defined(MODEL_IN_EXT_FLASH)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:70:      model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:75:    if model_data is None:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:84:      arena_size = len(model_data) * 10
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:87:        model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:92:        model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:123:      model_data = f.read()
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:126:        model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:135:      model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:143:      model_data: Model in byte array format
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime.py:154:        model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:42:    model_data = add_four_numbers.generate_model(write_file=False)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:44:        model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:109:    model_data = generate_test_models.generate_conv_model(False)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:110:    tflm_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:132:    model_data = generate_test_models.generate_conv_model(True, self.filename)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:133:    tflm_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:160:    model_data = generate_test_models.generate_conv_model(True, self.filename)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:161:    tflm_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:180:    model_data = generate_test_models.generate_conv_model(True, self.filename)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:181:    tflm_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:191:    model_data = generate_test_models.generate_conv_model(True, self.filename)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:194:    tflm_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:198:        model_content=model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:227:    model_data = generate_test_models.generate_conv_model(True, self.filename)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:230:    bytes_interpreter = runtime.Interpreter.from_bytes(model_data)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:255:    model_data = generate_test_models.generate_conv_model(False)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:258:        runtime.Interpreter.from_bytes(model_data) for i in range(10)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:306:    model_data = generate_test_models.generate_conv_model(False)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:310:      interpreter = runtime.Interpreter.from_bytes(model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:316:      interpreter = runtime.Interpreter.from_bytes(model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:320:    model_data = generate_test_models.generate_conv_model(False)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/runtime_test.py:324:      interpreter = runtime.Interpreter.from_bytes(model_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:239:    PyObject* model_data, const std::vector<std::string>& registerers_by_name,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:243:  // `model_data` is used as a raw pointer beyond the scope of this
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:246:  Py_INCREF(model_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:248:  // Get the input array contained in `model_data` as a byte array
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:251:  if (ConvertFromPyString(model_data, &buf, &length) == -1 || buf == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.cc:257:  model_ = model_data;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/interpreter_wrapper.h:41:      PyObject* model_data, const std::vector<std::string>& registerers_by_name,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party/xtensa/examples/micro_speech_lstm/micro_speech_lstm_test.cc:43:#include "third_party/xtensa/examples/micro_speech_lstm/micro_speech_lstm_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party/xtensa/examples/micro_speech_lstm/micro_speech_lstm_test.cc:53:      ::tflite::GetModel(g_micro_speech_lstm_model_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party/xtensa/examples/pytorch_to_tflite/pytorch_to_tflite_test.cc:43:#include "third_party/xtensa/examples/pytorch_to_tflite/mobilenet_v2_quantized_1x3x224x224_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party/xtensa/examples/pytorch_to_tflite/pytorch_to_tflite_test.cc:55:      ::tflite::GetModel(g_mobilenet_v2_quantized_1x3x224x224_model_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:22:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:25:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice10_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:28:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice11_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice12_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:34:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice13_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:37:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice14_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:40:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice15_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:43:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice16_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:46:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice17_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:49:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice18_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:52:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice19_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:55:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:58:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice20_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:61:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice21_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:64:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice22_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:67:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice23_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:70:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice24_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:73:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice25_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:76:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice26_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:79:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice27_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:82:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice28_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:85:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice29_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:88:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:91:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice30_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:94:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice31_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:97:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice32_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:100:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice33_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:103:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:106:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:109:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice5_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:112:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice6_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:115:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice7_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:118:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice8_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:121:#include "tensorflow/lite/micro/integration_tests/seanet/strided_slice/strided_slice9_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:177:      g_strided_slice0_model_data, g_strided_slice0_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:185:      g_strided_slice1_model_data, g_strided_slice1_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:193:      g_strided_slice2_model_data, g_strided_slice2_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:201:      g_strided_slice3_model_data, g_strided_slice3_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:209:      g_strided_slice4_model_data, g_strided_slice4_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:217:      g_strided_slice5_model_data, g_strided_slice5_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:225:      g_strided_slice6_model_data, g_strided_slice6_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:233:      g_strided_slice7_model_data, g_strided_slice7_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:241:      g_strided_slice8_model_data, g_strided_slice8_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:249:      g_strided_slice9_model_data, g_strided_slice9_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:257:      g_strided_slice10_model_data, g_strided_slice10_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:265:      g_strided_slice11_model_data, g_strided_slice11_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:273:      g_strided_slice12_model_data, g_strided_slice12_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:281:      g_strided_slice13_model_data, g_strided_slice13_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:289:      g_strided_slice14_model_data, g_strided_slice14_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:297:      g_strided_slice15_model_data, g_strided_slice15_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:305:      g_strided_slice16_model_data, g_strided_slice16_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:313:      g_strided_slice17_model_data, g_strided_slice17_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:321:      g_strided_slice18_model_data, g_strided_slice18_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:329:      g_strided_slice19_model_data, g_strided_slice19_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:337:      g_strided_slice20_model_data, g_strided_slice20_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:345:      g_strided_slice21_model_data, g_strided_slice21_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:353:      g_strided_slice22_model_data, g_strided_slice22_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:361:      g_strided_slice23_model_data, g_strided_slice23_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:369:      g_strided_slice24_model_data, g_strided_slice24_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:377:      g_strided_slice25_model_data, g_strided_slice25_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:385:      g_strided_slice26_model_data, g_strided_slice26_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:393:      g_strided_slice27_model_data, g_strided_slice27_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:401:      g_strided_slice28_model_data, g_strided_slice28_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:409:      g_strided_slice29_model_data, g_strided_slice29_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:417:      g_strided_slice30_model_data, g_strided_slice30_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:425:      g_strided_slice31_model_data, g_strided_slice31_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:433:      g_strided_slice32_model_data, g_strided_slice32_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/strided_slice/integration_tests.cc:441:      g_strided_slice33_model_data, g_strided_slice33_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:23:#include "tensorflow/lite/micro/integration_tests/seanet/transpose_conv/transpose_conv0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:27:#include "tensorflow/lite/micro/integration_tests/seanet/transpose_conv/transpose_conv1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/transpose_conv/transpose_conv2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:35:#include "tensorflow/lite/micro/integration_tests/seanet/transpose_conv/transpose_conv3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:39:#include "tensorflow/lite/micro/integration_tests/seanet/transpose_conv/transpose_conv4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:99:      g_transpose_conv0_model_data, g_transpose_conv0_input0_int32_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:109:      g_transpose_conv1_model_data, g_transpose_conv1_input0_int32_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:119:      g_transpose_conv2_model_data, g_transpose_conv2_input0_int32_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:129:      g_transpose_conv3_model_data, g_transpose_conv3_input0_int32_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/transpose_conv/integration_tests.cc:139:      g_transpose_conv4_model_data, g_transpose_conv4_input0_int32_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:23:#include "tensorflow/lite/micro/integration_tests/seanet/sub/sub0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:27:#include "tensorflow/lite/micro/integration_tests/seanet/sub/sub1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/sub/sub2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:35:#include "tensorflow/lite/micro/integration_tests/seanet/sub/sub3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:39:#include "tensorflow/lite/micro/integration_tests/seanet/sub/sub4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:99:      g_sub0_model_data, g_sub0_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:107:      g_sub1_model_data, g_sub1_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:115:      g_sub2_model_data, g_sub2_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:123:      g_sub3_model_data, g_sub3_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/sub/integration_tests.cc:131:      g_sub4_model_data, g_sub4_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:22:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:25:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad10_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:28:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad11_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad12_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:34:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad13_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:37:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad14_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:40:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad15_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:43:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad16_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:46:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad17_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:49:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad18_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:52:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:55:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:58:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:61:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:64:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad5_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:67:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad6_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:70:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad7_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:73:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad8_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:76:#include "tensorflow/lite/micro/integration_tests/seanet/pad/pad9_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:131:  tflite::micro::RunModel(g_pad0_model_data, g_pad0_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:138:  tflite::micro::RunModel(g_pad1_model_data, g_pad1_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:145:  tflite::micro::RunModel(g_pad2_model_data, g_pad2_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:152:  tflite::micro::RunModel(g_pad3_model_data, g_pad3_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:159:  tflite::micro::RunModel(g_pad4_model_data, g_pad4_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:166:  tflite::micro::RunModel(g_pad5_model_data, g_pad5_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:173:  tflite::micro::RunModel(g_pad6_model_data, g_pad6_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:180:  tflite::micro::RunModel(g_pad7_model_data, g_pad7_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:187:  tflite::micro::RunModel(g_pad8_model_data, g_pad8_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:194:  tflite::micro::RunModel(g_pad9_model_data, g_pad9_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:201:  tflite::micro::RunModel(g_pad10_model_data, g_pad10_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:208:  tflite::micro::RunModel(g_pad11_model_data, g_pad11_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:215:  tflite::micro::RunModel(g_pad12_model_data, g_pad12_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:222:  tflite::micro::RunModel(g_pad13_model_data, g_pad13_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:229:  tflite::micro::RunModel(g_pad14_model_data, g_pad14_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:236:  tflite::micro::RunModel(g_pad15_model_data, g_pad15_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:243:  tflite::micro::RunModel(g_pad16_model_data, g_pad16_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:250:  tflite::micro::RunModel(g_pad17_model_data, g_pad17_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/pad/integration_tests.cc:257:  tflite::micro::RunModel(g_pad18_model_data, g_pad18_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:23:#include "tensorflow/lite/micro/integration_tests/seanet/add/add0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:27:#include "tensorflow/lite/micro/integration_tests/seanet/add/add10_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/add/add11_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:35:#include "tensorflow/lite/micro/integration_tests/seanet/add/add12_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:39:#include "tensorflow/lite/micro/integration_tests/seanet/add/add13_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:43:#include "tensorflow/lite/micro/integration_tests/seanet/add/add14_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:47:#include "tensorflow/lite/micro/integration_tests/seanet/add/add15_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:51:#include "tensorflow/lite/micro/integration_tests/seanet/add/add16_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:55:#include "tensorflow/lite/micro/integration_tests/seanet/add/add1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:59:#include "tensorflow/lite/micro/integration_tests/seanet/add/add2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:63:#include "tensorflow/lite/micro/integration_tests/seanet/add/add3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:67:#include "tensorflow/lite/micro/integration_tests/seanet/add/add4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:71:#include "tensorflow/lite/micro/integration_tests/seanet/add/add5_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:75:#include "tensorflow/lite/micro/integration_tests/seanet/add/add6_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:79:#include "tensorflow/lite/micro/integration_tests/seanet/add/add7_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:83:#include "tensorflow/lite/micro/integration_tests/seanet/add/add8_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:87:#include "tensorflow/lite/micro/integration_tests/seanet/add/add9_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:147:      g_add0_model_data, g_add0_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:155:      g_add1_model_data, g_add1_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:163:      g_add2_model_data, g_add2_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:171:      g_add3_model_data, g_add3_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:179:      g_add4_model_data, g_add4_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:187:      g_add5_model_data, g_add5_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:195:      g_add6_model_data, g_add6_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:203:      g_add7_model_data, g_add7_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:211:      g_add8_model_data, g_add8_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:219:      g_add9_model_data, g_add9_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:227:      g_add10_model_data, g_add10_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:235:      g_add11_model_data, g_add11_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:243:      g_add12_model_data, g_add12_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:251:      g_add13_model_data, g_add13_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:259:      g_add14_model_data, g_add14_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:267:      g_add15_model_data, g_add15_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/add/integration_tests.cc:275:      g_add16_model_data, g_add16_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:22:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv0_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:25:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv10_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:28:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv11_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:31:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv12_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:34:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv13_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:37:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv14_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:40:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv15_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:43:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv16_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:46:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv17_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:49:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv18_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:52:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv19_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:55:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv1_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:58:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv20_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:61:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv21_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:64:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv2_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:67:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv3_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:70:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv4_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:73:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv5_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:76:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv6_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:79:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv7_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:82:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv8_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:85:#include "tensorflow/lite/micro/integration_tests/seanet/conv/conv9_model_data.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:140:  tflite::micro::RunModel(g_conv0_model_data, g_conv0_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:147:  tflite::micro::RunModel(g_conv1_model_data, g_conv1_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:154:  tflite::micro::RunModel(g_conv2_model_data, g_conv2_input0_int16_test_data,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/integration_tests/seanet/conv/integration_tests.cc:161:  tflite::micro::RunModel(g_conv3_model_data, g_conv3_input0_int16_test_data,
+
+=== 4. Inspect generated Heat-Stroke model C++ source ===
+-rw-rw-r-- 1 user user 64M Nov 18 14:01 /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/generated/src/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc
+b15c2275cd8c17eb127f7092317d1008a6107437dd4ae017768864483c73bd17  /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/generated/src/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc
+File: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/generated/src/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc
+First 1000 bytes:
+
+/*********************    Autogenerated file. DO NOT EDIT *******************
+ * Generated from Arm ML Embedded Evaluation Kit (MLEK) project.
+ * Script:          gen_utils.py
+ * Original file:   qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite * Date:            2026-11-18 14:01:13.607456
+ ***************************************************************************/
+
+#include "BufAttributes.hpp"
+
+#include <cstddef>
+#include <cstdint>
+
+
+namespace arm {
+namespace app {
+namespace polyu_heatstroke {
+
+
+static const uint8_t nn_model[] MODEL_SECTION_ATTRIBUTE =
+{
+0x20, 0x00, 0x00, 0x00, 0x54, 0x46, 0x4c, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x1c, 0x00, 0x04, 0x00, 0x08, 0x00, 0x0c, 0x00, 0x10, 0x00, 0x14, 0x00, 0x00, 0x00, 0x18, 0x00, 
+0x12, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x2c, 0x03, 0x00, 0x00, 0x20, 0x03, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 
+0x9c, 0x03, 0
+
+Last 1000 bytes:
+x00, 0x04, 0x00, 0x00, 0x00, 
+0x01, 0x00, 0x00, 0x00, 0xa6, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f, 0xb6, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 
+0x01, 0x00, 0x00, 0x00, 0xc6, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x00, 0xd6, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 
+0x7f, 0x00, 0x00, 0x00, 0xe6, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 
+0x08, 0x00, 0x04, 0x00, 0x06, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, };
+
+
+const uint8_t * GetModelPointer()
+{
+    return nn_model;
+}
+
+size_t GetModelLen()
+{
+    return sizeof(nn_model);
+}
+
+} /* namespace arm */
+} /* namespace app */
+} /* namespace polyu_heatstroke */
+
+
+Total source bytes: 66502616
+Total source lines: 344605
+'MODEL_IN_EXT_FLASH': 0 occurrence(s)
+'model_data': 0 occurrence(s)
+'g_model': 0 occurrence(s)
+'alignas': 0 occurrence(s)
+'__attribute__': 0 occurrence(s)
+'.rodata': 0 occurrence(s)
+'.ospi': 0 occurrence(s)
+'const unsigned char': 0 occurrence(s)
+'const uint8_t': 2 occurrence(s)
+
+=== 5. Inspect generated model object compile/link references ===
+12:app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+1506: .text          0x0000000000000000        0x0 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+1507: .data          0x0000000000000000        0x0 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+1508: .bss           0x0000000000000000        0x0 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+17326:                0x0000000080207b2c        0x8 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+17329:                0x0000000080207b34        0x8 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+23658:                0x00000000c0000000   0xa83f20 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+23696: .comment       0x0000000000000020       0x21 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+23909:                0x0000000000000338       0x28 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+24263: .debug_info    0x00000000000e726c   0xa84407 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+24450: .debug_abbrev  0x000000000000363f      0x14f app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+24637: .debug_line    0x000000000000792b      0x39c app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+24822: .debug_frame   0x00000000000006e0       0x30 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+25046: .debug_str     0x00000000000a6dae       0xeb app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+25594: .debug_ranges  0x0000000000001a18       0x18 app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+25814:                0x000000000000022e       0x3e app/libapp.a(qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite.cc.obj)
+
+=== 6. Inspect external flash section names in linker map ===
+180:zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+1074:modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+1076:modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+1112:zephyr/kernel/libkernel.a(xip.c.obj)
+1119:                              zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj) (z_impl_k_event_init)
+2498: .text          0x0000000000000000        0x0 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+2499: .data          0x0000000000000000        0x0 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+2500: .bss           0x0000000000000000        0x0 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+2502:                0x0000000000000000        0xa zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+12198: .text          0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12199: .data          0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12200: .bss           0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12201: .text.ospi_set_mode
+12202:                0x0000000000000000       0x30 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12203: .text.ospi_set_tmod
+12204:                0x0000000000000000       0x30 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12205: .text.ospi_control_xip_ss
+12206:                0x0000000000000000       0x28 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12207: .text.ospi_dma_send
+12208:                0x0000000000000000       0x4e modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12209: .text.ospi_dma_transfer
+12210:                0x0000000000000000       0x5e modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12211: .text.ospi_hyperbus_xip_init
+12212:                0x0000000000000000       0x3e modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12213: .text.ospi_psram_xip_init
+12214:                0x0000000000000000       0x68 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12215: .text.ospi_hyperbus_send
+12216:                0x0000000000000000       0x96 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+12217: .text          0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+12218: .data          0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+12219: .bss           0x0000000000000000        0x0 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+12220: .text.alif_hal_ospi_receive
+12221:                0x0000000000000000        0x4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+12530: .text          0x0000000000000000        0x0 zephyr/kernel/libkernel.a(xip.c.obj)
+12531: .data          0x0000000000000000        0x0 zephyr/kernel/libkernel.a(xip.c.obj)
+12532: .bss           0x0000000000000000        0x0 zephyr/kernel/libkernel.a(xip.c.obj)
+17024:OSPI1            0x00000000c0000000 0x0000000004000000 rw
+17057:LOAD modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a
+17076: .alif_sram0.activation_buf
+17722: .text.flash_is25wx_ospi_init
+17723:                0x000000008020dddc      0x204 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+17724: .text.flash_is25wx_ospi_erase
+17725:                0x000000008020dfe0      0x20c zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+17726: .text.flash_is25wx_ospi_read
+17727:                0x000000008020e1ec      0x2e4 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+17728: .text.flash_is25wx_ospi_write
+17729:                0x000000008020e4d0      0x4bc zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+18407: .text.ospi_xip_enable
+18408:                0x000000008021ba08       0x58 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+18409:                0x000000008021ba08                ospi_xip_enable
+18410: .text.ospi_xip_disable
+18411:                0x000000008021ba60       0x50 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+18412:                0x000000008021ba60                ospi_xip_disable
+18413: .text.alif_hal_ospi_initialize
+18414:                0x000000008021bab0      0x13c modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18415:                0x000000008021bab0                alif_hal_ospi_initialize
+18416: .text.alif_hal_ospi_deinit
+18417:                0x000000008021bbec       0x50 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18418:                0x000000008021bbec                alif_hal_ospi_deinit
+18419: .text.alif_hal_ospi_prepare_transfer
+18420:                0x000000008021bc3c       0x50 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18421:                0x000000008021bc3c                alif_hal_ospi_prepare_transfer
+18422: .text.alif_hal_ospi_cs_enable
+18423:                0x000000008021bc8c       0x3c modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18424:                0x000000008021bc8c                alif_hal_ospi_cs_enable
+18425: .text.alif_hal_ospi_send
+18426:                0x000000008021bcc8       0x54 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18427:                0x000000008021bcc8                alif_hal_ospi_send
+18428: .text.alif_hal_ospi_transfer
+18429:                0x000000008021bd1c       0x6c modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18430:                0x000000008021bd1c                alif_hal_ospi_transfer
+18431: .text.alif_hal_ospi_irq_handler
+18432:                0x000000008021bd88       0x64 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18433:                0x000000008021bd88                alif_hal_ospi_irq_handler
+18434: .text.alif_hal_ospi_xip_enable
+18435:                0x000000008021bdec       0x40 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18436:                0x000000008021bdec                alif_hal_ospi_xip_enable
+18437: .text.alif_hal_ospi_xip_disable
+18438:                0x000000008021be2c       0x48 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+18439:                0x000000008021be2c                alif_hal_ospi_xip_disable
+18657:                0x000000008021ef58       0x38 zephyr/kernel/libkernel.a(xip.c.obj)
+19471:                0x00000000802262cc       0x3a zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19472: .text.flash_alif_ospi_page_layout
+19473:                0x0000000080226306        0xc zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19474:                0x0000000080226306                flash_alif_ospi_page_layout
+19475: .text.flash_is25wx_ospi_get_parameters
+19476:                0x0000000080226312        0x6 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19477: .text.flash_alif_ospi_irq_config_func
+19478:                0x0000000080226318       0x16 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19479: .text.flash_is25wx_ospi_isr
+19480:                0x000000008022632e        0xa zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19482:                0x0000000080226338       0x1c zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19484:                0x0000000080226354       0x1e zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19486:                0x0000000080226372       0x20 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19488:                0x0000000080226392        0x6 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19490:                0x0000000080226398        0xc zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19491: .text.flash_ospi_wait_event.constprop.0.isra.0
+19492:                0x00000000802263a4       0x44 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19494:                0x00000000802263e8       0x96 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19496:                0x000000008022647e       0x9a zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+19497: .text.flash_is25wx_ospi_pm_action
+19498:                0x0000000080226518       0x7e zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+20530:                0x000000008022cb52       0x24 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20531: .text.ospi_set_dfs
+20532:                0x000000008022cb76       0x16 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20533:                0x000000008022cb76                ospi_set_dfs
+20534: .text.ospi_set_tx_threshold
+20535:                0x000000008022cb8c        0xc modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20536:                0x000000008022cb8c                ospi_set_tx_threshold
+20537: .text.ospi_set_rx_sample_delay
+20538:                0x000000008022cb98        0xe modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20539:                0x000000008022cb98                ospi_set_rx_sample_delay
+20540: .text.ospi_set_ddr_drive_edge
+20541:                0x000000008022cba6        0xe modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20542:                0x000000008022cba6                ospi_set_ddr_drive_edge
+20543: .text.ospi_control_ss
+20544:                0x000000008022cbb4       0x22 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20545:                0x000000008022cbb4                ospi_control_ss
+20546: .text.ospi_send
+20547:                0x000000008022cbd6       0x38 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20548:                0x000000008022cbd6                ospi_send
+20549: .text.ospi_receive
+20550:                0x000000008022cc0e       0x3c modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20551:                0x000000008022cc0e                ospi_receive
+20552: .text.ospi_transfer
+20553:                0x000000008022cc4a        0x4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20554:                0x000000008022cc4a                ospi_transfer
+20555: .text.ospi_irq_handler
+20556:                0x000000008022cc4e      0x1a4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+20557:                0x000000008022cc4e                ospi_irq_handler
+21424:                0x000000008022e608        0x8 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+21472:                0x000000008022e7b4       0x1c zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22155: ._log_const.static.log_const_OSPI_FLASH_
+22156:                0x000000008022f930        0x8 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22157:                0x000000008022f930                log_const_OSPI_FLASH
+22386: .rodata.flash_alif_ospi_driver_api
+22387:                0x0000000080257a94       0x18 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22389:                0x0000000080257aac        0x8 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22391:                0x0000000080257ab4        0x8 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22393:                0x0000000080257abc       0x2c zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22852: .rodata.flash_is25wx_ospi_erase.str1.1
+22853:                0x000000008025c38b       0x3f zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22854: .rodata.flash_is25wx_ospi_read.str1.1
+22855:                0x000000008025c3ca       0x1e zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22856: .rodata.flash_is25wx_ospi_write.str1.1
+22857:                0x000000008025c3e8       0x3f zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22859:                0x000000008025c427        0x4 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+22861:                0x000000008025c42b       0x18 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23441:                0x0000000020000828       0x10 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23442: .data.alif_flash_ospi_config
+23443:                0x0000000020000838       0x30 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23444:                0x0000000020000838                alif_flash_ospi_config
+23461: .data.g_ospi_instance
+23462:                0x0000000020000904      0x108 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+23463:                0x0000000020000904                g_ospi_instance
+23499: .z_devstate    0x0000000020000b9b        0x2 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23520:                0x0000000020000c18       0x1c zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23655:ospi1           0x00000000c0000000   0xa83f20
+23656: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23657: .alif_extflash_OSPI1
+23659: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+23756: .comment       0x0000000000000020       0x21 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+23835: .comment       0x0000000000000020       0x21 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+23836: .comment       0x0000000000000020       0x21 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+23854: .comment       0x0000000000000020       0x21 zephyr/kernel/libkernel.a(xip.c.obj)
+24029:                0x0000000000001558       0xa8 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24187:                0x0000000000003df8       0xb8 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+24189:                0x0000000000003eb0       0x68 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+24225:                0x0000000000004708       0x20 zephyr/kernel/libkernel.a(xip.c.obj)
+24329: .debug_info    0x0000000000bbf7f9     0x3720 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24408: .debug_info    0x0000000001024c14     0x1802 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+24409: .debug_info    0x0000000001026416     0x16b3 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+24427: .debug_info    0x0000000001053cdd      0x131 zephyr/kernel/libkernel.a(xip.c.obj)
+24516: .debug_abbrev  0x0000000000011d52      0x6a3 zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24595: .debug_abbrev  0x000000000003df78      0x391 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+24596: .debug_abbrev  0x000000000003e309      0x38e modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+24614: .debug_abbrev  0x0000000000042eb0       0xbe zephyr/kernel/libkernel.a(xip.c.obj)
+24703: .debug_line    0x000000000002668f     0x1c5e zephyr/drivers/flash/libdrivers__flash.a(flash_ospi_is25wx.c.obj)
+24782: .debug_line    0x000000000008a358      0xff4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+24783: .debug_line    0x000000000008b34c      0x963 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+
+=== 7. Inspect E8 HP board overlay ===
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay ---
+#include "alif_e8_common.overlay"
+
+&ethosu0 {
+    status = "okay";
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+
+/ {
+	aliases {
+		audio-codec = &wm8904;
+		spi-flash0 = &ospi_flash;
+	};
+};
+
+/ {
+	ext_flash_xip: memory@c0000000 {
+		compatible = "zephyr,memory-region";
+		reg = <0xc0000000 DT_SIZE_M(64)>;
+		zephyr,memory-region = "OSPI1";
+	};
+};
+
+&ospi1 {
+	pinctrl-0 = <&pinctrl_flash>;
+	status = "okay";
+};
+
+&ospi_flash {
+	status = "okay";
+};
+
+&pinctrl_lpgpio {
+	group0 {
+		pinmux = <PIN_P15_4__LPGPIO>;
+		read-enable = <1>;
+		driver-state-control = <1>;
+		drive-strength = <8>;
+	};
+};
+
+&lpgpio {
+	pinctrl-0 = < &pinctrl_lpgpio >;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+/ {
+	wakeup_pins: wakeup_pins {
+		compatible = "lpgpio-wakeup-pin";
+		lpgpios = <&lpgpio 4 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&pinctrl {
+	pinctrl_flash:pinctrl_flash {
+		group0 {
+			pinmux = <PIN_P5_5__OSPI1_SCLK_C>,
+				 <PIN_P5_7__OSPI1_SS0_C>;
+			read-enable = <0x0>;
+			drive-strength = <12>;
+			slew-rate = <0x1>;
+		};
+		group1 {
+			pinmux = <PIN_P9_5__OSPI1_D0_C>,
+				 <PIN_P9_6__OSPI1_D1_C>,
+				 <PIN_P9_7__OSPI1_D2_C>,
+				 <PIN_P10_0__OSPI1_D3_C>,
+				 <PIN_P10_1__OSPI1_D4_C>,
+				 <PIN_P10_2__OSPI1_D5_C>,
+				 <PIN_P10_3__OSPI1_D6_C>,
+				 <PIN_P10_4__OSPI1_D7_C>,
+				 <PIN_P10_7__OSPI1_RXDS0_C>;
+			read-enable = <0x1>;
+			drive-strength = <12>;
+			slew-rate = <0x1>;
+		};
+	};
+};
+
+&i2c1 {
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+	wm8904: wm8904@1a {
+		compatible = "cirrus,wm8904";
+		reg = <0x1a>;
+		status = "okay";
+	};
+};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/sleep.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+
+/* RTC is needed for Zephyr kernel to be able track timing after
+ * sleep periods.
+ */
+&rtc0 {
+	prescaler = <1>;
+	status = "okay";
+};
+
+/ {
+	chosen {
+		zephyr,cortex-m-idle-timer = &rtc0;
+	};
+};
+
+&stop_s2ram {
+	min-residency-us = <1000000>; /* 1s */
+	exit-latency-us = <3000>;
+	status = "okay";
+};
+
+
+/* Disable Zephyr handler for these modules. These
+ * will be controlled from application directly
+ */
+&pd_syst {
+	status = "disabled";
+};
+
+&pd_sse700_aon {
+	status = "disabled";
+};
+
+--- /home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_asr/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay ---
+/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+#include "alif_e8_common.overlay"
+/ {
+	aliases {
+		pdm-audio = &lppdm;
+		i2s-mic = &i2s4;
+		i2s-output = &i2s3;
+	};
+};
+
+&lppdm {
+	status = "okay";
+};
+
+&i2s4 {
+	status = "okay";
+};
+
+&i2s3 {
+	status = "okay";
+};
+
+=== 8. Inspect model generation scripts ===
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/gen/gen_model_cpp.py
+/home/user/sdk-alif/modules/alif-mlek/scripts/py/mlek_tools/gen/__pycache__/gen_model_cpp.cpython-312.pyc
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/source_gen_utils.cmake
+
+=== 9. Existing build model configuration ===
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/CMakeCache.txt:POLYU_MODEL_PATH:FILEPATH=/home/user/sdk-alif/beeinventor/test_heatstroke/../PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_SIZE=5632
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_BASE_ADDRESS=0x80000000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_HAS_FLASH_LOAD_OFFSET=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_LOAD_OFFSET=0x200000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_FILL_BUFFER_SIZE=32
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_INIT_PRIORITY=50
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_DT_HAS_ALIF_MRAM_FLASH_CONTROLLER_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_DT_HAS_ISSI_XSPI_FLASH_CONTROLLER_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_DT_HAS_SNPS_DESIGNWARE_OSPI_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_DT_HAS_SOC_NV_FLASH_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_OSPI1_XIP_REGION="ospi1"
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_USE_ALIF_HAL_OSPI=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_MPU_ALLOW_FLASH_WRITE is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_HAS_DRIVER_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_HAS_EXPLICIT_ERASE=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_HAS_NO_EXPLICIT_ERASE=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_HAS_PAGE_LAYOUT=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_PAGE_LAYOUT=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_MRAM_FLASH_ALIF=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_OSPI_FLASH=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_OSPI_FLASH_IS25WX=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_OSPI=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_ADDRESS_IN_SINGLE_FIFO_LOCATION=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_PREPARE_CMD_LEN=3
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_ALIF_OSPI_FLASH_XIP=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_LOG_LEVEL_OFF is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_LOG_LEVEL_ERR is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_LOG_LEVEL_WRN is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_LOG_LEVEL_INF is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_LOG_LEVEL_DBG is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_LOG_LEVEL_DEFAULT=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_LOG_LEVEL=3
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_FLASH_MAP is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:# CONFIG_STREAM_FLASH is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_FLASH_LOAD_SIZE=0
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config:CONFIG_MODEL_IN_EXT_FLASH=y
+
+=== FINISHED ===
+Log: /home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_external_flash_generator_audit_20261118.log
+No files modified and no build or flash operation performed.
