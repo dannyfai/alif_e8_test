@@ -1,0 +1,264 @@
+===== APPLICATION: INTERPRETER AND ARENA CONFIGURATION =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-439-                static_cast<unsigned int>(sample.missing_count));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-440-        LOG_INF("Ground-truth labels RPE=%u PSI=%u",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-441-                static_cast<unsigned int>(sample.rpe_label),
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-442-                static_cast<unsigned int>(sample.psi_label));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-443-        LOG_INF("Input-vector SHA256: %s", sample.input_sha256);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-444-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-445-        const auto resetStatus = backendData.m_pInterpreter->Reset();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-446-        if (resetStatus != kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:447:            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-448-                    static_cast<int>(resetStatus));
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-449-            return false;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-450-        }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:451:        LOG_INF("MicroInterpreter::Reset: SUCCESS");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-452-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-453-        if (!BindSmokeInputTensor(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-454-                model, 0U, "x_values", sample.x_values_bits,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-455-                5400U * sizeof(std::uint32_t),
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-456-                std::vector<size_t>{1U, 900U, 6U})) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-457-            return false;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-458-        }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc-459-        if (!BindSmokeInputTensor(
+--
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-308-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-309-  const size_t stage_bytes =
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-310-      static_cast<size_t>(time_steps) * batch_size *
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-311-      hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-312-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-313-  const size_t internal_bytes =
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-314-      static_cast<size_t>(batch_size) * hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-315-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:316:  if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-317-          context, reverse_bytes, &op_data->reverse_input_buffer) !=
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-318-          kTfLiteOk ||
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:319:      context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-320-          context, stage_bytes, &op_data->stage_output_buffer) !=
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-321-          kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-322-    MicroPrintf("Heatstroke BiLSTM: scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-323-    return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-324-  }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-325-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-326-  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-327-  // unidirectional FP32 LSTM implementation.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-328-  for (int i = 0; i < 4; ++i) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:329:    if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-330-            context, internal_bytes,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-331-            &op_data->forward.buffer_indices[i]) != kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-332-      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-333-      return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-334-    }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-335-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-336-    // Forward and backward passes execute sequentially, so they can
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-337-    // safely reuse the same four evaluator scratch buffers.
+--
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-268-      input_dimension, hidden, params->activation, params->cell_clip);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-269-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-270-  const size_t internal_bytes =
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-271-      static_cast<size_t>(batch_size) * hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-272-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-273-  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-274-  // unidirectional FP32 LSTM implementation.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-275-  for (int i = 0; i < 4; ++i) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc:276:    if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-277-            context, internal_bytes,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-278-            &op_data->forward.buffer_indices[i]) != kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-279-      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-280-      return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-281-    }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-282-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-283-    // Forward and backward passes execute sequentially, so they can
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-284-    // safely reuse the same four evaluator scratch buffers.
+
+===== TFLM: BUFFER RESIZE FAILURE IMPLEMENTATION =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-88-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-89-        "Internal error: either buffer is not resizable or "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-90-        "ResetTempAllocations() is not called before ResizeBuffer().");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-91-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-92-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-93-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-94-  uint8_t* const aligned_result = AlignPointerUp(buffer_head_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-95-  const size_t available_memory = tail_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-96-  if (available_memory < size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-97-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:98:        "Failed to resize buffer. Requested: %u, available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-99-        size, available_memory, size - available_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-100-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-101-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-102-  head_ = aligned_result + size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-103-  temp_ = head_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-104-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-105-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-106-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-107-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-108-uint8_t* SingleArenaBufferAllocator::AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-109-    size_t size, size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-110-  uint8_t* const aligned_result = AlignPointerDown(tail_ - size, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-111-  if (aligned_result < head_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-112-#ifndef TF_LITE_STRIP_ERROR_STRINGS
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-113-    const size_t missing_memory = head_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-114-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:115:        "Failed to allocate tail memory. Requested: %u, "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-116-        "available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-117-        size, size - missing_memory, missing_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-118-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-119-    return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-120-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-121-  tail_ = aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-122-  return aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-123-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-124-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-125-uint8_t* SingleArenaBufferAllocator::AllocateTemp(size_t size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-126-                                                  size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-127-  uint8_t* const aligned_result = AlignPointerUp(temp_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-128-  const size_t available_memory = tail_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-129-  if (available_memory < size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-130-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc:131:        "Failed to allocate temp memory. Requested: %u, "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-132-        "available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-133-        size, available_memory, size - available_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-134-    return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-135-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-136-  temp_ = aligned_result + size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-137-  temp_buffer_ptr_check_sum_ ^= (reinterpret_cast<intptr_t>(aligned_result));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-138-  temp_buffer_count_++;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-139-  return aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-140-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc-141-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-28-PersistentArenaBufferAllocator::~PersistentArenaBufferAllocator() {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-29-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-30-uint8_t* PersistentArenaBufferAllocator::AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-31-    size_t size, size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-32-  uint8_t* const aligned_result =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-33-      AlignPointerDown(tail_temp_ - size, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-34-  if (aligned_result < buffer_head_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-35-#ifndef TF_LITE_STRIP_ERROR_STRINGS
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-36-    const size_t missing_memory = buffer_head_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-37-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc:38:        "Failed to allocate tail memory. Requested: %u, "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-39-        "available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-40-        size, size - missing_memory, missing_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-41-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-42-    return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-43-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-44-  tail_temp_ = aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-45-  return aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-46-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-47-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc-48-size_t PersistentArenaBufferAllocator::GetPersistentUsedBytes() const {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-28-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-29-NonPersistentArenaBufferAllocator::~NonPersistentArenaBufferAllocator() {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-30-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-31-// Allocates a temporary buffer. This buffer is not resizable.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-32-uint8_t* NonPersistentArenaBufferAllocator::AllocateTemp(size_t size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-33-                                                         size_t alignment) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-34-  uint8_t* const aligned_result = AlignPointerUp(next_temp_, alignment);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-35-  const size_t available_memory = buffer_tail_ - aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-36-  if (available_memory < size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-37-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc:38:        "Failed to allocate temp memory. Requested: %u, "
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-39-        "available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-40-        size, available_memory, size - available_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-41-    return nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-42-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-43-  next_temp_ = aligned_result + size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-44-  temp_buffer_ptr_check_sum_ ^= reinterpret_cast<intptr_t>(aligned_result);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-45-  temp_buffer_count_++;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-46-  return aligned_result;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-47-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-48-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-109-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-110-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-111-  if (head_temp_ != next_temp_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-112-    MicroPrintf("ResetTempAllocations() is not called before ResizeBuffer().");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-113-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-114-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-115-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-116-  const size_t available_memory = buffer_tail_ - expect_resizable_buf;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-117-  if (available_memory < size) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-118-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc:119:        "Failed to resize buffer. Requested: %u, available %u, missing: %u",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-120-        size, available_memory, size - available_memory);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-121-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-122-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-123-  head_temp_ = expect_resizable_buf + size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-124-  next_temp_ = head_temp_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-125-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-126-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-127-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-128-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc-129-// Frees up the memory occupied by the resizable buffer.
+
+===== BUILD: LINKER AND MEMORY FILES =====
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.map (2541415 bytes)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config (48359 bytes)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd (29631 bytes)
+
+===== BUILD: SRAM AND ARENA CONFIGURATION =====
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:12:CONFIG_MAIN_STACK_SIZE=4096
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:13:CONFIG_IDLE_STACK_SIZE=2048
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:14:CONFIG_ISR_STACK_SIZE=4096
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:31:CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE=1024
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:46:# CONFIG_INIT_STACKS is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:56:# CONFIG_HW_STACK_PROTECTION is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:94:CONFIG_PRIVILEGED_STACK_SIZE=2048
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:189:CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE=1024
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:525:CONFIG_SYSTEM_HEAP_ZEPHYR_DEFAULT=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:527:# CONFIG_SYSTEM_HEAP_SRAM1 is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:571:CONFIG_STACK_ALIGN_DOUBLE_WORD=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:575:CONFIG_BUILTIN_STACK_GUARD=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:609:# CONFIG_MPU_STACK_GUARD is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:637:CONFIG_GEN_PRIV_STACKS=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:638:# CONFIG_STACK_GROWS_UP is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:653:CONFIG_ARCH_HAS_STACK_PROTECTION=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:725:CONFIG_THREAD_STACK_INFO=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:791:CONFIG_HEAP_MEM_POOL_SIZE=163840
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:792:# CONFIG_HEAP_MEM_POOL_IGNORE_MIN is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:807:CONFIG_ARCH_MEM_DOMAIN_SUPPORTS_ISOLATED_STACKS=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:808:CONFIG_MEM_DOMAIN_ISOLATED_STACKS=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1205:CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=163840
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1208:# CONFIG_NEWLIB_LIBC_HEAP_LISTENER is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1254:# Heap and Memory Allocation
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1256:# CONFIG_SYS_HEAP_VALIDATE is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1257:# CONFIG_SYS_HEAP_STRESS is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1258:# CONFIG_SYS_HEAP_INFO is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1259:CONFIG_SYS_HEAP_ALLOC_LOOPS=3
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1260:# CONFIG_SYS_HEAP_RUNTIME_STATS is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1261:CONFIG_SYS_HEAP_ARRAY_SIZE=0
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1262:# CONFIG_SYS_HEAP_LISTENER is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1263:CONFIG_SYS_HEAP_SMALL_ONLY=y
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1264:# CONFIG_SYS_HEAP_BIG_ONLY is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1265:# CONFIG_SYS_HEAP_AUTO is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1266:# CONFIG_MULTI_HEAP is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1267:# CONFIG_SHARED_MULTI_HEAP is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1268:# end of Heap and Memory Allocation
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1479:# CONFIG_STACK_USAGE is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1480:# CONFIG_STACK_SENTINEL is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1611:# CONFIG_MEM_ATTR_HEAP is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1682:# CONFIG_MMC_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1683:# CONFIG_SDMMC_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1684:# CONFIG_SDIO_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1714:# CONFIG_USB_DEVICE_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1715:# CONFIG_USB_DEVICE_STACK_NEXT is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1716:# CONFIG_USB_HOST_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1717:# CONFIG_USBC_STACK is not set
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config:1848:CONFIG_THREAD_STACK_SIZE=1024
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:7:    SRAM0 ( rw ) : ORIGIN = (33554432), LENGTH = (4194304) HOST_PERIPHERAL ( rw ) : ORIGIN = (436207616), LENGTH = (16777216) SRAM1 ( rw ) : ORIGIN = (37748736), LENGTH = (4194304) OSPI1 ( rw ) : ORIGIN = (3221225472), LENGTH = (67108864)
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:13:.alif_sram0 (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:15:KEEP(*(.alif_sram0))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:16:KEEP(*(".alif_sram0.*"))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:17:KEEP(*(.noinit.*kheap_buf_video_buffer_pool))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:19: } > SRAM0
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:22:.alif_sram1 (NOLOAD) :
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:24:KEEP(*(.alif_sram1))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:25:KEEP(*(".alif_sram1.*"))
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:26: } > SRAM1
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:342: k_heap_area : ALIGN_WITH_INPUT { _k_heap_list_start = .; *(SORT_BY_NAME(._k_heap.static.*)); _k_heap_list_end = .; } > RAM AT > FLASH
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:344: k_stack_area : ALIGN_WITH_INPUT { _k_stack_list_start = .; *(SORT_BY_NAME(._k_stack.static.*)); _k_stack_list_end = .; } > RAM AT > FLASH
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:406:    /DISCARD/ : { *(.note.GNU-stack) }
+/home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/linker.cmd:412:    SRAM0 (NOLOAD) : { __SRAM0_start = .; KEEP(*(SRAM0)) KEEP(*(SRAM0.*)) __SRAM0_end = .; } > SRAM0 __SRAM0_size = __SRAM0_end - __SRAM0_start; __SRAM0_load_start = LOADADDR(SRAM0); HOST_PERIPHERAL (NOLOAD) : { __HOST_PERIPHERAL_start = .; KEEP(*(HOST_PERIPHERAL)) KEEP(*(HOST_PERIPHERAL.*)) __HOST_PERIPHERAL_end = .; } > HOST_PERIPHERAL __HOST_PERIPHERAL_size = __HOST_PERIPHERAL_end - __HOST_PERIPHERAL_start; __HOST_PERIPHERAL_load_start = LOADADDR(HOST_PERIPHERAL); SRAM1 (NOLOAD) : { __SRAM1_start = .; KEEP(*(SRAM1)) KEEP(*(SRAM1.*)) __SRAM1_end = .; } > SRAM1 __SRAM1_size = __SRAM1_end - __SRAM1_start; __SRAM1_load_start = LOADADDR(SRAM1); OSPI1 (NOLOAD) : { __OSPI1_start = .; KEEP(*(OSPI1)) KEEP(*(OSPI1.*)) __OSPI1_end = .; } > OSPI1 __OSPI1_size = __OSPI1_end - __OSPI1_start; __OSPI1_load_start = LOADADDR(OSPI1);
