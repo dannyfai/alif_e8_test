@@ -1,4 +1,233 @@
-PATCHED: remove temporary-buffer fields from OpData
-PATCHED: remove persistent staging-dimensions allocation
-PATCHED: remove reverse/staging scratch requests and require batch one
-ERROR: expected exactly one match for rename directional output view parameter, found 0; no changes written
+PATCHED: remove temporary-buffer fields
+PATCHED: remove staging dimensions allocation
+PATCHED: remove reverse-input and staged-output scratch requests
+PATCHED: rename directional output view parameter
+PATCHED: update output view assignment
+SOURCE UPDATED: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc
+NEW SHA256: 52721a486e98481a473c22b12b6e6e6f62aba7317fa3c7c2a02f27d8c00c9f31
+
+===== VERIFY REMOVED TEMPORARY BUFFERS =====
+PASS: old staging/reversal references absent
+
+===== SCRATCH REQUESTS =====
+298:    if (context->RequestScratchBufferInArena(
+
+===== DIRECT STEP CALLS =====
+406:  lstm_internal::LstmStepManager forward_step_info(
+416:    lstm_internal::LstmStep<float, float, float, float>(
+430:  lstm_internal::LstmStepManager backward_step_info(
+442:    lstm_internal::LstmStep<float, float, float, float>(
+
+===== DIFF SUMMARY =====
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_bidirectional_lstm.cc.before_direct_output_20261118	2026-11-17 22:50:33.424989224 +0800
++++ /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc	2026-11-18 11:40:13.097815998 +0800
+@@ -17,9 +17,6 @@
+ struct HeatstrokeBidirectionalLstmOpData {
+   OpDataLSTM forward;
+   OpDataLSTM backward;
+-  TfLiteIntArray* staged_output_dims;
+-  int reverse_input_buffer;
+-  int stage_output_buffer;
+ };
+ 
+ TfLiteEvalTensor* GetInputEvalTensor(TfLiteContext* context,
+@@ -274,23 +271,6 @@
+     return kTfLiteError;
+   }
+ 
+-  // The directional evaluator must see [time_steps, batch_size, hidden],
+-  // not the merged output shape [time_steps, batch_size, 2 * hidden].
+-  const size_t staged_dims_bytes =
+-      sizeof(TfLiteIntArray) + 2 * sizeof(int);
+-  op_data->staged_output_dims =
+-      static_cast<TfLiteIntArray*>(
+-          context->AllocatePersistentBuffer(context, staged_dims_bytes));
+-
+-  if (op_data->staged_output_dims == nullptr) {
+-    MicroPrintf("Heatstroke BiLSTM: output dimensions allocation failed");
+-    return kTfLiteError;
+-  }
+-
+-  op_data->staged_output_dims->size = 3;
+-  op_data->staged_output_dims->data[0] = time_steps;
+-  op_data->staged_output_dims->data[1] = batch_size;
+-  op_data->staged_output_dims->data[2] = hidden;
+ 
+   // Compact 29-slot model: no separate auxiliary input slots exist.
+ 
+@@ -302,27 +282,16 @@
+       &op_data->backward, true, batch_size, time_steps,
+       input_dimension, hidden, params->activation, params->cell_clip);
+ 
+-  const size_t reverse_bytes =
+-      static_cast<size_t>(time_steps) * batch_size *
+-      input_dimension * sizeof(float);
+-
+-  const size_t stage_bytes =
+-      static_cast<size_t>(time_steps) * batch_size *
+-      hidden * sizeof(float);
++  // Direct output evaluation below supports time-major, batch-one sequences.
++  // The backward pass traverses the original input in reverse order.
++  if (batch_size != 1) {
++    MicroPrintf("Heatstroke BiLSTM: direct output requires batch size 1");
++    return kTfLiteError;
++  }
+ 
+   const size_t internal_bytes =
+       static_cast<size_t>(batch_size) * hidden * sizeof(float);
+ 
+-  if (context->RequestScratchBufferInArena(
+-          context, reverse_bytes, &op_data->reverse_input_buffer) !=
+-          kTfLiteOk ||
+-      context->RequestScratchBufferInArena(
+-          context, stage_bytes, &op_data->stage_output_buffer) !=
+-          kTfLiteOk) {
+-    MicroPrintf("Heatstroke BiLSTM: scratch allocation failed");
+-    return kTfLiteError;
+-  }
+-
+   // Match the four scratch buffers requested by TFLM's existing
+   // unidirectional FP32 LSTM implementation.
+   for (int i = 0; i < 4; ++i) {
+@@ -350,7 +319,7 @@
+                                int hidden_state_position,
+                                int cell_state_position,
+                                const TfLiteEvalTensor* input,
+-                               TfLiteEvalTensor* staged_output,
++                               TfLiteEvalTensor* output_view,
+                                LSTMKernelContents* contents) {
+   for (int i = 0; i < 24; ++i) {
+     contents->internal_tensors[i] = nullptr;
+@@ -379,7 +348,7 @@
+   contents->internal_tensors[19] =
+       GetInputEvalTensor(context, node, cell_state_position);
+ 
+-  contents->output_tensor = staged_output;
++  contents->output_tensor = output_view;
+ }
+ 
+ TfLiteStatus HeatstrokeBidirectionalLstmEval(TfLiteContext* context,
+@@ -405,75 +374,73 @@
+   const int input_dimension = op_data->forward.size_info.input_dimension;
+   const int hidden = op_data->forward.size_info.state_dimension;
+ 
+-  auto* reversed_input = static_cast<float*>(
+-      context->GetScratchBuffer(
+-          context, op_data->reverse_input_buffer));
+-
+-  auto* staged_output = static_cast<float*>(
+-      context->GetScratchBuffer(
+-          context, op_data->stage_output_buffer));
+-
+-  if (reversed_input == nullptr || staged_output == nullptr) {
+-    MicroPrintf("Heatstroke BiLSTM: scratch buffer unavailable");
++  if (op_data->forward.size_info.batch_size != 1 ||
++      op_data->backward.size_info.batch_size != 1 ||
++      !op_data->forward.size_info.time_major ||
++      !op_data->backward.size_info.time_major) {
++    MicroPrintf("Heatstroke BiLSTM: direct output requires time-major batch one");
+     return kTfLiteError;
+   }
+ 
+   const float* input_data = input->data.f;
+   float* output_data = output->data.f;
+ 
+-  // Reverse the time dimension for the backward direction.
+-  for (int t = 0; t < time_steps; ++t) {
+-    std::memcpy(
+-        reversed_input + t * input_dimension,
+-        input_data + (time_steps - 1 - t) * input_dimension,
+-        input_dimension * sizeof(float));
++  if (input_data == nullptr || output_data == nullptr) {
++    MicroPrintf("Heatstroke BiLSTM: input/output data unavailable");
++    return kTfLiteError;
+   }
+ 
+-  TfLiteEvalTensor reversed_input_tensor = *input;
+-  reversed_input_tensor.data.f = reversed_input;
+-
+-  TfLiteEvalTensor staged_output_tensor = *output;
+-  staged_output_tensor.data.f = staged_output;
+-  staged_output_tensor.dims = op_data->staged_output_dims;
+-
+-  LSTMKernelContents forward_contents{};
+-  PopulateDirectionContents(context, node, 1, 5, 9, 25, 26, input, &staged_output_tensor, &forward_contents);
+-
+   LSTMBuffers<float> buffers =
+       CreateLSTMBuffers<float>(context, op_data->forward.buffer_indices);
+ 
+-  TfLiteStatus forward_status =
+-      EvalLstm<float, float, float, float>(
+-          op_data->forward, forward_contents, buffers);
+-  if (forward_status != kTfLiteOk) {
+-    return forward_status;
+-  }
++  // Keep the step-manager offsets at zero. Move the input/output views
++  // to the current timestep instead. Hidden and cell states update in place.
++  TfLiteEvalTensor forward_input_view = *input;
++  TfLiteEvalTensor forward_output_view = *output;
++
++  LSTMKernelContents forward_contents{};
++  PopulateDirectionContents(
++      context, node, 1, 5, 9, 25, 26,
++      &forward_input_view, &forward_output_view, &forward_contents);
++
++  lstm_internal::LstmStepManager forward_step_info(
++      &op_data->forward.size_info);
+ 
+-  // Copy forward outputs into the first half of the merged output.
+   for (int t = 0; t < time_steps; ++t) {
+-    std::memcpy(
+-        output_data + t * (2 * hidden),
+-        staged_output + t * hidden,
+-        hidden * sizeof(float));
++    forward_input_view.data.f =
++        const_cast<float*>(input_data + t * input_dimension);
++
++    forward_output_view.data.f =
++        output_data + t * (2 * hidden);
++
++    lstm_internal::LstmStep<float, float, float, float>(
++        forward_step_info, op_data->forward, forward_contents, buffers);
+   }
+ 
++  // Process the original input backwards and write directly to the
++  // corresponding backward half of each output timestep.
++  TfLiteEvalTensor backward_input_view = *input;
++  TfLiteEvalTensor backward_output_view = *output;
++
+   LSTMKernelContents backward_contents{};
+-  PopulateDirectionContents(context, node, 13, 17, 21, 27, 28, &reversed_input_tensor, &staged_output_tensor, &backward_contents);
++  PopulateDirectionContents(
++      context, node, 13, 17, 21, 27, 28,
++      &backward_input_view, &backward_output_view, &backward_contents);
+ 
+-  TfLiteStatus backward_status =
+-      EvalLstm<float, float, float, float>(
+-          op_data->backward, backward_contents, buffers);
+-  if (backward_status != kTfLiteOk) {
+-    return backward_status;
+-  }
++  lstm_internal::LstmStepManager backward_step_info(
++      &op_data->backward.size_info);
+ 
+-  // Restore backward outputs to original time order and copy them
+-  // into the second half of the merged output.
+   for (int t = 0; t < time_steps; ++t) {
+-    std::memcpy(
+-        output_data + t * (2 * hidden) + hidden,
+-        staged_output + (time_steps - 1 - t) * hidden,
+-        hidden * sizeof(float));
++    const int original_t = time_steps - 1 - t;
++
++    backward_input_view.data.f =
++        const_cast<float*>(input_data + original_t * input_dimension);
++
++    backward_output_view.data.f =
++        output_data + original_t * (2 * hidden) + hidden;
++
++    lstm_internal::LstmStep<float, float, float, float>(
++        backward_step_info, op_data->backward, backward_contents, buffers);
+   }
+ 
+   return kTfLiteOk;
