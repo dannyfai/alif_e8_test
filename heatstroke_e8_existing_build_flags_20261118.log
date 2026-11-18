@@ -1,0 +1,106 @@
+===== CMAKE CACHE: BUILD IDENTITY =====
+APPLICATION_SOURCE_DIR:PATH=/home/user/sdk-alif/beeinventor/test_heatstroke
+BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+CONF_FILE:STRING=/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf
+DTC_OVERLAY_FILE:STRING=/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-256
+ZEPHYR_BASE:PATH=/home/user/sdk-alif/zephyr
+CMAKE_BUILD_TYPE:INTERNAL=Release
+CMAKE_GENERATOR:INTERNAL=Ninja
+CMAKE_HOME_DIRECTORY:INTERNAL=/home/user/sdk-alif/beeinventor/test_heatstroke
+
+===== GENERATED NPU CONFIGURATION =====
+1:# CONFIG_INPUT is not set
+119:CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED=y
+187:# CONFIG_ALIF_ETHOSU_SHELL is not set
+188:CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY=10
+189:CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE=1024
+190:CONFIG_ETHOSU_VERBOSE_LEVEL=1
+344:# hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+346:CONFIG_ARM_ETHOS_U=y
+349:# Arm Ethos-U NPU configuration
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+362:# end of Arm Ethos-U NPU configuration
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+372:CONFIG_ZEPHYR_HAL_ETHOS_U_MODULE=y
+373:# end of hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+906:CONFIG_CONSOLE_INPUT_MAX_LINE_LEN=128
+913:CONFIG_UART_CONSOLE_INPUT_EXPIRED=y
+914:CONFIG_UART_CONSOLE_INPUT_EXPIRED_TIMEOUT=15000
+1840:# CONFIG_ETHOS_U_AXI0_ONLY is not set
+
+===== APPLICATION ACTIVATION BUFFER DECLARATION =====
+154-#endif
+155-#else
+156-#define LPGPIO_EWIC_CFG 0
+157-#define LPGPIO_WAKEUP_EVENT 0
+158-#endif
+159-
+160-namespace arm {
+161-namespace app {
+162:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+163-
+164-    namespace polyu_heatstroke {
+165-extern const uint8_t* GetModelPointer();
+166-extern size_t GetModelLen();
+167-} /* namespace polyu_heatstroke */
+168-
+169-} /* namespace app */
+170-} /* namespace arm */
+171-
+172-
+173-#if LPGPIO_WAKEUP_ENABLED
+174-static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+175-	DT_NODELABEL(wakeup_pins), lpgpios, 0, {0});
+176-#endif
+--
+608-    LOG_INF("Combined model size: %u bytes",
+609-            static_cast<unsigned int>(modelLength));
+610-
+611-    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+612-    arm::app::fwk::iface::MemoryRegion modelMem{
+613-        const_cast<uint8_t*>(modelPointer), modelLength};
+614-
+615-    arm::app::fwk::iface::MemoryRegion computeMem{
+616:        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+617-
+618-    PolyUModel1 model;
+619-
+620-    printk("HP_BOOT_TRACE: entering model.Init\r\n");
+621-    if (!model.Init(computeMem, modelMem)) {
+622-        LOG_ERR("Failed to initialise combined heat-stress model");
+623-        return;
+624-    }
+625-
+626-    printk("HP_BOOT_TRACE: model.Init SUCCESS\r\n");
+627-    LOG_INF("Combined heat-stress model initialisation: OK");
+628-    LOG_INF("Contains Ethos-U operators: %s",
+629-            model.ContainsEthosUOperator() ? "yes" : "no");
+630-
+
+===== EXISTING WEST BUILD METADATA =====
+PRESENT: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config
+PRESENT: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.dts
+
+===== HP BOARD CONFIGURATION =====
+CONFIG_ACTIVATION_BUF_SECTION=".bss.NoInit.activation_buf_sram"
+
+===== SOURCE HASH =====
+52721a486e98481a473c22b12b6e6e6f62aba7317fa3c7c2a02f27d8c00c9f31  /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc
