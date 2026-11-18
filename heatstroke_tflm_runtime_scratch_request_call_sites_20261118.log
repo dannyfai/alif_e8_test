@@ -1,0 +1,1020 @@
+===== TFLM RUNTIME SCRATCH REQUEST CALL-SITE AUDIT =====
+APP=/home/user/sdk-alif/beeinventor/test_heatstroke
+SDK=/home/user/sdk-alif
+
+===== SEARCH ROOT: /home/user/sdk-alif/beeinventor/test_heatstroke/src =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-311-      hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-312-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-313-  const size_t internal_bytes =
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-314-      static_cast<size_t>(batch_size) * hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-315-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:316:  if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-317-          context, reverse_bytes, &op_data->reverse_input_buffer) !=
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-318-          kTfLiteOk ||
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:319:      context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-320-          context, stage_bytes, &op_data->stage_output_buffer) !=
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-321-          kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-322-    MicroPrintf("Heatstroke BiLSTM: scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-323-    return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-324-  }
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-325-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-326-  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-327-  // unidirectional FP32 LSTM implementation.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-328-  for (int i = 0; i < 4; ++i) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:329:    if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-330-            context, internal_bytes,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-331-            &op_data->forward.buffer_indices[i]) != kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-332-      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-333-      return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc-334-    }
+--
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-271-      static_cast<size_t>(batch_size) * hidden * sizeof(float);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-272-
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-273-  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-274-  // unidirectional FP32 LSTM implementation.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-275-  for (int i = 0; i < 4; ++i) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc:276:    if (context->RequestScratchBufferInArena(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-277-            context, internal_bytes,
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-278-            &op_data->forward.buffer_indices[i]) != kTfLiteOk) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-279-      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-280-      return kTfLiteError;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc-281-    }
+
+===== SEARCH ROOT: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek =====
+
+===== SEARCH ROOT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1580-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1581-  if (input->type != kTfLiteInt8) return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1582-  if (NumElements(input->dims) == 0) return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1583-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1584-  // Allocate a temporary buffer with the same size of input for sorting.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:1585:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1586-      context, sizeof(uint8_t) * NumElements(input->dims),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1587-      &data->sorting_buffer));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1588-  // We can interleave scratch / persistent buffer allocation.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1589-  data->invoke_count = reinterpret_cast<int*>(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-1590-      context->AllocatePersistentBuffer(context, sizeof(int)));
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-242-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-243-  // Register a scratch buffer of size `bytes` for Node with `node_id`.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-244-  // This method only requests a buffer with a given size to be used after a
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-245-  // model has finished allocation via FinishModelAllocation(). All requested
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-246-  // buffers will be accessible by the out-param in that method.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h:247:  TfLiteStatus RequestScratchBufferInArena(size_t bytes, int subgraph_idx,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-248-                                           int* buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-249-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-250-  // Finish allocating a specific NodeAndRegistration prepare block (kernel
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-251-  // entry for a model) with a given node ID. This call ensures that any scratch
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-252-  // buffer requests and temporary allocations are handled and ready for the
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-331-  // preparing.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-332-  TfLiteStatus InitScratchBufferData();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-333-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-334-  // Returns the pointer for the array of ScratchBufferRequest allocations in
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-335-  // the head section.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h:336:  internal::ScratchBufferRequest* GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-337-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-338-  // A simple memory allocator that always allocate from the arena tail or head.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-339-  INonPersistentBufferAllocator* non_persistent_buffer_allocator_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-340-  IPersistentBufferAllocator* persistent_buffer_allocator_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-341-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-349-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-350-  bool model_is_allocating_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-351-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-352-  // Holds the number of ScratchBufferRequest instances stored in the head
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-353-  // section when a model is allocating.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h:354:  size_t scratch_buffer_request_count_ = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-355-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-356-  // Holds ScratchBufferRequest when a model is allocating
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-357-  uint8_t* scratch_buffer_head_ = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-358-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h-359-  // Holds the byte length of the memory plan with the largest head usage. Used
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-63-  TFLITE_DCHECK(state_ == InterpreterState::kPrepare ||
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-64-                state_ == InterpreterState::kInit);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-65-  return allocator_.AllocatePersistentBuffer(bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-66-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-67-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc:68:TfLiteStatus MicroInterpreterContext::RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-69-    size_t bytes, int* buffer_idx) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-70-  TFLITE_DCHECK(state_ == InterpreterState::kPrepare);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc:71:  return allocator_.RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-72-      bytes, graph_.GetCurrentSubgraphIndex(), buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-73-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-74-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-75-void* MicroInterpreterContext::GetScratchBuffer(int buffer_idx) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-76-  TFLITE_DCHECK(state_ == InterpreterState::kInvoke);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-180-    // scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-181-    return -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-182-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-183-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-184-  int scratch_index = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc:185:  TfLiteStatus result = RequestScratchBufferInArena(byte_count, &scratch_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-186-  TFLITE_DCHECK(scratch_index != -1 && result == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-187-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-188-  return scratch_index;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-189-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc-190-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-85-  // correctly with optimized kernels.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-86-  return allocator_->AllocatePersistentBuffer(bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-87-                                              MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-88-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-89-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc:90:TfLiteStatus FakeMicroContext::RequestScratchBufferInArena(size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-91-                                                           int* buffer_index) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-92-  TFLITE_DCHECK(buffer_index != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-93-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-94-  if (scratch_buffer_count_ == kNumScratchBuffers_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-95-    MicroPrintf("Exceeded the maximum number of scratch tensors allowed (%d).",
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-153-    return -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-154-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-155-  TfLiteTensor* tensor = &tensors_[index];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-156-  int scratch_index = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-157-  TfLiteStatus result =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc:158:      RequestScratchBufferInArena(tensor->bytes, &scratch_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-159-  if (result != kTfLiteOk) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-160-    return -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-161-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-162-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc-163-  return scratch_index;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1361-  const int scratch_subgraph_idx = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1362-  const int scratch_node_idx = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1363-  const size_t scratch_size = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1364-  int buffer_idx1 = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1365-  TF_LITE_MICRO_EXPECT_EQ(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1366:      kTfLiteOk, allocator->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1367-                     scratch_size, scratch_subgraph_idx, &buffer_idx1));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1368-  int buffer_idx2 = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1369-  TF_LITE_MICRO_EXPECT_EQ(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1370:      kTfLiteOk, allocator->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1371-                     scratch_size, scratch_subgraph_idx, &buffer_idx2));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1372-  TF_LITE_MICRO_EXPECT_EQ(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1373-      kTfLiteOk, allocator->FinishPrepareNodeAllocations(scratch_node_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1374-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1375-  TF_LITE_MICRO_EXPECT_EQ(
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-54-  // Request a scratch buffer in the arena through static memory planning.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-55-  // This method is only available in Prepare stage and the buffer is allocated
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-56-  // by the interpreter between Prepare and Eval stage. In Eval stage,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-57-  // GetScratchBuffer API can be used to fetch the address.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-58-  // Virtual so that it can be faked for kernel tests.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h:59:  virtual TfLiteStatus RequestScratchBufferInArena(size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-60-                                                   int* buffer_idx) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-61-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-62-  // Get the scratch buffer pointer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-63-  // This method is only available in Eval stage.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h-64-  // Virtual so that it can be faked for kernel tests.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-50-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-51-  // Request a scratch buffer in the arena through static memory planning.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-52-  // This method is only available in Prepare stage and the buffer is allocated
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-53-  // by the interpreter between Prepare and Eval stage. In Eval stage,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-54-  // GetScratchBuffer API can be used to fetch the address.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h:55:  virtual TfLiteStatus RequestScratchBufferInArena(size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-56-                                                   int* buffer_idx) = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-57-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-58-  // Get the scratch buffer pointer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-59-  // This method is only available in Eval stage.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-60-  virtual void* GetScratchBuffer(int buffer_idx) = 0;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-182-// struct for TFLM.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-183-inline void* MicroContextAllocatePersistentBuffer(TfLiteContext* ctx,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-184-                                                  size_t bytes) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-185-  return GetMicroContext(ctx)->AllocatePersistentBuffer(bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-186-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h:187:inline TfLiteStatus MicroContextRequestScratchBufferInArena(TfLiteContext* ctx,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-188-                                                            size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-189-                                                            int* buffer_idx) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h:190:  return GetMicroContext(ctx)->RequestScratchBufferInArena(bytes, buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-191-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-192-inline void* MicroContextGetScratchBuffer(TfLiteContext* ctx, int buffer_idx) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-193-  return GetMicroContext(ctx)->GetScratchBuffer(buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-194-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h-195-inline TfLiteTensor* MicroContextGetTensor(const struct TfLiteContext* context,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-93-  context_.impl_ = static_cast<void*>(&micro_context_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-94-  context_.ReportError = MicroContextReportOpError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-95-  context_.GetTensor = MicroContextGetTensor;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-96-  context_.GetEvalTensor = MicroContextGetEvalTensor;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-97-  context_.profiler = profiler;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc:98:  context_.RequestScratchBufferInArena =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc:99:      MicroContextRequestScratchBufferInArena;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-100-  context_.GetExternalContext = MicroContextGetExternalContext;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-101-  context_.AllocatePersistentBuffer = MicroContextAllocatePersistentBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-102-  context_.GetScratchBuffer = MicroContextGetScratchBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-103-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc-104-  initialization_status_ = kTfLiteOk;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-52-}  // namespace
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-53-}  // namespace tflite
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-54-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-55-TF_LITE_MICRO_TESTS_BEGIN
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-56-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc:57:TF_LITE_MICRO_TEST(TestGetBeforeRequestScratchBufferWouldReturnNull) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-58-  constexpr size_t kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-59-  uint8_t arena_buffer[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-60-  tflite::SingleArenaBufferAllocator simple_memory_allocator(arena_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-61-                                                             kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-62-  tflite::MockMicroGraph dummy_micro_graph{&simple_memory_allocator};
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-65-      &simple_memory_allocator, &dummy_micro_graph);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-66-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-67-  TF_LITE_MICRO_EXPECT(micro_context.GetScratchBuffer(0) == nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-68-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-69-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc:70:TF_LITE_MICRO_TEST(TestRequestScratchBufferAndThenGetShouldSucceed) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-71-  constexpr size_t kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-72-  uint8_t arena_buffer[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-73-  tflite::SingleArenaBufferAllocator simple_memory_allocator(arena_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-74-                                                             kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-75-  tflite::MockMicroGraph dummy_micro_graph{&simple_memory_allocator};
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-77-  tflite::FakeMicroContext micro_context = tflite::CreateFakeMicroContext(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-78-      &simple_memory_allocator, &dummy_micro_graph);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-79-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-80-  constexpr size_t kScratchBufferSize = 16;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-81-  int scratch_buffer_index = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc:82:  TF_LITE_MICRO_EXPECT_EQ(micro_context.RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-83-                              kScratchBufferSize, &scratch_buffer_index),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-84-                          kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-85-  TF_LITE_MICRO_EXPECT_EQ(scratch_buffer_index, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-86-  TF_LITE_MICRO_EXPECT(micro_context.GetScratchBuffer(scratch_buffer_index) !=
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-87-                       nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-88-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc:89:  TF_LITE_MICRO_EXPECT_EQ(micro_context.RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-90-                              kScratchBufferSize, &scratch_buffer_index),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-91-                          kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-92-  TF_LITE_MICRO_EXPECT_EQ(scratch_buffer_index, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-93-  TF_LITE_MICRO_EXPECT(micro_context.GetScratchBuffer(scratch_buffer_index) !=
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context_test.cc-94-                       nullptr);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-676-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-677-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-678-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-679-  // Allocate scratch buffer metadata.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-680-  TF_LITE_ENSURE_STATUS(AllocateScratchBufferHandles(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:681:      scratch_buffer_handles, scratch_buffer_request_count_));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-682-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-683-  // Plan all subgraphs and scratch buffers together.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-684-  TF_LITE_ENSURE_STATUS(CommitStaticMemoryPlan(model, subgraph_allocations,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-685-                                               *scratch_buffer_handles));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-686-  model_is_allocating_ = false;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-690-void* MicroAllocator::AllocatePersistentBuffer(size_t bytes) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-691-  return persistent_buffer_allocator_->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-692-      bytes, MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-693-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-694-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:695:TfLiteStatus MicroAllocator::RequestScratchBufferInArena(size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-696-                                                         int subgraph_idx,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-697-                                                         int* buffer_idx) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-698-  // All scratch buffer requests are stored in the head section of the arena
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-699-  // when a model is in the prepare phase. First align a scratch buffer request
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-700-  // pointer to the start of the head:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:701:  internal::ScratchBufferRequest* requests = GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-702-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-703-  // Count the number of requested scratch buffers for the current node:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-704-  size_t current_node_request_count = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:705:  for (size_t i = 0; i < scratch_buffer_request_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-706-    if (requests[i].node_idx == kUnassignedScratchBufferRequestIndex) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-707-      ++current_node_request_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-708-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-709-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-710-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-715-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-716-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-717-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-718-  // Initialize and assign values for the request at the current index:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-719-  internal::ScratchBufferRequest* current_request =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:720:      &requests[scratch_buffer_request_count_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-721-  *current_request = {};
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-722-  // Assign -1 as a sentinel value that will be updated when the node finishes
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-723-  // allocating:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-724-  current_request->bytes = bytes;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-725-  current_request->node_idx = kUnassignedScratchBufferRequestIndex;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-726-  current_request->subgraph_idx = subgraph_idx;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-727-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-728-  // Assign the current request index to the out-param:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:729:  *buffer_idx = scratch_buffer_request_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-730-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-731-  // Bump the request count to prepare for the next request:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:732:  ++scratch_buffer_request_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-733-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-734-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-735-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-736-TfLiteStatus MicroAllocator::FinishPrepareNodeAllocations(int node_id) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-737-  // When a node has finished preparing, all temp allocations performed by the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-738-  // kernel should be cleaned up:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-739-  TF_LITE_ENSURE_STATUS(ResetTempAllocations());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-740-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-741-  // Find and update any new scratch buffer requests for the current node:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:742:  internal::ScratchBufferRequest* requests = GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-743-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:744:  for (size_t i = 0; i < scratch_buffer_request_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-745-    // A request with a node_idx of -1 is a sentinel value used to indicate this
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-746-    // was a new request for the current node. The allocator finally knows the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-747-    // node index at this point. Assign the value and update the list of new
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-748-    // requests so the head section can be adjusted to allow for the next kernel
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-749-    // to allocate at most kMaxScratchBuffersPerOp requests:
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-755-  // Ensure that the head is re-adjusted to allow for another at-most
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-756-  // kMaxScratchBuffersPerOp scratch buffer requests in the next operator:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-757-  TF_LITE_ENSURE_STATUS(non_persistent_buffer_allocator_->ResizeBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-758-      scratch_buffer_head_,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-759-      sizeof(internal::ScratchBufferRequest) *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:760:          (scratch_buffer_request_count_ + kMaxScratchBuffersPerOp),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-761-      alignof(internal::ScratchBufferRequest)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-762-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-763-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-764-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-765-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1125-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1126-  // Use the AllocationInfoBuilder class to help determine where buffers are
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1127-  // used in the subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1128-  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1129-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1130:      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1131-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1132-  const int32_t* offline_planner_offsets = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1133-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1134-      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1135-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1145-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1146-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1147-      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1148-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1149-  internal::ScratchBufferRequest* scratch_buffer_requests =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1150:      GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1151-  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1152-      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1153-  int allocation_info_count = builder.AllocationCount();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1154-  AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1155-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1208-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1209-TfLiteStatus MicroAllocator::AllocateScratchBufferHandles(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1210-    ScratchBufferHandle** scratch_buffer_handles, size_t handle_count) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1211-  TFLITE_DCHECK(scratch_buffer_handles != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1212-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1213:  if (scratch_buffer_request_count_ == 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1214-    // No scratch buffer requests were requested during model allocation.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1215-    return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1216-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1217-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1218-  // Allocate a consecutive block of memory store the scratch buffer handles.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1226-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1227-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1228-TfLiteStatus MicroAllocator::InitScratchBufferData() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1229-  // A model is preparing to allocate resources, ensure that scratch buffer
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1230-  // request counter is cleared:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1231:  scratch_buffer_request_count_ = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1232-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1233-  // All requests will be stored in the head section. Each kernel is allowed at
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1234-  // most kMaxScratchBuffersPerOp requests. Adjust the head to reserve at most
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1235-  // that many requests to begin:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1236-  scratch_buffer_head_ =
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1242-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1243-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1244-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1245-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1246-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1247:internal::ScratchBufferRequest* MicroAllocator::GetScratchBufferRequests() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1248-  return reinterpret_cast<internal::ScratchBufferRequest*>(AlignPointerUp(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1249-      scratch_buffer_head_, alignof(internal::ScratchBufferRequest)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1250-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1251-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1252-TfLiteBridgeBuiltinDataAllocator* MicroAllocator::GetBuiltinDataAllocator() {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-36-                   const CompressedTensorList* compressed_tensors = nullptr
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-37-#endif  // USE_TFLM_COMPRESSION
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-38-  );
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-39-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-40-  void* AllocatePersistentBuffer(size_t bytes) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h:41:  TfLiteStatus RequestScratchBufferInArena(size_t bytes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-42-                                           int* buffer_index) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-43-  void* GetScratchBuffer(int buffer_index) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-44-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-45-  TfLiteTensor* AllocateTempTfLiteTensor(int tensor_index) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h-46-  void DeallocateTempTfLiteTensor(TfLiteTensor* tensor) override;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-182-      input_class_predictions->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-183-  op_data->input_anchors.scale = input_anchors->params.scale;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-184-  op_data->input_anchors.zero_point = input_anchors->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-185-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-186-  // Scratch tensors
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:187:  context->RequestScratchBufferInArena(context, num_boxes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-188-                                       &op_data->active_candidate_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:189:  context->RequestScratchBufferInArena(context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-190-                                       num_boxes * kNumCoordBox * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-191-                                       &op_data->decoded_boxes_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:192:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-193-      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-194-      input_class_predictions->dims->data[1] *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-195-          input_class_predictions->dims->data[2] * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-196-      &op_data->scores_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-197-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-198-  // Additional buffers
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:199:  context->RequestScratchBufferInArena(context, num_boxes * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-200-                                       &op_data->score_buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:201:  context->RequestScratchBufferInArena(context, num_boxes * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-202-                                       &op_data->keep_scores_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:203:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-204-      context, op_data->max_detections * num_boxes * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-205-      &op_data->scores_after_regular_non_max_suppression_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:206:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-207-      context, op_data->max_detections * num_boxes * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-208-      &op_data->sorted_values_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:209:  context->RequestScratchBufferInArena(context, num_boxes * sizeof(int),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-210-                                       &op_data->keep_indices_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:211:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-212-      context, op_data->max_detections * num_boxes * sizeof(int),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-213-      &op_data->sorted_indices_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-214-  int buffer_size = std::max(num_classes, op_data->max_detections);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:215:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-216-      context, buffer_size * num_boxes * sizeof(int), &op_data->buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-217-  buffer_size = std::min(num_boxes, op_data->max_detections);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc:218:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-219-      context, buffer_size * num_boxes * sizeof(int), &op_data->selected_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-220-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-221-  // Outputs: detection_boxes, detection_scores, detection_classes,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-222-  // num_detections
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc-223-  TF_LITE_ENSURE_EQ(context, NumOutputs(node), 4);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-83-        TfLiteTypeGetName(cell_state_type), cell_state_type);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-84-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-85-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-86-  // request buffers (four buffers)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-87-  for (size_t i = 0; i < 4; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc:88:    TF_LITE_ENSURE_OK(context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-89-                                   context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-90-                                   op_data->size_info.batch_size *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-91-                                       op_data->size_info.state_dimension *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-92-                                       TfLiteTypeGetSize(cell_state_type),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/unidirectional_sequence_lstm.cc-93-                                   &(op_data->buffer_indices[i])));
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-131-    if (input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-132-      TFLITE_DCHECK(filter->type == kTfLiteInt8);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-133-      TFLITE_DCHECK(output->type == kTfLiteInt16);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-134-      if (bias->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-135-        TFLITE_DCHECK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:136:            context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-137-                context, GetTensorShape(bias).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-138-                &(data->bias_converted_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-139-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-140-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-141-    micro_context->DeallocateTempTfLiteTensor(input);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-188-      static_cast<int32_t*>(context->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-189-          context, num_channels * sizeof(int32_t)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-190-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-191-  // Quantized kernels use an int32 scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-192-  if (input->type == kTfLiteInt8) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:193:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-194-#if defined(HIFI3) || defined(HIFI4) || defined(HIFI5)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-195-    const int stride_width = params->stride_width;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-196-    const int stride_height = params->stride_height;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-197-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-198-    const int input_height = SizeOfDimension(input, 1);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-203-    int32_t scratch_buffer_size = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-204-    scratch_buffer_size = xa_nn_transpose_conv_getsize(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-205-        input_height, input_width, input_depth, filter_height, filter_width,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-206-        stride_width, stride_height, output_height, output_width, num_channels,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-207-        PREC_SYM8S, PREC_ASYM8S);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:208:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-209-                      context, scratch_buffer_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-210-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-211-#else  // #if defined(HIFI3) || defined(HIFI4) || defined(HIFI5)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:212:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-213-                      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-214-                      GetTensorShape(output).FlatSize() * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-215-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-216-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-217-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-218-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-219-  // Quantized 16x8 kernels use an int64 scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-220-  if (input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:221:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-222-#if defined(HIFI3) || defined(HIFI4) || defined(HIFI5)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-223-    const int stride_width = params->stride_width;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-224-    const int stride_height = params->stride_height;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-225-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-226-    const int input_height = SizeOfDimension(input, 1);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-231-    int32_t scratch_buffer_size = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-232-    scratch_buffer_size = xa_nn_transpose_conv_getsize(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-233-        input_height, input_width, input_depth, filter_height, filter_width,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-234-        stride_width, stride_height, output_height, output_width, num_channels,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-235-        PREC_SYM8S, PREC_SYM16S);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:236:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-237-                      context, scratch_buffer_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-238-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-239-#else   // #if defined(HIFI3) || defined(HIFI4) || defined(HIFI5)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc:240:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-241-                      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-242-                      GetTensorShape(output).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-243-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-244-#endif  // #if defined(HIFI3) || defined(HIFI4) || defined(HIFI5)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/transpose_conv.cc-245-  }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-139-    if (required_scratch <= 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-140-      MicroPrintf("Averagepool: xa_nn_avgpool_getsize failed");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-141-      return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-142-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-143-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc:144:    TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-145-        context, required_scratch, &(data->scratch_tensor_index)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-146-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-147-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-148-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-149-  return kTfLiteOk;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-234-    if (required_scratch <= 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-235-      MicroPrintf("Maxpool: xa_nn_maxpool_getsize failed");
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-236-      return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-237-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-238-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc:239:    TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-240-        context, required_scratch, &(data->scratch_tensor_index)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-241-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-242-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-243-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/pooling_int8.cc-244-  return kTfLiteOk;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-228-#endif  // defined(HIFIMINI)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-229-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-230-  data->input_zero_point = input->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-231-  data->output_zero_point = output->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-232-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc:233:  const TfLiteStatus scratch_status = context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-234-      context, batch_size * num_filters * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-235-      &(data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-236-  TF_LITE_ENSURE_OK(context, scratch_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-237-  const TfLiteStatus scratch_output_status =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc:238:      context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-239-          context, batch_size * num_units * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-240-          &(data->scratch_output_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-241-  TF_LITE_ENSURE_OK(context, scratch_output_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-242-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/svdf.cc-243-  micro_context->DeallocateTempTfLiteTensor(input);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-50-        get_softmax_scratch_size(PREC_ASYM8S, PREC_ASYM8S, depth);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-51-    TF_LITE_ENSURE(context, required_scratch > 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-52-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-53-    auto* data = static_cast<XtensaSoftmaxOpData*>(node->user_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-54-    TF_LITE_ENSURE_OK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc:55:        context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-56-                     context, required_scratch, &(data->scratch_tensor_index)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-57-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-58-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-59-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/softmax_int8_int16.cc-60-  micro_context->DeallocateTempTfLiteTensor(output);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-79-        depth_multiplier, stride_width, stride_height, pad_width, pad_height,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-80-        output_height, output_width, PREC_ASYM8S, 0 /* NHWC */);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-81-    TF_LITE_ENSURE(context, required_scratch > 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-82-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-83-  TF_LITE_ENSURE_OK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc:84:      context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-85-                   context, required_scratch, &data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-86-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-87-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-88-  micro_context->DeallocateTempTfLiteTensor(filter);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/depthwise_conv_hifi.cc-89-  micro_context->DeallocateTempTfLiteTensor(output);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-133-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-134-      TF_LITE_ENSURE(context, required_scratch > 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-135-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-136-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-137-  TF_LITE_ENSURE_OK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc:138:      context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-139-                   context, required_scratch, &data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-140-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-141-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-142-  micro_context->DeallocateTempTfLiteTensor(filter);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/conv_hifi.cc-143-  micro_context->DeallocateTempTfLiteTensor(output);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-108-  if (filter->type == kTfLiteInt4) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-109-    int filter_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-110-        RuntimeShape(filter->dims->size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-111-                     reinterpret_cast<const int32_t*>(filter->dims->data))
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-112-            .FlatSize();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc:113:    context->RequestScratchBufferInArena(context, filter_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-114-                                         &data->filter_buffer_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-115-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-116-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-117-  TFLITE_DCHECK_GE(GetTensorShape(output).DimensionsCount(), 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/fully_connected_common_xtensa.cc-118-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-204-  if (filter->type == kTfLiteInt4) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-205-    int filter_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-206-        RuntimeShape(filter->dims->size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-207-                     reinterpret_cast<const int32_t*>(filter->dims->data))
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-208-            .FlatSize();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc:209:    context->RequestScratchBufferInArena(context, filter_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-210-                                         &data->filter_buffer_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-211-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-212-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-213-#ifdef USE_TFLM_COMPRESSION
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc-214-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-28-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-29-void ClearBufferApi(TfLiteContext* context_) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-30-  context_->GetScratchBuffer = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-31-  context_->GetExternalContext = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-32-  context_->AllocatePersistentBuffer = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc:33:  context_->RequestScratchBufferInArena = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-34-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-35-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-36-KernelRunner::KernelRunner(const TFLMRegistration& registration,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-37-                           TfLiteTensor* tensors, int tensors_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-38-                           TfLiteIntArray* inputs, TfLiteIntArray* outputs,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-86-  TF_LITE_ENSURE(&context_, ValidateTempBufferDeallocated());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-87-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-88-  if (registration_.prepare) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-89-    tflite ::micro::ClearBufferApi(&context_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-90-    context_.AllocatePersistentBuffer = MicroContextAllocatePersistentBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc:91:    context_.RequestScratchBufferInArena =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc:92:        MicroContextRequestScratchBufferInArena;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-93-    context_.GetExternalContext = MicroContextGetExternalContext;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-94-    TF_LITE_ENSURE_STATUS(registration_.prepare(&context_, &node_));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-95-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-96-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc-97-  TF_LITE_ENSURE(&context_, ValidateTempBufferDeallocated());
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-474-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-475-    data->input_zero_point = input->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-476-    data->output_zero_point = output->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-477-    data->activation_state_zero_point = activation_state->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-478-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc:479:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-480-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc:481:    const TfLiteStatus scratch_status = context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-482-        context, batch_size * num_filters * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-483-        &(data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-484-    TF_LITE_ENSURE_OK(context, scratch_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-485-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-486-    const TfLiteStatus scratch_output_status =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc:487:        context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-488-            context, batch_size * num_units * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-489-            &(data->scratch_output_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-490-    TF_LITE_ENSURE_OK(context, scratch_output_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-491-  } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-492-    TF_LITE_ENSURE_EQ(context, weights_feature->type, kTfLiteFloat32);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-495-    if (bias != nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-496-      TF_LITE_ENSURE_EQ(context, bias->type, kTfLiteFloat32);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-497-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-498-    TF_LITE_ENSURE_TYPES_EQ(context, output->type, kTfLiteFloat32);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-499-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc:500:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc:501:    const TfLiteStatus scratch_status = context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-502-        context, batch_size * num_filters * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-503-        &(data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-504-    TF_LITE_ENSURE_OK(context, scratch_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-505-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc-506-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-191-      params->mode != TfLiteMirrorPaddingMode::kTfLiteMirrorPaddingReflect ? 0
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-192-                                                                           : 1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-193-  data->input_dims = NumDimensions(input_tensor);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-194-  data->output_size = NumElements(output_tensor);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-195-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc:196:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-197-      context, data->input_dims * sizeof(int),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-198-      &data->output_dims_num_elements_buffer_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc:199:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-200-      context, data->input_dims * sizeof(int),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-201-      &data->input_dims_num_elements_buffer_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-202-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-203-  micro_context->DeallocateTempTfLiteTensor(input_tensor);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc-204-  micro_context->DeallocateTempTfLiteTensor(padding_matrix);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-83-        TfLiteTypeGetName(cell_state_type), cell_state_type);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-84-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-85-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-86-  // request buffers (four buffers)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-87-  for (size_t i = 0; i < 4; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc:88:    TF_LITE_ENSURE_OK(context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-89-                                   context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-90-                                   op_data->size_info.batch_size *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-91-                                       op_data->size_info.state_dimension *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-92-                                       TfLiteTypeGetSize(cell_state_type),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc-93-                                   &(op_data->buffer_indices[i])));
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-125-      TFLITE_DCHECK(output->type == kTfLiteInt16);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-126-      // Handle the case where the bias is 16 bits for 16x8 transpose
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-127-      // convolution where the kernel actually expects 64-bit biases.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-128-      if (bias != nullptr && bias->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-129-        TFLITE_DCHECK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc:130:            context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-131-                context, GetTensorShape(bias).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-132-                &(data->bias_converted_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-133-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-134-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-135-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-190-      static_cast<int32_t*>(context->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-191-          context, num_channels * sizeof(int32_t)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-192-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-193-  // Quantized kernels use an int32 scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-194-  if (input->type == kTfLiteInt8) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc:195:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc:196:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-197-                      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-198-                      GetTensorShape(output).FlatSize() * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-199-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-200-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-201-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-202-  // Quantized 16x8 kernels use an int64 scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-203-  if (input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc:204:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc:205:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-206-                      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-207-                      GetTensorShape(output).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-208-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-209-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc-210-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-78-  op_data->input_scale = input->params.scale;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-79-  op_data->output_zp = output->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-80-  op_data->output_scale = output->params.scale;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-81-  op_data->num_output_elements = NumElements(output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-82-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc:83:  context->RequestScratchBufferInArena(context, sizeof(int) * input->dims->size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-84-                                       &op_data->temp_buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc:85:  context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-86-      context, sizeof(int) * static_cast<int>(ElementCount(*axis->dims)),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-87-      &op_data->resolved_axis_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-88-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-89-  micro_context->DeallocateTempTfLiteTensor(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-90-  micro_context->DeallocateTempTfLiteTensor(output);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-106-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-107-  int output_size = NumElements(output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-108-  op_data->num_axis = NumElements(axis);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-109-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-110-  if (input->type == kTfLiteInt8 || input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc:111:    context->RequestScratchBufferInArena(context, output_size * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-112-                                         &op_data->temp_buffer_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-113-    op_data->input_zp = input->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-114-    op_data->input_scale = input->params.scale;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-115-    op_data->output_zp = output->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc-116-    op_data->output_scale = output->params.scale;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-69-  if (filter->type == kTfLiteInt4) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-70-    int filter_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-71-        RuntimeShape(filter->dims->size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-72-                     reinterpret_cast<const int32_t*>(filter->dims->data))
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-73-            .FlatSize();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc:74:    context->RequestScratchBufferInArena(context, filter_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-75-                                         &data->filter_buffer_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-76-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-77-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-78-  TF_LITE_ENSURE_OK(context, CalculateOpDataFullyConnected(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc-79-                                 context, params->activation, input->type,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-202-  if (filter->type == kTfLiteInt4) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-203-    int filter_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-204-        RuntimeShape(filter->dims->size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-205-                     reinterpret_cast<const int32_t*>(filter->dims->data))
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-206-            .FlatSize();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc:207:    context->RequestScratchBufferInArena(context, filter_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-208-                                         &data->filter_buffer_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-209-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-210-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-211-  TF_LITE_ENSURE_STATUS(CalculateOpDataDepthwiseConv(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc-212-      context, node, params, input_width, input_height, filter_width,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-45-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-46-  OpData* data = static_cast<OpData*>(node->user_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-47-  int num_base_addr = node->inputs->size + node->outputs->size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-48-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-49-  // Request arrays for the base address pointers and sizes.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:50:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-51-      context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:52:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-53-      context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-54-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-55-  // Get command stream data size.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-56-  MicroContext* micro_context = GetMicroContext(context);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc-57-  TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-185-                  TfLiteTypeGetName(filter->type), filter->type);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-186-      return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-187-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-188-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-189-    if (buf_size > 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc:190:      TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-191-          context, buf_size, &data->buffer_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-192-    } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-193-      data->buffer_idx = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-194-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/depthwise_conv.cc-195-  }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-392-  } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-393-    number_of_buffers = 4;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-394-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-395-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-396-  for (size_t i = 0; i < number_of_buffers; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc:397:    TF_LITE_ENSURE_OK(context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-398-                                   context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-399-                                   op_data_lstm->size_info.batch_size *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-400-                                       op_data_lstm->size_info.state_dimension *
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-401-                                       TfLiteTypeGetSize(cell_state_type),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/unidirectional_sequence_lstm.cc-402-                                   &(op_data_lstm->buffer_indices[i])));
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-160-      buf_size = arm_convolve_wrapper_s16_get_buffer_size(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-161-          &conv_params, &input_dims, &filter_dims, &output_dims);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-162-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-163-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-164-    if (buf_size > 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc:165:      TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-166-          context, buf_size, &data->buffer_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-167-    } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-168-      data->buffer_idx = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-169-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc-170-  }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-131-    if (input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-132-      TFLITE_DCHECK(filter->type == kTfLiteInt8);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-133-      TFLITE_DCHECK(output->type == kTfLiteInt16);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-134-      if (bias->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-135-        TFLITE_DCHECK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:136:            context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-137-                context, GetTensorShape(bias).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-138-                &(data->bias_converted_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-139-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-140-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-141-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-201-  data->per_channel_output_shift =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-202-      static_cast<int32_t*>(context->AllocatePersistentBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-203-          context, num_channels * sizeof(int32_t)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-204-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-205-  if (input->type == kTfLiteInt8) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:206:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-207-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-208-    RuntimeShape input_shape = GetTensorShape(input);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-209-    RuntimeShape output_shape = GetTensorShape(output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-210-    RuntimeShape filter_shape = GetTensorShape(filter);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-211-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-236-    filter_dims.w = filter_shape.Dims(2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-237-    filter_dims.c = input_depth;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-238-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-239-    const size_t buf_size = arm_transpose_conv_s8_get_buffer_size(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-240-        &conv_params, &input_dims, &filter_dims, &output_dims);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:241:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-242-                      context, buf_size, &(data->scratch_buffer_index)) ==
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-243-                  kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-244-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-245-    // Quantized 8-bit kernels use a second scratch buffer for reversing the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-246-    // filter for certain configurations.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-247-    const size_t reverse_buf_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-248-        arm_transpose_conv_s8_get_reverse_conv_buffer_size(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-249-            &conv_params, &input_dims, &filter_dims);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:250:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-251-                      context, reverse_buf_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-252-                      &(data->scratch_buffer_output_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-253-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-254-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-255-  // Quantized 16x8 kernels use an int64 scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-256-  if (input->type == kTfLiteInt16) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:257:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc:258:    TFLITE_DCHECK(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-259-                      context,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-260-                      GetTensorShape(output).FlatSize() * sizeof(std::int64_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-261-                      &(data->scratch_buffer_index)) == kTfLiteOk);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-262-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/transpose_conv.cc-263-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-170-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-171-    data->input_zero_point = input->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-172-    data->output_zero_point = output->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-173-    data->activation_state_zero_point = activation_state->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-174-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:175:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-176-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:177:    const TfLiteStatus scratch_status = context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-178-        context, batch_size * num_filters * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-179-        &(data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-180-    TF_LITE_ENSURE_OK(context, scratch_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-181-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-182-    const TfLiteStatus scratch_output_status =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:183:        context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-184-            context, batch_size * num_units * sizeof(int32_t),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-185-            &(data->scratch_output_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-186-    TF_LITE_ENSURE_OK(context, scratch_output_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-187-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-188-    cmsis_nn_dims weights_feature_dims;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-200-                        GetTensorData<int8_t>(weights_feature),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-201-                        -data->input_zero_point,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-202-                        -data->activation_state_zero_point, nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-203-#elif defined(KERNELS_OPTIMIZED_FOR_SIZE)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-204-      const TfLiteStatus scratch_kernel_status =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:205:          context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-206-              context, buf_size, &(data->scratch_weight_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-207-      TF_LITE_ENSURE_OK(context, scratch_kernel_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-208-#else
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-209-      MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-210-          "Either KERNELS_OPTIMIZED_FOR_SIZE or KERNELS_OPTIMIZED_FOR_SPEED "
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-220-    if (bias != nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-221-      TF_LITE_ENSURE_EQ(context, bias->type, kTfLiteFloat32);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-222-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-223-    TF_LITE_ENSURE_TYPES_EQ(context, output->type, kTfLiteFloat32);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-224-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:225:    TFLITE_DCHECK(context->RequestScratchBufferInArena != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc:226:    const TfLiteStatus scratch_status = context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-227-        context, batch_size * num_filters * sizeof(float),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-228-        &(data->scratch_tensor_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-229-    TF_LITE_ENSURE_OK(context, scratch_status);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-230-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/svdf.cc-231-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-311-      TF_LITE_ENSURE_EQ(context, output->params.zero_point, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-312-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-313-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-314-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-315-  if (buf_size > 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc:316:    TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-317-        context, buf_size, &data->buffer_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-318-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-319-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-320-  micro_context->DeallocateTempTfLiteTensor(output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc-321-  micro_context->DeallocateTempTfLiteTensor(lhs_input);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-181-            ? arm_avgpool_s16_get_buffer_size(output_width, depth)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-182-            : arm_avgpool_s8_get_buffer_size(output_width, depth);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-183-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-184-    auto* data = static_cast<OpData*>(node->user_data);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-185-    if (buffer_size > 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc:186:      TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-187-          context, buffer_size, &data->buffer_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-188-    } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-189-      data->buffer_idx = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-190-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/pooling.cc-191-  }
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-132-      // In case per tensor quantization we use a scratch buffer to fake
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-133-      // conv1x1 per channel quantization.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-134-      if (!data->reference_op_data.is_per_channel) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-135-        const int total_per_channel_quantization_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-136-            data->output_depth * sizeof(int32_t) * 2;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc:137:        TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-138-            context, total_per_channel_quantization_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-139-            &data->buffer_conv_1x1_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-140-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-141-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-142-      cmsis_nn_dims input_dims;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-171-#endif
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-172-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-173-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-174-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-175-  if (buf_size > 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc:176:    TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-177-        context, buf_size, &data->buffer_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-178-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-179-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-180-  micro_context->DeallocateTempTfLiteTensor(output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/fully_connected.cc-181-  micro_context->DeallocateTempTfLiteTensor(input);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-81-  if (output->type == kTfLiteFloat32) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-82-    // Allocate scratch buffer space for pointer to each tensor's data
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-83-    // and store the scratch buffer index in the node's user_data
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-84-    int scratch_index;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-85-    size_t scratch_size = sizeof(float*) * num_inputs;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc:86:    TF_LITE_ENSURE_OK(context, context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-87-                                   context, scratch_size, &scratch_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-88-    node->user_data =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-89-        reinterpret_cast<decltype(node->user_data)>(scratch_index);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-90-  } else if (output->type == kTfLiteInt8) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-91-    node->user_data =
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-94-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-95-    // Allocate scratch buffer space for pointer to each tensor's data
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-96-    // and store the scratch buffer index in OpData
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-97-    size_t scratch_size = sizeof(int8_t*) * num_inputs;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-98-    TF_LITE_ENSURE_OK(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc:99:        context, context->RequestScratchBufferInArena(context, scratch_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-100-                                                      &data->scratch_index));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-101-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-102-    // 8bit -> 8bit general quantized path, with general rescalings
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-103-    data->input_offset = -input_tensor_first->params.zero_point;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc-104-    data->output_offset = output->params.zero_point;
+
+===== SEARCH ROOT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels =====
