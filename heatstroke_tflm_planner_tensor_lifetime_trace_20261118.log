@@ -1,0 +1,834 @@
+===== ALLOCATOR: BUILDING AND FINALIZING MEMORY PLANS =====
+            sizeof(LookupTableData));
+        return kTfLiteError;
+      }
+      ctd->data.lut_data = lut_table;
+
+      TfLiteStatus status =
+          internal::InitializeCompressionTensorDataFromFlatbuffer(
+              *model, subgraph_index, *lut_tensor, ctd);
+      if (status != kTfLiteOk) {
+        MicroPrintf("Compression: failed to initialize data for LutTensor %u",
+                    lut_tensors_index);
+        return kTfLiteError;
+      }
+
+      if (subgraph_allocations[subgraph_index].compressed.tensors == nullptr) {
+        size_t alloc_count =
+            model->subgraphs()->Get(subgraph_index)->tensors()->size();
+        const CompressionTensorData** tensors =
+            reinterpret_cast<const CompressionTensorData**>(
+                persistent_buffer_allocator_->AllocatePersistentBuffer(
+                    sizeof(CompressionTensorData*) * alloc_count,
+                    alignof(CompressionTensorData*)));
+        if (tensors == nullptr) {
+          MicroPrintf(
+              "Compression: failed to allocate memory for compression tensor "
+              "list, %d bytes required",
+              sizeof(CompressionTensorData*) * alloc_count);
+          return kTfLiteError;
+        }
+
+        subgraph_allocations[subgraph_index].compressed.tensors = tensors;
+        std::fill(tensors, tensors + alloc_count, nullptr);
+      }
+
+      const size_t tensor_index = lut_tensor->tensor();
+      if (subgraph_allocations[subgraph_index]
+              .compressed.tensors[tensor_index] != nullptr) {
+        MicroPrintf("Compression: duplicate LutTensor subgraph %u tensor %u",
+                    subgraph_index, tensor_index);
+        return kTfLiteError;
+      } else {
+        subgraph_allocations[subgraph_index].compressed.tensors[tensor_index] =
+            ctd;
+      }
+    }
+  }
+
+  return kTfLiteOk;
+}
+
+#endif  // USE_TFLM_COMPRESSION
+
+TfLiteStatus MicroAllocator::AllocateTfLiteEvalTensors(
+    const Model* model, SubgraphAllocations* subgraph_allocations) {
+  TFLITE_DCHECK(subgraph_allocations != nullptr);
+
+  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+       subgraph_idx++) {
+    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+    TFLITE_DCHECK(subgraph != nullptr);
+
+    size_t alloc_count = subgraph->tensors()->size();
+    TfLiteEvalTensor* tensors = reinterpret_cast<TfLiteEvalTensor*>(
+        persistent_buffer_allocator_->AllocatePersistentBuffer(
+            sizeof(TfLiteEvalTensor) * alloc_count, alignof(TfLiteEvalTensor)));
+    if (tensors == nullptr) {
+      MicroPrintf(
+          "Failed to allocate memory for context->eval_tensors, "
+          "%d bytes required",
+          sizeof(TfLiteEvalTensor) * alloc_count);
+      return kTfLiteError;
+    }
+
+    for (size_t i = 0; i < alloc_count; ++i) {
+      TfLiteStatus status = internal::InitializeTfLiteEvalTensorFromFlatbuffer(
+          *subgraph->tensors()->Get(i), model->buffers(), &tensors[i]);
+      if (status != kTfLiteOk) {
+        MicroPrintf("Failed to initialize tensor %d", i);
+        return kTfLiteError;
+      }
+    }
+    subgraph_allocations[subgraph_idx].tensors = tensors;
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus MicroAllocator::AllocateVariables(
+    const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+    const int32_t* offline_planner_offsets) {
+  for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+    auto* tensor = subgraph->tensors()->Get(i);
+    if (tensor->is_variable()) {
+      if (offline_planner_offsets == nullptr ||
+          offline_planner_offsets[i] == kOnlinePlannedBuffer) {
+        size_t buffer_size;
+        TF_LITE_ENSURE_STATUS(
+            TfLiteEvalTensorByteLength(&eval_tensors[i], &buffer_size));
+
+        eval_tensors[i].data.data =
+            persistent_buffer_allocator_->AllocatePersistentBuffer(
+                buffer_size, MicroArenaBufferAlignment());
+
+        if (eval_tensors[i].data.data == nullptr) {
+          MicroPrintf("Failed to allocate variable tensor of size %d",
+                      buffer_size);
+          return kTfLiteError;
+        }
+      }
+    }
+  }
+  return kTfLiteOk;
+}
+
+TfLiteTensor* MicroAllocator::AllocatePersistentTfLiteTensorInternal() {
+  return reinterpret_cast<TfLiteTensor*>(
+      persistent_buffer_allocator_->AllocatePersistentBuffer(
+          sizeof(TfLiteTensor), alignof(TfLiteTensor)));
+}
+
+TfLiteStatus MicroAllocator::PopulateTfLiteTensorFromFlatbuffer(
+    const Model* model, TfLiteTensor* tensor, int tensor_index,
+    int subgraph_idx, bool allocate_temp) {
+  // TODO(b/162311891): This method serves as a stub to ensure quantized
+  // allocations in the tail can be recorded. Once the interpreter has APIs for
+  // accessing buffers on TfLiteEvalTensor this method can be dropped.
+  return internal::InitializeTfLiteTensorFromFlatbuffer(
+      persistent_buffer_allocator_, non_persistent_buffer_allocator_,
+      allocate_temp,
+      *model->subgraphs()->Get(subgraph_idx)->tensors()->Get(tensor_index),
+      model->buffers(), tensor);
+}
+
+TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
+    const Model* model, SubgraphAllocations* allocations,
+    ScratchBufferHandle* scratch_buffer_handles) {
+  size_t head_usage = 0;
+  // Create static memory plan
+  // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+  // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+  // 3. Static memory planning using the planner.
+  // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+  //
+  // Note that AllocationInfo is only needed for creating the plan. It will be
+  // allocated from the temp section and cleaned up at the bottom of this
+  // function.
+
+  // Use the AllocationInfoBuilder class to help determine where buffers are
+  // used in the subgraph.
+  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+  TF_LITE_ENSURE_STATUS(
+      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+
+  const int32_t* offline_planner_offsets = nullptr;
+  TF_LITE_ENSURE_STATUS(
+      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+
+  // We allocate buffers for variable tensors here since the offline planner
+  // offsets are conviently available here.
+  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+       subgraph_idx++) {
+    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+    TFLITE_DCHECK(subgraph != nullptr);
+    TF_LITE_ENSURE_STATUS(AllocateVariables(
+        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+  }
+
+  TF_LITE_ENSURE_STATUS(
+      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+
+  internal::ScratchBufferRequest* scratch_buffer_requests =
+      GetScratchBufferRequests();
+  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+  int allocation_info_count = builder.AllocationCount();
+  AllocationInfo* allocation_info = builder.Finish();
+
+  // Remaining arena size that memory planner can use for calculating offsets.
+  size_t remaining_arena_size =
+      non_persistent_buffer_allocator_->GetAvailableMemory(
+          MicroArenaBufferAlignment());
+  uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+      remaining_arena_size, MicroArenaBufferAlignment());
+
+  if (planner_arena == nullptr) {
+    return kTfLiteError;
+  }
+
+  memory_planner_->Init(planner_arena, remaining_arena_size);
+  TF_LITE_ENSURE_STATUS(
+      CreatePlan(memory_planner_, allocation_info, allocation_info_count));
+
+  // Commit the plan.
+  TF_LITE_ENSURE_STATUS(
+      CommitPlan(memory_planner_,
+                 non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+                 allocation_info, allocation_info_count));
+
+  // Reset all temp allocations used above:
+  builder.FreeAllocationInfo();
+  non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+  TF_LITE_ENSURE_STATUS(
+      non_persistent_buffer_allocator_->ResetTempAllocations());
+  TF_LITE_ENSURE_STATUS(
+      non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+          scratch_buffer_head_));
+
+#ifdef TF_LITE_SHOW_MEMORY_USE
+  memory_planner_->PrintMemoryPlan();
+#endif
+  head_usage = memory_planner_->GetMaximumMemorySize();
+
+  // The head is used to store memory plans for one model at a time during the
+  // model preparation stage, and is re-purposed to store scratch buffer handles
+  // during model invocation. The head must be as large as the greater of the
+  // largest model memory plan's size and the total space required for all
+  // scratch buffer handles.
+  if (max_head_buffer_usage_ < head_usage) {
+    max_head_buffer_usage_ = head_usage;
+  }
+
+  // The head is used for storing scratch buffer allocations before finalizing a
+  // memory plan in this function. Ensure that the head is set to the largest
+  // memory plan sent through the allocator:
+  TF_LITE_ENSURE_STATUS(
+      non_persistent_buffer_allocator_->ReserveNonPersistentOverlayMemory(
+          max_head_buffer_usage_, MicroArenaBufferAlignment()));
+  return kTfLiteOk;
+}
+
+===== GREEDY PLANNER: BUFFER LIFETIME AND SIZE CALCULATION =====
+7-    http://www.apache.org/licenses/LICENSE-2.0
+8-
+9-Unless required by applicable law or agreed to in writing, software
+10-distributed under the License is distributed on an "AS IS" BASIS,
+11-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+12-See the License for the specific language governing permissions and
+13-limitations under the License.
+14-==============================================================================*/
+15-
+16-#include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+17-
+18-#include "tensorflow/lite/micro/micro_log.h"
+19-
+20-namespace tflite {
+21-
+22-namespace {
+23-
+24-// Returns a character representing a numbered buffer
+25:// for GreedyMemoryPlanner::PrintMemoryPlan()
+26-char GetOrdinalCharacter(int i) {
+27-  if (i < 10) {
+28-    return '0' + i;
+29-  } else if (i < 36) {
+30-    return 'a' + (i - 10);
+31-  } else if (i < 62) {
+32-    return 'A' + (i - 36);
+33-  }
+34-  return GetOrdinalCharacter(i % 62);
+35-}
+36-
+37-}  // namespace
+38-
+39-// Simple stable in-place sort function. Not time-efficient for large arrays.
+40-// Would normally be in an anonymous namespace to keep it private, but we want
+41-// to be able to test it externally.
+42:void ReverseSortInPlace(int* values, int* ids, int size) {
+43-  bool any_swapped;
+44-  do {
+45-    any_swapped = false;
+46:    for (int i = 1; i < size; ++i) {
+47-      if (values[i - 1] < values[i]) {
+48-        const int value_temp = values[i - 1];
+49-        values[i - 1] = values[i];
+50-        values[i] = value_temp;
+51-        const int id_temp = ids[i - 1];
+52-        ids[i - 1] = ids[i];
+53-        ids[i] = id_temp;
+54-        any_swapped = true;
+55-      }
+56-    }
+57-  } while (any_swapped);
+58-}
+59-
+60-GreedyMemoryPlanner::GreedyMemoryPlanner() {}
+61-
+62-TfLiteStatus GreedyMemoryPlanner::Init(unsigned char* scratch_buffer,
+63:                                       int scratch_buffer_size) {
+64-  // Reset internal states
+65-  buffer_count_ = 0;
+66-  need_to_calculate_offsets_ = true;
+67-
+68-  // Allocate the arrays we need within the scratch buffer arena.
+69:  max_buffer_count_ = scratch_buffer_size / per_buffer_size();
+70-
+71-  unsigned char* next_free = scratch_buffer;
+72-  requirements_ = reinterpret_cast<BufferRequirements*>(next_free);
+73:  next_free += sizeof(BufferRequirements) * max_buffer_count_;
+74-
+75:  buffer_sizes_sorted_ = reinterpret_cast<int*>(next_free);
+76:  next_free += sizeof(int) * max_buffer_count_;
+77-
+78-  buffer_ids_sorted_ = reinterpret_cast<int*>(next_free);
+79:  next_free += sizeof(int) * max_buffer_count_;
+80-
+81-  buffers_sorted_by_offset_ = reinterpret_cast<ListEntry*>(next_free);
+82:  next_free += sizeof(ListEntry) * max_buffer_count_;
+83-
+84-  buffer_offsets_ = reinterpret_cast<int*>(next_free);
+85-  return kTfLiteOk;
+86-}
+87-
+88-GreedyMemoryPlanner::~GreedyMemoryPlanner() {
+89-  // We don't own the scratch buffer, so don't deallocate anything.
+90-}
+91-
+92:TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+93:                                            int last_time_used) {
+94-  if (buffer_count_ >= max_buffer_count_) {
+95-    MicroPrintf("Too many buffers (max is %d)", max_buffer_count_);
+96-    return kTfLiteError;
+97-  }
+98-  BufferRequirements* current = &requirements_[buffer_count_];
+99:  current->size = size;
+100:  current->first_time_used = first_time_used;
+101:  current->last_time_used = last_time_used;
+102-  current->offline_offset = kOnlinePlannedBuffer;
+103-  ++buffer_count_;
+104-  need_to_calculate_offsets_ = true;
+105-  return kTfLiteOk;
+106-}
+107-
+108:TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+109:                                            int last_time_used,
+110-                                            int offline_offset) {
+111-  BufferRequirements* current = &requirements_[buffer_count_];
+112:  if (AddBuffer(size, first_time_used, last_time_used) != kTfLiteOk) {
+113-    return kTfLiteError;
+114-  }
+115-  current->offline_offset = offline_offset;
+116-  return kTfLiteOk;
+117-}
+118-
+119-bool GreedyMemoryPlanner::DoesEntryOverlapInTime(
+120:    const GreedyMemoryPlanner::ListEntry* entry, const int first_time_used,
+121:    const int last_time_used) const {
+122-  const BufferRequirements* entry_requirements =
+123-      &requirements_[entry->requirements_index];
+124:  if (entry_requirements->first_time_used > last_time_used) {
+125-    return false;
+126-  }
+127:  if (first_time_used > entry_requirements->last_time_used) {
+128-    return false;
+129-  }
+130-  return true;
+131-}
+132-
+133-GreedyMemoryPlanner::ListEntry*
+134-GreedyMemoryPlanner::NextSimultaneouslyActiveBuffer(
+135:    const GreedyMemoryPlanner::ListEntry* start, const int first_time_used,
+136:    const int last_time_used) {
+137-  ListEntry* result = nullptr;
+138-  ListEntry* candidate_next_entry;
+139-  if (start == nullptr) {
+140-    candidate_next_entry = &buffers_sorted_by_offset_[first_entry_index_];
+141-  } else {
+142-    if (start->next_entry_index == -1) {
+143-      return nullptr;
+144-    }
+145-    candidate_next_entry = &buffers_sorted_by_offset_[start->next_entry_index];
+146-  }
+147-  do {
+148:    if (DoesEntryOverlapInTime(candidate_next_entry, first_time_used,
+149:                               last_time_used)) {
+150-      result = candidate_next_entry;
+151-      break;
+152-    }
+153-    if (candidate_next_entry->next_entry_index == -1) {
+154-      break;
+155-    }
+156-    candidate_next_entry =
+157-        &buffers_sorted_by_offset_[candidate_next_entry->next_entry_index];
+158-  } while (true);
+159-  return result;
+160-}
+161-
+162-void GreedyMemoryPlanner::CalculateOffsetsIfNeeded() {
+163-  if (!need_to_calculate_offsets_ || (buffer_count_ == 0)) {
+164-    return;
+165-  }
+166-  need_to_calculate_offsets_ = false;
+167-
+168:  // Start off by ordering the buffers in descending order of size.
+169-  // This helps find a more compact layout. Intuitively, you can think
+170-  // about putting the large buffers in place first, and then the
+171-  // smaller buffers can fit in the gaps, rather than fragmenting the
+172-  // gaps with small buffers at the beginning. Add offline planned offsets
+173-  // first in the list, since they have a predetermined offset.
+174-  int idx_from_tail = buffer_count_;
+175-  int idx_from_head = 0;
+176-  for (int i = 0; i < buffer_count_; ++i) {
+177-    if (requirements_[i].offline_offset == kOnlinePlannedBuffer) {
+178-      idx_from_tail--;
+179:      buffer_sizes_sorted_[idx_from_tail] = requirements_[i].size;
+180-      buffer_ids_sorted_[idx_from_tail] = i;
+181-      buffer_offsets_[i] = -1;
+182-    } else {
+183:      buffer_sizes_sorted_[idx_from_head] = requirements_[i].size;
+184-      buffer_ids_sorted_[idx_from_head] = i;
+185-      buffer_offsets_[i] = requirements_[i].offline_offset;
+186-      idx_from_head++;
+187-    }
+188-  }
+189-
+190-  // This sorting algorithm is naive, and may end up taking a very long time
+191-  // with hundreds of buffers. Do not sort the offline planned offsets.
+192:  ReverseSortInPlace(&buffer_sizes_sorted_[idx_from_head],
+193-                     &buffer_ids_sorted_[idx_from_head],
+194-                     buffer_count_ - idx_from_head);
+195-
+196-  // Initialize the first entry to the first buffer in
+197-  // buffer_ids_sorted_.
+198-  //   - If there are no offline planned offsets, the largest buffer will be
+199:  //     first, and the buffers will be handled in size order.
+200-  //   - If offline offsets are present, these will be handled first in order
+201-  //     for the greedy algorithm to utilized gaps in the offline plan.
+202-  first_entry_index_ = 0;
+203-  next_free_entry_ = 1;
+204-  ListEntry* first_entry = &buffers_sorted_by_offset_[first_entry_index_];
+205-  first_entry->next_entry_index = -1;  // to mark the entry as end of list
+206-  int buffer_id = buffer_ids_sorted_[0];
+207-  first_entry->requirements_index = buffer_id;
+208-  if (requirements_[buffer_id].offline_offset == kOnlinePlannedBuffer) {
+209-    buffer_offsets_[buffer_id] = 0;
+210-  }
+211-  first_entry->offset = buffer_offsets_[buffer_id];
+212-
+213-  // Work through the rest of the buffers to find a good gap to place each one.
+214-  for (int i = 1; i < buffer_count_; ++i) {
+215-    // The id is the order the buffer was originally added by the client.
+216-    buffer_id = buffer_ids_sorted_[i];
+217:    // Look at what size and time range the buffer needs to be active.
+218-    BufferRequirements* wanted_requirements = &requirements_[buffer_id];
+219:    const int wanted_size = wanted_requirements->size;
+220:    const int wanted_first_time_used = wanted_requirements->first_time_used;
+221:    const int wanted_last_time_used = wanted_requirements->last_time_used;
+222-
+223-    // Find the first buffer that's active in our time range. All placed
+224-    // buffers are stored in the order of their starting position in the arena
+225-    // so that it's easy to find the next buffer in memory, and so the gap.
+226-    // The candidate_entry variable holds the buffer that we're considering
+227-    // placing the current buffer after.
+228-
+229-    int candidate_offset = 0;
+230-    // Loop through the offset-ordered list of buffers, looking for gaps.
+231-    if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
+232-      ListEntry* prior_entry = nullptr;
+233-      while (true) {
+234-        // Find out what the next active buffer is.
+235-        ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
+236:            prior_entry, wanted_first_time_used, wanted_last_time_used);
+237-
+238-        if (prior_entry) {
+239-          BufferRequirements* candidate_requirements =
+240-              &requirements_[prior_entry->requirements_index];
+241-          const int prior_entry_offset =
+242:              prior_entry->offset + candidate_requirements->size;
+243-          if (prior_entry_offset > candidate_offset) {
+244-            candidate_offset = prior_entry_offset;
+245-          }
+246-        }
+247-        if (next_entry == nullptr) {
+248-          // We're at the end of the list, so we can always append the buffer
+249-          // here.
+250-          break;
+251-        }
+252-        // Find out how much space there is between us and the next buffer.
+253-        const int gap = next_entry->offset - candidate_offset;
+254:        if (gap >= wanted_size) {
+255-          // This entry has a big enough gap between it and the next, so
+256-          // use it!
+257-          break;
+258-        }
+259-        // The gap wasn't big enough, so move on to another candidate.
+260-        prior_entry = next_entry;
+261-      }
+262-    } else {
+263-      // Offline planned offset are to be considered constant
+264-      candidate_offset = wanted_requirements->offline_offset;
+265-    }
+266-    // At this point, we've either found a gap (possibly at the end of the
+267-    // list) and want to place the buffer there, or there are no other active
+268-    // buffers in this time range and so we can put it at offset zero.
+269-    // Record the buffer's offset in our plan.
+270-    buffer_offsets_[buffer_id] = candidate_offset;
+271-    // Add the newly-placed buffer to our offset-ordered list, so that
+272-    // subsequent passes can fit in their buffers around it.
+--
+294-          new_entry->next_entry_index = -1;
+295-          break;
+296-        }
+297-        // not at the end of the list -> take a look at next entry
+298-        ListEntry* next_entry = &buffers_sorted_by_offset_[next_entry_index];
+299-        if (next_entry->offset > candidate_offset) {
+300-          // We're at the right spot to do an insertion and retain the sorting
+301-          // order, so place the new entry here.
+302-          new_entry->next_entry_index = current_entry->next_entry_index;
+303-          current_entry->next_entry_index = new_entry_index;
+304-          break;
+305-        }
+306-        current_entry = next_entry;
+307-      }
+308-    }
+309-  }
+310-}
+311-
+312:size_t GreedyMemoryPlanner::GetMaximumMemorySize() {
+313-  CalculateOffsetsIfNeeded();
+314-  if (buffer_count_ == 0) {
+315-    return 0;
+316-  }
+317-  ListEntry* entry = &buffers_sorted_by_offset_[first_entry_index_];
+318:  size_t max_size = 0;
+319-  while (entry) {
+320-    BufferRequirements* requirements =
+321-        &requirements_[entry->requirements_index];
+322:    const size_t current_size = entry->offset + requirements->size;
+323:    if (current_size > max_size) {
+324:      max_size = current_size;
+325-    }
+326-    if (entry->next_entry_index == -1) {
+327-      break;
+328-    }
+329-    entry = &buffers_sorted_by_offset_[entry->next_entry_index];
+330-  }
+331:  return max_size;
+332-}
+333-
+334:void GreedyMemoryPlanner::PrintMemoryPlan() {
+335-  CalculateOffsetsIfNeeded();
+336-
+337-  for (int i = 0; i < buffer_count_; ++i) {
+338-    char c = '*';
+339:    if (requirements_[i].first_time_used != requirements_[i].last_time_used) {
+340-      // not a scratch buffer nor subgraph output tensor
+341-      c = GetOrdinalCharacter(i);
+342-    }
+343:    MicroPrintf("%c (id=%d): size=%d, offset=%d, first_used=%d last_used=%d", c,
+344:                i, requirements_[i].size, buffer_offsets_[i],
+345:                requirements_[i].first_time_used,
+346:                requirements_[i].last_time_used);
+347-  }
+348-
+349-  constexpr int kLineWidth = 80;
+350:  int max_size = kLineWidth;
+351-  int max_time = 0;
+352-  for (int i = 0; i < buffer_count_; ++i) {
+353-    BufferRequirements* requirements = &requirements_[i];
+354-    const int offset = buffer_offsets_[i];
+355:    const int last_time_used = requirements->last_time_used;
+356:    const int size = offset + requirements->size;
+357:    if (size > max_size) {
+358:      max_size = size;
+359-    }
+360:    if (last_time_used > max_time) {
+361:      max_time = last_time_used;
+362-    }
+363-  }
+364-
+365-  char line[kLineWidth + 1];
+366-  for (int t = 0; t <= max_time; ++t) {
+367-    for (int c = 0; c < kLineWidth; ++c) {
+368-      line[c] = '.';
+369-    }
+370-    int memory_use = 0;
+371-    for (int i = 0; i < buffer_count_; ++i) {
+372-      BufferRequirements* requirements = &requirements_[i];
+373:      if ((t < requirements->first_time_used) ||
+374:          (t > requirements->last_time_used)) {
+375-        continue;
+376-      }
+377-      const int offset = buffer_offsets_[i];
+378-      if (offset == -1) {
+379-        continue;
+380-      }
+381:      const int size = requirements->size;
+382:      memory_use += size;
+383:      const int line_start = (offset * kLineWidth) / max_size;
+384:      const int line_end = ((offset + size) * kLineWidth) / max_size;
+385-      for (int n = line_start; n < line_end; ++n) {
+386-        if (line[n] == '.') {
+387:          if (requirements->first_time_used == requirements->last_time_used) {
+388-            // scratch buffer or subgraph output tensor
+389-            line[n] = '*';
+390-          } else {
+391-            line[n] = GetOrdinalCharacter(i);
+392-          }
+393-        } else {
+394-          line[n] = '!';
+395-        }
+396-      }
+397-    }
+398-    line[kLineWidth] = 0;
+399-
+400-    MicroPrintf("%4d: %s (%dk)", t, (const char*)line,
+401-                (memory_use + 1023) / 1024);
+402-  }
+403-}
+404-
+405-int GreedyMemoryPlanner::GetBufferCount() { return buffer_count_; }
+--
+407-TfLiteStatus GreedyMemoryPlanner::GetOffsetForBuffer(int buffer_index,
+408-                                                     int* offset) {
+409-  CalculateOffsetsIfNeeded();
+410-  if ((buffer_index < 0) || (buffer_index >= buffer_count_)) {
+411-    MicroPrintf("buffer index %d is outside range 0 to %d", buffer_index,
+412-                buffer_count_);
+413-    return kTfLiteError;
+414-  }
+415-  *offset = buffer_offsets_[buffer_index];
+416-  return kTfLiteOk;
+417-}
+418-
+419-bool GreedyMemoryPlanner::DoAnyBuffersOverlap() {
+420-  CalculateOffsetsIfNeeded();
+421-  bool were_overlaps_found = false;
+422-  for (int i = 0; i < buffer_count_; ++i) {
+423-    BufferRequirements* a_requirements = &requirements_[i];
+424-    const int a_start_offset = buffer_offsets_[i];
+425:    const int a_first_time_used = a_requirements->first_time_used;
+426:    const int a_last_time_used = a_requirements->last_time_used;
+427:    const int a_end_offset = a_start_offset + a_requirements->size;
+428-    for (int j = 0; j < buffer_count_; ++j) {
+429-      if (i == j) {
+430-        continue;
+431-      }
+432-      BufferRequirements* b_requirements = &requirements_[j];
+433-      const int b_start_offset = buffer_offsets_[j];
+434:      const int b_first_time_used = b_requirements->first_time_used;
+435:      const int b_last_time_used = b_requirements->last_time_used;
+436:      const int b_end_offset = b_start_offset + b_requirements->size;
+437:      if ((a_first_time_used > b_last_time_used) ||
+438:          (b_first_time_used > a_last_time_used)) {
+439-        // Buffers don't overlap in time.
+440-        continue;
+441-      }
+442-      if ((a_start_offset >= b_end_offset) ||
+443-          (b_start_offset >= a_end_offset)) {
+444-        // No overlap in memory.
+445-        continue;
+446-      }
+447-      were_overlaps_found = true;
+448-      MicroPrintf("Overlap: %d (%d=>%d, %d->%d) vs %d (%d=>%d, %d->%d)", i,
+449:                  a_first_time_used, a_last_time_used, a_start_offset,
+450:                  a_end_offset, j, b_first_time_used, b_last_time_used,
+451-                  b_start_offset, b_end_offset);
+452-    }
+453-  }
+454-  return were_overlaps_found;
+455-}
+456-
+457-}  // namespace tflite
+
+===== PLANNER INTERFACE =====
+/* Copyright 2019 The TensorFlow Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+#ifndef TENSORFLOW_LITE_MICRO_MEMORY_PLANNER_GREEDY_MEMORY_PLANNER_H_
+#define TENSORFLOW_LITE_MICRO_MEMORY_PLANNER_GREEDY_MEMORY_PLANNER_H_
+
+#include "tensorflow/lite/micro/compatibility.h"
+#include "tensorflow/lite/micro/memory_planner/micro_memory_planner.h"
+
+namespace tflite {
+
+constexpr int kOnlinePlannedBuffer = -1;
+
+// A memory planner that uses a greedy algorithm to arrange buffers in memory
+// to minimize the overall arena size needed.
+//
+// The algorithm works like this:
+//  - The client enters the buffer information through AddBuffer().
+//  - When a function like GetOffsetForBuffer() is called, the
+//    CalculateOffsetsIfNeeded() method is invoked.
+//  - If an up to date plan is not already present, one will be calculated.
+//  - The buffers are sorted in descending order of size.
+//  - The largest buffer is placed at offset zero.
+//  - The rest of the buffers are looped through in descending size order.
+//  - The other buffers that need to be in memory at the same time are found.
+//  - The first gap between simultaneously active buffers that the current
+//    buffer fits into will be used.
+//  - If no large-enough gap is found, the current buffer is placed after the
+//    last buffer that's simultaneously active.
+//  - This continues until all buffers are placed, and the offsets stored.
+//
+// This is not guaranteed to produce the best placement, since that's an
+// NP-Complete problem, but in practice it should produce one that's decent.
+class GreedyMemoryPlanner : public MicroMemoryPlanner {
+ public:
+  GreedyMemoryPlanner();
+  ~GreedyMemoryPlanner() override;
+
+  // You need to pass in an area of memory to be used for planning. The client
+  // should ensure the validity of the memory when it needs to use this object.
+  // This memory isn't owned by this object, so management should be handled by
+  // the client. This is so it can be stack or globally allocated if necessary
+  // on devices without dynamic memory allocation. How many buffers can be
+  // planned for will depend on the size of this scratch memory, so you should
+  // enlarge it if you see an error when calling AddBuffer(). The memory can be
+  // reused once you're done with the planner, as long as you copy the
+  // calculated offsets to another location. Each buffer requires about 36 bytes
+  // of scratch.
+  TfLiteStatus Init(unsigned char* scratch_buffer,
+                    int scratch_buffer_size) override;
+
+  // Record details of a buffer we want to place.
+  TfLiteStatus AddBuffer(int size, int first_time_used,
+                         int last_time_used) override;
+
+  // Record details of an offline planned buffer offset we want to place.
+  // offline_offset is the buffer offset from the start of the arena.
+  TfLiteStatus AddBuffer(int size, int first_time_used, int last_time_used,
+                         int offline_offset) override;
+
+  // Returns the high-water mark of used memory. This is the minimum size of a
+  // memory arena you'd need to allocate to hold these buffers.
+  size_t GetMaximumMemorySize() override;
+
+  // How many buffers have been recorded.
+  int GetBufferCount() override;
+
+  // Where a given buffer should be placed in the memory arena.
+  // This information is stored in the memory arena itself, so once the arena
+  // is used for inference, it will be overwritten.
+  TfLiteStatus GetOffsetForBuffer(int buffer_index, int* offset) override;
+
+  // Prints an ascii-art diagram of the buffer layout plan.
+  void PrintMemoryPlan() override;
+
+  // Debug method to check whether any buffer allocations are overlapping. This
+  // is an O(N^2) complexity operation, so only use for testing.
+  bool DoAnyBuffersOverlap();
+
+  // Used to store a list of buffers ordered by their offset.
+  struct ListEntry {
+    int offset;
+    int requirements_index;
+    int next_entry_index;
+  };
+
+  // Number of bytes required in order to plan a buffer.
+  static size_t per_buffer_size() {
+    const int per_buffer_size =
+        sizeof(BufferRequirements) +  // requirements_
+        sizeof(int) +                 // buffer_sizes_sorted_
+        sizeof(int) +                 // buffer_ids_sorted_
+        sizeof(ListEntry) +           // buffers_sorted_by_offset_
+        sizeof(int);                  // buffer_offsets_;
+    return per_buffer_size;
+  }
+
+  // Returns False because the GreedyMemoryPlanner doesn't preserves all tensors
+  // after invocation. Do to the fact that tensors that tensor data for tensors
+  // that aren't being used during a phase of invocation are overwritten.
+  bool preserves_all_tensors() const override { return false; }
+
+ private:
+  // Whether a buffer is active in a given time range.
+  bool DoesEntryOverlapInTime(const ListEntry* entry, const int first_time_used,
+                              const int last_time_used) const;
+
+  // Walks the list to return the next buffer that is active in a given time
+  // range, or a null pointer if there are none.
+  ListEntry* NextSimultaneouslyActiveBuffer(const ListEntry* start,
+                                            const int first_time_used,
+                                            const int last_time_used);
+
+  // If there isn't an up to date plan, calculate a new one.
+  void CalculateOffsetsIfNeeded();
+
+  // How many buffers we can plan for, based on the arena size we're given in
+  // the constructor.
+  int max_buffer_count_;
+
+  // The number of buffers added so far.
+  int buffer_count_;
+
+  // Records the client-provided information about each buffer.
+  struct BufferRequirements {
+    int size;
+    int offline_offset;
+    int first_time_used;
+    int last_time_used;
+  };
+
+  // Working arrays used during the layout algorithm.
+  BufferRequirements* requirements_;
+  // buffer_sizes_sorted_ and buffer_ids_sorted_ are sorted according to:
+  //   {
+  //     offline planned buffers,
+  //     online planned buffers sorted by size
+  //   }
+  int* buffer_sizes_sorted_;
+  int* buffer_ids_sorted_;
+  ListEntry* buffers_sorted_by_offset_;
+  int next_free_entry_;    // Index of the next free entry of
+                           // buffers_sorted_by_offset_
+  int first_entry_index_;  // Index of the first entry (smallest offset) of
+                           // buffers_sorted_by_offset_
+
+  // Stores the outcome of the plan, the location of each buffer in the arena.
+  int* buffer_offsets_;
+
+  // Whether buffers have been added since the last plan was calculated.
+  bool need_to_calculate_offsets_;
+
+  TF_LITE_REMOVE_VIRTUAL_DELETE
+};
+
+}  // namespace tflite
+
+#endif  // TENSORFLOW_LITE_MICRO_MEMORY_PLANNER_GREEDY_MEMORY_PLANNER_H_
