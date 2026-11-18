@@ -1,0 +1,621 @@
+===== ALLOCATION INFO SOURCE FILES =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+
+===== ALLOCATION INFO AND LIFETIME MAPPING =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-15-#ifndef TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-16-#define TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-17-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-18-#include "tensorflow/lite/c/common.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-19-#include "tensorflow/lite/micro/compatibility.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-20-#include "tensorflow/lite/micro/flatbuffer_utils.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-21-#include "tensorflow/lite/micro/micro_allocator.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-22-#include "tensorflow/lite/schema/schema_generated.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-23-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-24-namespace tflite {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-25-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-26-// Used to hold information used during allocation calculations.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:27:struct AllocationInfo {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-28-  size_t bytes;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-29-  void** output_ptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-30-  int first_created;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-31-  int last_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-32-  int32_t offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-33-  bool needs_allocating;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-34-};
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-35-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-36-// Used to hold the allocation info list and related metadata for the entire
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-37-// graph (including subgraphs). Since all subgraphs are planned together, the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-38-// allocation info list contains allocations for all subgraphs. Track the offset
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-39-// into this list for each subgraph then reserve space to track all allocations.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-46-//
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-47-// For this example, the subgraph offsets would be [0, 2, 5] and the scratch
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-48-// offset would be 7.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-49-struct GraphAllocationInfo {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-50-  AllocationInfo* allocation_info;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-51-  size_t allocation_info_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-52-  size_t* subgraph_offsets;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-53-  size_t scratch_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-54-  size_t tensor_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-55-  size_t scratch_buffer_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-56-};
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-57-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:58:// A helper class to construct AllocationInfo array. This array contains the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-59-// lifetime of tensors / scratch_buffer and will be used to calculate the memory
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-60-// plan. Methods need to be called in order from `Create`, Init`, `Add*`, to
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-61-// `Finish`.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:62:class AllocationInfoBuilder {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-63- public:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:64:  AllocationInfoBuilder(const Model* model,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-65-                        INonPersistentBufferAllocator* non_persistent_allocator)
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-66-      : model_(model), non_persistent_allocator_(non_persistent_allocator) {}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-67-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-68-  // Check if model contains offline planned buffer offsets.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-69-  //  - If there's no metadata available, offline_planner_offsets is not set
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-70-  //  - If there's metadata available, offline_planner_offsets will point to the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-71-  //    first offset in the metadata buffer list.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-72-  TfLiteStatus GetOfflinePlannedOffsets(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-73-      const int32_t** offline_planner_offsets);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-74-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-75-  // Allocate memory for the allocation info array as well as offsets into that
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-76-  // array for each subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:77:  TfLiteStatus CreateAllocationInfo(int scratch_buffer_request_count);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-78-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-79-  // Release memory used for the allocation info array.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-80-  TfLiteStatus FreeAllocationInfo();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-81-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-82-  // Initialize AllocationInfo for all tensors and scratch buffers in the graph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:83:  TfLiteStatus InitializeAllocationInfo(const int32_t* offline_offsets,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-84-                                        SubgraphAllocations* allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-85-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-86-  // Mark the scope of each tensor and scratch buffer across the graph. Enter
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-87-  // all possible subgraphs invoked by each control flow operator. This method
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-88-  // marks the maximum lifetime of each buffer so that tensors are correctly
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-89-  // planned for all valid invocation flows.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:90:  TfLiteStatus MarkAllocationLifetimes(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-91-      int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_request,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-92-      ScratchBufferHandle* scratch_buffer_handles,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-93-      SubgraphAllocations* allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-94-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-95-  // Identify control flow operators and recursively mark all subgraphs which
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-96-  // that operator can invoke. The lifetime of all tensors within a subgraph
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-97-  // can only be extended. The order of subgraph invocation does not matter
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-98-  // since subgraphs within the same control flow operator are executed
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-99-  // within their own allocation scope (planned buffers in a subgraph cannot
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-100-  // persist beyond the end of that subgraph's invocation).
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-101-  TfLiteStatus MarkSubgraphLifetimesIfNecessary(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-102-      const Operator* op,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-25-#include "tensorflow/lite/micro/micro_log.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-26-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-27-namespace tflite {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-28-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-29-namespace {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-30-constexpr char kOfflineMemAllocMetadata[] = "OfflineMemoryAllocation";
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-31-constexpr int kUninitializedLifetime = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-32-}  // namespace
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-33-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-34-// Mark the given Allocation info as first created at the specified allocation
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-35-// scope count. Only the first creation must be recorded since the allocation
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-36-// scope count monotonically increases throughout the lifetime marking process.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:37:void AllocationInfoBuilder::UpdateFirstCreated(AllocationInfo* current,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-38-                                               int allocation_scope_count) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-39-  TFLITE_DCHECK(current->first_created <= allocation_scope_count);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-40-  if (current->first_created == kUninitializedLifetime) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-41-    current->first_created = allocation_scope_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-42-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-43-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-44-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-45-// Mark the given AllocationInfo as last used at the specified allocation scope
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-46-// count. Update the last used marker every time, since the allocation scope
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-47-// count monotonically increases through the lifetime marking process.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:48:void AllocationInfoBuilder::UpdateLastUsed(AllocationInfo* current,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-49-                                           int allocation_scope_count) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-50-  TFLITE_DCHECK(current->last_used <= allocation_scope_count);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-51-  current->last_used = allocation_scope_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-52-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-53-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:54:TfLiteStatus AllocationInfoBuilder::MarkSubgraphLifetimesIfNecessary(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-55-    const Operator* op, internal::ScratchBufferRequest* scratch_buffer_requests,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-56-    ScratchBufferHandle* scratch_buffer_handles,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-57-    SubgraphAllocations* allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-58-  int first_subgraph_index = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-59-  int second_subgraph_index = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-60-  const OperatorCode* opcode =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-61-      model_->operator_codes()->Get(op->opcode_index());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-62-  switch (opcode->builtin_code()) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-63-    case BuiltinOperator_IF: {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-64-      first_subgraph_index =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-65-          op->builtin_options_as_IfOptions()->then_subgraph_index();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-66-      second_subgraph_index =
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-78-      second_subgraph_index =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-79-          op->builtin_options_as_WhileOptions()->body_subgraph_index();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-80-      break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-81-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-82-    default: {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-83-      break;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-84-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-85-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-86-  if (first_subgraph_index != -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-87-    // Enter a new allocation scope for each subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-88-    allocation_scope_count_++;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-89-    TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:90:        MarkAllocationLifetimes(first_subgraph_index, scratch_buffer_requests,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-91-                                scratch_buffer_handles, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-92-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-93-  if (second_subgraph_index != -1) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-94-    // Enter a new allocation scope for each subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-95-    allocation_scope_count_++;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-96-    TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:97:        MarkAllocationLifetimes(second_subgraph_index, scratch_buffer_requests,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-98-                                scratch_buffer_handles, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-99-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-100-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-101-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-102-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:103:TfLiteStatus AllocationInfoBuilder::CreateAllocationInfo(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-104-    int scratch_buffer_request_count) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-105-  size_t subgraph_offsets_length = model_->subgraphs()->size() * sizeof(size_t);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-106-  info_.subgraph_offsets =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-107-      reinterpret_cast<size_t*>(non_persistent_allocator_->AllocateTemp(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-108-          subgraph_offsets_length, alignof(size_t)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-109-  if (info_.subgraph_offsets == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-110-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-111-        "Failed to allocate memory for memory planning, %d bytes required",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-112-        subgraph_offsets_length);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-113-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-114-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-115-  size_t tensor_count = 0;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-122-    tensor_count += model_->subgraphs()->Get(subgraph_idx)->tensors()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-123-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-124-  info_.tensor_count = tensor_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-125-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-126-  // Scratch buffer allocations follow tensor allocations, so the scratch offset
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-127-  // is equal to the number of tensor allocations.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-128-  info_.scratch_offset = tensor_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-129-  info_.allocation_info_count = tensor_count + scratch_buffer_request_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-130-  info_.scratch_buffer_count = scratch_buffer_request_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-131-  size_t bytes = sizeof(AllocationInfo) * info_.allocation_info_count;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-132-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-133-  // Allocate an array of AllocationInfo structs from the temp section. This
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:134:  // struct will be used by AllocationInfoBuilder to find buffer usage.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-135-  info_.allocation_info = reinterpret_cast<AllocationInfo*>(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-136-      non_persistent_allocator_->AllocateTemp(bytes, alignof(AllocationInfo)));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-137-  if (info_.allocation_info == nullptr) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-138-    MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-139-        "Failed to allocate memory for memory planning, %d bytes required",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-140-        bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-141-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-142-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-143-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-144-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-145-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:146:TfLiteStatus AllocationInfoBuilder::FreeAllocationInfo() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-147-  non_persistent_allocator_->DeallocateTemp(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-148-      reinterpret_cast<uint8_t*>(info_.allocation_info));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-149-  non_persistent_allocator_->DeallocateTemp(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-150-      reinterpret_cast<uint8_t*>(info_.subgraph_offsets));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-151-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-152-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-153-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:154:TfLiteStatus AllocationInfoBuilder::ValidateSubgraph(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-155-    const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-156-  uint32_t operators_size = NumSubgraphOperators(subgraph);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-157-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-158-  for (uint32_t i = 0; i < operators_size; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-159-    const auto op = subgraph->operators()->Get(i);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-160-    for (size_t n = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-161-         op->intermediates() != nullptr && n < op->intermediates()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-162-         n++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-163-      const int tensor_index = op->intermediates()->Get(n);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-164-      size_t tensor_size = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-165-      TF_LITE_ENSURE_STATUS(TfLiteEvalTensorByteLength(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-166-          &eval_tensors[tensor_index], &tensor_size));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-167-      if (tensor_size != 0) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-168-        MicroPrintf(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-169-            "Does not support intermediate tensor with non-zero size: %d",
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-170-            tensor_size);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-171-        return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-172-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-173-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-174-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-175-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-176-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-177-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:178:TfLiteStatus AllocationInfoBuilder::InitializeAllocationInfo(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-179-    const int32_t* offline_offsets, SubgraphAllocations* allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-180-  AllocationInfo* allocation_info = info_.allocation_info;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-181-  // Initialize allocation info for every tensor in every subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-182-  int offline_index = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-183-  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-184-       subgraph_idx++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-185-    const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-186-    TfLiteEvalTensor* eval_tensors = allocations[subgraph_idx].tensors;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-187-    AllocationInfo* subgraph_allocation_info =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-188-        &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-189-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-190-    // Ensure constraints are met.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-221-  AllocationInfo* scratch_allocation_info =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-222-      &allocation_info[info_.scratch_offset];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-223-  for (size_t i = 0; i < info_.scratch_buffer_count; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-224-    AllocationInfo* current = &scratch_allocation_info[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-225-    current->first_created = kUninitializedLifetime;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-226-    current->last_used = kUninitializedLifetime;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-227-    current->needs_allocating = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-228-    current->offline_offset = kOnlinePlannedBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-229-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-230-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-231-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-232-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:233:TfLiteStatus AllocationInfoBuilder::MarkAllocationLifetimes(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-234-    int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_requests,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-235-    ScratchBufferHandle* scratch_buffer_handles,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-236-    SubgraphAllocations* allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-237-  const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-238-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-239-  AllocationInfo* allocation_info = info_.allocation_info;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-240-  // Each subgraph's tensor allocations are in a contiguous block starting at
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-241-  // subgraph_offsets_[subgraph index] with one entry per tensor.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-242-  AllocationInfo* subgraph_allocation_info =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-243-      &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-244-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-245-  uint32_t operators_size = NumSubgraphOperators(subgraph);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-326-    // Make sure to assign the First created value of the subgraph output
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-327-    // This will handle the case where the subgraph is empty. This helps
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-328-    // ensure all tensors have valid lifetimes before those are used by the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-329-    // memory planner.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-330-    UpdateFirstCreated(current, allocation_scope_count_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-331-    UpdateLastUsed(current, allocation_scope_count_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-332-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-333-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-334-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-335-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-336-// Get offline tensors allocation plan. See
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-337-// micro/docs/memory_management.md for more info.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:338:TfLiteStatus AllocationInfoBuilder::GetOfflinePlannedOffsets(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-339-    const int32_t** offline_planner_offsets) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-340-  if (model_->metadata()) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-341-    for (size_t i = 0; i < model_->metadata()->size(); ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-342-      auto metadata = model_->metadata()->Get(i);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-343-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-344-      if (metadata->name()) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-345-        const size_t metadata_name_size = metadata->name()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-346-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-347-        if ((strncmp(metadata->name()->c_str(), kOfflineMemAllocMetadata,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-348-                     std::min(metadata_name_size,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-349-                              strlen(kOfflineMemAllocMetadata))) == 0) &&
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-350-            metadata_name_size == strlen(kOfflineMemAllocMetadata)) {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-17-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-18-#include "tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-19-#include "tensorflow/lite/micro/test_helpers.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-20-#include "tensorflow/lite/micro/testing/micro_test.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-21-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-22-TF_LITE_MICRO_TESTS_BEGIN
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-23-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-24-TF_LITE_MICRO_TEST(TestSingleSubgraph) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-25-  constexpr int kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-26-  uint8_t arena[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-27-  const tflite::Model* model = tflite::testing::GetSimpleMockModel();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-28-  tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:29:  tflite::AllocationInfoBuilder builder(model, &allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:30:  builder.CreateAllocationInfo(0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-31-  tflite::MicroAllocator* micro_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-32-      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-33-  tflite::SubgraphAllocations* subgraph_allocations =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-34-      micro_allocator->StartModelAllocation(model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:35:  builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:36:  builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-37-  TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-38-  tflite::AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-39-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-40-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-41-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, -1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-42-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-43-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-44-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-45-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-46-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-47-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-48-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-49-TF_LITE_MICRO_TEST(TestSingleSubgraphWithIntermediates) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-50-  constexpr int kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-51-  uint8_t arena[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-52-  const tflite::Model* model = tflite::testing::GetSimpleStatefulModel();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-53-  tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:54:  tflite::AllocationInfoBuilder builder(model, &allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:55:  builder.CreateAllocationInfo(0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-56-  tflite::MicroAllocator* micro_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-57-      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-58-  tflite::SubgraphAllocations* subgraph_allocations =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-59-      micro_allocator->StartModelAllocation(model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:60:  builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:61:  builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-62-  TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-63-  tflite::AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-64-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-65-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-66-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].needs_allocating, true);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-67-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-68-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-69-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].needs_allocating, true);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-70-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-71-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-72-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].needs_allocating, true);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-73-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, -1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-74-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, -1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-75-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].needs_allocating, false);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-76-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-77-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-78-TF_LITE_MICRO_TEST(TestMultiSubgraphWithIf) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-79-  constexpr int kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-80-  uint8_t arena[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-81-  const tflite::Model* model =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-82-      tflite::testing::GetSimpleModelWithSubgraphsAndIf();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-83-  tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:84:  tflite::AllocationInfoBuilder builder(model, &allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:85:  builder.CreateAllocationInfo(0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-86-  tflite::MicroAllocator* micro_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-87-      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-88-  tflite::SubgraphAllocations* subgraph_allocations =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-89-      micro_allocator->StartModelAllocation(model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:90:  builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:91:  builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-92-  TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 10);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-93-  tflite::AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-94-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-95-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-96-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-97-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-98-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-99-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-100-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-101-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-102-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].first_created, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-103-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].last_used, 3);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-110-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[8].first_created, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-111-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[8].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-112-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[9].first_created, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-113-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[9].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-114-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-115-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-116-TF_LITE_MICRO_TEST(TestMultiSubgraphWithIfAndEmptySubgraph) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-117-  constexpr int kArenaSize = 1024;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-118-  uint8_t arena[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-119-  const tflite::Model* model =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-120-      tflite::testing::GetSimpleModelWithIfAndEmptySubgraph();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-121-  tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:122:  tflite::AllocationInfoBuilder builder(model, &allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:123:  builder.CreateAllocationInfo(0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-124-  tflite::MicroAllocator* micro_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-125-      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-126-  tflite::SubgraphAllocations* subgraph_allocations =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-127-      micro_allocator->StartModelAllocation(model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:128:  builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:129:  builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-130-  TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 10);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-131-  tflite::AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-132-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-133-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-134-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-135-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-136-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-137-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-138-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-139-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-140-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].first_created, 2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-141-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].last_used, 3);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-148-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[8].first_created, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-149-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[8].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-150-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[9].first_created, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-151-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[9].last_used, 4);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-152-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-153-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-154-TF_LITE_MICRO_TEST(TestMultiSubgraphWithIfAndInputSubgraphOverlap) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-155-  constexpr int kArenaSize = 2048;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-156-  uint8_t arena[kArenaSize];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-157-  const tflite::Model* model =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-158-      tflite::testing::GetModelWithIfAndSubgraphInputTensorOverlap();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-159-  tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:160:  tflite::AllocationInfoBuilder builder(model, &allocator);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:161:  builder.CreateAllocationInfo(0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-162-  tflite::MicroAllocator* micro_allocator =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-163-      tflite::MicroAllocator::Create(arena, kArenaSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-164-  tflite::SubgraphAllocations* subgraph_allocations =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-165-      micro_allocator->StartModelAllocation(model);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:166:  builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc:167:  builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-168-  TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 11);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-169-  tflite::AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-170-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-171-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-172-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-173-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 5);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-174-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-175-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 6);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-176-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-177-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 6);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-178-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].first_created, 6);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc-179-  TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].last_used, 6);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1114-    ScratchBufferHandle* scratch_buffer_handles) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1115-  size_t head_usage = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1116-  // Create static memory plan
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1117-  // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1118-  // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1119-  // 3. Static memory planning using the planner.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1120-  // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1121-  //
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1122-  // Note that AllocationInfo is only needed for creating the plan. It will be
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1123-  // allocated from the temp section and cleaned up at the bottom of this
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1124-  // function.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1125-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1126:  // Use the AllocationInfoBuilder class to help determine where buffers are
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1127-  // used in the subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1128:  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1129-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1130:      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1131-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1132-  const int32_t* offline_planner_offsets = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1133-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1134-      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1135-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1136-  // We allocate buffers for variable tensors here since the offline planner
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1137-  // offsets are conviently available here.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1138-  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1139-       subgraph_idx++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1140-    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1141-    TFLITE_DCHECK(subgraph != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1142-    TF_LITE_ENSURE_STATUS(AllocateVariables(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1143-        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1144-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1145-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1146-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1147:      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1148-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1149-  internal::ScratchBufferRequest* scratch_buffer_requests =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1150-      GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1151:  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1152-      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1153-  int allocation_info_count = builder.AllocationCount();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1154-  AllocationInfo* allocation_info = builder.Finish();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1155-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1156-  // Remaining arena size that memory planner can use for calculating offsets.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1157-  size_t remaining_arena_size =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1158-      non_persistent_buffer_allocator_->GetAvailableMemory(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1159-          MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1160-  uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1161-      remaining_arena_size, MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1162-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1163-  if (planner_arena == nullptr) {
+
+===== PLAN CREATION AND COMMIT =====
+84-    MemoryPlannerType memory_planner_type,
+85-    IPersistentBufferAllocator* memory_allocator) {
+86-  MicroMemoryPlanner* memory_planner = nullptr;
+87-  uint8_t* memory_planner_buffer = nullptr;
+88-
+89-  switch (memory_planner_type) {
+90-    case MemoryPlannerType::kLinear: {
+91-      memory_planner_buffer = memory_allocator->AllocatePersistentBuffer(
+92-          sizeof(LinearMemoryPlanner), alignof(LinearMemoryPlanner));
+93-      memory_planner = new (memory_planner_buffer) LinearMemoryPlanner();
+94-      break;
+95-    }
+96-    case MemoryPlannerType::kGreedy: {
+97-      memory_planner_buffer = memory_allocator->AllocatePersistentBuffer(
+98-          sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
+99-      memory_planner = new (memory_planner_buffer) GreedyMemoryPlanner();
+100-      break;
+101-    }
+102-  }
+103-  return memory_planner;
+104-}
+105-
+106:TfLiteStatus CreatePlan(MicroMemoryPlanner* planner,
+107-                        const AllocationInfo* allocation_info,
+108-                        size_t allocation_info_size) {
+109-  // Add the tensors to our allocation plan.
+110-  for (size_t i = 0; i < allocation_info_size; ++i) {
+111-    const AllocationInfo* current = &allocation_info[i];
+112-    if (current->needs_allocating) {
+113-      size_t aligned_bytes_required =
+114-          AlignSizeUp(current->bytes, MicroArenaBufferAlignment());
+115-      if (current->offline_offset == kOnlinePlannedBuffer) {
+116-        TF_LITE_ENSURE_STATUS(planner->AddBuffer(aligned_bytes_required,
+117-                                                 current->first_created,
+118-                                                 current->last_used));
+119-      } else {
+120-        TF_LITE_ENSURE_STATUS(
+121-            planner->AddBuffer(aligned_bytes_required, current->first_created,
+122-                               current->last_used, current->offline_offset));
+123-      }
+124-    }
+125-  }
+126-  return kTfLiteOk;
+127-}
+128-
+129:TfLiteStatus CommitPlan(MicroMemoryPlanner* planner, uint8_t* starting_point,
+130-                        const AllocationInfo* allocation_info,
+131-                        size_t allocation_info_size) {
+132-  // Figure out the actual memory addresses for each buffer, based on the plan.
+133-  int planner_index = 0;
+134-  for (size_t i = 0; i < allocation_info_size; ++i) {
+135-    const AllocationInfo* current = &allocation_info[i];
+136-    if (current->needs_allocating) {
+137-      int offset = -1;
+138-      TF_LITE_ENSURE_STATUS(
+139-          planner->GetOffsetForBuffer(planner_index, &offset));
+140-      *current->output_ptr = reinterpret_cast<void*>(starting_point + offset);
+141-      ++planner_index;
+142-    }
+143-  }
+144-  return kTfLiteOk;
+145-}
+146-
+147-IPersistentBufferAllocator* CreatePersistentArenaAllocator(uint8_t* buffer_head,
+148-                                                           size_t buffer_size) {
+149-  // Align the actually used area by the tail because persistent buffer grows
+150-  // from the bottom to top.
+151-  uint8_t* aligned_buffer_tail =
+--
+1147-      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+1148-
+1149-  internal::ScratchBufferRequest* scratch_buffer_requests =
+1150-      GetScratchBufferRequests();
+1151-  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+1152-      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+1153-  int allocation_info_count = builder.AllocationCount();
+1154-  AllocationInfo* allocation_info = builder.Finish();
+1155-
+1156-  // Remaining arena size that memory planner can use for calculating offsets.
+1157-  size_t remaining_arena_size =
+1158-      non_persistent_buffer_allocator_->GetAvailableMemory(
+1159-          MicroArenaBufferAlignment());
+1160-  uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+1161-      remaining_arena_size, MicroArenaBufferAlignment());
+1162-
+1163-  if (planner_arena == nullptr) {
+1164-    return kTfLiteError;
+1165-  }
+1166-
+1167-  memory_planner_->Init(planner_arena, remaining_arena_size);
+1168-  TF_LITE_ENSURE_STATUS(
+1169:      CreatePlan(memory_planner_, allocation_info, allocation_info_count));
+1170-
+1171-  // Commit the plan.
+1172-  TF_LITE_ENSURE_STATUS(
+1173:      CommitPlan(memory_planner_,
+1174-                 non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+1175-                 allocation_info, allocation_info_count));
+1176-
+1177-  // Reset all temp allocations used above:
+1178-  builder.FreeAllocationInfo();
+1179-  non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+1180-  TF_LITE_ENSURE_STATUS(
+1181-      non_persistent_buffer_allocator_->ResetTempAllocations());
+1182-  TF_LITE_ENSURE_STATUS(
+1183-      non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+1184-          scratch_buffer_head_));
+1185-
+1186-#ifdef TF_LITE_SHOW_MEMORY_USE
+1187-  memory_planner_->PrintMemoryPlan();
+1188-#endif
+1189-  head_usage = memory_planner_->GetMaximumMemorySize();
+1190-
+1191-  // The head is used to store memory plans for one model at a time during the
+1192-  // model preparation stage, and is re-purposed to store scratch buffer handles
+1193-  // during model invocation. The head must be as large as the greater of the
+1194-  // largest model memory plan's size and the total space required for all
+1195-  // scratch buffer handles.
+
+===== MEMORY PLAN DEBUG MACRO CONFIGURATION =====
