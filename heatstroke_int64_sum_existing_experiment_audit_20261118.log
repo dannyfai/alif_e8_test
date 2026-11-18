@@ -1,0 +1,504 @@
+===== EXISTING INT64 CAST/SUM EXPERIMENT FILES =====
+-rw-rw-r-- 1 user user 282 Nov 10 14:47 /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_cast_sum.hpp
+#ifndef HEATSTROKE_INT64_CAST_SUM_HPP
+#define HEATSTROKE_INT64_CAST_SUM_HPP
+
+#include "tensorflow/lite/micro/kernels/kernel_util.h"
+
+namespace tflite {
+
+TFLMRegistration RegisterHeatstrokeCastKernel();
+TFLMRegistration RegisterHeatstrokeSumKernel();
+
+}  // namespace tflite
+
+#endif
+-rw-rw-r-- 1 user user 11K Nov 10 14:47 /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_cast_sum.cc
+#include "heatstroke_int64_cast_sum.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <new>
+
+#include "tensorflow/lite/c/builtin_op_data.h"
+#include "tensorflow/lite/c/common.h"
+#include "tensorflow/lite/micro/kernels/kernel_util.h"
+#include "tensorflow/lite/micro/kernels/reduce.h"
+#include "tensorflow/lite/micro/micro_log.h"
+
+namespace tflite {
+namespace {
+
+bool GetElementCount(const TfLiteIntArray* dims, size_t* result)
+{
+    if (dims == nullptr || result == nullptr || dims->size < 0) {
+        return false;
+    }
+
+    size_t count = 1U;
+
+    for (int i = 0; i < dims->size; ++i) {
+        const int dimension = dims->data[i];
+
+        if (dimension < 0) {
+            return false;
+        }
+
+        if (dimension == 0) {
+            count = 0U;
+            continue;
+        }
+
+        if (count > std::numeric_limits<size_t>::max() /
+                        static_cast<size_t>(dimension)) {
+            return false;
+        }
+
+        count *= static_cast<size_t>(dimension);
+    }
+
+    *result = count;
+    return true;
+}
+
+bool SameShape(const TfLiteIntArray* a, const TfLiteIntArray* b)
+{
+    if (a == nullptr || b == nullptr || a->size != b->size) {
+        return false;
+    }
+
+    for (int i = 0; i < a->size; ++i) {
+        if (a->data[i] != b->data[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template <typename FromT, typename ToT>
+TfLiteStatus CopyCast(
+    const TfLiteEvalTensor* input,
+    TfLiteEvalTensor* output,
+    size_t count)
+{
+    const FromT* source = micro::GetTensorData<FromT>(input);
+    ToT* destination = micro::GetTensorData<ToT>(output);
+
+    if (count != 0U && (source == nullptr || destination == nullptr)) {
+        MicroPrintf("Heatstroke CAST: null tensor data pointer.");
+        return kTfLiteError;
+    }
+
+    for (size_t i = 0U; i < count; ++i) {
+        destination[i] = static_cast<ToT>(source[i]);
+    }
+
+    return kTfLiteOk;
+}
+
+TfLiteStatus HeatstrokeCastPrepare(
+    TfLiteContext* context,
+    TfLiteNode* node)
+{
+    if (node == nullptr ||
+        node->inputs == nullptr ||
+        node->outputs == nullptr ||
+        node->inputs->size != 1 ||
+        node->outputs->size != 1 ||
+        node->builtin_data == nullptr) {
+        MicroPrintf("Heatstroke CAST: invalid node or parameters.");
+        return kTfLiteError;
+    }
+
+    return kTfLiteOk;
+}
+
+TfLiteStatus HeatstrokeCastEval(
+    TfLiteContext* context,
+    TfLiteNode* node)
+{
+    if (context == nullptr || node == nullptr ||
+        node->builtin_data == nullptr) {
+        return kTfLiteError;
+    }
+
+    const TfLiteEvalTensor* input =
+        micro::GetEvalInput(context, node, 0);
+    TfLiteEvalTensor* output =
+        micro::GetEvalOutput(context, node, 0);
+
+    if (input == nullptr || output == nullptr) {
+        MicroPrintf("Heatstroke CAST: missing input or output.");
+        return kTfLiteError;
+    }
+
+    const auto* params =
+        static_cast<const TfLiteCastParams*>(node->builtin_data);
+
+    if (params->in_data_type != input->type ||
+        params->out_data_type != output->type) {
+        MicroPrintf("Heatstroke CAST: FlatBuffer type contract mismatch.");
+        return kTfLiteError;
+    }
+
+    if (!SameShape(input->dims, output->dims)) {
+        MicroPrintf("Heatstroke CAST: input/output shapes differ.");
+        return kTfLiteError;
+    }
+
+    size_t count = 0U;
+    if (!GetElementCount(input->dims, &count)) {
+        MicroPrintf("Heatstroke CAST: invalid tensor dimensions.");
+        return kTfLiteError;
+    }
+
+    // These are the six conversion combinations found in this model.
+    switch (input->type) {
+        case kTfLiteBool:
+            if (output->type == kTfLiteFloat32) {
+                return CopyCast<bool, float>(input, output, count);
+            }
+            if (output->type == kTfLiteInt64) {
+                return CopyCast<bool, int64_t>(input, output, count);
+            }
+            break;
+
+        case kTfLiteInt32:
+            if (output->type == kTfLiteInt64) {
+                return CopyCast<int32_t, int64_t>(
+                    input, output, count);
+            }
+            break;
+
+        case kTfLiteInt64:
+            if (output->type == kTfLiteBool) {
+                return CopyCast<int64_t, bool>(
+                    input, output, count);
+            }
+
+            if (output->type == kTfLiteFloat32) {
+                return CopyCast<int64_t, float>(
+                    input, output, count);
+            }
+
+            if (output->type == kTfLiteInt32) {
+                const int64_t* source =
+                    micro::GetTensorData<int64_t>(input);
+                int32_t* destination =
+                    micro::GetTensorData<int32_t>(output);
+
+                if (count != 0U &&
+                    (source == nullptr || destination == nullptr)) {
+                    return kTfLiteError;
+                }
+
+                for (size_t i = 0U; i < count; ++i) {
+                    if (source[i] <
+                            static_cast<int64_t>(
+                                std::numeric_limits<int32_t>::min()) ||
+                        source[i] >
+                            static_cast<int64_t>(
+                                std::numeric_limits<int32_t>::max())) {
+                        MicroPrintf(
+                            "Heatstroke CAST: INT64-to-INT32 overflow.");
+                        return kTfLiteError;
+                    }
+
+                    destination[i] = static_cast<int32_t>(source[i]);
+                }
+
+                return kTfLiteOk;
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    MicroPrintf(
+        "Heatstroke CAST: unsupported conversion %s -> %s.",
+        TfLiteTypeGetName(input->type),
+        TfLiteTypeGetName(output->type));
+
+    return kTfLiteError;
+}
+
+void* HeatstrokeSumInit(
+    TfLiteContext* context,
+    const char* buffer,
+    size_t length)
+{
+    if (context == nullptr ||
+        context->AllocatePersistentBuffer == nullptr) {
+        return nullptr;
+    }
+
+    void* storage = context->AllocatePersistentBuffer(
+        context, sizeof(OpDataReduce));
+
+    if (storage == nullptr) {
+        return nullptr;
+    }
+
+    return new (storage) OpDataReduce{};
+}
+
+TfLiteStatus HeatstrokeSumPrepare(
+    TfLiteContext* context,
+    TfLiteNode* node)
+{
+    if (node == nullptr || node->user_data == nullptr) {
+        MicroPrintf("Heatstroke SUM: missing operator data.");
+        return kTfLiteError;
+    }
+
+    // Retain the stock preparation path for FP32 and quantized SUM.
+    // INT64 does not require its quantized scratch buffer.
+    return PrepareMeanOrSumHelper(
+        context,
+        node,
+        static_cast<OpDataReduce*>(node->user_data));
+}
+
+TfLiteStatus HeatstrokeSumInt64Eval(
+    TfLiteContext* context,
+    TfLiteNode* node,
+    const TfLiteEvalTensor* input,
+    const TfLiteEvalTensor* axis,
+    TfLiteEvalTensor* output)
+{
+    if (input == nullptr || axis == nullptr || output == nullptr ||
+        input->dims == nullptr || axis->dims == nullptr ||
+        output->dims == nullptr) {
+        return kTfLiteError;
+    }
+
+    if (output->type != kTfLiteInt64 ||
+        axis->type != kTfLiteInt32 ||
+        input->dims->size != 3) {
+        MicroPrintf("Heatstroke SUM INT64: unsupported tensor contract.");
+        return kTfLiteError;
+    }
+
+    size_t axis_count = 0U;
+    if (!GetElementCount(axis->dims, &axis_count) || axis_count != 1U) {
+        MicroPrintf("Heatstroke SUM INT64: expected one reduction axis.");
+        return kTfLiteError;
+    }
+
+    const int* axis_values = micro::GetTensorData<int>(axis);
+    if (axis_values == nullptr) {
+        return kTfLiteError;
+    }
+
+    int normalized_axis = axis_values[0];
+
+===== POLYUMODEL1 EXPERIMENT REGISTRATION =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2025 Arm Limited
+     3	 * SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Application-local heat-stress TFLM operator registrations.
+     6	 */
+     7	
+     8	#include "PolyUModel1.hpp"
+     9	
+    10	#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+    11	#include "heatstroke_int64_cast_sum.hpp"
+    12	#endif
+    13	
+    14	#if defined(HEATSTROKE_INT64_MUL_EXPERIMENT)
+    15	#include "heatstroke_int64_mul.hpp"
+    16	#endif
+    17	
+    18	#if defined(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+    19	#include "heatstroke_int64_floor_mod.hpp"
+    20	#endif
+    21	
+    22	#if defined(HEATSTROKE_INT64_SUB_EXPERIMENT)
+    23	#include "heatstroke_int64_sub.hpp"
+    24	#endif
+    25	
+    26	#if defined(HEATSTROKE_INT64_ADD_EXPERIMENT)
+    27	#include "heatstroke_int64_add.hpp"
+    28	#endif
+   895	    /*
+   896	     * 28 stock ordinary built-in operators; GATHER is registered separately below.
+   897	     * These CPU registrations must remain available with Ethos-U enabled.
+   898	     */
+   899	#if defined(HEATSTROKE_INT64_ADD_EXPERIMENT)
+   900	    {
+   901	        const TFLMRegistration registration =
+   902	            tflite::RegisterHeatstrokeInt64AddKernel();
+   903	        if (this->m_opResolver.AddAdd(registration) != kTfLiteOk) {
+   904	            printf_err("Failed to register heat-stress INT64 ADD.\\n");
+   905	            return false;
+   906	        }
+   907	    }
+   908	#else
+   909	    HS_ADD_REQUIRED(AddAdd);
+   910	#endif
+   911	    HS_ADD_REQUIRED(AddBroadcastArgs);
+   912	    HS_ADD_REQUIRED(AddBroadcastTo);
+   913	#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+   914	    {
+   915	        const TFLMRegistration registration =
+   916	            tflite::RegisterHeatstrokeCastKernel();
+   917	
+   918	        if (this->m_opResolver.AddBuiltin(
+   919	                tflite::BuiltinOperator_CAST,
+   920	                registration,
+   921	                tflite::ParseCast) != kTfLiteOk) {
+   922	            printf_err("Failed to register heat-stress INT64 CAST.\n");
+   923	            return false;
+   924	        }
+   925	    }
+   926	#else
+   927	    HS_ADD_REQUIRED(AddCast);
+   928	#endif
+   929	    HS_ADD_REQUIRED(AddConcatenation);
+   930	    HS_ADD_REQUIRED(AddCumSum);
+   931	    HS_ADD_REQUIRED(AddDequantize);
+   932	    HS_ADD_REQUIRED(AddDiv);
+   933	    HS_ADD_REQUIRED(AddEqual);
+   934	#if defined(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+   935	    {
+   936	        const TFLMRegistration registration =
+   937	            tflite::RegisterHeatstrokeInt64FloorModKernel();
+   938	        if (this->m_opResolver.AddBuiltin(
+   939	                tflite::BuiltinOperator_FLOOR_MOD,
+   940	                registration,
+   941	                tflite::ParseFloorMod) != kTfLiteOk) {
+   942	            printf_err(
+   943	                "Failed to register heat-stress INT64 FLOOR_MOD.\\n");
+   944	            return false;
+   945	        }
+   946	    }
+   947	#else
+   948	    HS_ADD_REQUIRED(AddFloorMod);
+   949	#endif
+   950	    /*
+   951	     * Application-local GATHER replacement supporting INT32 and INT64
+   952	     * indices. It reuses the existing output tensor and allocates no
+   953	     * index-conversion or scratch buffer.
+   954	     */
+   955	    {
+   956	        const TFLMRegistration registration =
+   957	            tflite::RegisterHeatstrokeGatherKernel();
+   958	
+   959	        if (this->m_opResolver.AddBuiltin(
+   960	                tflite::BuiltinOperator_GATHER,
+   961	                registration,
+   962	                tflite::ParseGather) != kTfLiteOk) {
+   963	            printf_err(
+   964	                "Failed to register heat-stress INT64 GATHER.\n");
+   965	            return false;
+   966	        }
+   967	    }
+   968	    HS_ADD_REQUIRED(AddGreater);
+   969	    HS_ADD_REQUIRED(AddLogicalAnd);
+   970	    HS_ADD_REQUIRED(AddLogicalNot);
+   971	    HS_ADD_REQUIRED(AddMaximum);
+   972	    HS_ADD_REQUIRED(AddMean);
+   973	#if defined(HEATSTROKE_INT64_MUL_EXPERIMENT)
+   974	    {
+   975	        const TFLMRegistration registration =
+   976	            tflite::RegisterHeatstrokeInt64MulKernel();
+   977	        if (this->m_opResolver.AddMul(registration) != kTfLiteOk) {
+   978	            printf_err("Failed to register heat-stress INT64 MUL.\\n");
+   979	            return false;
+   980	        }
+   981	    }
+   982	#else
+   983	    HS_ADD_REQUIRED(AddMul);
+   984	#endif
+   985	    HS_ADD_REQUIRED(AddNeg);
+   986	    HS_ADD_REQUIRED(AddQuantize);
+   987	    HS_ADD_REQUIRED(AddReshape);
+   988	    HS_ADD_REQUIRED(AddRsqrt);
+   989	    HS_ADD_REQUIRED(AddSelectV2);
+   990	    HS_ADD_REQUIRED(AddSoftmax);
+   991	#if defined(HEATSTROKE_INT64_SPLIT_V_EXPERIMENT)
+   992	    {
+   993	        const TFLMRegistration registration =
+   994	            tflite::RegisterHeatstrokeInt64SplitVKernel();
+   995	        if (this->m_opResolver.AddBuiltin(
+   996	                tflite::BuiltinOperator_SPLIT_V,
+   997	                registration,
+   998	                tflite::ParseSplitV) != kTfLiteOk) {
+   999	            printf_err("Failed to register heat-stress INT64 SPLIT_V.\\n");
+  1000	            return false;
+  1001	        }
+  1002	    }
+  1003	#else
+  1004	    HS_ADD_REQUIRED(AddSplitV);
+  1005	#endif
+  1006	    HS_ADD_REQUIRED(AddSqrt);
+  1007	    HS_ADD_REQUIRED(AddSquare);
+  1008	#if defined(HEATSTROKE_INT64_SUB_EXPERIMENT)
+  1009	    {
+  1010	        const TFLMRegistration registration =
+  1011	            tflite::RegisterHeatstrokeInt64SubKernel();
+  1012	        if (this->m_opResolver.AddBuiltin(
+  1013	                tflite::BuiltinOperator_SUB,
+  1014	                registration,
+  1015	                tflite::ParseSub) != kTfLiteOk) {
+  1016	            printf_err("Failed to register heat-stress INT64 SUB.\\n");
+  1017	            return false;
+  1018	        }
+  1019	    }
+  1020	#else
+  1021	    HS_ADD_REQUIRED(AddSub);
+  1022	#endif
+  1023	#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+  1024	    {
+  1025	        const TFLMRegistration registration =
+  1026	            tflite::RegisterHeatstrokeSumKernel();
+  1027	
+  1028	        if (this->m_opResolver.AddBuiltin(
+  1029	                tflite::BuiltinOperator_SUM,
+  1030	                registration,
+  1031	                tflite::ParseReducer) != kTfLiteOk) {
+  1032	            printf_err("Failed to register heat-stress INT64 SUM.\n");
+  1033	            return false;
+  1034	        }
+  1035	    }
+  1036	#else
+  1037	    HS_ADD_REQUIRED(AddSum);
+  1038	#endif
+  1039	    HS_ADD_REQUIRED(AddTopKV2);
+  1040	
+  1041	#undef HS_ADD_REQUIRED
+  1042	
+  1043	    /*
+  1044	     * Custom SIGN registration under the built-in SIGN opcode.
+  1045	     */
+
+===== EXACT INT64 SUM ERROR SOURCE =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc:334:      MicroPrintf("Only float32, int8, and int16 types are supported.");
+
+===== REDUCTION KERNEL SOURCE FILES =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/reduce.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/reduce_vision.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/xtensa_reduce.h
+
+===== MODEL CONSTANTS AROUND SUM =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794979728.345623   34983 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794979728.345811   34983 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1794979728.374870   34983 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794979729.114019   34983 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1794979729.114219   34983 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Traceback (most recent call last):
+  File "<stdin>", line 19, in <module>
+TypeError: object of type 'int' has no len()
