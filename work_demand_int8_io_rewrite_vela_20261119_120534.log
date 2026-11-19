@@ -1,0 +1,170 @@
+============================================================
+Work-Demand INT8 external I/O interface experiment
+Run: 20261119_120534
+============================================================
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061134.711733   62211 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061134.712038   62211 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795061134.740753   62211 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061135.425605   62211 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061135.425794   62211 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+ONNX 1.20.1
+NumPy 2.5.4
+TensorFlow 2.21.0
+
+=== 1. Create ONNX INT8 input/output rewrite ===
+
+=== 2. Rewrite ONNX external interfaces ===
+=== Rewritten ONNX external interface ===
+Input: acc_window
+Input dtype: INT8
+Input shape: [1,3,512]
+Input scale: 0.005934785585850477
+Input zero point: -84
+
+stage1
+  output: stage1__logits_QuantizeLinear_Output
+  dtype: INT8
+  scale: 0.013855954632163048
+  zero point: -6
+
+stage2
+  output: stage2__logits_QuantizeLinear_Output
+  dtype: INT8
+  scale: 0.022502580657601357
+  zero point: -22
+
+stage3a
+  output: stage3a__logits_QuantizeLinear_Output
+  dtype: INT8
+  scale: 0.00777467479929328
+  zero point: 59
+
+stage3b
+  output: stage3b__logits_QuantizeLinear_Output
+  dtype: INT8
+  scale: 0.008165419101715088
+  zero point: 51
+
+Nodes: 592
+Initializers: 654
+Saved: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/combined_fourcnn_int8_io_20261119_120534/combined_4cnn_external_int8_io_SYNTHETIC_NOT_FOR_FINAL.onnx
+JSON: /home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/combined_fourcnn_int8_io_20261119_120534/combined_4cnn_external_int8_io_params.json
+[PASS] ONNX checker passed.
+
+=== 3. Convert external INT8 ONNX to TFLite ===
+[2026-11-19 12:05:38,356] [WARNING] Tensors without inferred format: stage3a__/Constant_output_0, stage3b__/Constant_output_0, stage2__/Constant_output_0, stage1__/Constant_output_0.
+[2026-11-19 12:05:38,375] [WARNING] Found multiple value infos for tensor "stage1__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,375] [WARNING] Found multiple value infos for tensor "stage1__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,375] [WARNING] Found multiple value infos for tensor "stage2__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage2__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3a__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3a__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3b__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3b__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage1__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage1__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage2__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage2__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3a__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3a__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3b__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,376] [WARNING] Found multiple value infos for tensor "stage3b__logits_QuantizeLinear_Output". Returning first one.
+[2026-11-19 12:05:38,625] [WARNING] Some ops in model will be converted to tensor-based quantization representation. Number of ops: 432.
+[2026-11-19 12:05:38,677] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,677] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,677] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,677] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,678] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,679] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,679] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,679] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,681] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,681] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,682] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,682] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,684] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,684] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,685] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,685] [DEBUG] Explicit ONNX 'pads' cannot be represented directly as 'SAME' or 'VALID'. Inserting an extra 'Pad' operator.
+[2026-11-19 12:05:38,692] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	DequantizeLinear(stage1__logits_DequantizeLinear)
+	DequantizeLinear(stage2__logits_DequantizeLinear)
+	DequantizeLinear(stage3a__logits_DequantizeLinear)
+	DequantizeLinear(stage3b__logits_DequantizeLinear)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-19 12:05:38,702] [INFO] Permuting the `weights`(stage1__classifier.0.weight_DequantizeLinear_Output) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-19 12:05:38,702] [INFO] Permuting the `weights`(stage2__classifier.0.weight_DequantizeLinear_Output) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-19 12:05:38,703] [INFO] Permuting the `weights`(stage3a__classifier.0.weight_DequantizeLinear_Output) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-19 12:05:38,703] [INFO] Permuting the `weights`(stage3b__classifier.0.weight_DequantizeLinear_Output) of a FullyConnected operator and removing an artificial Transpose operator.
+[2026-11-19 12:05:38,846] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/combined_fourcnn_int8_io_20261119_120534/combined_4cnn_external_int8_io_SYNTHETIC_NOT_FOR_FINAL.onnx' model to '/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/combined_fourcnn_int8_io_20261119_120534/combined_4cnn_external_int8_io_SYNTHETIC_NOT_FOR_FINAL.tflite'.
+
+=== 4. Validate new interface against existing INT8 TFLite ===
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061139.427845   62271 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061139.428023   62271 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795061139.455957   62271 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061140.150051   62271 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061140.150266   62271 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+=== New model interface ===
+Input: acc_window
+Input shape: [  1   3 512]
+Input dtype: <class 'numpy.int8'>
+Input qparams from ONNX:
+  scale: 0.005934785585850477
+  zero point: -84
+Interpreter input quantization: (0.005934785585850477, -84)
+
+stage1
+  output: stage1__logits_QuantizeLinear_Output
+  shape: [1 2]
+  dtype: <class 'numpy.int8'>
+  scale: 0.013855954632163048
+  zero point: -6
+
+stage2
+  output: stage2__logits_QuantizeLinear_Output
+  shape: [1 2]
+  dtype: <class 'numpy.int8'>
+  scale: 0.022502580657601357
+  zero point: -22
+
+stage3a
+  output: stage3a__logits_QuantizeLinear_Output
+  shape: [1 2]
+  dtype: <class 'numpy.int8'>
+  scale: 0.00777467479929328
+  zero point: 59
+
+stage3b
+  output: stage3b__logits_QuantizeLinear_Output
+  shape: [1 2]
+  dtype: <class 'numpy.int8'>
+  scale: 0.008165419101715088
+  zero point: 51
+
+=== Numerical results ===
+stage1: old-vs-new max_abs=0.0415678024, RMSE=0.0353258625, class agreement=7/7
+       FP32-vs-new max_abs=0.0906163454, class agreement=7/7, mismatches=[]
+stage2: old-vs-new max_abs=0, RMSE=0, class agreement=7/7
+       FP32-vs-new max_abs=0.0692692995, class agreement=7/7, mismatches=[]
+stage3a: old-vs-new max_abs=0.0466480479, RMSE=0.036878515, class agreement=7/7
+       FP32-vs-new max_abs=0.318243176, class agreement=7/7, mismatches=[]
+stage3b: old-vs-new max_abs=0.0081654191, RMSE=0.00577382324, class agreement=7/7
+       FP32-vs-new max_abs=0.0911265612, class agreement=7/7, mismatches=[]
+
+Overall maximum old-vs-new logit difference: 0.0466480478644371
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/tools/validate_external_int8_io.py", line 240, in <module>
+    raise RuntimeError(
+RuntimeError: New INT8 input/output interface does not match old INT8 model
