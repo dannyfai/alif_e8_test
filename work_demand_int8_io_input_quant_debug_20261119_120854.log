@@ -1,0 +1,87 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061334.329953   62360 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061334.330130   62360 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795061335.062601   62360 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795061335.062817   62360 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TensorFlow: 2.21.0
+NumPy: 2.5.4
+Original vector array: (7, 3, 512) float32
+Normalized vectors: (7, 3, 512)
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:465: UserWarning: Warning: Enabling `experimental_preserve_all_tensors` with the BUILTIN or AUTO op resolver is intended for debugging purposes only. Be aware that this can significantly increase memory usage by storing all intermediate tensors. If you encounter memory problems or are not actively debugging, consider disabling this option.
+  warnings.warn(
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+
+=== Input details ===
+Old: acc_window [  1   3 512] <class 'numpy.float32'>
+New: acc_window [  1   3 512] <class 'numpy.int8'>
+New input quantization: (0.005934785585850477, -84)
+
+=== Output quantization details ===
+stage1 name= stage1__logits_QuantizeLinear_Output dtype= <class 'numpy.int8'> scale= [0.01385595] zero_point= [-6]
+stage2 name= stage2__logits_QuantizeLinear_Output dtype= <class 'numpy.int8'> scale= [0.02250258] zero_point= [-22]
+stage3a name= stage3a__logits_QuantizeLinear_Output dtype= <class 'numpy.int8'> scale= [0.00777467] zero_point= [59]
+stage3b name= stage3b__logits_QuantizeLinear_Output dtype= <class 'numpy.int8'> scale= [0.00816542] zero_point= [51]
+
+=== Per-vector test ===
+
+Sample 0
+
+--- OLD MODEL: input-shaped INT8 intermediate tensors ---
+index=129 name='acc_window_DequantizeLinear_Output_4' shape=(1, 512, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+index=242 name='acc_window_DequantizeLinear_Output_1_4D_' shape=(1, 512, 1, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+index=246 name='acc_window_DequantizeLinear_Output_2_4D_' shape=(1, 512, 1, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+index=250 name='acc_window_DequantizeLinear_Output_3_4D_' shape=(1, 512, 1, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+index=254 name='acc_window_DequantizeLinear_Output_4_4D_' shape=(1, 512, 1, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+
+--- NEW MODEL: input-shaped INT8 intermediate tensors ---
+index=0 name='acc_window_channels_first' shape=(1, 512, 3) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+index=401 name='acc_window' shape=(1, 3, 512) dtype=<class 'numpy.int8'> min=-84 max=84 diff_counts={'rint_float32': 0, 'away_float32': 0, 'rint_float64': 0}
+stage1: old_codes=[7, -16] new_codes=[7, -16] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[63, -92] new_codes=[63, -92] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[109, -51] new_codes=[109, -51] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[114, -127] new_codes=[114, -127] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 1
+stage1: old_codes=[12, -18] new_codes=[12, -18] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[-1, -38] new_codes=[-1, -38] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[25, 13] new_codes=[25, 13] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[112, -48] new_codes=[112, -48] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 2
+stage1: old_codes=[83, -83] new_codes=[83, -83] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[-68, 21] new_codes=[-68, 21] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[126, -111] new_codes=[126, -111] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[127, -107] new_codes=[127, -107] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 3
+stage1: old_codes=[76, -74] new_codes=[76, -74] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[-100, 54] new_codes=[-100, 54] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[42, -22] new_codes=[42, -22] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[126, -90] new_codes=[126, -90] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 4
+stage1: old_codes=[-60, 55] new_codes=[-60, 55] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[125, -126] new_codes=[125, -126] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[82, 32] new_codes=[82, 32] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[103, 3] new_codes=[103, 3] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 5
+stage1: old_codes=[-127, 124] new_codes=[-127, 124] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[78, -102] new_codes=[78, -102] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[116, -127] new_codes=[116, -127] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[6, 21] new_codes=[6, 21] code_diff=[0, 0] max_abs_logit_diff=0
+
+Sample 6
+stage1: old_codes=[87, -103] new_codes=[87, -103] code_diff=[0, 0] max_abs_logit_diff=0
+stage2: old_codes=[46, -83] new_codes=[46, -83] code_diff=[0, 0] max_abs_logit_diff=0
+stage3a: old_codes=[81, -22] new_codes=[81, -22] code_diff=[0, 0] max_abs_logit_diff=0
+stage3b: old_codes=[-59, 50] new_codes=[-59, 50] code_diff=[0, 0] max_abs_logit_diff=0
+
+=== Diagnostic completed ===
