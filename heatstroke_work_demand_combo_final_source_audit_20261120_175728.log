@@ -1,0 +1,105 @@
+===== COMBINED APPLICATION SOURCE AUDIT =====
+App: /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620
+
+===== WORK-DEMAND RUNNER: MODEL ADDRESS, SIZE AND VALIDATION =====
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:1:#include "WorkDemandRunner.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:16:LOG_MODULE_REGISTER(WorkDemandRunner);
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:19:constexpr std::uintptr_t kWorkDemandModelXipAddress = 0xC0AA0000UL;
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:20:constexpr std::size_t kWorkDemandModelBytes = 0x011C9F10UL;
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:23:static std::uint8_t g_workDemandActivationBuf[ACTIVATION_BUF_SZ]
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:48:bool WorkDemandRunner::Init()
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:51:        kWorkDemandModelXipAddress);
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:53:    if (modelPointer == nullptr || kWorkDemandModelBytes < 8U ||
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:54:        std::memcmp(modelPointer + 4U, "TFL3", 4U) != 0) {
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:56:                static_cast<unsigned int>(kWorkDemandModelXipAddress));
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:60:    arm::app::fwk::iface::MemoryRegion modelMem{
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:61:        const_cast<std::uint8_t*>(modelPointer), kWorkDemandModelBytes};
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:63:        g_workDemandActivationBuf, sizeof(g_workDemandActivationBuf)};
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:66:            static_cast<unsigned int>(kWorkDemandModelXipAddress),
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:67:            static_cast<unsigned int>(kWorkDemandModelBytes));
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:69:            static_cast<unsigned int>(sizeof(g_workDemandActivationBuf)));
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:71:    if (!m_model.Init(computeMem, modelMem)) {
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:113:bool WorkDemandRunner::RunOnce(const std::size_t sampleIndex)
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandRunner.cpp:188:std::size_t WorkDemandRunner::GetVectorCount() const noexcept
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandModel.cpp:1:#include "WorkDemandModel.hpp"
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandModel.cpp:3:const tflite::MicroOpResolver& WorkDemandModel::GetOpResolver()
+/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/src/WorkDemandModel.cpp:8:bool WorkDemandModel::EnlistOperations()
+
+===== MAIN LOOP: MODEL INITIALIZATION AND EXECUTION ORDER =====
+32:#include "WorkDemandRunner.hpp"
+33:#include "heatstroke_smoke_test_vector.hpp"
+52:LOG_MODULE_REGISTER(MainLoop);
+61:constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+62:constexpr IRQn_Type kHeatstrokeEthosuIrq =
+65:struct k_work g_heatstrokeEthosuMonitorWork;
+66:struct k_timer g_heatstrokeEthosuMonitorTimer;
+68:void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+74:            kHeatstrokeEthosuStatusAddress);
+78:        NVIC_GetEnableIRQ(kHeatstrokeEthosuIrq));
+80:        NVIC_GetPendingIRQ(kHeatstrokeEthosuIrq));
+82:        NVIC_GetActive(kHeatstrokeEthosuIrq));
+101:void HeatstrokeEthosuMonitorTimerHandler(struct k_timer* timer)
+104:    (void)k_work_submit(&g_heatstrokeEthosuMonitorWork);
+107:void StartHeatstrokeEthosuMonitor()
+110:        &g_heatstrokeEthosuMonitorWork,
+111:        HeatstrokeEthosuMonitorWorkHandler);
+114:        &g_heatstrokeEthosuMonitorTimer,
+115:        HeatstrokeEthosuMonitorTimerHandler,
+119:        k_work_submit(&g_heatstrokeEthosuMonitorWork);
+127:        &g_heatstrokeEthosuMonitorTimer,
+134:void StopHeatstrokeEthosuMonitor()
+136:    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+165:    namespace polyu_heatstroke {
+168:} /* namespace polyu_heatstroke */
+288:    for (const size_t dimension : expectedShape) {
+329:    for (size_t i = 0; i < expectedInputs.size(); ++i) {
+344:    for (size_t i = 0; i < expectedOutputs.size(); ++i) {
+405:    for (unsigned int i = 1U; i < 4U; ++i) {
+414:static bool RunHeatstrokeSmokeInference(PolyUModel1& model, std::uint32_t slot)
+419:    if (slot >= heatstroke_smoke::kSampleCount) {
+424:    const auto& sample = heatstroke_smoke::kSamples[slot];
+427:            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+438:                static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+482:        arm::app::fwk::tflm::ResetHeatstrokeOperatorTiming();
+484:        LOG_INF("HEATSTROKE_DIAG: entering TFLM RunInference()");
+485:        StartHeatstrokeEthosuMonitor();
+487:        StopHeatstrokeEthosuMonitor();
+488:        arm::app::fwk::tflm::LogHeatstrokeOperatorTiming();
+520:        for (unsigned int i = 0U; i < 4U; ++i) {
+580:void MainLoop()
+582:    printk("HP_BOOT_TRACE: combined Work-Demand + Heat-Stroke MainLoop entered\r\n");
+593:    const uint8_t* heatstrokeModelPointer =
+594:        arm::app::polyu_heatstroke::GetModelPointer();
+595:    const size_t heatstrokeModelLength =
+596:        arm::app::polyu_heatstroke::GetModelLen();
+598:           static_cast<const void*>(heatstrokeModelPointer),
+599:           static_cast<unsigned int>(heatstrokeModelLength));
+601:    if (heatstrokeModelPointer == nullptr || heatstrokeModelLength == 0U) {
+606:    arm::app::fwk::iface::MemoryRegion heatstrokeModelMem{
+607:        const_cast<uint8_t*>(heatstrokeModelPointer), heatstrokeModelLength};
+608:    arm::app::fwk::iface::MemoryRegion heatstrokeComputeMem{
+611:    PolyUModel1 heatstrokeModel;
+612:    if (!heatstrokeModel.Init(heatstrokeComputeMem, heatstrokeModelMem)) {
+616:    if (!VerifyTensorInterface(heatstrokeModel)) {
+622:    WorkDemandRunner workDemandRunner;
+623:    if (!workDemandRunner.Init()) {
+632:            static_cast<unsigned int>(workDemandRunner.GetVectorCount()),
+633:            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+637:    std::size_t workDemandSlot = 0U;
+638:    std::uint32_t heatstrokeSlot = 0U;
+641:    while (true) {
+645:        const bool workDemandOk = workDemandRunner.RunOnce(workDemandSlot);
+646:        workDemandSlot = (workDemandSlot + 1U) % workDemandRunner.GetVectorCount();
+648:        const bool heatstrokeOk =
+649:            RunHeatstrokeSmokeInference(heatstrokeModel, heatstrokeSlot);
+650:        heatstrokeSlot = (heatstrokeSlot + 1U) % heatstroke_smoke::kSampleCount;
+652:        if (workDemandOk && heatstrokeOk) {
+657:                    workDemandOk ? "PASS" : "FAIL",
+658:                    heatstrokeOk ? "PASS" : "FAIL");
+
+===== CMAKE SOURCE REGISTRATION =====
+225:    src/use_case/alif_asr/src/MainLoop.cc
+228:    src/use_case/work_demand/src/WorkDemandModel.cpp
+229:    src/use_case/work_demand/src/WorkDemandRunner.cpp
+
+===== END OF AUDIT =====
