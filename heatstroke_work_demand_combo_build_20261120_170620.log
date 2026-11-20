@@ -1,0 +1,102 @@
+
+============================================================
+0. SAFETY AND SOURCE VALIDATION
+============================================================
+SDK:                 /home/user/sdk-alif
+Original Heat-Stroke: /home/user/sdk-alif/beeinventor/test_heatstroke (READ-ONLY; WILL NOT BE MODIFIED)
+Work-Demand source:  /home/user/sdk-alif/beeinventor/test_work_demand_tflm_probe_20261119_125012 (READ-ONLY; WILL NOT BE MODIFIED)
+Combined source copy:/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620
+New build directory: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620
+Work-Demand XIP:     0xC0AA0000
+Work-Demand size:    0x011C9F10 (18652944 bytes)
+Tensor arena each:   0x1A0000 bytes
+LOG:                 /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_work_demand_combo_build_20261120_170620.log
+NO SETOOS / J-LINK / J-FLASH / FLASH / ERASE / PROGRAMMING.
+Work-Demand model size: 18652944
+Work-Demand model SHA:  9f28f06f16074252125cf71749156ddf8a840fdc2002464200d2e6f1786a22a0
+Heat-Stroke model SHA:  b8056848e68ecdb1fc1cd35f65639db6f836b53abf603033f58f90ec7f1003b3
+
+============================================================
+1. CREATE A PROTECTED COPY OF THE HEAT-STROKE APPLICATION
+============================================================
+Copied only build/source inputs; excluded backups, logs, Python venvs and conversion workspaces.
+Original source checksum (MainLoop.cc):
+bf4168affaba9129dec5306a4ac103f6122377a5fc7c1d5fc0cc67f68491885c  /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+
+============================================================
+2. ADD THE WORK-DEMAND WRAPPER AND TEST VECTORS TO THE COPY
+============================================================
+
+============================================================
+3. PATCH THE COMBINED COPY ONLY
+============================================================
+Patched combined application copy only:
+   /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/CMakeLists.txt
+   /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/alif_asr/src/MainLoop.cc
+
+============================================================
+4. VERIFY THE ORIGINAL HEAT-STROKE SOURCES WERE NOT TOUCHED
+============================================================
+Original MainLoop.cc SHA256:
+bf4168affaba9129dec5306a4ac103f6122377a5fc7c1d5fc0cc67f68491885c  /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+Combined MainLoop.cc SHA256:
+2562aa5c6f6dcfce51bc7b5898ae1e1fb042c5f50536da9c8f702269a8781501  /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/alif_asr/src/MainLoop.cc
+Original Heat-Stroke CMakeLists.txt SHA256:
+69a95674f21b23dd72f7b58ddff370f6a9c4b4d9049629f5c9dcac6a13b80e5e  /home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt
+Combined CMakeLists.txt SHA256:
+776fcb311e842e9d295dfbcc37c2da3ee2a61949717924a26f40362a62d6c019  /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/CMakeLists.txt
+
+============================================================
+5. BUILD THE COMBINED TEST FIRMWARE IN A NEW BUILD DIRECTORY
+============================================================
+-- west build: generating a build system
+-- Ethos-U: ETHOSU_TARGET_NPU_CONFIG=ethos-u55-256 -> CONFIG_ARM_ETHOS_U55_256=y, model ID H256
+Loading Zephyr default modules (Zephyr base).
+-- Application: /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620
+-- CMake version: 3.31.10
+-- Found Python3: /home/user/zephyrproject/.py3.12_venv/bin/python3.12 (found suitable version "3.12.15", minimum required is "3.10") found components: Interpreter
+-- Cache files will be written to: /home/user/.cache/zephyr
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr)
+-- Found west (found suitable version "1.5.0", minimum required is "0.14.0")
+-- Board: alif_e8_dk, qualifiers: ae822fa0e5597xx0/rtss_hp
+-- Snippet(s): ospi-flash
+-- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
+-- Found host-tools: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found Dtc: /home/user/zephyr-sdk-0.17.0/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6")
+-- Found BOARD.dts: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.dts
+-- Found devicetree overlay: /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ospi-flash/e8_ospi1.overlay
+-- Generated zephyr.dts: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/zephyr.dts
+-- Generated pickled edt: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/dts.cmake
+
+warning: COUNTER_RTC_SNPS_DW (defined at drivers/counter/Kconfig.dw_rtc:6) was assigned the value
+'y' but got the value 'n'. Check these unsatisfied dependencies: DT_HAS_SNPS_DW_APB_RTC_ENABLED
+(=n). See http://docs.zephyrproject.org/latest/kconfig.html#CONFIG_COUNTER_RTC_SNPS_DW and/or look
+up COUNTER_RTC_SNPS_DW in the menuconfig/guiconfig interface. The Application Development Primer,
+Setting Configuration Values, and Kconfig - Tips and Best Practices sections of the manual might be
+helpful too.
+
+
+/home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/misc/generated/extra_kconfig_options.conf:2: warning: malformed string literal in assignment to ACTIVATION_BUF_SECTION (defined at /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/Kconfig:15). Assignment ignored.
+
+error: Aborting due to Kconfig warnings
+
+Parsing /home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/Kconfig
+Loaded configuration '/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_hp_defconfig'
+Merged configuration '/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/prj.conf'
+Merged configuration '/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.conf'
+Merged configuration '/home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/misc/generated/extra_kconfig_options.conf'
+CMake Error at /home/user/sdk-alif/zephyr/cmake/modules/kconfig.cmake:396 (message):
+  command failed with return code: 1
+Call Stack (most recent call first):
+  /home/user/sdk-alif/zephyr/cmake/modules/zephyr_default.cmake:133 (include)
+  /home/user/sdk-alif/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:66 (include)
+  /home/user/sdk-alif/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:92 (include_boilerplate)
+  CMakeLists.txt:79 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake -DWEST_PYTHON=/home/user/zephyrproject/.py3.12_venv/bin/python3.12 -B/home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620 -GNinja -DBOARD=alif_e8_dk/ae822fa0e5597xx0/rtss_hp -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256 -DHEATSTROKE_INT64_CAST_SUM_EXPERIMENT=ON -DHEATSTROKE_INT64_MUL_EXPERIMENT=ON -DHEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT=ON -DHEATSTROKE_INT64_SUB_EXPERIMENT=ON -DHEATSTROKE_INT64_ADD_EXPERIMENT=ON -DHEATSTROKE_INT64_SPLIT_V_EXPERIMENT=ON -DHEATSTROKE_SINGLE_STEP_EXPERIMENT=OFF -DHEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT=OFF -DHEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT=OFF -DHEATSTROKE_E8_U55_256_VELA_EXPERIMENT=OFF -DCONFIG_FLASH_BASE_ADDRESS=0x80000000 -DCONFIG_FLASH_LOAD_OFFSET=0x200000 -DCONFIG_ACTIVATION_BUF_SZ=0x1A0000 -DCONFIG_ACTIVATION_BUF_SECTION=.alif_sram0.activation_buf -DSNIPPET=ospi-flash -S/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620
