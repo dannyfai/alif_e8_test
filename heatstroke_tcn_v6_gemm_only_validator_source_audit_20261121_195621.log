@@ -1,0 +1,474 @@
+===== VALIDATOR SOURCE AND ARGUMENT AUDIT =====
+Source: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py
+
+===== COMMAND-LINE HELP =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795262182.765459  123525 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795262182.797950  123525 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795262183.566267  123525 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795262183.566461  123525 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+usage: validate_tcn_fold2_v6_tflite_all449.py [-h] --project PROJECT
+                                              --model-dir MODEL_DIR --out-dir
+                                              OUT_DIR --converter CONVERTER
+                                              [--seed SEED]
+                                              [--group-column GROUP_COLUMN]
+                                              [--atol ATOL] [--rtol RTOL]
+
+options:
+  -h, --help            show this help message and exit
+  --project PROJECT
+  --model-dir MODEL_DIR
+  --out-dir OUT_DIR
+  --converter CONVERTER
+  --seed SEED
+  --group-column GROUP_COLUMN
+  --atol ATOL
+  --rtol RTOL
+
+===== VALIDATOR SOURCE: LINES 1-220 =====
+     1	#!/usr/bin/env python3
+     2	from pathlib import Path
+     3	from collections import Counter
+     4	from datetime import datetime
+     5	import argparse
+     6	import hashlib
+     7	import importlib.util
+     8	import json
+     9	import subprocess
+    10	import sys
+    11	
+    12	import numpy as np
+    13	import torch
+    14	import onnxruntime as ort
+    15	import tensorflow as tf
+    16	
+    17	
+    18	SENTINELS = (-9997.0, -9998.0, -9999.0)
+    19	EXPECTED_ONNX_SHA256 = (
+    20	    "1679ccd65d37834014c22f9306241e72"
+    21	    "d57a6ee1e0996584747e8b30f8c0588a"
+    22	)
+    23	
+    24	
+    25	def sha256(path):
+    26	    h = hashlib.sha256()
+    27	    with open(path, "rb") as f:
+    28	        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+    29	            h.update(chunk)
+    30	    return h.hexdigest()
+    31	
+    32	
+    33	def import_module(path, name):
+    34	    spec = importlib.util.spec_from_file_location(name, str(path))
+    35	    if spec is None or spec.loader is None:
+    36	        raise RuntimeError(f"Cannot import {path}")
+    37	    module = importlib.util.module_from_spec(spec)
+    38	    spec.loader.exec_module(module)
+    39	    return module
+    40	
+    41	
+    42	def resolve_input(details, key):
+    43	    matches = [
+    44	        d for d in details
+    45	        if key.lower() in d["name"].lower()
+    46	    ]
+    47	    if len(matches) != 1:
+    48	        raise RuntimeError(
+    49	            f"Cannot uniquely identify TFLite input '{key}'. "
+    50	            f"Matches={[x['name'] for x in matches]}; "
+    51	            f"all_inputs={[x['name'] for x in details]}"
+    52	        )
+    53	    return matches[0]
+    54	
+    55	
+    56	def compare(reference, candidate, atol, rtol):
+    57	    delta = np.abs(reference - candidate)
+    58	    return {
+    59	        "max_abs_error": float(delta.max()),
+    60	        "mean_abs_error": float(delta.mean()),
+    61	        "rmse": float(np.sqrt(np.mean(np.square(reference - candidate)))),
+    62	        "allclose": bool(
+    63	            np.allclose(reference, candidate, atol=atol, rtol=rtol)
+    64	        ),
+    65	        "finite": bool(np.isfinite(candidate).all()),
+    66	    }
+    67	
+    68	
+    69	def main():
+    70	    ap = argparse.ArgumentParser()
+    71	    ap.add_argument("--project", required=True)
+    72	    ap.add_argument("--model-dir", required=True)
+    73	    ap.add_argument("--out-dir", required=True)
+    74	    ap.add_argument("--converter", required=True)
+    75	    ap.add_argument("--seed", type=int, default=20261121)
+    76	    ap.add_argument("--group-column", default="worker_id")
+    77	    ap.add_argument("--atol", type=float, default=2e-4)
+    78	    ap.add_argument("--rtol", type=float, default=2e-4)
+    79	    args = ap.parse_args()
+    80	
+    81	    project = Path(args.project).resolve()
+    82	    model_dir = Path(args.model_dir).resolve()
+    83	    out_dir = Path(args.out_dir).resolve()
+    84	    converter = Path(args.converter).resolve()
+    85	
+    86	    onnx_path = (
+    87	        model_dir /
+    88	        "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx"
+    89	    )
+    90	    tflite_path = (
+    91	        out_dir /
+    92	        "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite"
+    93	    )
+    94	
+    95	    exp = project / "experiments" / "tcn_reg_20261120"
+    96	    exporter_path = (
+    97	        exp / "export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py"
+    98	    )
+    99	    helper_path = exp / "train_tcn_reg_testdev_experiment.py"
+   100	    data_dir = project / "data" / "split_byid"
+   101	
+   102	    print("===== TCN FOLD-2 V6 FP32 TFLITE CONVERSION =====")
+   103	    print("Timestamp:", datetime.now().astimezone().isoformat())
+   104	    print("Python:", sys.version.replace("\n", " "))
+   105	    print("TensorFlow:", tf.__version__)
+   106	    print("ONNX Runtime:", ort.__version__)
+   107	    print("Project:", project)
+   108	    print("ONNX:", onnx_path)
+   109	    print("Output:", tflite_path)
+   110	
+   111	    for path in (
+   112	        onnx_path,
+   113	        exporter_path,
+   114	        helper_path,
+   115	        data_dir / "test_seq.feather",
+   116	        data_dir / "test_non_seq.csv",
+   117	        converter,
+   118	    ):
+   119	        if not path.is_file():
+   120	            raise FileNotFoundError(f"Required file missing: {path}")
+   121	
+   122	    if tflite_path.exists():
+   123	        raise FileExistsError(f"Refusing to overwrite: {tflite_path}")
+   124	
+   125	    actual_sha = sha256(onnx_path)
+   126	    print("V6 ONNX SHA256:", actual_sha)
+   127	    if actual_sha != EXPECTED_ONNX_SHA256:
+   128	        raise RuntimeError(
+   129	            "ONNX SHA256 does not match the validated V6 model. "
+   130	            "Refusing conversion."
+   131	        )
+   132	
+   133	    # ------------------------------------------------------------
+   134	    # 1. Convert ONNX to FP32 TFLite.
+   135	    # ------------------------------------------------------------
+   136	    command = [
+   137	        str(converter),
+   138	        str(onnx_path),
+   139	        "--cast-int64-to-int32",
+   140	        "--guarantee-non-negative-indices",
+   141	        "--verbose",
+   142	        "-o",
+   143	        str(tflite_path),
+   144	    ]
+   145	
+   146	    print("\n===== ONNX2TFLITE COMMAND =====")
+   147	    print(" ".join(command))
+   148	    subprocess.run(command, check=True)
+   149	
+   150	    if not tflite_path.is_file() or tflite_path.stat().st_size == 0:
+   151	        raise RuntimeError("Converter did not produce a valid TFLite file.")
+   152	
+   153	    print("TFLite bytes:", tflite_path.stat().st_size)
+   154	    print("TFLite SHA256:", sha256(tflite_path))
+   155	
+   156	    # ------------------------------------------------------------
+   157	    # 2. Allocate interpreter tensors and inspect operations.
+   158	    # ------------------------------------------------------------
+   159	    print("\n===== TFLITE INTERPRETER PREFLIGHT =====")
+   160	    interpreter = tf.lite.Interpreter(
+   161	        model_path=str(tflite_path)
+   162	    )
+   163	    interpreter.allocate_tensors()
+   164	
+   165	    input_details = interpreter.get_input_details()
+   166	    output_details = interpreter.get_output_details()
+   167	
+   168	    print("TFLite inputs:")
+   169	    for d in input_details:
+   170	        print(
+   171	            " ",
+   172	            d["name"],
+   173	            "shape=", d["shape"].tolist(),
+   174	            "dtype=", d["dtype"],
+   175	            "bytes=", int(np.prod(d["shape"])) * np.dtype(d["dtype"]).itemsize,
+   176	        )
+   177	
+   178	    print("TFLite outputs:")
+   179	    for d in output_details:
+   180	        print(
+   181	            " ",
+   182	            d["name"],
+   183	            "shape=", d["shape"].tolist(),
+   184	            "dtype=", d["dtype"],
+   185	        )
+   186	
+   187	    if len(output_details) != 1:
+   188	        raise RuntimeError(
+   189	            f"Expected one output, found {len(output_details)}"
+   190	        )
+   191	
+   192	    input_keys = [
+   193	        "x_values",
+   194	        "missing_mask",
+   195	        "x_mark",
+   196	        "worker_features_18",
+   197	        "compact_values",
+   198	    ]
+   199	
+   200	    resolved = {
+   201	        key: resolve_input(input_details, key)
+   202	        for key in input_keys
+   203	    }
+   204	
+   205	    expected_shapes = {
+   206	        "x_values": (1, 900, 6),
+   207	        "missing_mask": (1, 900, 6),
+   208	        "x_mark": (1, 900, 3),
+   209	        "worker_features_18": (1, 18),
+   210	        "compact_values": (1, 1800, 6),
+   211	    }
+   212	
+   213	    for key, detail in resolved.items():
+   214	        shape = tuple(int(v) for v in detail["shape"])
+   215	        if shape != expected_shapes[key]:
+   216	            raise RuntimeError(
+   217	                f"TFLite input {key} shape mismatch: {shape}"
+   218	            )
+   219	
+   220	        if key == "missing_mask":
+
+===== VALIDATOR SOURCE: LINES 221-450 =====
+   221	            if np.dtype(detail["dtype"]) != np.dtype(np.bool_):
+   222	                raise RuntimeError(
+   223	                    "The missing_mask input is not Boolean in TFLite: "
+   224	                    f"{detail['dtype']}. Stop and inspect conversion."
+   225	                )
+   226	        elif np.dtype(detail["dtype"]) != np.dtype(np.float32):
+   227	            raise RuntimeError(
+   228	                f"Expected FP32 input {key}; got {detail['dtype']}"
+   229	            )
+   230	
+   231	    ops = interpreter._get_ops_details()
+   232	    op_counts = Counter(str(op.get("op_name", "UNKNOWN")) for op in ops)
+   233	
+   234	    custom_ops = sorted(
+   235	        name for name in op_counts
+   236	        if name.upper() == "CUSTOM" or name.upper().startswith("FLEX")
+   237	    )
+   238	
+   239	    print("\nTFLite operator count:", len(ops))
+   240	    print("TFLite operator histogram:")
+   241	    print(json.dumps(dict(sorted(op_counts.items())), indent=2))
+   242	    print("CUSTOM/FLEX operators:", custom_ops)
+   243	
+   244	    if custom_ops:
+   245	        raise RuntimeError(
+   246	            f"Flex/custom operators detected: {custom_ops}"
+   247	        )
+   248	
+   249	    print("Interpreter allocate_tensors(): PASS")
+   250	    print("No CUSTOM/FLEX operators: PASS")
+   251	
+   252	    # ------------------------------------------------------------
+   253	    # 3. Set up the deterministic 449-sample dataset and V6 ORT.
+   254	    # ------------------------------------------------------------
+   255	    print("\n===== PREPARING 449-SAMPLE VALIDATION =====")
+   256	    exporter = import_module(
+   257	        exporter_path,
+   258	        "tcn_fold2_v5_exporter_for_v6_tflite_validation",
+   259	    )
+   260	    helper = exporter.import_helper(helper_path)
+   261	    project_run = helper.import_project(project)
+   262	
+   263	    dataset = helper.ImputationDataset(
+   264	        project_run,
+   265	        data_dir,
+   266	        "test",
+   267	        args.seed,
+   268	        args.group_column,
+   269	    )
+   270	    dataset.set_epoch(0)
+   271	
+   272	    if len(dataset) != 449:
+   273	        raise RuntimeError(
+   274	            f"Expected 449 samples, found {len(dataset)}"
+   275	        )
+   276	
+   277	    ort_session = ort.InferenceSession(
+   278	        str(onnx_path),
+   279	        providers=["CPUExecutionProvider"],
+   280	    )
+   281	    print("ONNX Runtime input names:")
+   282	    print([
+   283	        (d.name, d.shape, d.type)
+   284	        for d in ort_session.get_inputs()
+   285	    ])
+   286	
+   287	    ort_output_name = ort_session.get_outputs()[0].name
+   288	    tflite_output = output_details[0]
+   289	
+   290	    # ------------------------------------------------------------
+   291	    # 4. Compare TFLite with V6 ONNX Runtime on every sample.
+   292	    # ------------------------------------------------------------
+   293	    failures = []
+   294	    global_max = 0.0
+   295	    abs_sum = 0.0
+   296	    square_sum = 0.0
+   297	    total_values = 0
+   298	    worst_sample = -1
+   299	    missing_entries = 0
+   300	
+   301	    for index in range(len(dataset)):
+   302	        x, mark, worker, compact = exporter.make_sample_inputs(
+   303	            dataset, index
+   304	        )
+   305	
+   306	        mask = (
+   307	            (x == -9997) |
+   308	            (x == -9998) |
+   309	            (x == -9999)
+   310	        )
+   311	        sanitized = torch.where(
+   312	            mask,
+   313	            torch.zeros_like(x),
+   314	            x,
+   315	        )
+   316	
+   317	        feed = {
+   318	            "x_values": sanitized.cpu().numpy().astype(np.float32),
+   319	            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+   320	            "x_mark": mark.cpu().numpy().astype(np.float32),
+   321	            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+   322	            "compact_values": compact.cpu().numpy().astype(np.float32),
+   323	        }
+   324	
+   325	        # Reference: validated V6 ONNX Runtime model.
+   326	        reference = ort_session.run(
+   327	            [ort_output_name],
+   328	            feed,
+   329	        )[0]
+   330	
+   331	        # Candidate: converted FP32 TFLite model.
+   332	        for key in input_keys:
+   333	            detail = resolved[key]
+   334	            value = feed[key].astype(detail["dtype"], copy=False)
+   335	            interpreter.set_tensor(detail["index"], value)
+   336	
+   337	        interpreter.invoke()
+   338	        candidate = interpreter.get_tensor(
+   339	            tflite_output["index"]
+   340	        )
+   341	
+   342	        if reference.shape != candidate.shape:
+   343	            raise RuntimeError(
+   344	                f"Sample {index}: output shape mismatch "
+   345	                f"{reference.shape} vs {candidate.shape}"
+   346	            )
+   347	
+   348	        metrics = compare(
+   349	            reference,
+   350	            candidate,
+   351	            args.atol,
+   352	            args.rtol,
+   353	        )
+   354	
+   355	        delta = np.abs(reference - candidate)
+   356	        sample_max = metrics["max_abs_error"]
+   357	
+   358	        if sample_max > global_max:
+   359	            global_max = sample_max
+   360	            worst_sample = index
+   361	
+   362	        abs_sum += float(delta.sum())
+   363	        square_sum += float(np.square(reference - candidate).sum())
+   364	        total_values += delta.size
+   365	        missing_entries += int(feed["missing_mask"].sum())
+   366	
+   367	        if not metrics["allclose"] or not metrics["finite"]:
+   368	            failures.append({
+   369	                "sample": index,
+   370	                **metrics,
+   371	            })
+   372	
+   373	        if index % 25 == 0 or index == len(dataset) - 1:
+   374	            print(
+   375	                f"Progress {index + 1}/{len(dataset)}; "
+   376	                f"sample_max_abs={sample_max:.9g}; "
+   377	                f"failed_samples={len(failures)}"
+   378	            )
+   379	
+   380	    report = {
+   381	        "model": "Fold-2 TCN regression/imputation stage, FP32",
+   382	        "onnx": str(onnx_path),
+   383	        "onnx_sha256": actual_sha,
+   384	        "tflite": str(tflite_path),
+   385	        "tflite_sha256": sha256(tflite_path),
+   386	        "dataset": "split_byid/test",
+   387	        "sample_count": len(dataset),
+   388	        "comparison": "TFLite versus V6 ONNX Runtime",
+   389	        "atol": args.atol,
+   390	        "rtol": args.rtol,
+   391	        "all_samples_pass": len(failures) == 0,
+   392	        "failed_samples": failures[:50],
+   393	        "global_max_abs_error": global_max,
+   394	        "global_mean_abs_error": abs_sum / max(total_values, 1),
+   395	        "global_rmse": float(
+   396	            np.sqrt(square_sum / max(total_values, 1))
+   397	        ),
+   398	        "worst_sample_index": worst_sample,
+   399	        "missing_sensor_entries": missing_entries,
+   400	        "operator_count": len(ops),
+   401	        "operator_histogram": dict(sorted(op_counts.items())),
+   402	        "custom_flex_operators": custom_ops,
+   403	        "input_specs": {
+   404	            key: {
+   405	                "shape": list(resolved[key]["shape"]),
+   406	                "dtype": str(resolved[key]["dtype"]),
+   407	            }
+   408	            for key in input_keys
+   409	        },
+   410	    }
+   411	
+   412	    report_path = out_dir / "tflite_vs_onnx_all449_report.json"
+   413	    report_path.write_text(json.dumps(report, indent=2))
+   414	
+   415	    print("\n===== ALL-449 TFLITE VALIDATION SUMMARY =====")
+   416	    print(json.dumps(report, indent=2))
+   417	    print("JSON report:", report_path)
+   418	
+   419	    if failures:
+   420	        raise RuntimeError(
+   421	            f"TFLite validation FAILED: {len(failures)} / "
+   422	            f"{len(dataset)} samples outside tolerance. "
+   423	            "Do not quantize this model."
+   424	        )
+   425	
+   426	    print("\n<TCN_V6_FP32_TFLITE_ALL449> PASS </TCN_V6_FP32_TFLITE_ALL449>")
+   427	    print("No INT8 quantization, Vela, firmware or flash operation performed.")
+   428	    return 0
+   429	
+   430	
+   431	if __name__ == "__main__":
+   432	    try:
+   433	        raise SystemExit(main())
+   434	    except Exception as exc:
+   435	        print(
+   436	            "\n<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>",
+   437	            file=sys.stderr,
+   438	        )
+   439	        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+   440	        raise
+
+===== INSPECTION COMPLETE =====
