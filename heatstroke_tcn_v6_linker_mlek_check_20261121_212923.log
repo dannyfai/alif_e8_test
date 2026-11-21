@@ -1,0 +1,2617 @@
+TCN V6 LINKER AND MLEK INTEGRATION CHECK
+Sat Nov 21 09:29:23 PM HKT 2026
+
+===== MEMORY REGION API =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef MLEK_MODEL_HPP
+    18	#define MLEK_MODEL_HPP
+    19	
+    20	#include "mlek/fwk/iface/Tensor.hpp"
+    21	#include <cstdint>
+    22	#include <memory>
+    23	
+    24	namespace arm::app::fwk::iface {
+    25	
+    26	/**
+    27	 * @brief   Memory region used by underlying framework
+    28	 */
+    29	struct MemoryRegion {
+    30	    uint8_t* data{nullptr};
+    31	    size_t size{0};
+    32	    explicit MemoryRegion(uint8_t* addr, size_t bytes) : data(addr), size(bytes) {}
+    33	    MemoryRegion() = default;
+    34	};
+    35	
+    36	/**
+    37	 * @brief   NN model class wrapping the underlying TensorFlow-Lite-Micro API.
+    38	 */
+    39	class Model {
+    40	public:
+    41	    /** @brief Constructor. */
+    42	    Model() = default;
+    43	
+    44	    /** @brief Destructor. */
+    45	    virtual ~Model() = 0;
+    46	
+    47	    /** @brief  Gets the pointer to the model's input tensor at given input index. */
+    48	    virtual std::shared_ptr<TensorIface> GetInputTensor(size_t index) const = 0;
+    49	
+    50	    /** @brief  Gets the pointer to the model's output tensor at given output index. */
+    51	    virtual std::shared_ptr<TensorIface> GetOutputTensor(size_t index) const = 0;
+    52	
+    53	    /** @brief  Gets the model's data type. */
+    54	    virtual TensorType GetType() const = 0;
+    55	
+    56	    /** @brief  Gets the pointer to the model's input shape. */
+    57	    virtual std::vector<size_t> GetInputShape(size_t index) const = 0;
+    58	
+    59	    /** @brief  Gets the pointer to the model's output shape at given output index. */
+    60	    virtual std::vector<size_t> GetOutputShape(size_t index) const = 0;
+    61	
+    62	    /** @brief  Gets the number of input tensors the model has. */
+    63	    virtual size_t GetNumInputs() const = 0;
+    64	
+    65	    /** @brief  Gets the number of output tensors the model has. */
+    66	    virtual size_t GetNumOutputs() const = 0;
+    67	
+    68	    /** @brief  Logs the tensor information to stdout. */
+    69	    virtual void LogTensorInfo(std::shared_ptr<TensorIface> tensor) = 0;
+    70	
+    71	    /** @brief  Logs the interpreter information to stdout. */
+    72	    virtual void LogInterpreterInfo() = 0;
+    73	
+    74	    /** @brief      Initialise the model class object.
+    75	     *  @return     true if initialisation succeeds, false otherwise.
+    76	     **/
+    77	    virtual bool
+    78	    Init(MemoryRegion& computeBuffer, MemoryRegion& nnModel, const void* backendData) = 0;
+    79	
+    80	    /** @brief  Checks if this object has been initialised. */
+    81	    virtual bool IsInited() const = 0;
+    82	
+    83	    /** @brief  Checks if the model uses signed data. */
+    84	    virtual bool IsDataSigned() const = 0;
+    85	
+    86	    /** @brief Checks if the model uses Ethos-U operator */
+    87	    virtual bool ContainsEthosUOperator() const = 0;
+    88	
+    89	    /** @brief  Runs the inference (invokes the interpreter). */
+    90	    virtual bool RunInference() = 0;
+    91	
+    92	    /**
+    93	     * @brief   Gets memory region information for the backend's compute buffer.
+    94	     * @return  Const reference to MemoryRegion object.
+    95	     */
+    96	    virtual const MemoryRegion& GetComputeBuffer() const = 0;
+    97	
+    98	    /**
+    99	     * @brief   Gets memory region information for neural network model.
+   100	     * @return  Const reference to MemoryRegion object.
+   101	     */
+   102	    virtual const MemoryRegion& GetModelBuffer() const = 0;
+   103	};
+   104	
+   105	inline Model::~Model() {}
+   106	
+   107	} /* namespace arm::app::fwk::iface */
+   108	
+   109	#endif /* MLEK_MODEL_HPP */
+
+===== MLEK MODEL INITIALIZATION API =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef MLEK_MODEL_HPP
+    18	#define MLEK_MODEL_HPP
+    19	
+    20	#include "mlek/fwk/iface/Tensor.hpp"
+    21	#include <cstdint>
+    22	#include <memory>
+    23	
+    24	namespace arm::app::fwk::iface {
+    25	
+    26	/**
+    27	 * @brief   Memory region used by underlying framework
+    28	 */
+    29	struct MemoryRegion {
+    30	    uint8_t* data{nullptr};
+    31	    size_t size{0};
+    32	    explicit MemoryRegion(uint8_t* addr, size_t bytes) : data(addr), size(bytes) {}
+    33	    MemoryRegion() = default;
+    34	};
+    35	
+    36	/**
+    37	 * @brief   NN model class wrapping the underlying TensorFlow-Lite-Micro API.
+    38	 */
+    39	class Model {
+    40	public:
+    41	    /** @brief Constructor. */
+    42	    Model() = default;
+    43	
+    44	    /** @brief Destructor. */
+    45	    virtual ~Model() = 0;
+    46	
+    47	    /** @brief  Gets the pointer to the model's input tensor at given input index. */
+    48	    virtual std::shared_ptr<TensorIface> GetInputTensor(size_t index) const = 0;
+    49	
+    50	    /** @brief  Gets the pointer to the model's output tensor at given output index. */
+    51	    virtual std::shared_ptr<TensorIface> GetOutputTensor(size_t index) const = 0;
+    52	
+    53	    /** @brief  Gets the model's data type. */
+    54	    virtual TensorType GetType() const = 0;
+    55	
+    56	    /** @brief  Gets the pointer to the model's input shape. */
+    57	    virtual std::vector<size_t> GetInputShape(size_t index) const = 0;
+    58	
+    59	    /** @brief  Gets the pointer to the model's output shape at given output index. */
+    60	    virtual std::vector<size_t> GetOutputShape(size_t index) const = 0;
+    61	
+    62	    /** @brief  Gets the number of input tensors the model has. */
+    63	    virtual size_t GetNumInputs() const = 0;
+    64	
+    65	    /** @brief  Gets the number of output tensors the model has. */
+    66	    virtual size_t GetNumOutputs() const = 0;
+    67	
+    68	    /** @brief  Logs the tensor information to stdout. */
+    69	    virtual void LogTensorInfo(std::shared_ptr<TensorIface> tensor) = 0;
+    70	
+    71	    /** @brief  Logs the interpreter information to stdout. */
+    72	    virtual void LogInterpreterInfo() = 0;
+    73	
+    74	    /** @brief      Initialise the model class object.
+    75	     *  @return     true if initialisation succeeds, false otherwise.
+    76	     **/
+    77	    virtual bool
+    78	    Init(MemoryRegion& computeBuffer, MemoryRegion& nnModel, const void* backendData) = 0;
+    79	
+    80	    /** @brief  Checks if this object has been initialised. */
+    81	    virtual bool IsInited() const = 0;
+    82	
+    83	    /** @brief  Checks if the model uses signed data. */
+    84	    virtual bool IsDataSigned() const = 0;
+    85	
+    86	    /** @brief Checks if the model uses Ethos-U operator */
+    87	    virtual bool ContainsEthosUOperator() const = 0;
+    88	
+    89	    /** @brief  Runs the inference (invokes the interpreter). */
+    90	    virtual bool RunInference() = 0;
+    91	
+    92	    /**
+    93	     * @brief   Gets memory region information for the backend's compute buffer.
+    94	     * @return  Const reference to MemoryRegion object.
+    95	     */
+    96	    virtual const MemoryRegion& GetComputeBuffer() const = 0;
+    97	
+    98	    /**
+    99	     * @brief   Gets memory region information for neural network model.
+   100	     * @return  Const reference to MemoryRegion object.
+   101	     */
+   102	    virtual const MemoryRegion& GetModelBuffer() const = 0;
+   103	};
+   104	
+   105	inline Model::~Model() {}
+   106	
+   107	} /* namespace arm::app::fwk::iface */
+   108	
+   109	#endif /* MLEK_MODEL_HPP */
+
+===== CURRENT APPLICATION MAIN ENTRY =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	/****************************************************************************\
+    20	 *               Main application file for ARM NPU on MPS3 board             *
+    21	\****************************************************************************/
+    22	
+    23	#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp" /* our inference logic api */
+    24	#include "power_mgr.h"             /* power management APIs */
+    25	#include <cstdio>
+    26	#include <cstdint>
+    27	#include <new>
+    28	#include <exception>
+    29	
+    30	#include <zephyr/console/console.h>
+    31	#include <zephyr/logging/log.h>
+    32	
+    33	LOG_MODULE_REGISTER(Main);
+    34	
+    35	extern void MainLoop();
+    36	
+    37	#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+    38	__ASM(" .global __ARM_use_no_argv\n");
+    39	#endif
+    40	
+    41	/* Print application information. */
+    42	static void PrintApplicationIntro()
+    43	{
+    44	    #define PRJ_DES_STR     "BeeInventor - PolyU Model1 Test"
+    45	    LOG_INF("%s\n", PRJ_DES_STR);
+    46	    LOG_INF("Version %s Build date: " __DATE__ " @ " __TIME__ "\n", PRJ_VER_STR);
+    47	    //LOG_INF("Compiler: %s\n", PRJ_COMPILER);
+    48	    // LOG_INF("Copyright 2021-2026 Arm Limited and/or "
+    49	    //      "its affiliates <open-source-office@arm.com>\n\n");
+    50	}
+    51	
+    52	static void out_of_heap()
+    53	{
+    54	    LOG_WRN("Out of heap\n");
+    55	    std::terminate();
+    56	}
+    57	
+    58	/* ITGU READ-ONLY DIAGNOSTIC
+    59	 * Reads ITGU registers only. No security configuration is modified.
+    60	 */
+    61	static void PrintItguRegisters()
+    62	{
+    63	    constexpr std::uintptr_t ITGU_BASE = 0xE001E500UL;
+    64	    constexpr std::uintptr_t ITGU_CTRL = ITGU_BASE + 0x00UL;
+    65	    constexpr std::uintptr_t ITGU_CFG  = ITGU_BASE + 0x04UL;
+    66	    constexpr std::uintptr_t ITGU_LUT  = ITGU_BASE + 0x10UL;
+    67	
+    68	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC START");
+    69	    LOG_INF("No ITGU/DTGU/SAU registers will be written.");
+    70	
+    71	    LOG_INF("About to read ITGU_CTRL at 0x%08x",
+    72	            static_cast<unsigned int>(ITGU_CTRL));
+    73	    const auto ctrl = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CTRL);
+    74	    LOG_INF("ITGU_CTRL = 0x%08x", static_cast<unsigned int>(ctrl));
+    75	
+    76	    LOG_INF("About to read ITGU_CFG at 0x%08x",
+    77	            static_cast<unsigned int>(ITGU_CFG));
+    78	    const auto cfg = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CFG);
+    79	    LOG_INF("ITGU_CFG = 0x%08x", static_cast<unsigned int>(cfg));
+    80	
+    81	    for (unsigned int i = 0; i < 16; ++i) {
+    82	        const std::uintptr_t address = ITGU_LUT + (i * 4U);
+    83	        LOG_INF("About to read ITGU_LUT[%u] at 0x%08x",
+    84	                i, static_cast<unsigned int>(address));
+    85	        const auto value = *reinterpret_cast<volatile const std::uint32_t *>(address);
+    86	        LOG_INF("ITGU_LUT[%u] = 0x%08x",
+    87	                i, static_cast<unsigned int>(value));
+    88	    }
+    89	
+    90	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC COMPLETE");
+    91	}
+    92	int main ()
+    93	{
+    94		printk("HP_BOOT_TRACE: main entered\r\n");
+    95		console_getline_init();
+    96		printk("HP_BOOT_TRACE: console_getline_init returned\r\n");
+    97	
+    98		/* Application information, UART should have been initialised. */
+    99		PrintApplicationIntro();
+   100		printk("HP_BOOT_TRACE: application intro returned\r\n");
+   101		/* Temporarily bypass direct ITGU register reads during startup diagnosis. */
+   102		printk("HP_BOOT_TRACE: ITGU probe bypassed\r\n");
+   103	
+   104		std::set_new_handler(out_of_heap);
+   105		printk("HP_BOOT_TRACE: calling MainLoop\r\n");
+   106		MainLoop();
+   107		printk("HP_BOOT_TRACE: MainLoop returned\r\n");
+   108	
+   109	    /* This is unreachable without errors. */
+   110	    LOG_INF("program terminating...\n");
+   111	
+   112	    return 0;
+   113	}
+
+===== MLEK ZEPHYR PORT CONFIGURATION =====
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:18:if (NOT CONFIG_MLEK_EXAMPLES_LIB)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:32:if (NOT CONFIG_CMSIS_DSP)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:33:    mlek_config_err(CONFIG_CMSIS_DSP)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:58:elseif (CONFIG_MLEK_EXAMPLES_FWK_TFLM)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:60:    if (NOT CONFIG_TENSORFLOW_LITE_MICRO)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:61:        mlek_config_err(CONFIG_TENSORFLOW_LITE_MICRO)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:18:config MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:24:if MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:27:        default MLEK_EXAMPLES_FWK_TFLM
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:29:        config MLEK_EXAMPLES_FWK_TFLM
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:31:            depends on TENSORFLOW_LITE_MICRO && CMSIS_DSP
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:37:            depends on EXECUTORCH && CMSIS_DSP
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:69:endif # MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/CMakeLists.txt:91:    if (NOT TARGET mlek::ml_framework_impl)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/CMakeLists.txt:92:        message(FATAL_ERROR "mlek::ml_framework_impl target must "
+/home/user/sdk-alif/modules/alif-mlek/source/lib/CMakeLists.txt:98:        mlek::ml_framework_impl)    # The ML framework impl to pull in
+/home/user/sdk-alif/modules/alif-mlek/source/lib/export.cmake:54:    set_target_properties(ml_framework_tflm PROPERTIES EXPORT_NAME ml_framework_impl)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/export.cmake:58:    set_target_properties(ml_framework_et PROPERTIES EXPORT_NAME ml_framework_impl)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:18:if (NOT CONFIG_MLEK_EXAMPLES_LIB)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:32:if (NOT CONFIG_CMSIS_DSP)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:33:    mlek_config_err(CONFIG_CMSIS_DSP)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:58:elseif (CONFIG_MLEK_EXAMPLES_FWK_TFLM)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:60:    if (NOT CONFIG_TENSORFLOW_LITE_MICRO)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt:61:        mlek_config_err(CONFIG_TENSORFLOW_LITE_MICRO)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:18:config MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:24:if MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:27:        default MLEK_EXAMPLES_FWK_TFLM
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:29:        config MLEK_EXAMPLES_FWK_TFLM
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:31:            depends on TENSORFLOW_LITE_MICRO && CMSIS_DSP
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:37:            depends on EXECUTORCH && CMSIS_DSP
+/home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/Kconfig:69:endif # MLEK_EXAMPLES_LIB
+/home/user/sdk-alif/modules/alif-mlek/source/lib/config.cmake:46:set(CMSIS_DSP_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/cmsis-dsp
+/home/user/sdk-alif/modules/alif-mlek/source/lib/config.cmake:54:set(TENSORFLOW_LITE_MICRO_BUILD_TYPE release_with_logs
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/CMakeLists.txt:41:    add_library(mlek::ml_framework_impl ALIAS ml_framework_et)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/CMakeLists.txt:45:    add_library(mlek::ml_framework_impl ALIAS ml_framework_tflm)
+
+===== CURRENT PROJECT MLEK AND TFLM CONFIG =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:5:CONFIG_MLEK_EXAMPLES_LIB=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:6:CONFIG_TENSORFLOW_LITE_MICRO=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:7:CONFIG_ARM_ETHOS_U=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:22:CONFIG_CMSIS_DSP=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:23:CONFIG_CMSIS_DSP_TRANSFORM=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:24:CONFIG_CMSIS_DSP_FASTMATH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:25:CONFIG_CMSIS_DSP_STATISTICS=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:26:CONFIG_CMSIS_DSP_COMPLEXMATH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:77:CONFIG_MODEL_IN_EXT_FLASH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:78:CONFIG_ALIF_OSPI_FLASH_XIP=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:79:CONFIG_OSPI_FLASH_IS25WX=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:80:CONFIG_OSPI=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:81:CONFIG_OSPI_FLASH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:82:CONFIG_USE_ALIF_HAL_OSPI=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:88:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:10:CONFIG_SYSTEM_HEAP_SRAM0=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:14:CONFIG_ACTIVATION_BUF_SZ=0x200000
+
+===== MODEL GENERATOR IMPLEMENTATION =====
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2021, 2024, 2026 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	include_guard()
+    19	
+    20	set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+    21	
+    22	##############################################################################
+    23	# This function generates C++ files for images located in the directory it is
+    24	# pointed at. NOTE: uses python
+    25	##############################################################################
+    26	function(generate_images_code input_dir gen_dir img_size)
+    27	
+    28	    # Absolute paths for passing into python script
+    29	    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    30	    get_filename_component(gen_out_abs ${gen_dir} ABSOLUTE)
+    31	
+    32	    message(STATUS "Generating image files from ${input_dir_abs}")
+    33	    execute_process(
+    34	        COMMAND ${CMAKE_COMMAND} -E env
+    35	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+    36	            ${PYTHON} -m mlek_tools.gen.gen_rgb_cpp
+    37	            --image_path ${input_dir_abs}
+    38	            --package_gen_dir ${gen_out_abs}
+    39	            --image_size ${img_size} ${img_size}
+    40	        RESULT_VARIABLE return_code
+    41	    )
+    42	    if (NOT return_code EQUAL "0")
+    43	        message(FATAL_ERROR "Failed to generate image files.")
+    44	    endif ()
+    45	
+    46	endfunction()
+    47	
+    48	##############################################################################
+    49	# This function generates C++ files for audio files located in the directory it is
+    50	# pointed at. NOTE: uses python
+    51	##############################################################################
+    52	function(generate_audio_code input_dir gen_dir s_rate_opt mono_opt off_opt duration_opt res_type_opt min_sample_opt)
+    53	
+    54	    # Absolute paths for passing into python script
+    55	    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    56	    get_filename_component(gen_dir_abs ${gen_dir} ABSOLUTE)
+    57	
+    58	    to_py_bool(mono_opt mono_opt_py)
+    59	
+    60	    message(STATUS "Generating audio files from ${input_dir_abs}")
+    61	    execute_process(
+    62	        COMMAND ${CMAKE_COMMAND} -E env
+    63	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+    64	            ${PYTHON} -m mlek_tools.gen.gen_audio_cpp
+    65	            --audio_path ${input_dir_abs}
+    66	            --package_gen_dir ${gen_dir_abs}
+    67	            --sampling_rate ${s_rate_opt}
+    68	            --mono ${mono_opt_py}
+    69	            --offset ${off_opt}
+    70	            --duration ${duration_opt}
+    71	            --res_type ${res_type_opt}
+    72	            --min_samples ${min_sample_opt}
+    73	        RESULT_VARIABLE return_code
+    74	    )
+    75	    if (NOT return_code EQUAL "0")
+    76	        message(FATAL_ERROR "Failed to generate audio files.")
+    77	    endif ()
+    78	
+    79	endfunction()
+    80	
+    81	##############################################################################
+    82	# This function generates C++ files for tflite NN model files.
+    83	# @param[in]    MODEL_PATH      path to a tflite file
+    84	# @param[in]    DESTINATION     directory in which the output cc must be
+    85	#                               placed
+    86	# @param[in]    EXPRESSIONS     C++ code expressions to add to the generated file
+    87	# @param[in]    NAMESPACE       model name space
+    88	# NOTE: Uses python
+    89	##############################################################################
+    90	function(generate_model_code)
+    91	
+    92	    set(multiValueArgs EXPRESSIONS NAMESPACE)
+    93	    set(oneValueArgs MODEL_PATH DESTINATION)
+    94	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+    95	
+    96	    # Absolute paths for passing into python script
+    97	    get_filename_component(ABS_MODEL_PATH ${PARSED_MODEL_PATH} ABSOLUTE)
+    98	    get_filename_component(ABS_DESTINATION ${PARSED_DESTINATION} ABSOLUTE)
+    99	
+   100	    if (EXISTS ${ABS_MODEL_PATH})
+   101	        message(STATUS "Using ${ABS_MODEL_PATH}")
+   102	    else ()
+   103	        message(FATAL_ERROR "${ABS_MODEL_PATH} not found!")
+   104	    endif ()
+   105	
+   106	
+   107	    foreach(expression ${PARSED_EXPRESSIONS})
+   108	        set(py_arg_exp ${py_arg_exp} --expression=${expression})
+   109	    endforeach()
+   110	
+   111	    foreach(name ${PARSED_NAMESPACE})
+   112	        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+   113	    endforeach()
+   114	
+   115	    # Pass optional Arm Ethos-U NPU validation args if NPU is enabled.
+   116	    if (ETHOS_U_NPU_ENABLED)
+   117	        if (DEFINED ETHOS_U_NPU_MEMORY_MODE)
+   118	            set(py_arg_exp ${py_arg_exp} --ethos_u_memory_mode=${ETHOS_U_NPU_MEMORY_MODE})
+   119	        endif()
+   120	        if (DEFINED ETHOS_U_NPU_CONFIG_ID)
+   121	            # gen_model_cpp.py accepts short forms like H128/Y256/Z256 directly.
+   122	            set(py_arg_exp ${py_arg_exp} --ethos_u_config=${ETHOS_U_NPU_CONFIG_ID})
+   123	        endif()
+   124	    endif()
+   125	
+   126	    execute_process(
+   127	        COMMAND ${CMAKE_COMMAND} -E env
+   128	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+   129	            ${PYTHON} -m mlek_tools.gen.gen_model_cpp
+   130	            --model_path ${ABS_MODEL_PATH}
+   131	            --output_dir ${ABS_DESTINATION} ${py_arg_exp}
+   132	        RESULT_VARIABLE return_code
+   133	    )
+   134	    if (NOT return_code EQUAL "0")
+   135	        message(FATAL_ERROR "Failed to generate model files.")
+   136	    endif ()
+   137	endfunction()
+   138	
+   139	
+   140	##############################################################################
+   141	# This function generates C++ file for a given labels' text file.
+   142	# @param[in]    INPUT          Path to the label text file
+   143	# @param[in]    DESTINATION_SRC directory in which the output cc must be
+   144	#                               placed
+   145	# @param[in]    DESTINATION_HDR directory in which the output h file must be
+   146	#                               placed
+   147	# @param[in]    OUTPUT_FILENAME    Path to required output file
+   148	# @param[in]    NAMESPACE       data name space
+   149	# NOTE: Uses python
+   150	##############################################################################
+   151	function(generate_labels_code)
+   152	
+   153	    set(multiValueArgs NAMESPACE)
+   154	    set(oneValueArgs INPUT DESTINATION_SRC DESTINATION_HDR OUTPUT_FILENAME)
+   155	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+   156	
+   157	    # Absolute paths for passing into python script
+   158	    get_filename_component(input_abs ${PARSED_INPUT} ABSOLUTE)
+   159	    get_filename_component(src_out_abs ${PARSED_DESTINATION_SRC} ABSOLUTE)
+   160	    get_filename_component(hdr_out_abs ${PARSED_DESTINATION_HDR} ABSOLUTE)
+   161	
+   162	    message(STATUS "Generating labels file from ${PARSED_INPUT}")
+   163	    file(REMOVE "${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp")
+   164	    file(REMOVE "${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+   165	
+   166	    foreach(name ${PARSED_NAMESPACE})
+   167	        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+   168	    endforeach()
+   169	
+   170	    message(STATUS "writing to ${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp and ${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+   171	    execute_process(
+   172	        COMMAND ${CMAKE_COMMAND} -E env
+   173	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+   174	            ${PYTHON} -m mlek_tools.gen.gen_labels_cpp
+   175	            --labels_file ${input_abs}
+   176	            --source_folder_path ${src_out_abs}
+   177	            --header_folder_path ${hdr_out_abs}
+   178	            --output_file_name ${PARSED_OUTPUT_FILENAME} ${py_arg_exp}
+   179	        RESULT_VARIABLE return_code
+   180	    )
+   181	    if (NOT return_code EQUAL "0")
+   182	        message(FATAL_ERROR "Failed to generate label files.")
+   183	    endif ()
+   184	endfunction()
+   185	
+   186	
+   187	##############################################################################
+   188	# This function generates C++ data files for test located in the directory it is
+   189	# pointed at.
+   190	# @param[in]    INPUT_DIR       directory in which are the npy files
+
+===== MLEK FRAMEWORK LIBRARY CMAKE =====
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/CMakeLists.txt ---
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	cmake_minimum_required(VERSION 3.21.0)
+    19	
+    20	# Build in release mode by default
+    21	if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
+    22	    set(CMAKE_BUILD_TYPE Release CACHE INTERNAL "")
+    23	endif()
+    24	
+    25	# Set language standards.
+    26	set(CMAKE_C_STANDARD   11)
+    27	set(CMAKE_CXX_STANDARD 17)
+    28	
+    29	# Make the standard a requirement => prevent fallback to previous
+    30	# supported standard
+    31	set(CMAKE_C_STANDARD_REQUIRED ON)
+    32	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    33	
+    34	# We want to pass standard C/C++ flags, without gnu extensions
+    35	set(CMAKE_C_EXTENSIONS OFF)
+    36	set(CMAKE_CXX_EXTENSIONS OFF)
+    37	
+    38	project(MLEK_API
+    39	        DESCRIPTION "Generic platform agnostic API"
+    40	        LANGUAGES   CXX)
+    41	
+    42	# Default configuration - paths and other defaults
+    43	include(${CMAKE_CURRENT_SOURCE_DIR}/config.cmake)
+    44	
+    45	add_subdirectory(mlek/log)
+    46	add_subdirectory(mlek/math)
+    47	add_subdirectory(mlek/fwk)
+    48	add_subdirectory(mlek/common)
+    49	add_subdirectory(mlek/use_case)
+    50	
+    51	###############################################################################
+    52	# Function to add current directory to the targets includes. This ensures
+    53	# that all the headers included refer to this base directory as the root.
+    54	# It will be the same for installation target.
+    55	# @param[in]    target_name     Name of the CMake target to add include
+    56	#                               directories for.
+    57	###############################################################################
+    58	function(mlek_api_set_include_dirs target_name)
+    59	    if (NOT TARGET ${target_name})
+    60	        message(WARNING "${target_name} is not defined")
+    61	        return()
+    62	    endif()
+    63	
+    64	    get_target_property(_target_type ${target_name} TYPE)
+    65	    if (_target_type STREQUAL "INTERFACE_LIBRARY")
+    66	        set(_scope INTERFACE)
+    67	    else()
+    68	        set(_scope PUBLIC)
+    69	    endif()
+    70	
+    71	    target_include_directories(${target_name} ${_scope}
+    72	        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    73	        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    74	endfunction()
+    75	
+    76	
+    77	###############################################################################
+    78	# Function to create an ML framework specific implementation interface library
+    79	# to allow easier use of targets defined in this CMake project.
+    80	# The function will create an alias library as well namespaced with 'mlek::'
+    81	# and the library will be called 'API_NAME_et_impl' or 'API_NAME_tflm_impl'.
+    82	# @param[in]    API_NAME        Name of the API to target. The name is suffixed
+    83	#                               by '_api' to get the expected target defined
+    84	#                               by subdirectory 'use_case'.
+    85	###############################################################################
+    86	function(create_mlek_impl_lib_target)
+    87	    set(oneValueArgs API_NAME)
+    88	    cmake_parse_arguments(PARSED "" "${oneValueArgs}"
+    89	                          "${multiValueArgs}" ${ARGN})
+    90	    set(TARGET_LIB_NAME ${PARSED_API_NAME}_impl)
+    91	    if (NOT TARGET mlek::ml_framework_impl)
+    92	        message(FATAL_ERROR "mlek::ml_framework_impl target must "
+    93	                            "exist before creating ${TARGET_LIB_NAME}")
+    94	    endif()
+    95	    add_library(${TARGET_LIB_NAME} INTERFACE)
+    96	    target_link_libraries(${TARGET_LIB_NAME} INTERFACE
+    97	        ${PARSED_API_NAME}_api      # API target (relies on abstract fwk interface)
+    98	        mlek::ml_framework_impl)    # The ML framework impl to pull in
+    99	
+   100	    add_library(mlek::${TARGET_LIB_NAME} ALIAS ${TARGET_LIB_NAME})
+   101	    message(STATUS "Created interface target: mlek::${TARGET_LIB_NAME}")
+   102	endfunction()
+   103	
+   104	# Set include directories for base targets. All other targets depend on at
+   105	# least one of these targets.
+   106	mlek_api_set_include_dirs(mlek_log)
+   107	mlek_api_set_include_dirs(arm_math)
+   108	mlek_api_set_include_dirs(common_api)
+   109	mlek_api_set_include_dirs(ml_framework_iface)
+   110	
+   111	# Create alises and add namepaced targets for easier linking.
+   112	if (NOT DEFINED MLEK_API_LIST)
+   113	    message(FATAL_ERROR "MLEK_API_LIST variable should be exposed by "
+   114	                        "${CMAKE_CURRENT_SOURCE_DIR}/mlek/use_case")
+   115	endif()
+   116	
+   117	foreach(_api_name ${MLEK_API_LIST})
+   118	    create_mlek_impl_lib_target(API_NAME ${_api_name})
+   119	endforeach()
+   120	
+   121	# Only include export/install logic when building as part of the top-level MLEK
+   122	# project. When this library is embedded in another project, defer export to
+   123	# the parent to avoid clashing install/export settings.
+   124	if (CMAKE_SOURCE_DIR STREQUAL MLEK_ROOT)
+   125	    include(${CMAKE_CURRENT_SOURCE_DIR}/export.cmake)
+   126	endif()
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/config.cmake ---
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	include_guard(GLOBAL)
+    19	
+    20	message(STATUS "Including default API config parameters...")
+    21	
+    22	if (NOT COMMAND assert_defined)
+    23	    function(assert_defined var_name)
+    24	        if (NOT DEFINED ${var_name})
+    25	            message(FATAL_ERROR "ERROR: ${var_name} is undefined!")
+    26	        endif()
+    27	    endfunction()
+    28	endif()
+    29	
+    30	if (NOT DEFINED MLEK_ROOT)
+    31	    set(MLEK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+    32	endif()
+    33	
+    34	if (NOT DEFINED MLEK_DEPENDENCIES_DIR)
+    35	    set(MLEK_DEPENDENCIES_DIR ${MLEK_ROOT}/dependencies)
+    36	endif()
+    37	
+    38	if (NOT DEFINED MLEK_SCRIPTS_DIR)
+    39	    set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+    40	endif()
+    41	
+    42	# Add CMake scripts to module path
+    43	list(APPEND CMAKE_MODULE_PATH ${MLEK_ROOT}/scripts/cmake)
+    44	
+    45	# CMSIS sources
+    46	set(CMSIS_DSP_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/cmsis-dsp
+    47	    CACHE PATH "CMSIS-DSP path")
+    48	set(CMSIS_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/cmsis-6
+    49	    CACHE PATH "CMSIS path")
+    50	set(CORTEX_DFP_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/cortex-dfp
+    51	    CACHE PATH "Cortex DFP path")
+    52	
+    53	# TensorFlow Lite Micro
+    54	set(TENSORFLOW_LITE_MICRO_BUILD_TYPE release_with_logs
+    55	    CACHE STRING "Build type")
+    56	set(TENSORFLOW_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/tensorflow
+    57	    CACHE PATH "TensorFlow source path")
+    58	set(CMSIS_NN_SRC_PATH ${MLEK_DEPENDENCIES_DIR}/cmsis-nn
+    59	    CACHE PATH "CMSIS-NN path")
+    60	
+    61	# ExecuTorch
+    62	set(EXECUTORCH_SRC_PATH ${MLEK_ROOT}/dependencies/executorch
+    63	    CACHE PATH "ExecuTorch source path")
+    64	set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded
+    65	    CACHE PATH "Path for resources")
+    66	
+    67	# ExecuTorch set up requires Python virtual env set up.
+    68	if (NOT COMMAND setup_source_generator)
+    69	    include(source_gen_utils)
+    70	    setup_source_generator()
+    71	endif()
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/CMakeLists.txt ---
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	#########################################################
+    20	#                   ML framework abstraction            #
+    21	#########################################################
+    22	cmake_minimum_required(VERSION 3.21.0)
+    23	
+    24	set(ML_FWK_IFACE_TARGET   ml_framework_iface)
+    25	project(${ML_FWK_IFACE_TARGET}
+    26	    DESCRIPTION     "ML framework interface library"
+    27	    LANGUAGES       CXX)
+    28	
+    29	if (NOT DEFINED ML_FRAMEWORK)
+    30	    message(FATAL_ERROR "ML_FRAMEWORK must be defined")
+    31	endif ()
+    32	
+    33	# Add interface library
+    34	add_library(${ML_FWK_IFACE_TARGET} INTERFACE)
+    35	add_library(mlek::${ML_FWK_IFACE_TARGET} ALIAS ${ML_FWK_IFACE_TARGET})
+    36	
+    37	if ("ExecuTorch" STREQUAL ${ML_FRAMEWORK})
+    38	    message(STATUS "Adding ExecuTorch framework to the build...")
+    39	    add_subdirectory(executorch)
+    40	    set_target_properties(ml_framework_et PROPERTIES POSITION_INDEPENDENT_CODE FALSE)
+    41	    add_library(mlek::ml_framework_impl ALIAS ml_framework_et)
+    42	elseif ("TensorFlowLiteMicro" STREQUAL ${ML_FRAMEWORK})
+    43	    message(STATUS "Adding TensorFlow Lite Micro framework to the build...")
+    44	    add_subdirectory(tflm)
+    45	    add_library(mlek::ml_framework_impl ALIAS ml_framework_tflm)
+    46	else ()
+    47	    message(FATAL_ERROR "Unsupported ML framework '${ML_FRAMEWORK}'.")
+    48	endif ()
+    49	
+    50	# Display status:
+    51	message(STATUS "*******************************************************")
+    52	message(STATUS "Library: "                ${ML_FWK_IFACE_TARGET})
+    53	message(STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+    54	message(STATUS "*******************************************************")
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/CMakeLists.txt ---
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	#########################################################
+    20	#               TensorFlow Lite Micro wrapper           #
+    21	#########################################################
+    22	cmake_minimum_required(VERSION 3.21.0)
+    23	
+    24	set(ML_FWK_TFLM_TARGET   ml_framework_tflm)
+    25	project(${ML_FWK_TFLM_TARGET}
+    26	    DESCRIPTION     "TensorFlow Lite Micro framework module"
+    27	    LANGUAGES       C CXX)
+    28	
+    29	if (NOT "TensorFlowLiteMicro" STREQUAL ${ML_FRAMEWORK})
+    30	    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR} should not be included for ${ML_FRAMEWORK}")
+    31	endif()
+    32	
+    33	# For CMSIS pack generation flow, we don't need to include TensorFlow Lite
+    34	# Micro lib or link against it.
+    35	if (NOT CMSIS_PACK_GEN_FLOW)
+    36	    # Include the TensorFlow Lite Micro build target
+    37	    # if the target is not available. An external project
+    38	    # including this project can provide its own version
+    39	    # of the target.
+    40	    if (NOT TARGET google::tensorflow-lite-micro)
+    41	        set(TFLM_EXTERNAL_TARGET OFF)
+    42	        include(tensorflow_lite_micro)
+    43	    else()
+    44	        set(TFLM_EXTERNAL_TARGET ON)
+    45	    endif()
+    46	endif ()
+    47	
+    48	# Create static library
+    49	add_library(${ML_FWK_TFLM_TARGET} STATIC
+    50	    YoloFastestModel.cc
+    51	    AdModel.cc
+    52	    MicroNetKwsModel.cc
+    53	    Wav2LetterModel.cc
+    54	    VisualWakeWordModel.cc
+    55	    TflmTensor.cc
+    56	    TensorFlowLiteMicro.cc
+    57	    RNNoiseModel.cc
+    58	    MobileNetModel.cc
+    59	    TestModel.cc
+    60	    TflmModel.cc
+    61	    MicroMutableAllOpsResolver.cc
+    62	)
+    63	
+    64	# Link time library targets:
+    65	target_link_libraries(${ML_FWK_TFLM_TARGET} PUBLIC
+    66	    mlek::log                                                               # Logging functions
+    67	    mlek::ml_framework_iface                                                # ML framework interface
+    68	    $<$<NOT:$<BOOL:${CMSIS_PACK_GEN_FLOW}>>:google::tensorflow-lite-micro>) # TensorFlow Lite Micro library
+    69	
+    70	target_compile_definitions(${ML_FWK_TFLM_TARGET} INTERFACE MLEK_FWK_TFLM=1)
+    71	
+    72	# Set the source file property to indicate that it should not use the logging
+    73	# facility from the Cortex-M CPU generic target unless it is an internally
+    74	# configured target. Reason: for external target, we can't assume that it
+    75	# compiles the sources required.
+    76	if (TFLM_EXTERNAL_TARGET)
+    77	    set_source_files_properties(TensorFlowLiteMicro.cc
+    78	        PROPERTIES COMPILE_DEFINITIONS TFLM_EXTERNAL_TARGET)
+    79	endif()
+    80	
+    81	add_library(mlek::${ML_FWK_TFLM_TARGET} ALIAS ${ML_FWK_TFLM_TARGET})
+    82	
+    83	# Display status:
+    84	message(STATUS "*******************************************************")
+    85	message(STATUS "Library: "                ${ML_FWK_TFLM_TARGET})
+    86	message(STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+    87	message(STATUS "*******************************************************")
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/ports/zephyr/CMakeLists.txt ---
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	if (NOT CONFIG_MLEK_EXAMPLES_LIB)
+    19	    return()
+    20	endif()
+    21	
+    22	project(MLEK_API_ZEPHYR_PORT
+    23	    DESCRIPTION "MLEK platform agnostic API port for Zephyr"
+    24	    LANGUAGES   CXX
+    25	    VERSION     0.1.0)
+    26	
+    27	macro(mlek_config_err dependency)
+    28	    message(FATAL_ERROR "To use MLEK examples, ${dependency} must be enabled"
+    29	                        "in Zephyr configuration")
+    30	endmacro()
+    31	
+    32	if (NOT CONFIG_CMSIS_DSP)
+    33	    mlek_config_err(CONFIG_CMSIS_DSP)
+    34	endif()
+    35	
+    36	if (TARGET modules__cmsis-dsp)
+    37	    add_library(arm::cmsis-dsp ALIAS modules__cmsis-dsp)
+    38	else()
+    39	    message(FATAL_ERROR "Target modules__cmsis-dsp not found.")
+    40	endif()
+    41	
+    42	if (CONFIG_MLEK_EXAMPLES_FWK_EXECUTORCH)
+    43	    set(ML_FRAMEWORK "ExecuTorch")
+    44	    if (NOT CONFIG_EXECUTORCH)
+    45	        mlek_config_err(CONFIG_EXECUTORCH)
+    46	    endif()
+    47	
+    48	    # The Zephyr ExecuTorch module names its library target explicitly with
+    49	    # zephyr_library_named(libexecutorch), so the default "modules__executorch"
+    50	    # target does not exist. Support both names for robustness.
+    51	    if (TARGET libexecutorch)
+    52	        add_library(meta::executorch ALIAS libexecutorch)
+    53	    elseif (TARGET modules__executorch)
+    54	        add_library(meta::executorch ALIAS modules__executorch)
+    55	    else()
+    56	        message(FATAL_ERROR "Neither target 'libexecutorch' nor 'modules__executorch' found.")
+    57	    endif()
+    58	elseif (CONFIG_MLEK_EXAMPLES_FWK_TFLM)
+    59	    set(ML_FRAMEWORK "TensorFlowLiteMicro")
+    60	    if (NOT CONFIG_TENSORFLOW_LITE_MICRO)
+    61	        mlek_config_err(CONFIG_TENSORFLOW_LITE_MICRO)
+    62	    endif()
+    63	
+    64	    if (TARGET modules__tflite-micro)
+    65	        add_library(google::tensorflow-lite-micro ALIAS modules__tflite-micro)
+    66	    else()
+    67	        message(FATAL_ERROR "Target modules__tflite-micro not found.")
+    68	    endif()
+    69	else()
+    70	    message(FATAL_ERROR "No ML framework enabled for MLEK to use in the config.")
+    71	endif()
+    72	
+    73	set(MLEK_LOG_ENABLE ${CONFIG_MLEK_EXAMPLES_LOG_ENABLE} CACHE BOOL "Enable MLEK log")
+    74	
+    75	# If logging has been enabled.
+    76	if (CONFIG_MLEK_EXAMPLES_LOG_ENABLE)
+    77	    if (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_TRACE)
+    78	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_TRACE)
+    79	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_DEBUG)
+    80	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_DEBUG)
+    81	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_INFO)
+    82	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_INFO)
+    83	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_WARN)
+    84	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_WARN)
+    85	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_ERROR)
+    86	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_ERROR)
+    87	    else()
+    88	        message(FATAL_ERROR "Unknown MLEK log level configuration.")
+    89	    endif()
+    90	    set(MLEK_LOG_LEVEL ${_MLEK_LOG_LEVEL} CACHE STRING "MLEK log level")
+    91	endif()
+    92	
+    93	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/mlek)
+
+===== LINKER SECTION DEFINITIONS IN E8 / ALIF SDK =====
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.gnu.ld:159:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.gnu.ld:227:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.llvm.ld:177:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-315/mps4-sse-315.llvm.ld:241:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.gnu.ld:159:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.gnu.ld:227:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.llvm.ld:177:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps4/sse-320/mps4-sse-320.llvm.ld:241:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.gnu.ld:162:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.gnu.ld:207:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.llvm.ld:93:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-300/mps3-sse-300.llvm.ld:126:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.gnu.ld:154:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.gnu.ld:222:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.llvm.ld:90:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/mps3/sse-310/mps3-sse-310.llvm.ld:236:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld:180:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE.ld:196:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld:145:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_he/RTSS-HE-infrun.ld:161:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld:145:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP-infrun.ld:161:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld:191:    * (.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE822FA0E5597/rtss_hp/RTSS-HP.ld:207:    * (.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld:161:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld:157:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld:167:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld:132:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-merged-SRAM.ld:167:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP-infrun.ld:131:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_hp/RTSS-HP.ld:174:    * (.bss.NoInit.activation_buf_sram) /* 2MB */
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.gnu.ld:155:    *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.gnu.ld:200:    *(.bss.NoInit.activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.llvm.ld:93:        *(.bss.NoInit.activation_buf_sram)
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/simple_platform/simple_platform.llvm.ld:126:        *(activation_buf_dram)
+/home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp:32:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:46:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:49:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h:52:    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+
+===== E8 SRAM MEMORY REGION DEFINITIONS =====
+/home/user/sdk-alif/zephyr/boards/ronoth/lodev/ronoth_lodev.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/kincony/kincony_kc868_a32/kincony_kc868_a32_procpu.dts:138:&psram0 {
+/home/user/sdk-alif/zephyr/boards/vcc-gnd/yd_stm32h750vb/yd_stm32h750vb.dts:26:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/mediatek/mt8188/mt8188_adsp.dts:12:	sram0: memory@4e100000 {
+/home/user/sdk-alif/zephyr/boards/mediatek/mt8195/mt8195_adsp.dts:12:	sram0: memory@40000000 {
+/home/user/sdk-alif/zephyr/boards/mediatek/mt8186/mt8186_adsp.dts:11:	sram0: memory@4e100000 {
+/home/user/sdk-alif/zephyr/boards/mediatek/mt8196/mt8196_adsp.dts:12:	sram0: memory@4e100000 {
+/home/user/sdk-alif/zephyr/boards/witte/linum/linum.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_ace30_ptl.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_cavs25.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_cavs25_tgph.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_ace15_mtpm.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_ace20_lnl.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/adsp/intel_adsp_ace30_ptl_sim.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/niosv_m/niosv_m.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/niosv_m/niosv_m.dts:25:&sram0 {
+/home/user/sdk-alif/zephyr/boards/intel/niosv_g/niosv_g.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/intel/niosv_g/niosv_g.dts:25:&sram0 {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl652_dvk/bl652_dvk.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl654_usb/bl654_usb.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl653_dvk/bl653_dvk.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/pinnacle_100_dvk/pinnacle_100_dvk.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/rm1xx_dvk/rm1xx_dvk.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/mg100/mg100.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/bt510/bt510.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_common.dtsi:389:		sram0_image: image@20000000 {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_common.dtsi:393:		sram0_s: image_s@20000000 {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_common.dtsi:397:		sram0_ns: image_ns@20040000 {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_shared_sram_planning_conf.dtsi:11: * - 64 kB SRAM allocated as Shared memory (sram0_shared)
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_shared_sram_planning_conf.dtsi:18:		zephyr,ipc_shm = &sram0_shared;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_shared_sram_planning_conf.dtsi:26:		sram0_shared: memory@20070000 {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:16: * Secure image will use sram0 for system memory.
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:19: * sram0_ns for system memory.
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:43: * - Lowest 256 kB SRAM allocated to Secure image (sram0_s)
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:44: * - Middle 192 kB allocated to Non-Secure image (sram0_ns)
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:45: * - Upper 64 kB SRAM allocated as Shared memory (sram0_shared)
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:48:&sram0_image {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:52:&sram0_s {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_partition_conf.dtsi:56:&sram0_ns {
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp.dts:17:		zephyr,sram = &sram0_image;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp.dts:20:		zephyr,sram-secure-partition = &sram0_s;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp.dts:21:		zephyr,sram-non-secure-partition = &sram0_ns;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl5340_dvk/bl5340_dvk_nrf5340_cpuapp_ns.dts:17:		zephyr,sram = &sram0_ns;
+/home/user/sdk-alif/zephyr/boards/ezurio/bt610/bt610.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ezurio/bl654_sensor_board/bl654_sensor_board.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/waveshare/nrf51_ble400/nrf51_ble400.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/waveshare/open103z/waveshare_open103z.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/waveshare/rp2040_zero/rp2040_zero.dts:15:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/segger/ip_k66f/ip_k66f.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/segger/trb_stm32f407/segger_trb_stm32f407.dts:15:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo510_evb/apollo510_evb.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo510_evb/apollo510_evb.dts:32:	sram0: memory@SSRAM_BASE_NAME {
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo4p_evb/apollo4p_evb.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo3p_evb/apollo3p_evb.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo4p_blue_kxr_evb/apollo4p_blue_kxr_evb.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ambiq/apollo3_evb/apollo3_evb.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alientek/pandora_stm32l475/pandora_stm32l475.dts:28:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/ebyte/e73_tbb/ebyte_e73_tbb_nrf52832.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/rakwireless/rak3172/rak3172.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/rakwireless/rak11720/rak11720.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:59:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e7_dk/alif_e7_dk_ae722f80f55d5xx_apss.dts:62:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:59:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_apss.dts:62:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:60:		sram0: sram@2000000 {
+/home/user/sdk-alif/zephyr/boards/alif/alif_e8_ak/alif_e8_ak_ae822fa0e5597xx0_apss.dts:63:			label = "sram0";
+/home/user/sdk-alif/zephyr/boards/bbc/microbit_v2/bbc_microbit_v2.dts:30:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/bbc/microbit/bbc_microbit.dts:30:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/tdk/robokit1/robokit1-common.dtsi:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/makerbase/mks_canable_v20/mks_canable_v20.dts:15:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/seagate/faze/faze.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/seagate/legend/legend.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/aconno/acn52832/acn52832.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32e103v_eval/gd32e103v_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f450v_start/gd32f450v_start.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f403z_eval/gd32f403z_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32a503v_eval/gd32a503v_eval.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32e507z_eval/gd32e507z_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32vf103v_eval/gd32vf103v_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32vf103c_starter/gd32vf103c_starter.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f470i_eval/gd32f470i_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f450i_eval/gd32f450i_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f450z_eval/gd32f450z_eval.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f350r_eval/gd32f350r_eval.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32e507v_start/gd32e507v_start.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gd/gd32f407v_start/gd32f407v_start.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmarktechno/degu_evk/degu_evk.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/altr/max10/altera_max10.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/nsim/arc_classic/nsim-flash-sram-mem.dtsi:20:	sram0: sram@80400000 {
+/home/user/sdk-alif/zephyr/boards/snps/nsim/arc_classic/nsim-flash-sram-mem.dtsi:26:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em6.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em5d.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em7d_esp.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em9d.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em4.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em7d.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/snps/emsdp/emsdp_emsdp_em11d.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/gardena/sgrm/sgrm.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/imx8qm_mek/imx8qm_mek_mimx8qm6_adsp.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/usb_kw24d512/usb_kw24d512.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/mimxrt700_evk/mimxrt700_evk_mimxrt798s_cm33_cpu0.dts:28:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/mimxrt700_evk/mimxrt700_evk_mimxrt798s_cm33_cpu1.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxc242/frdm_mcxc242.dts:34:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/twr_kv58f220m/twr_kv58f220m.dts:32:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s36/lpcxpresso55s36.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s16/lpcxpresso55s16_common.dtsi:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s16/lpcxpresso55s16.dts:19: * Default for this board is to allocate SRAM0-2 for data.  But the
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s16/lpcxpresso55s16.dts:23:&sram0 {
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_k82f/frdm_k82f.dts:40:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxc444/frdm_mcxc444.dts:34:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu1.dts:31: * allocate the SRAM0-4 differently.
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu1.dts:33: * For example, SRAM0-3 could be allocated to cpu0 with only SRAM4
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu1.dts:35: * to be changed to sram4 and the value of sram0 to have a DT_SIZE_K
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:38:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:79: * Default for this board is to allocate SRAM0-2 to cpu0 but the
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:81: * allocate the SRAM0-4 differently.
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:83: * For example, SRAM0-3 could be allocated to cpu0 with only SRAM4
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:85: * to be changed to sram4 and the value of sram0 to have a DT_SIZE_K
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s69/lpcxpresso55s69_lpc55s69_cpu0.dts:89:&sram0 {
+/home/user/sdk-alif/zephyr/boards/nxp/ls1046ardb/ls1046ardb_ls1046a.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/ls1046ardb/ls1046ardb_ls1046a_smp.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/ls1046ardb/ls1046ardb_ls1046a_smp_4cores.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_k22f/frdm_k22f.dts:35:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso54114/lpcxpresso54114_lpc54114_m4.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso54114/lpcxpresso54114_lpc54114_m4.dts:53: * Default for this board is to allocate SRAM0-1 to M4 CPU but the
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso54114/lpcxpresso54114_lpc54114_m4.dts:55: * allocate the SRAM0-3 differently.
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso54114/lpcxpresso54114_lpc54114_m4.dts:58:&sram0 {
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s06/lpcxpresso55s06_common.dtsi:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/rddrone_fmuk66/rddrone_fmuk66.dts:37:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso11u68/lpcxpresso11u68.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/mimxrt595_evk/mimxrt595_evk_mimxrt595s_cm33.dts:40:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/mimxrt595_evk/mimxrt595_evk_mimxrt595s_f1.dts:25:	sram0: memory@0 {
+/home/user/sdk-alif/zephyr/boards/nxp/mr_canhubk3/mr_canhubk3.dts:21:		zephyr,sram = &sram0_1;
+/home/user/sdk-alif/zephyr/boards/nxp/mimxrt685_evk/mimxrt685_evk_mimxrt685s_cm33.dts:45:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/twr_ke18f/twr_ke18f.dts:48:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/hexiwear/hexiwear_mkw40z4.dts:13:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/hexiwear/hexiwear_mk64f12.dts:26:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxa156/frdm_mcxa156.dts:29:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:42: * Default for this board is to allocate SRAM0-5 to cpu0 but the
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:44: * allocate the SRAM0-7 differently.
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:46: * For example, SRAM0-6 could be allocated to cpu0 with only SRAM7
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:47: * for cpu1. This would require the value of sram0 to have a DT_SIZE_K
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn947/frdm_mcxn947_mcxn947_cpu0.dtsi:50:&sram0 {
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso55s28/lpcxpresso55s28.dts:28:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_k64f/frdm_k64f.dts:25:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/lpcxpresso51u68/lpcxpresso51u68.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn236/frdm_mcxn236.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_mcxn236/frdm_mcxn236.dts:34:&sram0 {
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_kw41z/frdm_kw41z.dts:30:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/frdm_kl25z/frdm_kl25z.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/imx8ulp_evk/imx8ulp_evk_mimx8ud7_adsp.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/imx8mp_evk/imx8mp_evk_mimx8ml8_adsp.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/nxp/imx8qxp_mek/imx8qxp_mek_mimx8qx6_adsp.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/sparkfun/thing_plus_matter_mgm240p/sparkfun_thing_plus_matter_mgm240p.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/sparkfun/micromod/micromod_nrf52840.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/sparkfun/thing_plus/sparkfun_thing_plus_nrf9160_ns.dts:15:		zephyr,sram = &sram0_ns_app;
+/home/user/sdk-alif/zephyr/boards/sparkfun/thing_plus/sparkfun_thing_plus_nrf9160.dts:14:		zephyr,sram = &sram0_s;
+/home/user/sdk-alif/zephyr/boards/sparkfun/thing_plus/sparkfun_thing_plus_nrf9160.dts:17:		zephyr,sram-secure-partition = &sram0_s;
+/home/user/sdk-alif/zephyr/boards/sparkfun/thing_plus/sparkfun_thing_plus_nrf9160.dts:18:		zephyr,sram-non-secure-partition = &sram0_ns;
+/home/user/sdk-alif/zephyr/boards/sparkfun/nrf52_sparkfun/nrf52_sparkfun.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/sparkfun/pro_micro_rp2040/sparkfun_pro_micro_rp2040.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/samr21_xpro/samr21_xpro.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/samd21_xpro/samd21_xpro.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/samr34_xpro/samr34_xpro.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/same54_xpro/same54_xpro.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/samd20_xpro/samd20_xpro.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/saml21_xpro/saml21_xpro.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam0/samc21n_xpro/samc21n_xpro.dts:22:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam/sam_e70_xplained/sam_e70_xplained-common.dtsi:25:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam/sam4l_ek/sam4l_ek.dts:25:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam/sam4s_xplained/sam4s_xplained.dts:29:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam/sam_v71_xult/sam_v71_xult-common.dtsi:29:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/atmel/sam/sam4e_xpro/sam4e_xpro.dts:30:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/pine64/pinetime_devkit0/pinetime_devkit0.dts:26:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/cdns/xt-sim/xt-sim.dts:15:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_b1/v2m_musca_b1_musca_b1_ns.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_b1/v2m_musca_b1_musca_b1_ns.dts:49:	sram0: memory@20040000 {
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_b1/v2m_musca_b1.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_b1/v2m_musca_b1.dts:68:	sram0: memory@30000000 {
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_s1/v2m_musca_s1_musca_s1_ns.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_s1/v2m_musca_s1_musca_s1_ns.dts:49:	sram0: memory@20040000 {
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_s1/v2m_musca_s1.dts:24:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_musca_s1/v2m_musca_s1.dts:73:	sram0: memory@30000000 {
+/home/user/sdk-alif/zephyr/boards/arm/v2m_beetle/v2m_beetle.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/v2m_beetle/v2m_beetle.dts:33:	sram0: memory@20000000 {
+/home/user/sdk-alif/zephyr/boards/arm/mps2/mps2_base.dtsi:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/arm/mps2/mps2_base.dtsi:54:	sram0: memory@20000000 {
+/home/user/sdk-alif/zephyr/boards/firefly/roc_rk3568_pc/roc_rk3568_pc.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/firefly/roc_rk3568_pc/roc_rk3568_pc.dts:22:	sram0: memory@40000000 {
+/home/user/sdk-alif/zephyr/boards/others/stm32f401_mini/stm32f401_mini.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/stm32f103_mini/stm32f103_mini.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/candlelightfd/candlelightfd.dtsi:12:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/serpente/serpente.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/candlelight/candlelight.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/canbardo/canbardo.dts:23:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/promicro_nrf52840/promicro_nrf52840_nrf52840_common.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/black_f407ve/black_f407ve.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/stm32f030_demo/stm32f030_demo.dts:18:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/black_f407zg_pro/black_f407zg_pro.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/others/stm32_min_dev/stm32_min_dev.dts:19:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/circuitdojo/feather/circuitdojo_feather_nrf9160_ns.dts:15:		zephyr,sram = &sram0_ns_app;
+/home/user/sdk-alif/zephyr/boards/circuitdojo/feather/circuitdojo_feather_nrf9160.dts:14:		zephyr,sram = &sram0_s;
+/home/user/sdk-alif/zephyr/boards/circuitdojo/feather/circuitdojo_feather_nrf9160.dts:17:		zephyr,sram-secure-partition = &sram0_s;
+/home/user/sdk-alif/zephyr/boards/circuitdojo/feather/circuitdojo_feather_nrf9160.dts:18:		zephyr,sram-non-secure-partition = &sram0_ns;
+/home/user/sdk-alif/zephyr/boards/wiznet/w5500_evb_pico/w5500_evb_pico.dts:20:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/malta/qemu_malta.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/malta/qemu_malta.dts:38:	sram0: memory@80200000 {
+/home/user/sdk-alif/zephyr/boards/qemu/xtensa/qemu_xtensa_dc233c_mmu.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/xtensa/qemu_xtensa_sample_controller32_mpu.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/xtensa/qemu_xtensa_dc233c.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/nios2/qemu_nios2.dts:17:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/cortex_m0/qemu_cortex_m0.dts:21:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/cortex_r5/qemu_cortex_r5.dts:16:		zephyr,sram = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/cortex_a9/qemu_cortex_a9.dts:27:	sram0: memory@100000 {
+/home/user/sdk-alif/zephyr/boards/qemu/cortex_a9/qemu_cortex_a9.dts:38:		zephyr,sram       = &sram0;
+/home/user/sdk-alif/zephyr/boards/qemu/kvm_arm64/qemu_kvm_arm64.dts:22:		zephyr,sram = &sram0;
+
+===== EXISTING BUILD DIRECTORIES AND EFFECTIVE CONFIGS =====
+
+--- /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/zephyr.map ---
+16808:SRAM0            0x0000000002000000 0x0000000000400000 rw
+16860:.alif_sram0     0x0000000002000000   0x340000
+16861: *(SORT_BY_ALIGNMENT(.alif_sram0))
+16862: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+16863: .alif_sram0.activation_buf
+16865: .alif_sram0.activation_buf
+23733: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23734: .alif_extflash_OSPI1
+23736: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27406:SRAM0           0x0000000002340000        0x0
+27407:                0x0000000002340000                __SRAM0_start = .
+27408: *(SORT_BY_ALIGNMENT(SRAM0))
+27409: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27410:                0x0000000002340000                __SRAM0_end = .
+27411:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27412:                0x0000000002340000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_floor_mod_arena130000_kernelheap64k_20261110_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_20261118/zephyr/zephyr.map ---
+16996:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17048:.alif_sram0     0x0000000002000000   0x1a0000
+17049: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17050: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17051: .alif_sram0.activation_buf
+23538: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23539: .alif_extflash_OSPI1
+23541: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27032:SRAM0           0x00000000021a0000        0x0
+27033:                0x00000000021a0000                __SRAM0_start = .
+27034: *(SORT_BY_ALIGNMENT(SRAM0))
+27035: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27036:                0x00000000021a0000                __SRAM0_end = .
+27037:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27038:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_rank4_fix_20261110_091757/zephyr/zephyr.map ---
+26952: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_rank4_fix_20261110_091757/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_bmi323_pm/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_bmi323_pm/zephyr/.config ---
+265:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+330:# CONFIG_ARM_ETHOS_U is not set
+479:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_helloworld/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_helloworld/zephyr/.config ---
+249:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+313:# CONFIG_ARM_ETHOS_U is not set
+462:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_tflm_ethosu/zephyr/.config ---
+2:CONFIG_TENSORFLOW_LITE_MICRO=y
+6:# CONFIG_MODEL_IN_EXT_FLASH is not set
+264:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+328:CONFIG_ARM_ETHOS_U=y
+333:# CONFIG_ARM_ETHOS_U55_64 is not set
+334:CONFIG_ARM_ETHOS_U55_128=y
+335:# CONFIG_ARM_ETHOS_U55_256 is not set
+336:# CONFIG_ARM_ETHOS_U65_128 is not set
+337:# CONFIG_ARM_ETHOS_U65_256 is not set
+338:# CONFIG_ARM_ETHOS_U65_512 is not set
+339:# CONFIG_ARM_ETHOS_U85_128 is not set
+340:# CONFIG_ARM_ETHOS_U85_256 is not set
+341:# CONFIG_ARM_ETHOS_U85_512 is not set
+342:# CONFIG_ARM_ETHOS_U85_1024 is not set
+343:# CONFIG_ARM_ETHOS_U85_2048 is not set
+346:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+347:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+348:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+353:CONFIG_ARM_ETHOS_U_LOG_LEVEL=4
+502:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_heatstroke_int64_split_v_arena130000_kernelheap64k_20261111_try1/zephyr/zephyr.map ---
+27213: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_split_v_arena130000_kernelheap64k_20261111_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_beacon/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_beacon/zephyr/.config ---
+266:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+332:# CONFIG_ARM_ETHOS_U is not set
+690:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_peripheral_nus/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_peripheral_nus/zephyr/.config ---
+264:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+330:# CONFIG_ARM_ETHOS_U is not set
+682:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_heatstroke_ethosu_aligned16_arena130000_kernelheap64k_20261111_try1/zephyr/zephyr.map ---
+27427: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_ethosu_aligned16_arena130000_kernelheap64k_20261111_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_add_arena130000_kernelheap64k_20261111_try1/zephyr/zephyr.map ---
+27177: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_add_arena130000_kernelheap64k_20261111_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_ble_blinky/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_ble_blinky/zephyr/.config ---
+266:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+346:# CONFIG_ARM_ETHOS_U is not set
+496:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_heatstroke_int64_floor_mod_arena130000_kernelheap64k_20261110_try2/zephyr/zephyr.map ---
+27107: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_floor_mod_arena130000_kernelheap64k_20261110_try2/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_mul_arena130000_kernelheap64k_20261110_try2/zephyr/zephyr.map ---
+27075: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_mul_arena130000_kernelheap64k_20261110_try2/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_bmi323/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_bmi323/zephyr/.config ---
+259:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+323:# CONFIG_ARM_ETHOS_U is not set
+472:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_heatstroke_int64_sub_arena130000_kernelheap64k_20261110_try1/zephyr/zephyr.map ---
+27143: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_sub_arena130000_kernelheap64k_20261110_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_20261118/zephyr/zephyr.map ---
+17006:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17058:.alif_sram0     0x0000000002000000   0x1a0000
+17059: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17060: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17061: .alif_sram0.activation_buf
+23589: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23590: .alif_extflash_OSPI1
+23592: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27109:SRAM0           0x00000000021a0000        0x0
+27110:                0x00000000021a0000                __SRAM0_start = .
+27111: *(SORT_BY_ALIGNMENT(SRAM0))
+27112: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27113:                0x00000000021a0000                __SRAM0_end = .
+27114:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27115:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_20261118/zephyr/zephyr.map ---
+17016:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17068:.alif_sram0     0x0000000002000000   0x1a0000
+17069: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17070: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17071: .alif_sram0.activation_buf
+23633: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23634: .alif_extflash_OSPI1
+23636: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27179:SRAM0           0x00000000021a0000        0x0
+27180:                0x00000000021a0000                __SRAM0_start = .
+27181: *(SORT_BY_ALIGNMENT(SRAM0))
+27182: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27183:                0x00000000021a0000                __SRAM0_end = .
+27184:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27185:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_single_step_20261109_171247/zephyr/zephyr.map ---
+26918: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_single_step_20261109_171247/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_fused_kernel_compile_20261109_223512/zephyr/zephyr.map ---
+26945: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_fused_kernel_compile_20261109_223512/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_work_demand_e8_hp_u55_256_tflm_probe_ospi_aa0000_20261119_162426/zephyr/zephyr.map ---
+12526:SRAM0            0x0000000002000000 0x0000000000400000 rw
+12574:.alif_sram0     0x0000000002000000   0x1a0000
+12575: *(SORT_BY_ALIGNMENT(.alif_sram0))
+12576: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+12577: .alif_sram0.activation_buf
+17538: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+17539: .alif_extflash_OSPI1
+17541: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+19961:SRAM0           0x00000000021a0000        0x0
+19962:                0x00000000021a0000                __SRAM0_start = .
+19963: *(SORT_BY_ALIGNMENT(SRAM0))
+19964: *(SORT_BY_ALIGNMENT(SRAM0.*))
+19965:                0x00000000021a0000                __SRAM0_end = .
+19966:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+19967:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_work_demand_e8_hp_u55_256_tflm_probe_ospi_aa0000_20261119_162426/zephyr/.config ---
+259:CONFIG_TENSORFLOW_LITE_MICRO=y
+260:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+330:CONFIG_ARM_ETHOS_U=y
+335:# CONFIG_ARM_ETHOS_U55_64 is not set
+336:# CONFIG_ARM_ETHOS_U55_128 is not set
+337:CONFIG_ARM_ETHOS_U55_256=y
+338:# CONFIG_ARM_ETHOS_U65_128 is not set
+339:# CONFIG_ARM_ETHOS_U65_256 is not set
+340:# CONFIG_ARM_ETHOS_U65_512 is not set
+341:# CONFIG_ARM_ETHOS_U85_128 is not set
+342:# CONFIG_ARM_ETHOS_U85_256 is not set
+343:# CONFIG_ARM_ETHOS_U85_512 is not set
+344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+427:CONFIG_MLEK_EXAMPLES_LIB=y
+428:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+429:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+510:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1751:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1752:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1753:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_cast_sum_arena130000_kernelheap64k_20261110_retry1/zephyr/zephyr.map ---
+27030: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_cast_sum_arena130000_kernelheap64k_20261110_retry1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/zephyr.map ---
+16969:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17021:.alif_sram0     0x0000000002000000    0x91000
+17022: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17023: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17024: .alif_sram0.activation_buf
+23489: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23490: .alif_extflash_OSPI1
+23492: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+26980:SRAM0           0x0000000002091000        0x0
+26981:                0x0000000002091000                __SRAM0_start = .
+26982: *(SORT_BY_ALIGNMENT(SRAM0))
+26983: *(SORT_BY_ALIGNMENT(SRAM0.*))
+26984:                0x0000000002091000                __SRAM0_end = .
+26985:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+26986:                0x0000000002091000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x00091000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_fused_20261109_225941/zephyr/zephyr.map ---
+26951: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_fused_20261109_225941/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build/zephyr/.config ---
+278:CONFIG_TENSORFLOW_LITE_MICRO=y
+279:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+349:CONFIG_ARM_ETHOS_U=y
+354:# CONFIG_ARM_ETHOS_U55_64 is not set
+355:# CONFIG_ARM_ETHOS_U55_128 is not set
+356:# CONFIG_ARM_ETHOS_U55_256 is not set
+357:# CONFIG_ARM_ETHOS_U65_128 is not set
+358:# CONFIG_ARM_ETHOS_U65_256 is not set
+359:# CONFIG_ARM_ETHOS_U65_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_128 is not set
+361:CONFIG_ARM_ETHOS_U85_256=y
+362:# CONFIG_ARM_ETHOS_U85_512 is not set
+363:# CONFIG_ARM_ETHOS_U85_1024 is not set
+364:# CONFIG_ARM_ETHOS_U85_2048 is not set
+367:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u85-256"
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+370:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+371:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+372:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+373:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+374:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+446:CONFIG_MLEK_EXAMPLES_LIB=y
+447:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+448:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+529:CONFIG_SYSTEM_HEAP_SRAM0=y
+1856:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+1857:CONFIG_ACTIVATION_BUF_SZ=0x200000
+1858:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_arena130000_kernelheap64k_20261110_094648/zephyr/zephyr.map ---
+26978: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_arena130000_kernelheap64k_20261110_094648/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_asr/zephyr/zephyr.map ---
+27508: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_asr/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0xA0000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_20261118/zephyr/zephyr.map ---
+17001:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17053:.alif_sram0     0x0000000002000000   0x1a0000
+17054: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17055: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17056: .alif_sram0.activation_buf
+23570: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23571: .alif_extflash_OSPI1
+23573: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27077:SRAM0           0x00000000021a0000        0x0
+27078:                0x00000000021a0000                __SRAM0_start = .
+27079: *(SORT_BY_ALIGNMENT(SRAM0))
+27080: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27081:                0x00000000021a0000                __SRAM0_end = .
+27082:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27083:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_fused_capacity_20261109_222001/zephyr/zephyr.map ---
+26918: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_fused_capacity_20261109_222001/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_arena_plus64k_20261110_093157/zephyr/zephyr.map ---
+26952: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_layernorm_arena_plus64k_20261110_093157/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_cast_sum_20261110_1430/zephyr/zephyr.map ---
+27030: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_cast_sum_20261110_1430/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x120000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/zephyr.map ---
+17021:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17073:.alif_sram0     0x0000000002000000   0x1a0000
+17074: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17075: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17076: .alif_sram0.activation_buf
+23656: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23657: .alif_extflash_OSPI1
+23659: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27215:SRAM0           0x00000000021a0000        0x0
+27216:                0x00000000021a0000                __SRAM0_start = .
+27217: *(SORT_BY_ALIGNMENT(SRAM0))
+27218: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27219:                0x00000000021a0000                __SRAM0_end = .
+27220:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27221:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_add_splitv_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_20261118/zephyr/zephyr.map ---
+17011:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17063:.alif_sram0     0x0000000002000000   0x1a0000
+17064: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17065: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17066: .alif_sram0.activation_buf
+23612: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23613: .alif_extflash_OSPI1
+23615: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27145:SRAM0           0x00000000021a0000        0x0
+27146:                0x00000000021a0000                __SRAM0_start = .
+27147: *(SORT_BY_ALIGNMENT(SRAM0))
+27148: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27149:                0x00000000021a0000                __SRAM0_end = .
+27150:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27151:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_int64castsum_mul_floormod_sub_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_work_demand_e8_hp_u55_256_tflm_probe_20261119_125012/zephyr/zephyr.map ---
+12526:SRAM0            0x0000000002000000 0x0000000000400000 rw
+12574:.alif_sram0     0x0000000002000000   0x1a0000
+12575: *(SORT_BY_ALIGNMENT(.alif_sram0))
+12576: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+12577: .alif_sram0.activation_buf
+17538: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+17539: .alif_extflash_OSPI1
+17541: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+19961:SRAM0           0x00000000021a0000        0x0
+19962:                0x00000000021a0000                __SRAM0_start = .
+19963: *(SORT_BY_ALIGNMENT(SRAM0))
+19964: *(SORT_BY_ALIGNMENT(SRAM0.*))
+19965:                0x00000000021a0000                __SRAM0_end = .
+19966:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+19967:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_work_demand_e8_hp_u55_256_tflm_probe_20261119_125012/zephyr/.config ---
+259:CONFIG_TENSORFLOW_LITE_MICRO=y
+260:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+330:CONFIG_ARM_ETHOS_U=y
+335:# CONFIG_ARM_ETHOS_U55_64 is not set
+336:# CONFIG_ARM_ETHOS_U55_128 is not set
+337:CONFIG_ARM_ETHOS_U55_256=y
+338:# CONFIG_ARM_ETHOS_U65_128 is not set
+339:# CONFIG_ARM_ETHOS_U65_256 is not set
+340:# CONFIG_ARM_ETHOS_U65_512 is not set
+341:# CONFIG_ARM_ETHOS_U85_128 is not set
+342:# CONFIG_ARM_ETHOS_U85_256 is not set
+343:# CONFIG_ARM_ETHOS_U85_512 is not set
+344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+427:CONFIG_MLEK_EXAMPLES_LIB=y
+428:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+429:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+510:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1751:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1752:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1753:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_kws_ethosu/zephyr/zephyr.map ---
+
+--- /home/user/sdk-alif/build_kws_ethosu/zephyr/.config ---
+255:# CONFIG_TENSORFLOW_LITE_MICRO is not set
+319:CONFIG_ARM_ETHOS_U=y
+324:# CONFIG_ARM_ETHOS_U55_64 is not set
+325:CONFIG_ARM_ETHOS_U55_128=y
+326:# CONFIG_ARM_ETHOS_U55_256 is not set
+327:# CONFIG_ARM_ETHOS_U65_128 is not set
+328:# CONFIG_ARM_ETHOS_U65_256 is not set
+329:# CONFIG_ARM_ETHOS_U65_512 is not set
+330:# CONFIG_ARM_ETHOS_U85_128 is not set
+331:# CONFIG_ARM_ETHOS_U85_256 is not set
+332:# CONFIG_ARM_ETHOS_U85_512 is not set
+333:# CONFIG_ARM_ETHOS_U85_1024 is not set
+334:# CONFIG_ARM_ETHOS_U85_2048 is not set
+337:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+338:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+339:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+340:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN is not set
+341:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+342:CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG=y
+343:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+344:CONFIG_ARM_ETHOS_U_LOG_LEVEL=4
+493:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+
+--- /home/user/sdk-alif/build_asr_e8/zephyr/zephyr.map ---
+17674:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17730:.alif_sram0     0x0000000002000000    0x28000
+17731: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17732: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+24085: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+24086: .alif_extflash_OSPI1
+24088: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+27550:SRAM0           0x0000000002028000   0x252080
+27551:                0x0000000002028000                __SRAM0_start = .
+27552: *(SORT_BY_ALIGNMENT(SRAM0))
+27553: *(SORT_BY_ALIGNMENT(SRAM0.*))
+27554: SRAM0.activation_buf
+27556: SRAM0.audio_inf
+27558:                0x000000000227a080                __SRAM0_end = .
+27559:                0x0000000000252080                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+27560:                0x0000000002028000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_asr_e8/zephyr/.config ---
+278:CONFIG_TENSORFLOW_LITE_MICRO=y
+279:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+349:CONFIG_ARM_ETHOS_U=y
+354:# CONFIG_ARM_ETHOS_U55_64 is not set
+355:# CONFIG_ARM_ETHOS_U55_128 is not set
+356:# CONFIG_ARM_ETHOS_U55_256 is not set
+357:# CONFIG_ARM_ETHOS_U65_128 is not set
+358:# CONFIG_ARM_ETHOS_U65_256 is not set
+359:# CONFIG_ARM_ETHOS_U65_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_128 is not set
+361:CONFIG_ARM_ETHOS_U85_256=y
+362:# CONFIG_ARM_ETHOS_U85_512 is not set
+363:# CONFIG_ARM_ETHOS_U85_1024 is not set
+364:# CONFIG_ARM_ETHOS_U85_2048 is not set
+367:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u85-256"
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+370:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+371:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+372:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+373:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+374:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+446:CONFIG_MLEK_EXAMPLES_LIB=y
+447:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+448:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+529:CONFIG_SYSTEM_HEAP_SRAM0=y
+1856:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+1857:CONFIG_ACTIVATION_BUF_SZ=0x200000
+1858:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_int64_mul_arena130000_kernelheap64k_20261110_try1/zephyr/zephyr.map ---
+27075: .bss.activation_buf
+
+--- /home/user/sdk-alif/build_heatstroke_int64_mul_arena130000_kernelheap64k_20261110_try1/zephyr/.config ---
+282:CONFIG_TENSORFLOW_LITE_MICRO=y
+283:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+381:CONFIG_ARM_ETHOS_U=y
+386:# CONFIG_ARM_ETHOS_U55_64 is not set
+387:CONFIG_ARM_ETHOS_U55_128=y
+388:# CONFIG_ARM_ETHOS_U55_256 is not set
+389:# CONFIG_ARM_ETHOS_U65_128 is not set
+390:# CONFIG_ARM_ETHOS_U65_256 is not set
+391:# CONFIG_ARM_ETHOS_U65_512 is not set
+392:# CONFIG_ARM_ETHOS_U85_128 is not set
+393:# CONFIG_ARM_ETHOS_U85_256 is not set
+394:# CONFIG_ARM_ETHOS_U85_512 is not set
+395:# CONFIG_ARM_ETHOS_U85_1024 is not set
+396:# CONFIG_ARM_ETHOS_U85_2048 is not set
+399:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+400:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+401:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+402:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+403:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+404:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+405:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+406:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+480:CONFIG_MLEK_EXAMPLES_LIB=y
+481:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+482:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+564:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1886:CONFIG_ACTIVATION_BUF_SECTION=".bss.activation_buf"
+1887:CONFIG_ACTIVATION_BUF_SZ=0x130000
+1888:CONFIG_MODEL_IN_EXT_FLASH=y
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_20261118/zephyr/zephyr.map ---
+16969:SRAM0            0x0000000002000000 0x0000000000400000 rw
+17021:.alif_sram0     0x0000000002000000   0x1a0000
+17022: *(SORT_BY_ALIGNMENT(.alif_sram0))
+17023: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+17024: .alif_sram0.activation_buf
+23489: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+23490: .alif_extflash_OSPI1
+23492: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+26980:SRAM0           0x00000000021a0000        0x0
+26981:                0x00000000021a0000                __SRAM0_start = .
+26982: *(SORT_BY_ALIGNMENT(SRAM0))
+26983: *(SORT_BY_ALIGNMENT(SRAM0.*))
+26984:                0x00000000021a0000                __SRAM0_end = .
+26985:                0x0000000000000000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+26986:                0x00000000021a0000                __SRAM0_load_start = LOADADDR (SRAM0)
+
+--- /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_directout_arena1a0000_20261118/zephyr/.config ---
+275:CONFIG_TENSORFLOW_LITE_MICRO=y
+276:# CONFIG_TENSORFLOW_LITE_MICRO_CMSIS_NN_KERNELS is not set
+346:CONFIG_ARM_ETHOS_U=y
+351:# CONFIG_ARM_ETHOS_U55_64 is not set
+352:# CONFIG_ARM_ETHOS_U55_128 is not set
+353:CONFIG_ARM_ETHOS_U55_256=y
+354:# CONFIG_ARM_ETHOS_U65_128 is not set
+355:# CONFIG_ARM_ETHOS_U65_256 is not set
+356:# CONFIG_ARM_ETHOS_U65_512 is not set
+357:# CONFIG_ARM_ETHOS_U85_128 is not set
+358:# CONFIG_ARM_ETHOS_U85_256 is not set
+359:# CONFIG_ARM_ETHOS_U85_512 is not set
+360:# CONFIG_ARM_ETHOS_U85_1024 is not set
+361:# CONFIG_ARM_ETHOS_U85_2048 is not set
+364:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-256"
+365:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+366:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+367:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+368:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+369:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+370:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+371:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+443:CONFIG_MLEK_EXAMPLES_LIB=y
+444:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+445:# CONFIG_MLEK_EXAMPLES_LOG_ENABLE is not set
+526:# CONFIG_SYSTEM_HEAP_SRAM0 is not set
+1837:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+1838:CONFIG_ACTIVATION_BUF_SZ=0x1A0000
+1839:CONFIG_MODEL_IN_EXT_FLASH=y
+
+===== V6 MODEL CHECKSUM =====
+bytes=9789936 file=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+
+CHECK COMPLETE - NO SOURCE FILES MODIFIED
