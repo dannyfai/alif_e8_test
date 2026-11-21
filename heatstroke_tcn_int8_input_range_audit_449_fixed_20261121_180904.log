@@ -2246,4 +2246,1286 @@ Existing TFLite model reused; no conversion or firmware actions.
 
 SCRIPT_EXIT_CODE=0
 LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflite_all449_final_report_20261121.log
-]3008;end=2d68c382-134e-46ec-b79d-4c53a7607e10;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=2d68c382-134e-46ec-b79d-4c53a7607e10;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+MODEL_DIR="$EXP/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+
+RUN_TAG="$(date +%Y%m%d_%H%M%S)"
+OUTDIR="$EXP/onnx_qdq_int8_fold2_v6_$RUN_TAG"
+SCRIPT="$EXP/quantize_tcn_fold2_v6_static_qdq.py"
+LOG="$LOGDIR/heatstroke_tcn_v6_static_qdq_int8_$RUN_TAG.log"
+
+mkdir -p "$OUTDIR"
+
+cat > "$SCRIPT" <<'PY'
+#!/usr/bin/env python3
+from pathlib import Path
+from collections import Counter
+from datetime import datetime
+import argparse
+import hashlib
+import importlib.util
+import json
+import sys
+
+import numpy as np
+import onnx
+from onnx import numpy_helper
+import onnxruntime as ort
+
+from onnxruntime.quantization import (
+    CalibrationDataReader,
+    CalibrationMethod,
+    QuantFormat,
+    QuantType,
+    quantize_static,
+)
+
+
+PROJECT = Path(
+    "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+)
+
+EXP = PROJECT / "experiments" / "tcn_reg_20261120"
+
+MODEL_DIR = (
+    EXP / "onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+)
+
+FP32_ONNX = (
+    MODEL_DIR /
+    "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx"
+)
+
+EXPECTED_FP32_SHA256 = (
+    "1679ccd65d37834014c22f9306241e72"
+    "d57a6ee1e0996584747e8b30f8c0588a"
+)
+
+EXPORTER_PATH = (
+    EXP / "export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py"
+)
+
+HELPER_PATH = EXP / "train_tcn_reg_testdev_experiment.py"
+
+DATA_DIR = PROJECT / "data" / "split_byid"
+
+SENTINELS = (-9997.0, -9998.0, -9999.0)
+
+INPUT_NAMES = [
+    "x_values",
+    "missing_mask",
+    "x_mark",
+    "worker_features_18",
+    "compact_values",
+]
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def import_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot import module: {path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def json_default(value):
+    if isinstance(value, np.generic):
+        return value.item()
+
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+
+    if isinstance(value, Path):
+        return str(value)
+
+    raise TypeError(f"Cannot serialize {type(value).__name__}")
+
+
+class DatasetCalibrationReader(CalibrationDataReader):
+    """Feeds deterministic five-input samples to ONNX Runtime calibration."""
+
+    def __init__(self, samples):
+        super().__init__()
+        self.samples = samples
+        self.index = 0
+
+    def get_next(self):
+        if self.index >= len(self.samples):
+            return None
+
+        sample = self.samples[self.index]
+        self.index += 1
+        return sample
+
+    def rewind(self):
+        self.index = 0
+
+
+def collect_dataset_samples(exporter, helper, seed=20261121):
+    project_run = helper.import_project(PROJECT)
+
+    dataset = helper.ImputationDataset(
+        project_run,
+        DATA_DIR,
+        "test",
+        seed,
+        "worker_id",
+    )
+
+    dataset.set_epoch(0)
+
+    if len(dataset) != 449:
+        raise RuntimeError(
+            f"Expected 449 samples, found {len(dataset)}"
+        )
+
+    samples = []
+    missing_entries = 0
+    total_entries = 0
+
+    print("\n===== BUILDING CALIBRATION INPUTS =====")
+
+    for index in range(len(dataset)):
+        x, mark, worker, compact = exporter.make_sample_inputs(
+            dataset, index
+        )
+
+        mask = (
+            (x == SENTINELS[0]) |
+            (x == SENTINELS[1]) |
+            (x == SENTINELS[2])
+        )
+
+        sanitized = np.where(
+            mask.numpy(),
+            0.0,
+            x.numpy(),
+        ).astype(np.float32)
+
+        feed = {
+            "x_values": sanitized,
+            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+            "x_mark": mark.cpu().numpy().astype(np.float32),
+            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+            "compact_values": compact.cpu().numpy().astype(np.float32),
+        }
+
+        expected_shapes = {
+            "x_values": (1, 900, 6),
+            "missing_mask": (1, 900, 6),
+            "x_mark": (1, 900, 3),
+            "worker_features_18": (1, 18),
+            "compact_values": (1, 1800, 6),
+        }
+
+        for name, shape in expected_shapes.items():
+            if feed[name].shape != shape:
+                raise RuntimeError(
+                    f"Sample {index}, {name}: "
+                    f"expected {shape}, got {feed[name].shape}"
+                )
+
+        for name in INPUT_NAMES:
+            if name != "missing_mask" and not np.isfinite(feed[name]).all():
+                raise RuntimeError(
+                    f"Sample {index}: non-finite values in {name}"
+                )
+
+        if np.any(feed["x_values"] == -9997):
+            raise RuntimeError("Sentinel -9997 remains after sanitization")
+        if np.any(feed["x_values"] == -9998):
+            raise RuntimeError("Sentinel -9998 remains after sanitization")
+        if np.any(feed["x_values"] == -9999):
+            raise RuntimeError("Sentinel -9999 remains after sanitization")
+
+        missing_entries += int(feed["missing_mask"].sum())
+        total_entries += int(feed["missing_mask"].size)
+
+        samples.append(feed)
+
+        if index % 100 == 0 or index == len(dataset) - 1:
+            print(
+                f"Prepared {index + 1}/{len(dataset)} samples"
+            )
+
+    print("Calibration samples:", len(samples))
+    print("Missing sensor entries:", missing_entries)
+    print("Total sensor entries:", total_entries)
+    print(
+        "Missing sensor percentage:",
+        100.0 * missing_entries / max(total_entries, 1),
+    )
+
+    return samples
+
+
+def summarize_initializers(model):
+    counts = Counter()
+    total_bytes = Counter()
+    int8_names = []
+
+    for initializer in model.graph.initializer:
+        array = numpy_helper.to_array(initializer)
+        dtype = str(array.dtype)
+
+        counts[dtype] += 1
+        total_bytes[dtype] += int(array.nbytes)
+
+        if array.dtype == np.int8:
+            int8_names.append(initializer.name)
+
+    return {
+        "initializer_count_by_dtype": dict(counts),
+        "initializer_bytes_by_dtype": dict(total_bytes),
+        "int8_initializer_count": len(int8_names),
+        "int8_initializer_bytes": int(total_bytes.get("int8", 0)),
+        "int8_initializer_examples": int8_names[:20],
+    }
+
+
+def summarize_qdq(model):
+    ops = Counter(node.op_type for node in model.graph.node)
+
+    initializers = {
+        item.name: numpy_helper.to_array(item)
+        for item in model.graph.initializer
+    }
+
+    scale_sizes = []
+    scale_min = []
+    scale_max = []
+
+    direct_input_quantizers = {
+        name: [] for name in INPUT_NAMES
+    }
+
+    for node in model.graph.node:
+        if node.op_type not in ("QuantizeLinear", "DequantizeLinear"):
+            continue
+
+        if len(node.input) >= 2:
+            scale = initializers.get(node.input[1])
+
+            if scale is not None:
+                scale = np.asarray(scale, dtype=np.float64)
+                if scale.size:
+                    scale_sizes.append(int(scale.size))
+                    scale_min.append(float(np.min(scale)))
+                    scale_max.append(float(np.max(scale)))
+
+        if node.op_type == "QuantizeLinear" and node.input:
+            for name in INPUT_NAMES:
+                if node.input[0] == name:
+                    direct_input_quantizers[name].append({
+                        "node_name": node.name,
+                        "output": list(node.output),
+                        "scale_initializer": (
+                            node.input[1] if len(node.input) > 1 else None
+                        ),
+                        "zero_point_initializer": (
+                            node.input[2] if len(node.input) > 2 else None
+                        ),
+                    })
+
+    return {
+        "operator_counts": dict(sorted(ops.items())),
+        "quantize_linear_nodes": int(ops.get("QuantizeLinear", 0)),
+        "dequantize_linear_nodes": int(ops.get("DequantizeLinear", 0)),
+        "qdq_scale_tensor_count": len(scale_sizes),
+        "qdq_scale_value_count": int(sum(scale_sizes)),
+        "qdq_scale_min": min(scale_min) if scale_min else None,
+        "qdq_scale_max": max(scale_max) if scale_max else None,
+        "direct_graph_input_quantizers": direct_input_quantizers,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--seed", type=int, default=20261121)
+    args = ap.parse_args()
+
+    out_dir = Path(args.out_dir).resolve()
+    out_dir.mkdir(parents=True, exist_ok=False)
+
+    qdq_path = (
+        out_dir / "heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx"
+    )
+
+    print("===== TCN FOLD-2 V6 STATIC INT8 QDQ EXPERIMENT =====")
+    print("Timestamp:", datetime.now().astimezone().isoformat())
+    print("Python:", sys.version.replace("\n", " "))
+    print("NumPy:", np.__version__)
+    print("ONNX:", onnx.__version__)
+    print("ONNX Runtime:", ort.__version__)
+    print("FP32 ONNX:", FP32_ONNX)
+    print("QDQ output:", qdq_path)
+
+    for path in (
+        FP32_ONNX,
+        EXPORTER_PATH,
+        HELPER_PATH,
+        DATA_DIR / "test_seq.feather",
+        DATA_DIR / "test_non_seq.csv",
+    ):
+        if not path.is_file():
+            raise FileNotFoundError(path)
+
+    fp32_sha = sha256(FP32_ONNX)
+    print("FP32 ONNX SHA256:", fp32_sha)
+
+    if fp32_sha != EXPECTED_FP32_SHA256:
+        raise RuntimeError(
+            "FP32 ONNX SHA256 mismatch; refusing to quantize."
+        )
+
+    # ------------------------------------------------------------
+    # 1. Verify original FP32 ONNX inputs and operations.
+    # ------------------------------------------------------------
+    original = onnx.load(str(FP32_ONNX))
+    onnx.checker.check_model(original)
+
+    original_inputs = [
+        item.name for item in original.graph.input
+    ]
+
+    if original_inputs != INPUT_NAMES:
+        raise RuntimeError(
+            f"Unexpected FP32 input interface: {original_inputs}"
+        )
+
+    original_ops = Counter(
+        node.op_type for node in original.graph.node
+    )
+
+    print("\nOriginal graph node count:", len(original.graph.node))
+    print("Original Conv count:", original_ops.get("Conv", 0))
+    print("Original Gemm count:", original_ops.get("Gemm", 0))
+    print("Original operator histogram:")
+    print(json.dumps(dict(sorted(original_ops.items())), indent=2))
+
+    if original_ops.get("Conv", 0) == 0:
+        raise RuntimeError("No Conv operators found.")
+    if original_ops.get("Gemm", 0) == 0:
+        raise RuntimeError("No Gemm operators found.")
+
+    # ------------------------------------------------------------
+    # 2. Load 449 calibration and validation inputs.
+    # ------------------------------------------------------------
+    exporter = import_module(
+        EXPORTER_PATH,
+        "tcn_v6_static_qdq_exporter",
+    )
+    helper = exporter.import_helper(HELPER_PATH)
+
+    samples = collect_dataset_samples(
+        exporter,
+        helper,
+        seed=args.seed,
+    )
+
+    # ------------------------------------------------------------
+    # 3. Static QDQ quantization.
+    #
+    # Quantize only Conv and Gemm initially:
+    # - INT8 activations
+    # - INT8 weights
+    # - Per-channel weights
+    # - Symmetric activation and weight quantization
+    # - MinMax activation calibration
+    #
+    # Boolean missing_mask remains Boolean.
+    # ------------------------------------------------------------
+    reader = DatasetCalibrationReader(samples)
+
+    print("\n===== STATIC QDQ QUANTIZATION CONFIGURATION =====")
+    config = {
+        "quant_format": "QDQ",
+        "op_types_to_quantize": ["Conv", "Gemm"],
+        "activation_type": "QInt8",
+        "weight_type": "QInt8",
+        "per_channel": True,
+        "calibrate_method": "MinMax",
+        "ActivationSymmetric": True,
+        "WeightSymmetric": True,
+        "calibration_sample_count": len(samples),
+        "excluded_operator_policy": (
+            "All other operators left in their original representation"
+        ),
+        "missing_mask": "Boolean input; not treated as an INT8 activation",
+    }
+    print(json.dumps(config, indent=2))
+
+    quantize_static(
+        model_input=str(FP32_ONNX),
+        model_output=str(qdq_path),
+        calibration_data_reader=reader,
+        quant_format=QuantFormat.QDQ,
+        op_types_to_quantize=["Conv", "Gemm"],
+        per_channel=True,
+        activation_type=QuantType.QInt8,
+        weight_type=QuantType.QInt8,
+        calibrate_method=CalibrationMethod.MinMax,
+        extra_options={
+            "ActivationSymmetric": True,
+            "WeightSymmetric": True,
+        },
+    )
+
+    if not qdq_path.is_file() or qdq_path.stat().st_size == 0:
+        raise RuntimeError("QDQ quantizer did not create an output model.")
+
+    qdq_sha = sha256(qdq_path)
+
+    print("\nQDQ ONNX file:", qdq_path)
+    print("QDQ file bytes:", qdq_path.stat().st_size)
+    print("QDQ SHA256:", qdq_sha)
+
+    # ------------------------------------------------------------
+    # 4. Validate QDQ graph and inspect actual quantization.
+    # ------------------------------------------------------------
+    qdq_model = onnx.load(str(qdq_path))
+    onnx.checker.check_model(qdq_model)
+
+    qdq_ops = summarize_qdq(qdq_model)
+    initializer_summary = summarize_initializers(qdq_model)
+
+    print("\nQDQ ONNX checker: PASS")
+    print("QDQ operator summary:")
+    print(json.dumps(qdq_ops, indent=2))
+    print("Initializer summary:")
+    print(json.dumps(initializer_summary, indent=2))
+
+    if qdq_ops["quantize_linear_nodes"] == 0:
+        raise RuntimeError("No QuantizeLinear nodes found.")
+    if qdq_ops["dequantize_linear_nodes"] == 0:
+        raise RuntimeError("No DequantizeLinear nodes found.")
+    if initializer_summary["int8_initializer_count"] == 0:
+        raise RuntimeError("No INT8 initializers were generated.")
+
+    # ------------------------------------------------------------
+    # 5. Run FP32 ONNX and QDQ ONNX on all 449 samples.
+    #
+    # This is a diagnostic comparison, not an independent
+    # generalization benchmark: the same samples were calibrated.
+    # ------------------------------------------------------------
+    print("\n===== ONNX RUNTIME QDQ VALIDATION: ALL 449 SAMPLES =====")
+
+    fp32_session = ort.InferenceSession(
+        str(FP32_ONNX),
+        providers=["CPUExecutionProvider"],
+    )
+
+    qdq_session = ort.InferenceSession(
+        str(qdq_path),
+        providers=["CPUExecutionProvider"],
+    )
+
+    fp32_output_name = fp32_session.get_outputs()[0].name
+    qdq_output_name = qdq_session.get_outputs()[0].name
+
+    fp32_input_names = [
+        item.name for item in fp32_session.get_inputs()
+    ]
+    qdq_input_names = [
+        item.name for item in qdq_session.get_inputs()
+    ]
+
+    print("FP32 input names:", fp32_input_names)
+    print("QDQ input names:", qdq_input_names)
+    print("FP32 output:", fp32_session.get_outputs()[0].name)
+    print("QDQ output:", qdq_session.get_outputs()[0].name)
+
+    if fp32_input_names != INPUT_NAMES:
+        raise RuntimeError(
+            f"FP32 ORT input mismatch: {fp32_input_names}"
+        )
+
+    if qdq_input_names != INPUT_NAMES:
+        raise RuntimeError(
+            f"QDQ ORT input mismatch: {qdq_input_names}"
+        )
+
+    global_max = 0.0
+    total_abs = 0.0
+    total_sq = 0.0
+    total_values = 0
+    worst_sample = -1
+    sample_max_errors = []
+    nonfinite_samples = []
+    per_channel = {
+        str(channel): {
+            "max_abs": 0.0,
+            "sum_abs": 0.0,
+            "sum_sq": 0.0,
+            "count": 0,
+        }
+        for channel in range(6)
+    }
+
+    for index, feed in enumerate(samples):
+        reference = fp32_session.run(
+            [fp32_output_name], feed
+        )[0]
+
+        candidate = qdq_session.run(
+            [qdq_output_name], feed
+        )[0]
+
+        if reference.shape != candidate.shape:
+            raise RuntimeError(
+                f"Sample {index}: output shape mismatch "
+                f"{reference.shape} vs {candidate.shape}"
+            )
+
+        if not np.isfinite(candidate).all():
+            nonfinite_samples.append(int(index))
+            continue
+
+        delta = np.abs(reference - candidate)
+        sample_max = float(delta.max())
+        sample_max_errors.append(sample_max)
+
+        if sample_max > global_max:
+            global_max = sample_max
+            worst_sample = index
+
+        total_abs += float(np.sum(delta, dtype=np.float64))
+        total_sq += float(
+            np.sum(np.square(reference - candidate), dtype=np.float64)
+        )
+        total_values += int(delta.size)
+
+        for channel in range(6):
+            channel_delta = delta[:, :, channel]
+            entry = per_channel[str(channel)]
+
+            entry["max_abs"] = max(
+                entry["max_abs"],
+                float(channel_delta.max()),
+            )
+            entry["sum_abs"] += float(
+                np.sum(channel_delta, dtype=np.float64)
+            )
+            entry["sum_sq"] += float(
+                np.sum(np.square(channel_delta), dtype=np.float64)
+            )
+            entry["count"] += int(channel_delta.size)
+
+        if index % 50 == 0 or index == len(samples) - 1:
+            print(
+                f"Progress {index + 1}/{len(samples)}; "
+                f"sample_max_abs={sample_max:.9g}; "
+                f"nonfinite_samples={len(nonfinite_samples)}"
+            )
+
+    per_channel_result = {}
+
+    for channel, entry in per_channel.items():
+        count = max(entry["count"], 1)
+
+        per_channel_result[channel] = {
+            "max_abs_error": float(entry["max_abs"]),
+            "mean_abs_error": float(entry["sum_abs"] / count),
+            "rmse": float(np.sqrt(entry["sum_sq"] / count)),
+        }
+
+    metrics = {
+        "model": "Fold-2 TCN regression/imputation V6",
+        "quantization": config,
+        "dataset": "split_byid/test",
+        "samples": len(samples),
+        "note": (
+            "Exploratory quantization check. The same 449 samples were "
+            "used for calibration and comparison; this is not an "
+            "independent generalization evaluation."
+        ),
+        "fp32_onnx": str(FP32_ONNX),
+        "fp32_onnx_sha256": fp32_sha,
+        "qdq_onnx": str(qdq_path),
+        "qdq_onnx_sha256": qdq_sha,
+        "qdq_bytes": int(qdq_path.stat().st_size),
+        "all_outputs_finite": len(nonfinite_samples) == 0,
+        "nonfinite_samples": nonfinite_samples,
+        "global_max_abs_error": float(global_max),
+        "global_mean_abs_error": float(
+            total_abs / max(total_values, 1)
+        ),
+        "global_rmse": float(
+            np.sqrt(total_sq / max(total_values, 1))
+        ),
+        "worst_sample_index": int(worst_sample),
+        "median_sample_max_abs_error": float(
+            np.median(sample_max_errors)
+        ) if sample_max_errors else None,
+        "p99_sample_max_abs_error": float(
+            np.percentile(sample_max_errors, 99)
+        ) if sample_max_errors else None,
+        "per_channel_error": per_channel_result,
+        "qdq_graph": qdq_ops,
+        "initializer_summary": initializer_summary,
+        "qdq_operator_counts": dict(
+            sorted(Counter(n.op_type for n in qdq_model.graph.node).items())
+        ),
+    }
+
+    report_path = out_dir / "qdq_ort_all449_report.json"
+    report_path.write_text(
+        json.dumps(metrics, indent=2, default=json_default)
+    )
+
+    print("\n===== STATIC QDQ SUMMARY =====")
+    print(json.dumps(metrics, indent=2, default=json_default))
+    print("JSON report:", report_path)
+
+    if nonfinite_samples:
+        raise RuntimeError(
+            f"QDQ produced non-finite outputs on {len(nonfinite_samples)} samples." 
+        )
+
+    print("\n<TCN_V6_STATIC_INT8_QDQ> PASS </TCN_V6_STATIC_INT8_QDQ>")
+    print("QDQ model created and all 449 ORT outputs are finite.")
+    print("No TFLite conversion, Vela, firmware, or flash actions performed.")
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(
+            "\n<TCN_V6_STATIC_INT8_QDQ> FAIL </TCN_V6_STATIC_INT8_QDQ>",
+            file=sys.stderr,
+        )
+        print(
+            f"ERROR: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+[7m        )[27m
+[7m        raise[27m
+[7mPY[27m
+
+[7mecho "Script: $SCRIPT"[27m
+[7mecho "Output directory: $OUTDIR"[27m
+[7mecho "Log: $LOG"[27m
+
+[7m([27m
+[7m  set -o pipefail[27m
+
+[7m  "$PYTHON" -u "$SCRIPT" \[27m
+[7m    --out-dir "$OUTDIR" \[27m
+[7m    2>&1 | tee "$LOG"[27m
+
+[7m  RC=${PIPESTATUS[0]}[27m
+
+[7m  echo[27m
+[7m  echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m  echo "LOG_FILE=$LOG"[27m
+[7m  echo "OUTPUT_DIR=$OUTDIR"[27m
+
+[7m  exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A        )
+        raise
+PY
+
+echo "Script: $SCRIPT"
+echo "Output directory: $OUTDIR"
+echo "Log: $LOG"
+
+(
+  set -o pipefail
+
+  "$PYTHON" -u "$SCRIPT" \
+    --out-dir "$OUTDIR" \
+    2>&1 | tee "$LOG"
+
+  RC=${PIPESTATUS[0]}
+
+  echo
+  echo "SCRIPT_EXIT_CODE=$RC"
+  echo "LOG_FILE=$LOG"
+  echo "OUTPUT_DIR=$OUTDIR"
+
+  exit "$RC"
+)
+[?2004l]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Script: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_fold2_v6_static_qdq.py
+]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Output directory: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834
+]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Log: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_static_qdq_int8_20261121_182834.log
+]3008;start=544a9919-43e0-40f1-9875-2b59e9c2fb42;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\
+<TCN_V6_STATIC_INT8_QDQ> FAIL </TCN_V6_STATIC_INT8_QDQ>
+ERROR: FileExistsError: [Errno 17] File exists: '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834'
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_fold2_v6_static_qdq.py", line 646, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_fold2_v6_static_qdq.py", line 300, in main
+    out_dir.mkdir(parents=True, exist_ok=False)
+  File "/usr/lib/python3.12/pathlib.py", line 1311, in mkdir
+    os.mkdir(self, mode)
+FileExistsError: [Errno 17] File exists: '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834'
+
+SCRIPT_EXIT_CODE=1
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_static_qdq_int8_20261121_182834.log
+OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834
+]3008;end=544a9919-43e0-40f1-9875-2b59e9c2fb42;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+OUTDIR="$EXP/onnx_qdq_int8_fold2_v6_20261121_182834"
+
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+SCRIPT="$EXP/quantize_tcn_fold2_v6_static_qdq.py"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+
+QDQ="$OUTDIR/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx"
+REPORT="$OUTDIR/qdq_ort_all449_report.json"
+
+LOG="$LOGDIR/heatstroke_tcn_v6_static_qdq_int8_retry_20261121.log"
+
+echo "===== SAFE QDQ RETRY ====="
+
+# Confirm the existing output directory.
+test -d "$OUTDIR" || {
+    echo "ERROR: Expected output directory does not exist."
+    exit 1
+}
+
+# Never overwrite a previously generated QDQ artifact or report.
+if [ -e "$QDQ" ] || [ -e "$REPORT" ]; then
+    echo "ERROR: QDQ output or report already exists."
+    echo "Inspect the directory before proceeding:"
+    find "$OUTDIR" -maxdepth 2 -type f -printf '%p %s bytes\n'
+    exit 2
+fi
+
+# Fix the conflict: the shell already created OUTDIR.
+"$PYTHON" - <<'PY'
+from pathlib import Path
+
+p = Path(
+    "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/"
+    "experiments/tcn_reg_20261120/quantize_tcn_fold2_v6_static_qdq.py"
+)
+
+s = p.read_text()
+old = "out_dir.mkdir(parents=True, exist_ok=False)"
+new = "out_dir.mkdir(parents=True, exist_ok=True)"
+
+count = s.count(old)
+if count != 1:
+    raise RuntimeError(
+        f"Expected exactly one directory-creation statement; found {count}. "
+        "No script modification made."
+    )
+
+p.write_text(s.replace(old, new))
+print("Patched directory creation:", p)
+PY
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Script patch failed."
+    exit 3
+fi
+
+echo
+echo "===== VERIFYING PATCH ====="
+grep -n "out_dir.mkdir" "$SCRIPT"
+
+[7mecho[27m
+[7mecho "===== RUNNING STATIC QDQ QUANTIZATION ====="[27m
+
+[7m([27m
+[7m    set -o pipefail[27m
+
+[7m    "$PYTHON" -u "$SCRIPT" \[27m
+[7m        --out-dir "$OUTDIR" \[27m
+[7m        2>&1 | tee "$LOG"[27m
+
+[7m    RC=${PIPESTATUS[0]}[27m
+
+[7m    echo[27m
+[7m    echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m    echo "LOG_FILE=$LOG"[27m
+[7m    echo "OUTPUT_DIR=$OUTDIR"[27m
+
+[7m    if [ -f "$QDQ" ]; then[27m
+[7m        echo "QDQ_FILE_BYTES=$(stat -c%s "$QDQ")"[27m
+[7m        sha256sum "$QDQ"[27m
+[7m    fi[27m
+
+[7m    exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Aecho
+echo "===== RUNNING STATIC QDQ QUANTIZATION ====="
+
+(
+    set -o pipefail
+
+    "$PYTHON" -u "$SCRIPT" \
+        --out-dir "$OUTDIR" \
+        2>&1 | tee "$LOG"
+
+    RC=${PIPESTATUS[0]}
+
+    echo
+    echo "SCRIPT_EXIT_CODE=$RC"
+    echo "LOG_FILE=$LOG"
+    echo "OUTPUT_DIR=$OUTDIR"
+
+    if [ -f "$QDQ" ]; then
+        echo "QDQ_FILE_BYTES=$(stat -c%s "$QDQ")"
+        sha256sum "$QDQ"
+    fi
+
+    exit "$RC"
+)
+[?2004l]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== SAFE QDQ RETRY =====
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Patched directory creation: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_fold2_v6_static_qdq.py
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== VERIFYING PATCH =====
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\300:    out_dir.mkdir(parents=True, exist_ok=True)
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== RUNNING STATIC QDQ QUANTIZATION =====
+]3008;start=e4c05617-25f2-42c0-8399-a48e74dab8e2;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== TCN FOLD-2 V6 STATIC INT8 QDQ EXPERIMENT =====
+Timestamp: 2026-11-21T18:31:31.617493+08:00
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+NumPy: 2.5.4
+ONNX: 1.20.1
+ONNX Runtime: 1.24.4
+FP32 ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+QDQ output: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+FP32 ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+
+Original graph node count: 343
+Original Conv count: 47
+Original Gemm count: 7
+Original operator histogram:
+{
+  "Abs": 2,
+  "Add": 23,
+  "Cast": 6,
+  "Clip": 1,
+  "Concat": 7,
+  "Constant": 97,
+  "ConstantOfShape": 7,
+  "Conv": 47,
+  "Div": 4,
+  "Equal": 1,
+  "Exp": 2,
+  "Expand": 1,
+  "Gather": 6,
+  "Gemm": 7,
+  "GreaterOrEqual": 2,
+  "Mul": 29,
+  "Neg": 4,
+  "Not": 1,
+  "Or": 2,
+  "Pad": 5,
+  "Reciprocal": 2,
+  "ReduceMean": 4,
+  "ReduceSum": 2,
+  "Relu": 31,
+  "Reshape": 11,
+  "Shape": 1,
+  "Slice": 5,
+  "Sqrt": 2,
+  "Sub": 8,
+  "Transpose": 9,
+  "Unsqueeze": 6,
+  "Where": 8
+}
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+
+===== BUILDING CALIBRATION INPUTS =====
+Prepared 1/449 samples
+Prepared 101/449 samples
+Prepared 201/449 samples
+Prepared 301/449 samples
+Prepared 401/449 samples
+Prepared 449/449 samples
+Calibration samples: 449
+Missing sensor entries: 1179526
+Total sensor entries: 2424600
+Missing sensor percentage: 48.64827187989771
+
+===== STATIC QDQ QUANTIZATION CONFIGURATION =====
+{
+  "quant_format": "QDQ",
+  "op_types_to_quantize": [
+    "Conv",
+    "Gemm"
+  ],
+  "activation_type": "QInt8",
+  "weight_type": "QInt8",
+  "per_channel": true,
+  "calibrate_method": "MinMax",
+  "ActivationSymmetric": true,
+  "WeightSymmetric": true,
+  "calibration_sample_count": 449,
+  "excluded_operator_policy": "All other operators left in their original representation",
+  "missing_mask": "Boolean input; not treated as an INT8 activation"
+}
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+[0;93m2026-11-21 18:31:34.576647030 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:34.576668230 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:34.576670503 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+QDQ ONNX file: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+QDQ file bytes: 10232634
+QDQ SHA256: 859df7512168d0e24a253ac33ce745ad8f9bbd8126186698eb6678546e1bd60b
+
+QDQ ONNX checker: PASS
+QDQ operator summary:
+{
+  "operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 176,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 88,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  },
+  "quantize_linear_nodes": 88,
+  "dequantize_linear_nodes": 176,
+  "qdq_scale_tensor_count": 264,
+  "qdq_scale_value_count": 15264,
+  "qdq_scale_min": 2.882812566440407e-07,
+  "qdq_scale_max": 1.7082247734069824,
+  "direct_graph_input_quantizers": {
+    "x_values": [],
+    "missing_mask": [],
+    "x_mark": [],
+    "worker_features_18": [
+      {
+        "node_name": "worker_features_18_QuantizeLinear",
+        "output": [
+          "worker_features_18_QuantizeLinear_Output"
+        ],
+        "scale_initializer": "worker_features_18_scale",
+        "zero_point_initializer": "worker_features_18_zero_point"
+      }
+    ],
+    "compact_values": []
+  }
+}
+Initializer summary:
+{
+  "initializer_count_by_dtype": {
+    "float32": 180,
+    "int8": 196,
+    "int32": 68
+  },
+  "initializer_bytes_by_dtype": {
+    "float32": 75104,
+    "int8": 9884536,
+    "int32": 57792
+  },
+  "int8_initializer_count": 196,
+  "int8_initializer_bytes": 9884536,
+  "int8_initializer_examples": [
+    "worker_features_18_zero_point",
+    "/non_seq_enc/Gemm_output_0_zero_point",
+    "model.non_seq_enc.weight_zero_point",
+    "model.non_seq_enc.weight_quantized",
+    "/Gather_output_0_zero_point",
+    "/svf.0/Gemm_output_0_zero_point",
+    "model.svf.0.weight_zero_point",
+    "model.svf.0.weight_quantized",
+    "/Gather_1_output_0_zero_point",
+    "/svf.1/Gemm_output_0_zero_point",
+    "model.svf.1.weight_zero_point",
+    "model.svf.1.weight_quantized",
+    "/Gather_2_output_0_zero_point",
+    "/svf.2/Gemm_output_0_zero_point",
+    "model.svf.2.weight_zero_point",
+    "model.svf.2.weight_quantized",
+    "/Gather_3_output_0_zero_point",
+    "/svf.3/Gemm_output_0_zero_point",
+    "model.svf.3.weight_zero_point",
+    "model.svf.3.weight_quantized"
+  ]
+}
+
+===== ONNX RUNTIME QDQ VALIDATION: ALL 449 SAMPLES =====
+[0;93m2026-11-21 18:31:38.594646804 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:38.594666390 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:38.594668744 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:38.634289890 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:38.634317488 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:31:38.634348391 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+FP32 input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+QDQ input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+FP32 output: reconstructed_values
+QDQ output: reconstructed_values
+Progress 1/449; sample_max_abs=1.12518466; nonfinite_samples=0
+Progress 51/449; sample_max_abs=0.931938887; nonfinite_samples=0
+Progress 101/449; sample_max_abs=1.15385103; nonfinite_samples=0
+Progress 151/449; sample_max_abs=1.25473571; nonfinite_samples=0
+Progress 201/449; sample_max_abs=1.11680794; nonfinite_samples=0
+Progress 251/449; sample_max_abs=1.1354003; nonfinite_samples=0
+Progress 301/449; sample_max_abs=1.08259261; nonfinite_samples=0
+Progress 351/449; sample_max_abs=1.08134663; nonfinite_samples=0
+Progress 401/449; sample_max_abs=2.36812115; nonfinite_samples=0
+Progress 449/449; sample_max_abs=1.33221793; nonfinite_samples=0
+
+===== STATIC QDQ SUMMARY =====
+{
+  "model": "Fold-2 TCN regression/imputation V6",
+  "quantization": {
+    "quant_format": "QDQ",
+    "op_types_to_quantize": [
+      "Conv",
+      "Gemm"
+    ],
+    "activation_type": "QInt8",
+    "weight_type": "QInt8",
+    "per_channel": true,
+    "calibrate_method": "MinMax",
+    "ActivationSymmetric": true,
+    "WeightSymmetric": true,
+    "calibration_sample_count": 449,
+    "excluded_operator_policy": "All other operators left in their original representation",
+    "missing_mask": "Boolean input; not treated as an INT8 activation"
+  },
+  "dataset": "split_byid/test",
+  "samples": 449,
+  "note": "Exploratory quantization check. The same 449 samples were used for calibration and comparison; this is not an independent generalization evaluation.",
+  "fp32_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+  "fp32_onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx",
+  "qdq_onnx_sha256": "859df7512168d0e24a253ac33ce745ad8f9bbd8126186698eb6678546e1bd60b",
+  "qdq_bytes": 10232634,
+  "all_outputs_finite": true,
+  "nonfinite_samples": [],
+  "global_max_abs_error": 4.072439193725586,
+  "global_mean_abs_error": 0.2247111273953891,
+  "global_rmse": 0.286119906810278,
+  "worst_sample_index": 344,
+  "median_sample_max_abs_error": 1.1158344745635986,
+  "p99_sample_max_abs_error": 2.550707216262814,
+  "per_channel_error": {
+    "0": {
+      "max_abs_error": 1.3058788776397705,
+      "mean_abs_error": 0.22104638178186364,
+      "rmse": 0.2776183635889005
+    },
+    "1": {
+      "max_abs_error": 2.3714070320129395,
+      "mean_abs_error": 0.2238613551391385,
+      "rmse": 0.2800578493278789
+    },
+    "2": {
+      "max_abs_error": 1.811004638671875,
+      "mean_abs_error": 0.2578595306305779,
+      "rmse": 0.3227940415832573
+    },
+    "3": {
+      "max_abs_error": 1.8064887523651123,
+      "mean_abs_error": 0.18718692822125113,
+      "rmse": 0.2357779231252375
+    },
+    "4": {
+      "max_abs_error": 2.8358447551727295,
+      "mean_abs_error": 0.21825600769873216,
+      "rmse": 0.27049754338655874
+    },
+    "5": {
+      "max_abs_error": 4.072439193725586,
+      "mean_abs_error": 0.24005656090077124,
+      "rmse": 0.3205106993124102
+    }
+  },
+  "qdq_graph": {
+    "operator_counts": {
+      "Abs": 2,
+      "Add": 23,
+      "Cast": 6,
+      "Clip": 1,
+      "Concat": 7,
+      "Constant": 97,
+      "ConstantOfShape": 7,
+      "Conv": 47,
+      "DequantizeLinear": 176,
+      "Div": 4,
+      "Equal": 1,
+      "Exp": 2,
+      "Expand": 1,
+      "Gather": 6,
+      "Gemm": 7,
+      "GreaterOrEqual": 2,
+      "Mul": 29,
+      "Neg": 4,
+      "Not": 1,
+      "Or": 2,
+      "Pad": 5,
+      "QuantizeLinear": 88,
+      "Reciprocal": 2,
+      "ReduceMean": 4,
+      "ReduceSum": 2,
+      "Relu": 31,
+      "Reshape": 11,
+      "Shape": 1,
+      "Slice": 5,
+      "Sqrt": 2,
+      "Sub": 8,
+      "Transpose": 9,
+      "Unsqueeze": 6,
+      "Where": 8
+    },
+    "quantize_linear_nodes": 88,
+    "dequantize_linear_nodes": 176,
+    "qdq_scale_tensor_count": 264,
+    "qdq_scale_value_count": 15264,
+    "qdq_scale_min": 2.882812566440407e-07,
+    "qdq_scale_max": 1.7082247734069824,
+    "direct_graph_input_quantizers": {
+      "x_values": [],
+      "missing_mask": [],
+      "x_mark": [],
+      "worker_features_18": [
+        {
+          "node_name": "worker_features_18_QuantizeLinear",
+          "output": [
+            "worker_features_18_QuantizeLinear_Output"
+          ],
+          "scale_initializer": "worker_features_18_scale",
+          "zero_point_initializer": "worker_features_18_zero_point"
+        }
+      ],
+      "compact_values": []
+    }
+  },
+  "initializer_summary": {
+    "initializer_count_by_dtype": {
+      "float32": 180,
+      "int8": 196,
+      "int32": 68
+    },
+    "initializer_bytes_by_dtype": {
+      "float32": 75104,
+      "int8": 9884536,
+      "int32": 57792
+    },
+    "int8_initializer_count": 196,
+    "int8_initializer_bytes": 9884536,
+    "int8_initializer_examples": [
+      "worker_features_18_zero_point",
+      "/non_seq_enc/Gemm_output_0_zero_point",
+      "model.non_seq_enc.weight_zero_point",
+      "model.non_seq_enc.weight_quantized",
+      "/Gather_output_0_zero_point",
+      "/svf.0/Gemm_output_0_zero_point",
+      "model.svf.0.weight_zero_point",
+      "model.svf.0.weight_quantized",
+      "/Gather_1_output_0_zero_point",
+      "/svf.1/Gemm_output_0_zero_point",
+      "model.svf.1.weight_zero_point",
+      "model.svf.1.weight_quantized",
+      "/Gather_2_output_0_zero_point",
+      "/svf.2/Gemm_output_0_zero_point",
+      "model.svf.2.weight_zero_point",
+      "model.svf.2.weight_quantized",
+      "/Gather_3_output_0_zero_point",
+      "/svf.3/Gemm_output_0_zero_point",
+      "model.svf.3.weight_zero_point",
+      "model.svf.3.weight_quantized"
+    ]
+  },
+  "qdq_operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 176,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 88,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  }
+}
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834/qdq_ort_all449_report.json
+
+<TCN_V6_STATIC_INT8_QDQ> PASS </TCN_V6_STATIC_INT8_QDQ>
+QDQ model created and all 449 ORT outputs are finite.
+No TFLite conversion, Vela, firmware, or flash actions performed.
+
+SCRIPT_EXIT_CODE=0
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_static_qdq_int8_retry_20261121.log
+OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834
+QDQ_FILE_BYTES=10232634
+859df7512168d0e24a253ac33ce745ad8f9bbd8126186698eb6678546e1bd60b  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_int8_fold2_v6_20261121_182834/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+]3008;end=e4c05617-25f2-42c0-8399-a48e74dab8e2;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
