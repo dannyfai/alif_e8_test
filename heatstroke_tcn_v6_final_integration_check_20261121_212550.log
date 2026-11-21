@@ -1,0 +1,738 @@
+TCN V6 FINAL INTEGRATION CHECK
+Sat Nov 21 09:25:50 PM HKT 2026
+
+===== V6 VELA MODEL =====
+  File: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+  Size: 9789936   	Blocks: 19128      IO Block: 4096   regular file
+Device: 259,5	Inode: 3457095     Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/    user)   Gid: ( 1000/    user)
+Access: 2026-11-21 20:17:24.983419750 +0800
+Modify: 2026-11-21 20:17:24.938584181 +0800
+Change: 2026-11-21 20:17:24.938584181 +0800
+ Birth: 2026-11-21 20:17:24.937421340 +0800
+4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+
+===== MEMORY REGION DEFINITION =====
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/iface/Model.hpp:29:struct MemoryRegion {
+
+===== EXISTING MEMORY REGION INITIALIZATION PATTERNS =====
+
+===== CURRENT APPLICATION CMAKE =====
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	
+     9	cmake_minimum_required(VERSION 3.20.0)
+    10	
+    11	if(NOT ospi-flash IN_LIST SNIPPET)
+    12	  set(SNIPPET ospi-flash ${SNIPPET} CACHE STRING "" FORCE)
+    13	endif()
+    14	
+    15	# Locate the alif-mlek west module. Its Zephyr port lives in a sub-directory,
+    16	# so the module is not auto-discovered and must be registered explicitly. Ask
+    17	# west for the module path instead of hardcoding the workspace layout.
+    18	execute_process(
+    19	    COMMAND west list --format "{abspath}" alif-mlek
+    20	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    21	    OUTPUT_VARIABLE MLEK_ROOT
+    22	    OUTPUT_STRIP_TRAILING_WHITESPACE
+    23	    RESULT_VARIABLE MLEK_LIST_RESULT
+    24	    ERROR_QUIET
+    25	)
+    26	if (MLEK_LIST_RESULT OR NOT EXISTS ${MLEK_ROOT})
+    27	    message(FATAL_ERROR
+    28	        "alif-mlek module not found. Enable and fetch it first:\n"
+    29	        "  west config manifest.project-filter -- +alif-mlek\n"
+    30	        "  west update\n")
+    31	endif()
+    32	
+    33	# Register the MLEK Zephyr port as an extra Zephyr module
+    34	list(APPEND ZEPHYR_EXTRA_MODULES ${MLEK_ROOT}/source/lib/ports/zephyr)
+    35	
+    36	# ---------------------------------------------------------------------------
+    37	# Ethos-U NPU selection
+    38	# ---------------------------------------------------------------------------
+    39	# When ETHOSU_TARGET_NPU_CONFIG is provided on the command line it is the single
+    40	# source of truth for the NPU. We must act on it BEFORE find_package(Zephyr) so
+    41	# that the matching Kconfig choice (CONFIG_ARM_ETHOS_U<arch>_<macs>) is fed into
+    42	# the build and the Ethos-U driver targets the requested NPU. This overrides the
+    43	# board default (E8 rtss_hp defaults to Ethos-U55 with 256 MACs).
+    44	#
+    45	# The parsed value is also used to pick the correct Vela-compiled model below.
+    46	# Vela config-ID prefix: U55 -> H, U65 -> Y, U85 -> Z (e.g. ethos-u85-256 -> Z256).
+    47	if (DEFINED ETHOSU_TARGET_NPU_CONFIG)
+    48	    string(TOLOWER "${ETHOSU_TARGET_NPU_CONFIG}" _npu_cfg)
+    49	    if (_npu_cfg MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+    50	        set(_npu_arch "${CMAKE_MATCH_1}")
+    51	        set(_npu_macs "${CMAKE_MATCH_2}")
+    52	        if (_npu_arch STREQUAL "u55")
+    53	            set(_npu_prefix "H")
+    54	        elseif (_npu_arch STREQUAL "u65")
+    55	            set(_npu_prefix "Y")
+    56	        elseif (_npu_arch STREQUAL "u85")
+    57	            set(_npu_prefix "Z")
+    58	        else()
+    59	            message(FATAL_ERROR
+    60	                "Unsupported Ethos-U architecture '${_npu_arch}' in "
+    61	                "ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'")
+    62	        endif()
+    63	        set(ETHOS_U_NPU_CONFIG_ID "${_npu_prefix}${_npu_macs}")
+    64	
+    65	        # Feed the matching Kconfig choice into the Zephyr configuration.
+    66	        string(TOUPPER "${_npu_arch}" _npu_arch_uc)
+    67	        set(CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs} y
+    68	            CACHE INTERNAL "Selected Ethos-U NPU configuration" FORCE)
+    69	        message(STATUS
+    70	            "Ethos-U: ETHOSU_TARGET_NPU_CONFIG=${ETHOSU_TARGET_NPU_CONFIG} -> "
+    71	            "CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs}=y, model ID ${ETHOS_U_NPU_CONFIG_ID}")
+    72	    else()
+    73	        message(FATAL_ERROR
+    74	            "Invalid ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'.\n"
+    75	            "Expected format: ethos-u<arch>-<macs>, e.g. ethos-u55-256 or ethos-u85-256")
+    76	    endif()
+    77	endif()
+    78	
+    79	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    80	
+    81	project(alif_asr)
+    82	
+    83	# Silence "changed in GCC 7.1" warnigns from C++ headers
+    84	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi")
+    85	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+    86	
+    87	set(PLATFORM_DRIVERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/source/platform/zephyr)
+    88	
+    89	set(ML_FRAMEWORK TensorFlowLiteMicro)
+    90	
+    91	# ---------------------------------------------------------------------------
+    92	# Build-time model and labels generation from MLEK resources
+    93	# ---------------------------------------------------------------------------
+    94	set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+    95	set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded CACHE PATH
+    96	    "Path to MLEK resources (models compiled with Vela)")
+    97	setup_source_generator()
+    98	
+    99	# Source generation output directories
+   100	set(SRC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/src)
+   101	set(INC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+   102	file(MAKE_DIRECTORY ${SRC_GEN_DIR} ${INC_GEN_DIR})
+   103	
+   104	message(STATUS "Using SRC_GEN_DIR:    ${SRC_GEN_DIR}")
+   105	message(STATUS "Using INC_GEN_DIR:    ${INC_GEN_DIR}")
+   106	
+   107	# Determine NPU config ID based on Zephyr Kconfig.
+   108	# If ETHOSU_TARGET_NPU_CONFIG was supplied on the command line, ETHOS_U_NPU_CONFIG_ID
+   109	# has already been computed above. Otherwise fall back to the board Kconfig defaults.
+   110	if (NOT DEFINED ETHOS_U_NPU_CONFIG_ID)
+   111	    if (CONFIG_ARM_ETHOS_U85_256)
+   112	        set(ETHOS_U_NPU_CONFIG_ID "Z256")
+   113	    elseif (CONFIG_ARM_ETHOS_U55_256)
+   114	        set(ETHOS_U_NPU_CONFIG_ID "H256")
+   115	    else()
+   116	        set(ETHOS_U_NPU_CONFIG_ID "H128")
+   117	    endif()
+   118	endif()
+   119	
+   120	# Opt-in experiment. Default remains the production model and kernel.
+   121	option(HEATSTROKE_SINGLE_STEP_EXPERIMENT
+   122	    "Use repaired Vela model and single-step BiLSTM experiment" OFF)
+   123	
+   124	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   125	    set(POLYU_MODEL_PATH
+   126	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_performance/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp_vela.tflite"
+   127	        CACHE FILEPATH "Experimental PolyU heat-stress model" FORCE)
+   128	else()
+   129	    set(POLYU_MODEL_PATH
+   130	        "${CMAKE_CURRENT_SOURCE_DIR}/../PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite"
+   131	        CACHE FILEPATH "Production PolyU heat-stress model" FORCE)
+   132	endif()
+   133	
+   134	if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+   135	    set(POLYU_MODEL_PATH
+   136	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp.tflite"
+   137	        CACHE FILEPATH "Fused LayerNorm heat-stress experimental model" FORCE)
+   138	endif()
+   139	
+   140	option(HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT
+   141	    "Use the FlatBuffer with 16-byte-aligned Ethos-U command streams" OFF)
+   142	
+   143	if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+   144	    set(POLYU_MODEL_PATH
+   145	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp_ethosu_aligned16_20261111.tflite"
+   146	        CACHE FILEPATH "16-byte-aligned Ethos-U heat-stress model" FORCE)
+   147	endif()
+   148	
+   149	# E8 HP U55-256 Vela model selection
+   150	option(HEATSTROKE_E8_U55_256_VELA_EXPERIMENT
+   151	    "Use the E8 HP Ethos-U55-256 Vela model" OFF)
+   152	
+   153	if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+   154	    if (NOT CONFIG_ARM_ETHOS_U55_256)
+   155	        message(FATAL_ERROR "The E8 HP U55-256 model requires CONFIG_ARM_ETHOS_U55_256")
+   156	    endif()
+   157	    set(POLYU_MODEL_PATH
+   158	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_e8_hp_u55_256_20261117.tflite"
+   159	        CACHE FILEPATH "E8 HP Ethos-U55-256 Vela model" FORCE)
+   160	endif()
+   161	
+   162	if (NOT EXISTS "${POLYU_MODEL_PATH}")
+   163	    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+   164	endif()
+   165	
+   166	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   167	    set(POLYU_MODEL_SHA256_EXPECTED
+   168	        "72bf7dba9d0234458108fc413915cdb161050edccf4327dd6cf34597e1cb556a")
+   169	else()
+   170	    set(POLYU_MODEL_SHA256_EXPECTED
+   171	        "b8056848e68ecdb1fc1cd35f65639db6f836b53abf603033f58f90ec7f1003b3")
+   172	endif()
+   173	if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+   174	    set(POLYU_MODEL_SHA256_EXPECTED "06455fa9d1b41e2b920485b9bfd4a1a48d68ae0474d1aa7d9558c0a0afd02125")
+   175	endif()
+   176	
+   177	if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+   178	    set(POLYU_MODEL_SHA256_EXPECTED
+   179	        "f76150bcfef7b5fb0378eff51196045d8139c7ba805b5af9192afd178702389d")
+   180	endif()
+   181	
+   182	# E8 HP U55-256 model integrity check
+   183	if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+   184	    set(POLYU_MODEL_SHA256_EXPECTED "4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d")
+   185	endif()
+   186	
+   187	file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+   188	if (NOT "${POLYU_MODEL_SHA256_ACTUAL}" STREQUAL "${POLYU_MODEL_SHA256_EXPECTED}")
+   189	    message(FATAL_ERROR
+   190	        "Combined PolyU model SHA256 mismatch. "
+   191	        "Expected ${POLYU_MODEL_SHA256_EXPECTED}, got ${POLYU_MODEL_SHA256_ACTUAL}")
+   192	endif()
+   193	
+   194	message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+   195	message(STATUS "Combined model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+   196	
+   197	# The generator output filename is the complete model filename plus .cc.
+   198	generate_model_code(
+   199	    MODEL_PATH "${POLYU_MODEL_PATH}"
+   200	    DESTINATION "${SRC_GEN_DIR}"
+   201	    NAMESPACE "arm" "app" "polyu_heatstroke")
+   202	
+   203	get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+   204	set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+   205	set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+   206	
+   207	# Application-local includes for the heat-stress TFLM model.
+   208	target_include_directories(app PRIVATE
+   209	    src/application/main/include
+   210	    src/use_case/alif_asr/include
+   211	    src/power
+   212	    "${INC_GEN_DIR}"
+   213	)
+   214	
+   215	target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+   216	
+   217	
+   218	if (CONFIG_USE_APP_MENU)
+   219	target_compile_definitions(app PRIVATE USE_APP_MENU)
+   220	endif()
+   221	
+   222	target_sources(app PRIVATE
+   223	    src/application/main/Main.cc
+   224	    src/use_case/alif_asr/src/MainLoop.cc
+   225	    src/use_case/alif_asr/src/reverse_v2.cc
+   226	    src/use_case/alif_asr/src/PolyUModel1.cc
+   227	    src/power/power_mgr.c
+   228	    "${POLYU_MODEL_CPP}"
+   229	)
+   230	
+   231	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   232	    target_sources(app PRIVATE
+   233	        src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc)
+   234	    target_compile_definitions(app PRIVATE
+   235	        HEATSTROKE_SINGLE_STEP_EXPERIMENT=1)
+   236	else()
+   237	    target_sources(app PRIVATE
+   238	        src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc)
+   239	endif()
+   240	
+   241	
+   242	option(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT
+   243	       "Use application-local INT64-compatible CAST and SUM kernels" OFF)
+   244	
+   245	if (HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+   246	    target_sources(app PRIVATE
+   247	        src/use_case/alif_asr/src/heatstroke_int64_cast_sum.cc
+   248	    )
+   249	    target_compile_definitions(app PRIVATE
+   250	        HEATSTROKE_INT64_CAST_SUM_EXPERIMENT=1
+   251	    )
+   252	endif()
+   253	
+   254	option(HEATSTROKE_INT64_MUL_EXPERIMENT
+   255	       "Use application-local INT64-compatible MUL kernel" OFF)
+   256	
+   257	if (HEATSTROKE_INT64_MUL_EXPERIMENT)
+   258	    target_sources(app PRIVATE
+   259	        src/use_case/alif_asr/src/heatstroke_int64_mul.cc
+   260	    )
+   261	    target_compile_definitions(app PRIVATE
+   262	        HEATSTROKE_INT64_MUL_EXPERIMENT=1
+   263	    )
+   264	endif()
+   265	
+   266	option(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT
+   267	       "Use application-local INT64-compatible FLOOR_MOD kernel" OFF)
+   268	
+   269	if (HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+   270	    target_sources(app PRIVATE
+
+===== CURRENT PROJECT CONFIGURATION =====
+    65	CONFIG_STDOUT_CONSOLE=y
+    66	CONFIG_PRINTK=y
+    67	CONFIG_POWEROFF=y
+    68	
+    69	# Enable push-to-talk mode for the ASR sample application
+    70	CONFIG_PUSH_TO_TALK=y
+    71	CONFIG_OUTPUT_TO_LINE_OUT=n
+    72	
+    73	CONFIG_GPIO=y
+    74	CONFIG_LPGPIO_M55_IRQ_ENABLED=y
+    75	
+    76	# ASR model is large, so we need to store it in external flash
+    77	CONFIG_MODEL_IN_EXT_FLASH=y
+    78	CONFIG_ALIF_OSPI_FLASH_XIP=y
+    79	CONFIG_OSPI_FLASH_IS25WX=y
+    80	CONFIG_OSPI=y
+    81	CONFIG_OSPI_FLASH=y
+    82	CONFIG_USE_ALIF_HAL_OSPI=y
+    83	
+    84	# ####### Configuration supported with the updated Secure Enclave software
+    85	CONFIG_SE_SERVICE_INIT_PRIORITY=1
+    86	CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0
+    87	CONFIG_GPIO_INIT_PRIORITY=40
+    88	CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+
+===== E8 RTSS-HE BOARD CONFIGURATION =====
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https: //alifsemi.com/license
+     8	#
+     9	
+    10	CONFIG_SYSTEM_HEAP_SRAM0=y
+    11	CONFIG_LPGPIO_WAKEUP_SOURCE=0
+    12	CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+    13	CONFIG_I2S=y
+    14	CONFIG_ACTIVATION_BUF_SZ=0x200000
+
+===== BUFFER ATTRIBUTE HEADER =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef BUF_ATTRIBUTES_HPP
+    20	#define BUF_ATTRIBUTES_HPP
+    21	
+    22	#include <zephyr/devicetree.h>
+    23	
+    24	#define BYTE_ALIGNMENT              16
+    25	#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+    26	#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+    27	
+    28	#if CONFIG_MODEL_IN_EXT_FLASH
+    29	#define MODEL_SECTION               section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+    30	#else
+    31	#define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+    32	#endif
+    33	
+    34	#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+    35	#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+    36	#define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+    37	#define LABELS_ATTRIBUTE
+    38	
+    39	
+    40	#endif /* BUF_ATTRIBUTES_HPP */
+
+===== MLEK TFLM MODEL EXAMPLE =====
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TestModel.hpp ---
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2023, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef INF_RUNNER_TESTMODEL_HPP
+    18	#define INF_RUNNER_TESTMODEL_HPP
+    19	
+    20	#include "mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp"
+    21	#include "mlek/fwk/tflm/TflmModel.hpp"
+    22	
+    23	namespace arm::app::fwk::tflm {
+    24	class TestModel : public TflmModel {
+    25	
+    26	protected:
+    27	    /** @brief   Gets the reference to op resolver interface class. */
+    28	    const tflite::MicroOpResolver& GetOpResolver() override;
+    29	
+    30	    /** @brief   Adds operations to the op resolver instance. */
+    31	    bool EnlistOperations() override;
+    32	
+    33	private:
+    34	    /* A mutable op resolver instance including every operation for Inference runner. */
+    35	    tflite::MicroMutableOpResolver<kNumberOperators> m_opResolver;
+    36	};
+    37	
+    38	} /* namespace arm::app::fwk::tflm */
+    39	
+    40	#endif /* INF_RUNNER_TESTMODEL_HPP */
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TestModel.cc ---
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2023, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#include "mlek/fwk/tflm/TestModel.hpp"
+    18	#include "mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp"
+    19	#include "mlek/log/log_macros.h"
+    20	
+    21	const tflite::MicroOpResolver& arm::app::fwk::tflm::TestModel::GetOpResolver()
+    22	{
+    23	    return this->m_opResolver;
+    24	}
+    25	
+    26	bool arm::app::fwk::tflm::TestModel::EnlistOperations()
+    27	{
+    28	    this->m_opResolver = CreateAllOpsResolver();
+    29	    return true;
+    30	}
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MobileNetModel.hpp ---
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef IMG_CLASS_MOBILENETMODEL_HPP
+    18	#define IMG_CLASS_MOBILENETMODEL_HPP
+    19	
+    20	#include "mlek/fwk/tflm/TflmModel.hpp"
+    21	
+    22	namespace arm::app::fwk::tflm {
+    23	
+    24	class MobileNetModel : public TflmModel {
+    25	
+    26	public:
+    27	    /* Indices for the expected model - based on input tensor shape */
+    28	    static constexpr uint32_t ms_inputRowsIdx     = 1;
+    29	    static constexpr uint32_t ms_inputColsIdx     = 2;
+    30	    static constexpr uint32_t ms_inputChannelsIdx = 3;
+    31	
+    32	protected:
+    33	    /** @brief   Gets the reference to op resolver interface class. */
+    34	    const tflite::MicroOpResolver& GetOpResolver() override;
+    35	
+    36	    /** @brief   Adds operations to the op resolver instance. */
+    37	    bool EnlistOperations() override;
+    38	
+    39	private:
+    40	    /* Maximum number of individual operations that can be enlisted. */
+    41	    static constexpr int ms_maxOpCnt = 7;
+    42	
+    43	    /* A mutable op resolver instance. */
+    44	    tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+    45	};
+    46	
+    47	} /* namespace arm::app::fwk::tflm */
+    48	
+    49	#endif /* IMG_CLASS_MOBILENETMODEL_HPP */
+
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MobileNetModel.cc ---
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#include "mlek/fwk/tflm/MobileNetModel.hpp"
+    18	#include "mlek/log/log_macros.h"
+    19	
+    20	const tflite::MicroOpResolver& arm::app::fwk::tflm::MobileNetModel::GetOpResolver()
+    21	{
+    22	    return this->m_opResolver;
+    23	}
+    24	
+    25	bool arm::app::fwk::tflm::MobileNetModel::EnlistOperations()
+    26	{
+    27	#ifndef ETHOS_U_NPU_ASSUMED
+    28	    this->m_opResolver.AddDepthwiseConv2D();
+    29	    this->m_opResolver.AddConv2D();
+    30	    this->m_opResolver.AddAveragePool2D();
+    31	    this->m_opResolver.AddAdd();
+    32	    this->m_opResolver.AddReshape();
+    33	    this->m_opResolver.AddSoftmax();
+    34	#endif
+    35	
+    36	    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+    37	        info("Added %s support to op resolver\n", tflite::GetString_ETHOSU());
+    38	    } else {
+    39	        printf_err("Failed to add Arm NPU support to op resolver.");
+    40	        return false;
+    41	    }
+    42	    return true;
+    43	}
+
+===== MLEK ZEPHYR PORT CMAKE =====
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	if (NOT CONFIG_MLEK_EXAMPLES_LIB)
+    19	    return()
+    20	endif()
+    21	
+    22	project(MLEK_API_ZEPHYR_PORT
+    23	    DESCRIPTION "MLEK platform agnostic API port for Zephyr"
+    24	    LANGUAGES   CXX
+    25	    VERSION     0.1.0)
+    26	
+    27	macro(mlek_config_err dependency)
+    28	    message(FATAL_ERROR "To use MLEK examples, ${dependency} must be enabled"
+    29	                        "in Zephyr configuration")
+    30	endmacro()
+    31	
+    32	if (NOT CONFIG_CMSIS_DSP)
+    33	    mlek_config_err(CONFIG_CMSIS_DSP)
+    34	endif()
+    35	
+    36	if (TARGET modules__cmsis-dsp)
+    37	    add_library(arm::cmsis-dsp ALIAS modules__cmsis-dsp)
+    38	else()
+    39	    message(FATAL_ERROR "Target modules__cmsis-dsp not found.")
+    40	endif()
+    41	
+    42	if (CONFIG_MLEK_EXAMPLES_FWK_EXECUTORCH)
+    43	    set(ML_FRAMEWORK "ExecuTorch")
+    44	    if (NOT CONFIG_EXECUTORCH)
+    45	        mlek_config_err(CONFIG_EXECUTORCH)
+    46	    endif()
+    47	
+    48	    # The Zephyr ExecuTorch module names its library target explicitly with
+    49	    # zephyr_library_named(libexecutorch), so the default "modules__executorch"
+    50	    # target does not exist. Support both names for robustness.
+    51	    if (TARGET libexecutorch)
+    52	        add_library(meta::executorch ALIAS libexecutorch)
+    53	    elseif (TARGET modules__executorch)
+    54	        add_library(meta::executorch ALIAS modules__executorch)
+    55	    else()
+    56	        message(FATAL_ERROR "Neither target 'libexecutorch' nor 'modules__executorch' found.")
+    57	    endif()
+    58	elseif (CONFIG_MLEK_EXAMPLES_FWK_TFLM)
+    59	    set(ML_FRAMEWORK "TensorFlowLiteMicro")
+    60	    if (NOT CONFIG_TENSORFLOW_LITE_MICRO)
+    61	        mlek_config_err(CONFIG_TENSORFLOW_LITE_MICRO)
+    62	    endif()
+    63	
+    64	    if (TARGET modules__tflite-micro)
+    65	        add_library(google::tensorflow-lite-micro ALIAS modules__tflite-micro)
+    66	    else()
+    67	        message(FATAL_ERROR "Target modules__tflite-micro not found.")
+    68	    endif()
+    69	else()
+    70	    message(FATAL_ERROR "No ML framework enabled for MLEK to use in the config.")
+    71	endif()
+    72	
+    73	set(MLEK_LOG_ENABLE ${CONFIG_MLEK_EXAMPLES_LOG_ENABLE} CACHE BOOL "Enable MLEK log")
+    74	
+    75	# If logging has been enabled.
+    76	if (CONFIG_MLEK_EXAMPLES_LOG_ENABLE)
+    77	    if (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_TRACE)
+    78	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_TRACE)
+    79	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_DEBUG)
+    80	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_DEBUG)
+    81	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_INFO)
+    82	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_INFO)
+    83	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_WARN)
+    84	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_WARN)
+    85	    elseif (CONFIG_MLEK_EXAMPLES_LOG_LEVEL_ERROR)
+    86	        set(_MLEK_LOG_LEVEL MLEK_LOG_LEVEL_ERROR)
+    87	    else()
+    88	        message(FATAL_ERROR "Unknown MLEK log level configuration.")
+    89	    endif()
+    90	    set(MLEK_LOG_LEVEL ${_MLEK_LOG_LEVEL} CACHE STRING "MLEK log level")
+    91	endif()
+    92	
+    93	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/mlek)
+
+===== MLEK TFLM FRAMEWORK CMAKE =====
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	#########################################################
+    20	#               TensorFlow Lite Micro wrapper           #
+    21	#########################################################
+    22	cmake_minimum_required(VERSION 3.21.0)
+    23	
+    24	set(ML_FWK_TFLM_TARGET   ml_framework_tflm)
+    25	project(${ML_FWK_TFLM_TARGET}
+    26	    DESCRIPTION     "TensorFlow Lite Micro framework module"
+    27	    LANGUAGES       C CXX)
+    28	
+    29	if (NOT "TensorFlowLiteMicro" STREQUAL ${ML_FRAMEWORK})
+    30	    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR} should not be included for ${ML_FRAMEWORK}")
+    31	endif()
+    32	
+    33	# For CMSIS pack generation flow, we don't need to include TensorFlow Lite
+    34	# Micro lib or link against it.
+    35	if (NOT CMSIS_PACK_GEN_FLOW)
+    36	    # Include the TensorFlow Lite Micro build target
+    37	    # if the target is not available. An external project
+    38	    # including this project can provide its own version
+    39	    # of the target.
+    40	    if (NOT TARGET google::tensorflow-lite-micro)
+    41	        set(TFLM_EXTERNAL_TARGET OFF)
+    42	        include(tensorflow_lite_micro)
+    43	    else()
+    44	        set(TFLM_EXTERNAL_TARGET ON)
+    45	    endif()
+    46	endif ()
+    47	
+    48	# Create static library
+    49	add_library(${ML_FWK_TFLM_TARGET} STATIC
+    50	    YoloFastestModel.cc
+    51	    AdModel.cc
+    52	    MicroNetKwsModel.cc
+    53	    Wav2LetterModel.cc
+    54	    VisualWakeWordModel.cc
+    55	    TflmTensor.cc
+    56	    TensorFlowLiteMicro.cc
+    57	    RNNoiseModel.cc
+    58	    MobileNetModel.cc
+    59	    TestModel.cc
+    60	    TflmModel.cc
+    61	    MicroMutableAllOpsResolver.cc
+    62	)
+    63	
+    64	# Link time library targets:
+    65	target_link_libraries(${ML_FWK_TFLM_TARGET} PUBLIC
+    66	    mlek::log                                                               # Logging functions
+    67	    mlek::ml_framework_iface                                                # ML framework interface
+    68	    $<$<NOT:$<BOOL:${CMSIS_PACK_GEN_FLOW}>>:google::tensorflow-lite-micro>) # TensorFlow Lite Micro library
+    69	
+    70	target_compile_definitions(${ML_FWK_TFLM_TARGET} INTERFACE MLEK_FWK_TFLM=1)
+    71	
+    72	# Set the source file property to indicate that it should not use the logging
+    73	# facility from the Cortex-M CPU generic target unless it is an internally
+    74	# configured target. Reason: for external target, we can't assume that it
+    75	# compiles the sources required.
+    76	if (TFLM_EXTERNAL_TARGET)
+    77	    set_source_files_properties(TensorFlowLiteMicro.cc
+    78	        PROPERTIES COMPILE_DEFINITIONS TFLM_EXTERNAL_TARGET)
+    79	endif()
+    80	
+    81	add_library(mlek::${ML_FWK_TFLM_TARGET} ALIAS ${ML_FWK_TFLM_TARGET})
+    82	
+    83	# Display status:
+    84	message(STATUS "*******************************************************")
+    85	message(STATUS "Library: "                ${ML_FWK_TFLM_TARGET})
+    86	message(STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+    87	message(STATUS "*******************************************************")
+
+===== EXISTING BUILD CONFIG AND LINKER MAP =====
+
+===== WEST MODULE LOCATION =====
+alif-mlek: /home/user/sdk-alif/modules/alif-mlek
+west status: 0
+
+INSPECTION COMPLETE - NO SOURCE FILES MODIFIED
