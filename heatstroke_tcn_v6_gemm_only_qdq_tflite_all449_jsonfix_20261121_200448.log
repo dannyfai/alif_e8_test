@@ -1,0 +1,322 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795262689.572254  124245 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795262689.604484  124245 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795262690.393528  124245 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795262690.393827  124245 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== GEMM-ONLY QDQ TFLITE VALIDATION =====
+TensorFlow: 2.21.0
+ONNX Runtime: 1.24.4
+Project: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+Output directory: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_gemm_only_qdq_tflite_all449_retry_20261121_200232
+
+===== MODEL INTEGRITY CHECK =====
+fp32_onnx:
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+  bytes: 39660214
+  SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+  expected: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+qdq_onnx:
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+  bytes: 10562148
+  SHA256: 52c9ed79e7e43a7892f334f9fb855c41ece37fbf7dd1660cd136f92ca2fc76ac
+  expected: 52c9ed79e7e43a7892f334f9fb855c41ece37fbf7dd1660cd136f92ca2fc76ac
+tflite:
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_gemm_only_qdq_v6_20261121_185419/heatstroke_tcn_reg_fold2_gemm_only_qdq.tflite
+  bytes: 10630000
+  SHA256: b5cf8d5f74e9a87108129046cec4aae63f91974649242fd3e2de82a34b3f63a5
+  expected: b5cf8d5f74e9a87108129046cec4aae63f91974649242fd3e2de82a34b3f63a5
+MODEL_HASH_CHECK: PASS
+
+===== CREATE ONNX SESSIONS =====
+FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+FP32 output: reconstructed_values
+QDQ output: reconstructed_values
+
+===== CREATE EXISTING TFLITE INTERPRETER =====
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+x_values shape= (1, 900, 6) dtype= float32
+missing_mask shape= (1, 900, 6) dtype= bool
+x_mark shape= (1, 900, 3) dtype= float32
+worker_features_18 shape= (1, 18) dtype= float32
+compact_values shape= (1, 1800, 6) dtype= float32
+Output: reconstructed_values
+Output shape: [1, 900, 6]
+Output dtype: float32
+TFLite operator count: 275
+TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 9, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 7, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 7, 'RELU': 21, 'RESHAPE': 65, 'SELECT_V2': 7, 'SQRT': 2, 'SUB': 8, 'SUM': 2, 'TRANSPOSE': 4}
+Custom/Flex operators: []
+TFLITE_PREFLIGHT: PASS
+
+===== LOAD DETERMINISTIC 449-SAMPLE DATASET =====
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+Dataset samples: 449
+
+===== RUN ALL-449 COMPARISON =====
+Progress 1/449 | TFLite-vs-FP32 max=0.051546797 | QDQ-vs-FP32 max=0.051547036 | TFLite-vs-QDQ max=9.5367432e-07
+Progress 26/449 | TFLite-vs-FP32 max=0.078480907 | QDQ-vs-FP32 max=0.078481063 | TFLite-vs-QDQ max=7.7486038e-06
+Progress 51/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=8.5830688e-06
+Progress 76/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=1.1086464e-05
+Progress 101/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=1.1086464e-05
+Progress 126/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 151/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 176/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 201/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 226/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 251/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 276/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 301/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=2.0503998e-05
+Progress 326/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+Progress 351/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+Progress 376/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+Progress 401/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+Progress 426/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+Progress 449/449 | TFLite-vs-FP32 max=0.084108055 | QDQ-vs-FP32 max=0.08410801 | TFLite-vs-QDQ max=0.01900959
+
+===== FINAL NUMERICAL SUMMARY =====
+{
+  "model": "Fold-2 TCN V6 Gemm-only QDQ TFLite",
+  "dataset": "split_byid/test",
+  "sample_count": 449,
+  "group_column": "worker_id",
+  "seed": 20261121,
+  "missing_sensor_entries": 1179526,
+  "model_hashes": {
+    "fp32_onnx": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+    "qdq_onnx": "52c9ed79e7e43a7892f334f9fb855c41ece37fbf7dd1660cd136f92ca2fc76ac",
+    "tflite": "b5cf8d5f74e9a87108129046cec4aae63f91974649242fd3e2de82a34b3f63a5"
+  },
+  "models": {
+    "fp32_reference": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+    "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx",
+    "candidate_tflite": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_gemm_only_qdq_v6_20261121_185419/heatstroke_tcn_reg_fold2_gemm_only_qdq.tflite"
+  },
+  "tflite_operator_count": 275,
+  "tflite_operator_histogram": {
+    "ABS": 2,
+    "ADD": 23,
+    "BROADCAST_ARGS": 1,
+    "BROADCAST_TO": 1,
+    "CAST": 1,
+    "CONCATENATION": 2,
+    "CONV_2D": 27,
+    "DELEGATE": 9,
+    "DEPTHWISE_CONV_2D": 20,
+    "DEQUANTIZE": 7,
+    "DIV": 6,
+    "EXP": 2,
+    "FULLY_CONNECTED": 7,
+    "GATHER": 6,
+    "GREATER_EQUAL": 2,
+    "LOGICAL_NOT": 1,
+    "LOGICAL_OR": 2,
+    "MAXIMUM": 1,
+    "MEAN": 4,
+    "MIRROR_PAD": 5,
+    "MUL": 26,
+    "NEG": 4,
+    "QUANTIZE": 7,
+    "RELU": 21,
+    "RESHAPE": 65,
+    "SELECT_V2": 7,
+    "SQRT": 2,
+    "SUB": 8,
+    "SUM": 2,
+    "TRANSPOSE": 4
+  },
+  "custom_flex_operators": [],
+  "input_specs": {
+    "x_values": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "float32"
+    },
+    "missing_mask": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "bool"
+    },
+    "x_mark": {
+      "shape": [
+        1,
+        900,
+        3
+      ],
+      "dtype": "float32"
+    },
+    "worker_features_18": {
+      "shape": [
+        1,
+        18
+      ],
+      "dtype": "float32"
+    },
+    "compact_values": {
+      "shape": [
+        1,
+        1800,
+        6
+      ],
+      "dtype": "float32"
+    }
+  },
+  "comparisons": {
+    "tflite_vs_fp32_onnx": {
+      "global_max_abs_error": 0.08410805463790894,
+      "global_mean_abs_error": 0.004181881875732324,
+      "global_rmse": 0.007504636987829476,
+      "median_sample_max_abs_error": 0.059954673051834106,
+      "p99_sample_max_abs_error": 0.07987053215503691,
+      "worst_sample_index": 44,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 0.03760983422398567,
+          "mean_abs_error": 0.0028022435612675965,
+          "rmse": 0.004632494096685243
+        },
+        "1": {
+          "max_abs_error": 0.08410805463790894,
+          "mean_abs_error": 0.0061808852286908056,
+          "rmse": 0.011669825660152016
+        },
+        "2": {
+          "max_abs_error": 0.058686256408691406,
+          "mean_abs_error": 0.004240079399763609,
+          "rmse": 0.006659176921175285
+        },
+        "3": {
+          "max_abs_error": 0.062051236629486084,
+          "mean_abs_error": 0.00415010029218034,
+          "rmse": 0.007541516739115174
+        },
+        "4": {
+          "max_abs_error": 0.058782726526260376,
+          "mean_abs_error": 0.003244771884142398,
+          "rmse": 0.005506383980836595
+        },
+        "5": {
+          "max_abs_error": 0.07609689235687256,
+          "mean_abs_error": 0.004473210888349195,
+          "rmse": 0.006980920346354213
+        }
+      }
+    },
+    "qdq_onnx_vs_fp32_onnx": {
+      "global_max_abs_error": 0.08410800993442535,
+      "global_mean_abs_error": 0.004181878148779921,
+      "global_rmse": 0.0075046324500136615,
+      "median_sample_max_abs_error": 0.05995464324951172,
+      "p99_sample_max_abs_error": 0.07987056851387023,
+      "worst_sample_index": 44,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 0.037609800696372986,
+          "mean_abs_error": 0.0028022419308021615,
+          "rmse": 0.004632490872359589
+        },
+        "1": {
+          "max_abs_error": 0.08410800993442535,
+          "mean_abs_error": 0.006180891095458045,
+          "rmse": 0.011669816759589767
+        },
+        "2": {
+          "max_abs_error": 0.05868643522262573,
+          "mean_abs_error": 0.004240055821257058,
+          "rmse": 0.00665916753711308
+        },
+        "3": {
+          "max_abs_error": 0.06205138564109802,
+          "mean_abs_error": 0.004150107988451147,
+          "rmse": 0.007541528114560202
+        },
+        "4": {
+          "max_abs_error": 0.05878263711929321,
+          "mean_abs_error": 0.0032447732710485793,
+          "rmse": 0.005506383459585325
+        },
+        "5": {
+          "max_abs_error": 0.0760965347290039,
+          "mean_abs_error": 0.004473198785662533,
+          "rmse": 0.006980905169091852
+        }
+      }
+    },
+    "tflite_vs_qdq_onnx": {
+      "global_max_abs_error": 0.01900959014892578,
+      "global_mean_abs_error": 3.3774074284729865e-07,
+      "global_rmse": 2.1469544882208405e-05,
+      "median_sample_max_abs_error": 2.3543834686279297e-06,
+      "p99_sample_max_abs_error": 1.2211799621582024e-05,
+      "worst_sample_index": 322,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 0.0004137307405471802,
+          "mean_abs_error": 1.8755928571248033e-07,
+          "rmse": 2.0637647508193924e-06
+        },
+        "1": {
+          "max_abs_error": 0.005693912506103516,
+          "mean_abs_error": 3.4662961100758157e-07,
+          "rmse": 1.2443455699946081e-05
+        },
+        "2": {
+          "max_abs_error": 0.013098932802677155,
+          "mean_abs_error": 3.732357784959383e-07,
+          "rmse": 2.2849555121893095e-05
+        },
+        "3": {
+          "max_abs_error": 0.01900959014892578,
+          "mean_abs_error": 3.2020122561449585e-07,
+          "rmse": 3.0696399377815296e-05
+        },
+        "4": {
+          "max_abs_error": 0.00999721884727478,
+          "mean_abs_error": 3.0377525421399247e-07,
+          "rmse": 1.741162000761162e-05
+        },
+        "5": {
+          "max_abs_error": 0.016662240028381348,
+          "mean_abs_error": 4.950433020393033e-07,
+          "rmse": 2.8965735182651422e-05
+        }
+      }
+    }
+  },
+  "note": "No arbitrary INT8 pass/fail tolerance was imposed. The three comparisons separately measure quantization error and TFLite conversion fidelity."
+}
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_gemm_only_qdq_tflite_all449_retry_20261121_200232/gemm_only_qdq_tflite_all449_report.json
+
+===== FINITE OUTPUT CHECK =====
+tflite_vs_fp32_onnx all_finite= True nonfinite_samples= []
+qdq_onnx_vs_fp32_onnx all_finite= True nonfinite_samples= []
+tflite_vs_qdq_onnx all_finite= True nonfinite_samples= []
+
+<TCN_V6_GEMM_ONLY_QDQ_TFLITE_ALL449> COMPLETE </TCN_V6_GEMM_ONLY_QDQ_TFLITE_ALL449>
+All 449 samples evaluated.
+Existing models reused; no conversion or model modification.
+No Vela, firmware or flash operations performed.
