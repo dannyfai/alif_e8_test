@@ -1,0 +1,776 @@
+]3008;start=2215e24a-b1c9-46a3-bd37-e913025bea18;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\]3008;start=2215e24a-b1c9-46a3-bd37-e913025bea18;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\PROJECT: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+HELPER: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/train_tcn_reg_testdev_experiment.py
+CHECKPOINT: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/leave_one_worker_out_20261121/fold_02_heldout_2c624232cdd2/best_tcn_reg.pth
+HELPER SHA256: 2c82c7b4e9a464724b19ba01552a046cb79da134afe44667cda23015f1361b0e
+HELPER LINES: 800
+
+===== EXACT TCN CLASS SOURCE =====
+
+========================================================================================
+SeparableTemporalLayer: lines 94-116
+========================================================================================
+class SeparableTemporalLayer(nn.Module):
+    """Depthwise temporal convolution + pointwise channel mixing.
+
+    Kernel 31 and dilation 1/2 are deliberate: U55 convolution hardware
+    supports dilation factors 1 or 2, unlike a conventional exponentially
+    dilated TCN using dilation 4..128.
+    """
+    def __init__(self, channels: int, kernel_size: int, dilation: int):
+        super().__init__()
+        effective_pad = ((kernel_size - 1) * dilation) // 2
+        self.depthwise = nn.Conv1d(
+            channels, channels, kernel_size=kernel_size,
+            padding=effective_pad, dilation=dilation,
+            groups=channels, bias=False,
+        )
+        self.pointwise = nn.Conv1d(channels, channels, kernel_size=1, bias=False)
+        self.bn = nn.BatchNorm1d(channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.depthwise(x)
+        x = self.pointwise(x)
+        x = self.bn(x)
+        return F.relu(x, inplace=False)
+
+========================================================================================
+TemporalResidualBlock: lines 119-126
+========================================================================================
+class TemporalResidualBlock(nn.Module):
+    def __init__(self, channels: int, kernel_size: int, dilation: int):
+        super().__init__()
+        self.layer1 = SeparableTemporalLayer(channels, kernel_size, dilation)
+        self.layer2 = SeparableTemporalLayer(channels, kernel_size, dilation)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return F.relu(x + self.layer2(self.layer1(x)), inplace=False)
+
+========================================================================================
+TCNRegModel: lines 129-235
+========================================================================================
+class TCNRegModel(nn.Module):
+    """Reg_Model-compatible replacement with only its long BiLSTM removed.
+
+    All data preparation branches and the six per-feature projection heads are
+    copied structurally from run.Reg_Model. The recurrent [B,900,16]->
+    [B,900,256] stage is replaced by a residual depthwise-separable TCN.
+    """
+    def __init__(self, project_run, channels: int = 48, kernel_size: int = 31):
+        super().__init__()
+        # Instantiate the baseline to preserve exact preprocessing/projector
+        # definitions and parameter names, then discard only the LSTM module.
+        base = project_run.Reg_Model()
+        self.seq_len = base.seq_len
+        self.non_seq_len = base.non_seq_len
+        self.seq_feature_num = base.seq_feature_num
+        self.time_feature_num = base.time_feature_num
+        self.hidden_dim1 = base.hidden_dim1
+        self.dropout = base.dropout
+        self.non_seq_enc = base.non_seq_enc
+        self.compact_seq_len = base.compact_seq_len
+        self.svf = base.svf
+        self.cvf = base.cvf
+        # The original six projection heads consume a 256-wide LSTM state.
+        # The TCN instead predicts the six sensor channels directly with a
+        # 48->6 pointwise convolution, keeping every TCN feature map <=127
+        # channels for Ethos-U55 compatibility.
+        del base
+
+        input_channels = self.seq_feature_num * 2 + self.time_feature_num + 1
+        if input_channels != 16:
+            raise RuntimeError(f"Expected original Reg_Model embedding width 16, got {input_channels}")
+        # U55 supports 1D convolution kernels up to 64 taps after dilation.
+        # With dilation=2, (kernel_size - 1) * 2 + 1 must therefore be <=64.
+        if channels < 1 or channels > 127:
+            raise ValueError(f"Ethos-U55 TCN channels must be in [1,127], got {channels}")
+        effective_dilated_kernel = (kernel_size - 1) * 2 + 1
+        if kernel_size < 3 or effective_dilated_kernel > 64:
+            raise ValueError(
+                f"For U55 dilation=2, kernel_size must be in [3,32], got {kernel_size} "
+                f"(effective kernel={effective_dilated_kernel})"
+            )
+        self.tcn_channels = channels
+        self.tcn_kernel_size = kernel_size
+        self.tcn_in = nn.Conv1d(input_channels, channels, kernel_size=1, bias=False)
+        self.tcn_in_bn = nn.BatchNorm1d(channels)
+        dilations = [1, 2] * 5
+        self.tcn_blocks = nn.ModuleList([
+            TemporalResidualBlock(channels, kernel_size, d) for d in dilations
+        ])
+        self.tcn_out = nn.Conv1d(channels, self.seq_feature_num, kernel_size=1, bias=True)
+
+    def forward(self, x, x_mark_enc=None, one_hot_x=None, device=None):
+        batch, length, features = x.shape
+        if length != self.seq_len or features != self.seq_feature_num:
+            raise ValueError(f"Expected [B,{self.seq_len},{self.seq_feature_num}], got {tuple(x.shape)}")
+        device = x.device if device is None else device
+        missing_mask = (x == -9997) | (x == -9998) | (x == -9999)
+
+        if one_hot_x is None:
+            raise ValueError("one_hot_x (first 18 worker features) is required")
+        non_seq_enc_out = self.non_seq_enc(one_hot_x)
+        if x_mark_enc is None:
+            raise ValueError("x_mark_enc is required")
+        time_and_worker = torch.cat((x_mark_enc, non_seq_enc_out.view(batch, -1, 1)), dim=2)
+
+        # Original single-variate feature path.
+        per_feature = []
+        for b in range(batch):
+            batch_features = []
+            for n in range(features):
+                channel = x[b:b + 1, :, n:n + 1]
+                valid = (channel != -9997) & (channel != -9998) & (channel != -9999)
+                values = channel[valid]
+                if values.numel() > 0:
+                    pooled = F.adaptive_avg_pool1d(
+                        values.reshape(1, 1, -1), self.compact_seq_len
+                    ).reshape(self.compact_seq_len)
+                else:
+                    pooled = torch.zeros(self.compact_seq_len, device=device, dtype=x.dtype)
+                batch_features.append(pooled)
+            per_feature.append(torch.stack(batch_features, dim=1))
+        compact = torch.stack(per_feature, dim=0)
+        svf_out = [layer(compact[:, :, i]) for i, layer in enumerate(self.svf)]
+        svf_enc = torch.stack(svf_out, dim=2)
+        svf_enc = torch.where(missing_mask, svf_enc, torch.zeros_like(svf_enc))
+
+        # Original cross-variate feature path.
+        b = x.clone()
+        b[missing_mask] = float("nan")
+        means = torch.nanmean(b, dim=1, keepdim=True).expand(-1, self.seq_len, -1)
+        b[missing_mask] = means[missing_mask]
+        b = torch.nan_to_num(b, nan=0.0, posinf=0.0, neginf=0.0)
+        cvf_enc = self.cvf(b.permute(0, 2, 1)).permute(0, 2, 1)
+        cvf_enc = torch.where(missing_mask, cvf_enc, torch.zeros_like(cvf_enc))
+
+        observed_zeroed = torch.where(missing_mask, torch.zeros_like(x), x)
+        embedding = torch.cat(((svf_enc + cvf_enc) / 2.0, observed_zeroed), dim=2)
+        embedding = torch.cat((embedding, time_and_worker), dim=2)
+
+        # TCN temporal encoder. Shape: [B,16,900] -> [B,48,900].
+        encoded = self.tcn_in(embedding.transpose(1, 2))
+        encoded = F.relu(self.tcn_in_bn(encoded), inplace=False)
+        for block in self.tcn_blocks:
+            encoded = block(encoded)
+        # Direct six-channel sequence reconstruction; no wide FC/projector
+        # head is needed after the temporal encoder.
+        return self.tcn_out(encoded).transpose(1, 2)
+
+TCN CLASSES FOUND: ['SeparableTemporalLayer', 'TCNRegModel', 'TemporalResidualBlock']
+TCN CLASSES MISSING: []
+
+===== HELPER FUNCTIONS =====
+
+========================================================================================
+import_project: lines 62-77
+========================================================================================
+def import_project(project: Path):
+    if str(project) not in sys.path:
+        sys.path.insert(0, str(project))
+    # torchsummary is used only by run.py's standalone reporting path. It is
+    # not needed for this experiment, so tolerate its absence without editing
+    # the original project source.
+    try:
+        import torchsummary  # noqa: F401
+    except ModuleNotFoundError as exc:
+        if exc.name != "torchsummary":
+            raise
+        stub = types.ModuleType("torchsummary")
+        stub.summary = lambda *args, **kwargs: None
+        sys.modules["torchsummary"] = stub
+    import run as project_run  # noqa: E402
+    return project_run
+
+========================================================================================
+load_checkpoint: lines 80-91
+========================================================================================
+def load_checkpoint(path: Path) -> Dict[str, torch.Tensor]:
+    try:
+        obj = torch.load(path, map_location="cpu", weights_only=True)
+    except TypeError:
+        obj = torch.load(path, map_location="cpu")
+    if isinstance(obj, dict) and "state_dict" in obj:
+        obj = obj["state_dict"]
+    elif isinstance(obj, dict) and "model_state_dict" in obj:
+        obj = obj["model_state_dict"]
+    if not isinstance(obj, dict):
+        raise TypeError(f"Checkpoint is not a state_dict: {path}")
+    return obj
+
+========================================================================================
+evaluate_reconstruction: lines 471-483
+========================================================================================
+def evaluate_reconstruction(model, loader, device, scale) -> float:
+    model.eval()
+    losses = []
+    for corrupted, target, artificial, marks, worker, _labels in loader:
+        corrupted = corrupted.to(device)
+        target = target.to(device)
+        artificial = artificial.to(device)
+        marks = marks.to(device)
+        worker = worker.to(device)
+        pred = model(corrupted, x_mark_enc=marks, one_hot_x=worker[:, :18], device=device)
+        loss = masked_reconstruction_loss(pred, target, artificial, scale)
+        losses.append(float(loss.item()))
+    return float(np.mean(losses))
+
+===== ORIGINAL PROJECT MODEL SOURCE =====
+IMPORTED RUN MODULE FILE: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/run.py
+
+========================================================================================
+Reg_Model: lines 87-201
+========================================================================================
+def __init__(self):
+        super(Reg_Model, self).__init__()
+        self.seq_len = 900
+        # self.target_length = configs.seq_len
+        self.non_seq_len = 18
+        self.seq_feature_num = 6
+        self.time_feature_num = 3
+        self.hidden_dim1 = 256
+        self.e_layers = 1
+        self.dropout = 0.1
+        self.batch_first = True
+        self.rnn_type = 'BiLSTM'
+        bidirectional = True if 'Bi' in self.rnn_type else False
+        if self.non_seq_len > 0:
+            self.non_seq_enc = torch.nn.Linear(self.non_seq_len, self.seq_len)
+
+        # single variate feature
+        self.compact_seq_len = self.seq_len * 2
+        svf = []
+        for i in range(self.seq_feature_num):
+            svf.append(nn.Linear(self.compact_seq_len, self.seq_len, bias=True))
+        self.svf = nn.ModuleList(svf)
+
+        # cross-variate features
+        self.cvf = nn.Sequential(
+            nn.Conv1d(self.seq_feature_num, 16, kernel_size=3, stride=1, padding=1, padding_mode='reflect', bias=True),
+            nn.Conv1d(16, 32, kernel_size=5, stride=1, padding=2, padding_mode='reflect', bias=True),
+            nn.LayerNorm(self.seq_len),
+            nn.GELU(),
+            nn.Conv1d(32, 64, kernel_size=7, stride=1, padding=3, padding_mode='reflect', bias=True),
+            nn.Conv1d(64, 128, kernel_size=9, stride=1, padding=4, padding_mode='reflect', bias=True),
+            nn.LayerNorm(self.seq_len),
+            nn.GELU(),
+            nn.Conv1d(128, self.seq_feature_num, kernel_size=11, stride=1, padding=5, padding_mode='reflect', bias=True),
+        )
+
+        # rnn encoder
+        rnn_input_size = self.seq_feature_num * 2 + self.time_feature_num + (1 if self.non_seq_len > 0 else 0)
+        if 'GRU' in self.rnn_type:
+            RNN = nn.GRU
+        else:
+            RNN = nn.LSTM
+        self.rnn = RNN(rnn_input_size, int(self.hidden_dim1 / 2), self.e_layers, batch_first=self.batch_first, bidirectional=bidirectional, bias=True)
+
+        # projector
+        dim_in = self.hidden_dim1 if bidirectional else int(self.hidden_dim1 / 2)
+        proj = []
+        for i in range(self.seq_feature_num):
+            proj.append(
+                nn.Sequential(
+                    nn.Linear(dim_in, int(self.hidden_dim1 / 2)),
+                    nn.LayerNorm(int(self.hidden_dim1 / 2)),
+                    nn.GELU(),
+                    nn.Dropout(self.dropout),
+                    nn.Linear(int(self.hidden_dim1 / 2), 1)
+                )
+            )
+        self.proj = nn.ModuleList(proj)
+def forward(self, x, x_mark_enc=None, one_hot_x=None, device='cpu'):
+        B, L, N = x.shape
+        missing_mask = (x == -9997) | (x == -9998) | (x == -9999)
+        if self.non_seq_len > 0:
+            non_seq_enc_out = self.non_seq_enc(one_hot_x)
+        else:
+            non_seq_enc_out = None
+        if x_mark_enc is not None and non_seq_enc_out is not None:
+            x_mark_enc = torch.cat((x_mark_enc, non_seq_enc_out.view(B, -1, 1)), dim=2)
+
+        # single variate feature
+        a = []
+        svf_out = []
+        for b in range(B):
+            aa = []
+            for n in range(N):
+                bnx = x[b: b + 1, :, n: n + 1]
+                non_missing_mask = (bnx != -9997) & (bnx != -9998) & (bnx != -9999)
+                bnx = bnx[non_missing_mask]
+                if len(bnx) > 0:
+                    aa.append(nn.functional.adaptive_avg_pool1d(bnx.reshape(1, 1, -1), self.compact_seq_len).reshape(
+                        self.compact_seq_len))
+                else:
+                    aa.append(torch.zeros((self.compact_seq_len,)).to(device))
+            a.append(torch.stack(aa, dim=1))
+        a = torch.stack(a, dim=0)
+        for i, l in enumerate(self.svf):
+            svf_out.append(l(a[:, :, i]))
+        svf_enc = torch.stack(svf_out, dim=2)
+        svf_enc[~missing_mask] = 0.0
+
+        # cross-variate features
+        b = x.clone()
+        b[missing_mask] = np.nan
+        means = torch.tile(torch.nanmean(b, dim=1).unsqueeze(1), (1, self.seq_len, 1))
+        b[missing_mask] = means[missing_mask]
+        b = torch.nan_to_num(b, nan=0.0)
+        cvf_enc = self.cvf(b.permute(0, 2, 1)).permute(0, 2, 1)
+        cvf_enc[~missing_mask] = 0.0
+
+        # rnn features
+        c = x.clone()
+        c[missing_mask] = 0.0
+        emb = torch.cat(((svf_enc + cvf_enc) / 2, c), dim=2)
+        if x_mark_enc is not None:
+            emb = torch.cat((emb, x_mark_enc), dim=2)
+        enc, _ = self.rnn(emb)
+
+        # projector
+        out = []
+        for i, l in enumerate(self.proj):
+            out.append(l(enc).reshape(B, L))
+        out = torch.stack(out, dim=2)
+
+        return out
+
+========================================================================================
+Cla_Model: lines 204-301
+========================================================================================
+def __init__(self):
+        super(Cla_Model, self).__init__()
+        self.seq_len = 900
+        self.non_seq_len = 30
+        self.seq_feature_num = 6
+        self.time_feature_num = 3
+        self.hidden_dim1 = 128
+        self.e_layers = 1
+        self.dropout = 0.1
+        self.target = ['rpe', 'psi']
+        self.batch_first = True
+        self.rnn_type = 'BiLSTM'
+        bidirectional = True if 'Bi' in self.rnn_type else False
+
+        # v1
+        self.conv_feats = nn.Sequential(
+            nn.Conv1d(self.seq_feature_num, 16, kernel_size=3, stride=3, padding=0, dilation=2),
+
+            nn.Conv1d(16, 32, kernel_size=3, stride=3, padding=0, dilation=2),
+
+            nn.Conv1d(32, 64, kernel_size=3, stride=3, padding=0, dilation=2),
+
+            nn.AdaptiveAvgPool1d(32),
+        )
+        self.ffn1 = nn.Sequential(
+            nn.Linear(32 * 64, self.hidden_dim1),
+            nn.LayerNorm(self.hidden_dim1),
+            nn.GELU()
+        )
+
+        if 'GRU' in self.rnn_type:
+            rnn = nn.GRU
+        else:
+            rnn = nn.LSTM
+        self.rnn = rnn(self.seq_feature_num, int(self.hidden_dim1 / 2) if bidirectional else self.hidden_dim1,
+                       self.e_layers, batch_first=self.batch_first, bidirectional=bidirectional)
+        self.ffn2 = nn.Sequential(
+            nn.Linear(self.hidden_dim1, self.hidden_dim1),
+            nn.LayerNorm(self.hidden_dim1),
+            nn.GELU()
+        )
+
+        # prediction heads
+        dim_in = self.hidden_dim1 * 2
+        if self.non_seq_len > 0:
+            dim_in += self.non_seq_len
+        self.pred_head1 = nn.Sequential(
+            nn.Linear(dim_in, self.hidden_dim1 * 4),
+            nn.LayerNorm(self.hidden_dim1 * 4),
+            nn.GELU(),
+            nn.Dropout(self.dropout),
+            nn.Linear(self.hidden_dim1 * 4, 4)
+        )
+
+        if isinstance(self.target, list) and 'psi' in self.target and 'rpe' in self.target:
+            self.pred_head2 = nn.Sequential(
+                nn.Linear(dim_in + 4, self.hidden_dim1 * 4),
+                nn.LayerNorm(self.hidden_dim1 * 4),
+                nn.GELU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(self.hidden_dim1 * 4, 4)
+            )
+            self.soft_max = nn.Softmax(dim=1)
+        else:
+            self.pred_head2 = None
+def forward(self, x, x_mark_enc=None, one_hot_x=None, device='cpu'):
+        B, L, N = x.shape  # batch, seq_len, feature_num
+
+        # conv features
+        conv_feats = self.conv_feats(x.permute(0, 2, 1)).permute(0, 2, 1).reshape(B, -1)
+        conv_feats = self.ffn1(conv_feats)
+
+        # rnn features
+        if self.seq_len > 60:
+            x = torch.adaptive_avg_pool1d(x.permute(0, 2, 1), int(self.seq_len / 60)).permute(0, 2, 1)
+        rnn_feats = self.rnn(x)[0][:, -1, :]
+        rnn_feats = self.ffn2(rnn_feats)
+
+        # combined features
+        if self.non_seq_len > 0 and one_hot_x is not None:
+            comb_feats = torch.cat((conv_feats, rnn_feats, one_hot_x), dim=1)
+        else:
+            comb_feats = torch.cat((conv_feats, rnn_feats), dim=1)
+
+        # classification
+        if self.pred_head2 is None:
+            cla = self.pred_head1(comb_feats)
+            if self.target == 'rpe' or 'psi' not in self.target:
+                return cla, None
+            else:
+                return None, cla
+        else:
+            psi_out = self.pred_head1(comb_feats)
+            psi_cla = self.soft_max(psi_out)
+            rpe_out = self.pred_head2(torch.cat((comb_feats, psi_cla), dim=1))
+            return rpe_out, psi_out
+
+===== CHECKPOINT STRUCTURE =====
+File bytes: 39617837
+Payload type: dict
+Payload top-level keys: ['format', 'model_state_dict', 'config', 'epoch', 'train_masked_smooth_l1', 'val_masked_smooth_l1']
+Nested dictionary: model_state_dict, entries=176
+Tensor state dictionary: model_state_dict
+  non_seq_enc.weight: (900, 18) torch.float32
+  non_seq_enc.bias: (900,) torch.float32
+  svf.0.weight: (900, 1800) torch.float32
+  svf.0.bias: (900,) torch.float32
+  svf.1.weight: (900, 1800) torch.float32
+  svf.1.bias: (900,) torch.float32
+  svf.2.weight: (900, 1800) torch.float32
+  svf.2.bias: (900,) torch.float32
+  svf.3.weight: (900, 1800) torch.float32
+  svf.3.bias: (900,) torch.float32
+  svf.4.weight: (900, 1800) torch.float32
+  svf.4.bias: (900,) torch.float32
+  svf.5.weight: (900, 1800) torch.float32
+  svf.5.bias: (900,) torch.float32
+  cvf.0.weight: (16, 6, 3) torch.float32
+  cvf.0.bias: (16,) torch.float32
+  cvf.1.weight: (32, 16, 5) torch.float32
+  cvf.1.bias: (32,) torch.float32
+  cvf.2.weight: (900,) torch.float32
+  cvf.2.bias: (900,) torch.float32
+  cvf.4.weight: (64, 32, 7) torch.float32
+  cvf.4.bias: (64,) torch.float32
+  cvf.5.weight: (128, 64, 9) torch.float32
+  cvf.5.bias: (128,) torch.float32
+  cvf.6.weight: (900,) torch.float32
+  cvf.6.bias: (900,) torch.float32
+  cvf.8.weight: (6, 128, 11) torch.float32
+  cvf.8.bias: (6,) torch.float32
+  tcn_in.weight: (32, 16, 1) torch.float32
+  tcn_in_bn.weight: (32,) torch.float32
+  tcn_in_bn.bias: (32,) torch.float32
+  tcn_in_bn.running_mean: (32,) torch.float32
+  tcn_in_bn.running_var: (32,) torch.float32
+  tcn_in_bn.num_batches_tracked: () torch.int64
+  tcn_blocks.0.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.0.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.0.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.0.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.0.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.0.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.0.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.0.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.0.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.0.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.0.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.0.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.0.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.0.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.1.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.1.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.1.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.1.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.1.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.1.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.1.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.1.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.1.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.1.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.1.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.1.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.1.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.1.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.2.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.2.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.2.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.2.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.2.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.2.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.2.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.2.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.2.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.2.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.2.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.2.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.2.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.2.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.3.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.3.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.3.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.3.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.3.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.3.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.3.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.3.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.3.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.3.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.3.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.3.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.3.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.3.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.4.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.4.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.4.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.4.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.4.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.4.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.4.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.4.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.4.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.4.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.4.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.4.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.4.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.4.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.5.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.5.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.5.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.5.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.5.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.5.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.5.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.5.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.5.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.5.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.5.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.5.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.5.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.5.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.6.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.6.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.6.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.6.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.6.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.6.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.6.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.6.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.6.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.6.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.6.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.6.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.6.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.6.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.7.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.7.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.7.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.7.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.7.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.7.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.7.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.7.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.7.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.7.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.7.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.7.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.7.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.7.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.8.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.8.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.8.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.8.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.8.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.8.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.8.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.8.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.8.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.8.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.8.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.8.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.8.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.8.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.9.layer1.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.9.layer1.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.9.layer1.bn.weight: (32,) torch.float32
+  tcn_blocks.9.layer1.bn.bias: (32,) torch.float32
+  tcn_blocks.9.layer1.bn.running_mean: (32,) torch.float32
+  tcn_blocks.9.layer1.bn.running_var: (32,) torch.float32
+  tcn_blocks.9.layer1.bn.num_batches_tracked: () torch.int64
+  tcn_blocks.9.layer2.depthwise.weight: (32, 1, 31) torch.float32
+  tcn_blocks.9.layer2.pointwise.weight: (32, 32, 1) torch.float32
+  tcn_blocks.9.layer2.bn.weight: (32,) torch.float32
+  tcn_blocks.9.layer2.bn.bias: (32,) torch.float32
+  tcn_blocks.9.layer2.bn.running_mean: (32,) torch.float32
+  tcn_blocks.9.layer2.bn.running_var: (32,) torch.float32
+  tcn_blocks.9.layer2.bn.num_batches_tracked: () torch.int64
+  tcn_out.weight: (6, 32, 1) torch.float32
+  tcn_out.bias: (6,) torch.float32
+Nested dictionary: config, entries=13
+
+===== TCN MODEL CHECKPOINT LOAD =====
+Loaded state type: OrderedDict
+Loaded state entries: 176
+Missing model keys: []
+Unexpected checkpoint keys: []
+TCN parameter count: 9888080
+TCN forward signature: (x, x_mark_enc=None, one_hot_x=None, device=None)
+
+===== TCN MODULE TREE =====
+TCNRegModel(
+  (non_seq_enc): Linear(in_features=18, out_features=900, bias=True)
+  (svf): ModuleList(
+    (0-5): 6 x Linear(in_features=1800, out_features=900, bias=True)
+  )
+  (cvf): Sequential(
+    (0): Conv1d(6, 16, kernel_size=(3,), stride=(1,), padding=(1,), padding_mode=reflect)
+    (1): Conv1d(16, 32, kernel_size=(5,), stride=(1,), padding=(2,), padding_mode=reflect)
+    (2): LayerNorm((900,), eps=1e-05, elementwise_affine=True, bias=True)
+    (3): GELU(approximate='none')
+    (4): Conv1d(32, 64, kernel_size=(7,), stride=(1,), padding=(3,), padding_mode=reflect)
+    (5): Conv1d(64, 128, kernel_size=(9,), stride=(1,), padding=(4,), padding_mode=reflect)
+    (6): LayerNorm((900,), eps=1e-05, elementwise_affine=True, bias=True)
+    (7): GELU(approximate='none')
+    (8): Conv1d(128, 6, kernel_size=(11,), stride=(1,), padding=(5,), padding_mode=reflect)
+  )
+  (tcn_in): Conv1d(16, 32, kernel_size=(1,), stride=(1,), bias=False)
+  (tcn_in_bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+  (tcn_blocks): ModuleList(
+    (0): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (1): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (2): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (3): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (4): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (5): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (6): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (7): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (8): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(15,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (9): TemporalResidualBlock(
+      (layer1): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (layer2): SeparableTemporalLayer(
+        (depthwise): Conv1d(32, 32, kernel_size=(31,), stride=(1,), padding=(30,), dilation=(2,), groups=32, bias=False)
+        (pointwise): Conv1d(32, 32, kernel_size=(1,), stride=(1,), bias=False)
+        (bn): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+  )
+  (tcn_out): Conv1d(32, 6, kernel_size=(1,), stride=(1,))
+)
+
+===== AUDIT COMPLETE =====
+]3008;start=2215e24a-b1c9-46a3-bd37-e913025bea18;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\
+]3008;start=2215e24a-b1c9-46a3-bd37-e913025bea18;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\SOURCE/CHECKPOINT AUDIT LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_export_source_checkpoint_audit_20261121_153556.log
+]3008;end=2215e24a-b1c9-46a3-bd37-e913025bea18;exit=success\]3008;start=2f95f916-3d49-46d8-a1ed-19c8848c7d4d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
