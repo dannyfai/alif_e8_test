@@ -1,0 +1,643 @@
+Shape inference: PASS
+
+Total Conv nodes: 47
+Total Gemm nodes: 7
+
+===== CONV NODE DETAILS =====
+
+[00] /cvf/cvf.0/Conv
+  scope: cvf
+  data_input: /cvf/cvf.0/Pad_output_0
+  weight_initializer: model.cvf.0.weight
+  weight_shape: [16, 6, 3]
+  output: ['/cvf/cvf.0/Conv_output_0']
+  output_shape: ['unk__2', 16, 'unk__5']
+  group: 1
+  kernel_shape: [3]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[01] /cvf/cvf.1/Conv
+  scope: cvf
+  data_input: /cvf/cvf.1/Pad_output_0
+  weight_initializer: model.cvf.1.weight
+  weight_shape: [32, 16, 5]
+  output: ['/cvf/cvf.1/Conv_output_0']
+  output_shape: ['unk__6', 32, 'unk__9']
+  group: 1
+  kernel_shape: [5]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[02] /cvf/cvf.4/Conv
+  scope: cvf
+  data_input: /cvf/cvf.4/Pad_output_0
+  weight_initializer: model.cvf.4.weight
+  weight_shape: [64, 32, 7]
+  output: ['/cvf/cvf.4/Conv_output_0']
+  output_shape: ['unk__10', 64, 'unk__13']
+  group: 1
+  kernel_shape: [7]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[03] /cvf/cvf.5/Conv
+  scope: cvf
+  data_input: /cvf/cvf.5/Pad_output_0
+  weight_initializer: model.cvf.5.weight
+  weight_shape: [128, 64, 9]
+  output: ['/cvf/cvf.5/Conv_output_0']
+  output_shape: ['unk__14', 128, 'unk__17']
+  group: 1
+  kernel_shape: [9]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[04] /cvf/cvf.8/Conv
+  scope: cvf
+  data_input: /cvf/cvf.8/Pad_output_0
+  weight_initializer: model.cvf.8.weight
+  weight_shape: [6, 128, 11]
+  output: ['/cvf/cvf.8/Conv_output_0']
+  output_shape: ['unk__18', 6, 'unk__21']
+  group: 1
+  kernel_shape: [11]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[05] /tcn_in/Conv
+  scope: tcn_in
+  data_input: /Transpose_2_output_0
+  weight_initializer: onnx::Conv_603
+  weight_shape: [32, 16, 1]
+  output: ['/tcn_in/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[06] /tcn_blocks.0/layer1/depthwise/Conv
+  scope: tcn_blocks.0
+  data_input: /Relu_output_0
+  weight_initializer: model.tcn_blocks.0.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[07] /tcn_blocks.0/layer1/pointwise/Conv
+  scope: tcn_blocks.0
+  data_input: /tcn_blocks.0/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_606
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.0/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[08] /tcn_blocks.0/layer2/depthwise/Conv
+  scope: tcn_blocks.0
+  data_input: /tcn_blocks.0/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.0.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.0/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[09] /tcn_blocks.0/layer2/pointwise/Conv
+  scope: tcn_blocks.0
+  data_input: /tcn_blocks.0/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_609
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.0/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[10] /tcn_blocks.1/layer1/depthwise/Conv
+  scope: tcn_blocks.1
+  data_input: /tcn_blocks.0/Relu_output_0
+  weight_initializer: model.tcn_blocks.1.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.1/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[11] /tcn_blocks.1/layer1/pointwise/Conv
+  scope: tcn_blocks.1
+  data_input: /tcn_blocks.1/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_612
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.1/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[12] /tcn_blocks.1/layer2/depthwise/Conv
+  scope: tcn_blocks.1
+  data_input: /tcn_blocks.1/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.1.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.1/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[13] /tcn_blocks.1/layer2/pointwise/Conv
+  scope: tcn_blocks.1
+  data_input: /tcn_blocks.1/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_615
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.1/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[14] /tcn_blocks.2/layer1/depthwise/Conv
+  scope: tcn_blocks.2
+  data_input: /tcn_blocks.1/Relu_output_0
+  weight_initializer: model.tcn_blocks.2.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.2/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[15] /tcn_blocks.2/layer1/pointwise/Conv
+  scope: tcn_blocks.2
+  data_input: /tcn_blocks.2/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_618
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.2/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[16] /tcn_blocks.2/layer2/depthwise/Conv
+  scope: tcn_blocks.2
+  data_input: /tcn_blocks.2/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.2.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.2/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[17] /tcn_blocks.2/layer2/pointwise/Conv
+  scope: tcn_blocks.2
+  data_input: /tcn_blocks.2/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_621
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.2/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[18] /tcn_blocks.3/layer1/depthwise/Conv
+  scope: tcn_blocks.3
+  data_input: /tcn_blocks.2/Relu_output_0
+  weight_initializer: model.tcn_blocks.3.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.3/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[19] /tcn_blocks.3/layer1/pointwise/Conv
+  scope: tcn_blocks.3
+  data_input: /tcn_blocks.3/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_624
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.3/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[20] /tcn_blocks.3/layer2/depthwise/Conv
+  scope: tcn_blocks.3
+  data_input: /tcn_blocks.3/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.3.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.3/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[21] /tcn_blocks.3/layer2/pointwise/Conv
+  scope: tcn_blocks.3
+  data_input: /tcn_blocks.3/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_627
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.3/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[22] /tcn_blocks.4/layer1/depthwise/Conv
+  scope: tcn_blocks.4
+  data_input: /tcn_blocks.3/Relu_output_0
+  weight_initializer: model.tcn_blocks.4.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.4/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[23] /tcn_blocks.4/layer1/pointwise/Conv
+  scope: tcn_blocks.4
+  data_input: /tcn_blocks.4/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_630
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.4/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[24] /tcn_blocks.4/layer2/depthwise/Conv
+  scope: tcn_blocks.4
+  data_input: /tcn_blocks.4/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.4.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.4/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[25] /tcn_blocks.4/layer2/pointwise/Conv
+  scope: tcn_blocks.4
+  data_input: /tcn_blocks.4/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_633
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.4/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[26] /tcn_blocks.5/layer1/depthwise/Conv
+  scope: tcn_blocks.5
+  data_input: /tcn_blocks.4/Relu_output_0
+  weight_initializer: model.tcn_blocks.5.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.5/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[27] /tcn_blocks.5/layer1/pointwise/Conv
+  scope: tcn_blocks.5
+  data_input: /tcn_blocks.5/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_636
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.5/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[28] /tcn_blocks.5/layer2/depthwise/Conv
+  scope: tcn_blocks.5
+  data_input: /tcn_blocks.5/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.5.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.5/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[29] /tcn_blocks.5/layer2/pointwise/Conv
+  scope: tcn_blocks.5
+  data_input: /tcn_blocks.5/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_639
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.5/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[30] /tcn_blocks.6/layer1/depthwise/Conv
+  scope: tcn_blocks.6
+  data_input: /tcn_blocks.5/Relu_output_0
+  weight_initializer: model.tcn_blocks.6.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.6/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[31] /tcn_blocks.6/layer1/pointwise/Conv
+  scope: tcn_blocks.6
+  data_input: /tcn_blocks.6/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_642
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.6/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[32] /tcn_blocks.6/layer2/depthwise/Conv
+  scope: tcn_blocks.6
+  data_input: /tcn_blocks.6/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.6.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.6/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[33] /tcn_blocks.6/layer2/pointwise/Conv
+  scope: tcn_blocks.6
+  data_input: /tcn_blocks.6/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_645
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.6/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[34] /tcn_blocks.7/layer1/depthwise/Conv
+  scope: tcn_blocks.7
+  data_input: /tcn_blocks.6/Relu_output_0
+  weight_initializer: model.tcn_blocks.7.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.7/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[35] /tcn_blocks.7/layer1/pointwise/Conv
+  scope: tcn_blocks.7
+  data_input: /tcn_blocks.7/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_648
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.7/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[36] /tcn_blocks.7/layer2/depthwise/Conv
+  scope: tcn_blocks.7
+  data_input: /tcn_blocks.7/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.7.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.7/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[37] /tcn_blocks.7/layer2/pointwise/Conv
+  scope: tcn_blocks.7
+  data_input: /tcn_blocks.7/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_651
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.7/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[38] /tcn_blocks.8/layer1/depthwise/Conv
+  scope: tcn_blocks.8
+  data_input: /tcn_blocks.7/Relu_output_0
+  weight_initializer: model.tcn_blocks.8.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.8/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[39] /tcn_blocks.8/layer1/pointwise/Conv
+  scope: tcn_blocks.8
+  data_input: /tcn_blocks.8/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_654
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.8/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[40] /tcn_blocks.8/layer2/depthwise/Conv
+  scope: tcn_blocks.8
+  data_input: /tcn_blocks.8/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.8.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.8/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [1]
+  pads: [15, 15]
+
+[41] /tcn_blocks.8/layer2/pointwise/Conv
+  scope: tcn_blocks.8
+  data_input: /tcn_blocks.8/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_657
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.8/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[42] /tcn_blocks.9/layer1/depthwise/Conv
+  scope: tcn_blocks.9
+  data_input: /tcn_blocks.8/Relu_output_0
+  weight_initializer: model.tcn_blocks.9.layer1.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.9/layer1/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[43] /tcn_blocks.9/layer1/pointwise/Conv
+  scope: tcn_blocks.9
+  data_input: /tcn_blocks.9/layer1/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_660
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.9/layer1/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[44] /tcn_blocks.9/layer2/depthwise/Conv
+  scope: tcn_blocks.9
+  data_input: /tcn_blocks.9/layer1/Relu_output_0
+  weight_initializer: model.tcn_blocks.9.layer2.depthwise.weight
+  weight_shape: [32, 1, 31]
+  output: ['/tcn_blocks.9/layer2/depthwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 32
+  kernel_shape: [31]
+  strides: [1]
+  dilations: [2]
+  pads: [30, 30]
+
+[45] /tcn_blocks.9/layer2/pointwise/Conv
+  scope: tcn_blocks.9
+  data_input: /tcn_blocks.9/layer2/depthwise/Conv_output_0
+  weight_initializer: onnx::Conv_663
+  weight_shape: [32, 32, 1]
+  output: ['/tcn_blocks.9/layer2/pointwise/Conv_output_0']
+  output_shape: [1, 32, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+[46] /tcn_out/Conv
+  scope: tcn_out
+  data_input: /tcn_blocks.9/Relu_output_0
+  weight_initializer: model.tcn_out.weight
+  weight_shape: [6, 32, 1]
+  output: ['/tcn_out/Conv_output_0']
+  output_shape: [1, 6, 900]
+  group: 1
+  kernel_shape: [1]
+  strides: [1]
+  dilations: [1]
+  pads: [0, 0]
+
+===== CONV COUNTS BY NAME SCOPE =====
+cvf: 5
+tcn_blocks.0: 4
+tcn_blocks.1: 4
+tcn_blocks.2: 4
+tcn_blocks.3: 4
+tcn_blocks.4: 4
+tcn_blocks.5: 4
+tcn_blocks.6: 4
+tcn_blocks.7: 4
+tcn_blocks.8: 4
+tcn_blocks.9: 4
+tcn_in: 1
+tcn_out: 1
+
+===== GEMM NODE DETAILS =====
+[00] /non_seq_enc/Gemm | weight=model.non_seq_enc.weight
+[01] /svf.0/Gemm | weight=model.svf.0.weight
+[02] /svf.1/Gemm | weight=model.svf.1.weight
+[03] /svf.2/Gemm | weight=model.svf.2.weight
+[04] /svf.3/Gemm | weight=model.svf.3.weight
+[05] /svf.4/Gemm | weight=model.svf.4.weight
+[06] /svf.5/Gemm | weight=model.svf.5.weight
+
+===== INVENTORY COMPLETE =====
