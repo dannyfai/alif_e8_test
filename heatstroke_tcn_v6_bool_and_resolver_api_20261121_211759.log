@@ -1,0 +1,1051 @@
+TCN V6 BOOL TENSOR AND RESOLVER API CHECK
+Sat Nov 21 09:17:59 PM HKT 2026
+
+===== /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/iface/Tensor.hpp =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or
+     3	 * its affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef MLEK_TENSOR_HPP
+    20	#define MLEK_TENSOR_HPP
+    21	
+    22	#include <cstddef>
+    23	#include <vector>
+    24	
+    25	namespace arm::app::fwk::iface {
+    26	
+    27	/** Struct for quantization parameters. */
+    28	struct QuantParams {
+    29	    float scale{0.0};
+    30	    int offset{0};
+    31	};
+    32	
+    33	/** Enum representing tensor data types supported. */
+    34	enum class TensorType { INT8 = 0, UINT8 = 1, INT16 = 2, INT32 = 3, FP16 = 4, FP32 = 5, INVALID = 6 };
+    35	
+    36	/** Enum representing tensor layout. */
+    37	enum class TensorLayout { NHWC = 0, NCHW = 1, INVALID = 2 };
+    38	
+    39	/**
+    40	 * @brief       Gets the tensor data type name as character array.
+    41	 * @param[in]   type Tensor data type object.
+    42	 * @return      String represented as const char pointer.
+    43	 */
+    44	const inline char* GetTensorDataTypeName(const TensorType type)
+    45	{
+    46	    switch (type) {
+    47	    case TensorType::INT8:
+    48	        return "int8";
+    49	    case TensorType::UINT8:
+    50	        return "uint8";
+    51	    case TensorType::INT16:
+    52	        return "int16";
+    53	    case TensorType::INT32:
+    54	        return "int32";
+    55	    case TensorType::FP16:
+    56	        return "fp16";
+    57	    case TensorType::FP32:
+    58	        return "fp32";
+    59	    default:
+    60	        return "unknown";
+    61	    }
+    62	}
+    63	
+    64	/**
+    65	 * @brief       Gets the tensor data type name as character array.
+    66	 * @param[in]   type Tensor data type object.
+    67	 * @return      String represented as const char pointer.
+    68	 */
+    69	const inline char* GetTensorLayoutName(const TensorLayout layout)
+    70	{
+    71	    switch (layout) {
+    72	    case TensorLayout::NHWC:
+    73	        return "NHWC";
+    74	    case TensorLayout::NCHW:
+    75	        return "NCHW";
+    76	    default:
+    77	        return "unknown";
+    78	    }
+    79	}
+    80	
+    81	/**
+    82	 * @brief       Gets the tensor element size in bytes.
+    83	 * @param[in]   type Tensor data type object.
+    84	 * @return      Number of bytes as a signed integer.
+    85	 */
+    86	inline int GetTensorDataTypeSize(const TensorType type)
+    87	{
+    88	    switch (type) {
+    89	    case TensorType::INT8:
+    90	        [[fallthrough]];
+    91	    case TensorType::UINT8:
+    92	        return 1;
+    93	    case TensorType::INT16:
+    94	        [[fallthrough]];
+    95	    case TensorType::FP16:
+    96	        return 2;
+    97	    case TensorType::INT32:
+    98	        [[fallthrough]];
+    99	    case TensorType::FP32:
+   100	        return 4;
+   101	    default:
+   102	        return 0;
+   103	    }
+   104	}
+   105	
+   106	/**
+   107	 * @brief Tensor interface class.
+   108	 */
+   109	class TensorIface {
+   110	public:
+   111	    TensorIface()                        = default; /**< Constructor */
+   112	    virtual ~TensorIface()               = default; /** Destructor */
+   113	
+   114	    /** Gets pointer to actual tensor data. */
+   115	    virtual void* GetData()              = 0;
+   116	
+   117	    /** Gets number of bytes occupied by tensor data. */
+   118	    virtual size_t Bytes()               = 0;
+   119	
+   120	    /** Gets number of elements in the tensor (all dimensions combined). */
+   121	    virtual size_t GetNumElements()      = 0;
+   122	
+   123	    /** Gets the tensor data type. */
+   124	    virtual TensorType Type()            = 0;
+   125	
+   126	    /** Gets the tensor layout. */
+   127	    virtual TensorLayout Layout()        = 0;
+   128	
+   129	    /** Gets the tensor shape, expressed as a std::vector */
+   130	    virtual std::vector<size_t> Shape()  = 0;
+   131	
+   132	    /** Gets the quantization parameters for this tensor. */
+   133	    virtual QuantParams GetQuantParams() = 0;
+   134	
+   135	    /** Utility function to get the tensor data pointer in required pointer format. */
+   136	    template <typename T>
+   137	    T* GetData()
+   138	    {
+   139	        return reinterpret_cast<T*>(this->GetData());
+   140	    }
+   141	};
+   142	} // namespace arm::app::fwk::iface
+   143	
+   144	#endif /* MLEK_TENSOR_HPP */
+
+===== /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmTensor.hpp =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or
+     3	 * its affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef MLEK_TFLM_TENSOR_HPP
+    20	#define MLEK_TFLM_TENSOR_HPP
+    21	
+    22	#include "mlek/fwk/iface/Tensor.hpp"
+    23	#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp"
+    24	#include <vector>
+    25	
+    26	namespace arm::app::fwk::tflm {
+    27	
+    28	class TflmTensor : public iface::TensorIface {
+    29	public:
+    30	    explicit TflmTensor(TfLiteTensor* tensor); /**< Constructor */
+    31	    ~TflmTensor() override = default;          /** Destructor */
+    32	    void* GetData() override;
+    33	    size_t Bytes() override;
+    34	    size_t GetNumElements() override;
+    35	    iface::TensorType Type() override;
+    36	    iface::TensorLayout Layout() override;
+    37	    std::vector<size_t> Shape() override;
+    38	    iface::QuantParams GetQuantParams() override;
+    39	
+    40	private:
+    41	    TfLiteTensor* m_tensor{nullptr};
+    42	};
+    43	
+    44	} // namespace arm::app::fwk::tflm
+    45	
+    46	#endif /* MLEK_TFLM_TENSOR_HPP */
+
+===== /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmTensor.cc =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2025 Arm Limited and/or
+     3	 * its affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#include "mlek/fwk/tflm/TflmTensor.hpp"
+    20	#include <cassert>
+    21	
+    22	namespace arm::app::fwk::tflm {
+    23	
+    24	TflmTensor::TflmTensor(TfLiteTensor* tensor) : m_tensor(tensor) {}
+    25	
+    26	void* TflmTensor::GetData()
+    27	{
+    28	    assert(this->m_tensor);
+    29	    return this->m_tensor->data.data;
+    30	}
+    31	
+    32	size_t TflmTensor::Bytes()
+    33	{
+    34	    assert(this->m_tensor);
+    35	    return this->m_tensor->bytes;
+    36	}
+    37	
+    38	size_t TflmTensor::GetNumElements()
+    39	{
+    40	    assert(this->m_tensor);
+    41	    const auto shape = this->Shape();
+    42	    size_t nElements = 1;
+    43	    for (auto& dim : shape) {
+    44	        nElements *= dim;
+    45	    }
+    46	    return nElements;
+    47	}
+    48	
+    49	std::vector<size_t> TflmTensor::Shape()
+    50	{
+    51	    assert(this->m_tensor);
+    52	    assert(this->m_tensor->dims);
+    53	    return std::vector<size_t>(this->m_tensor->dims->data,
+    54	                               this->m_tensor->dims->data + this->m_tensor->dims->size);
+    55	}
+    56	
+    57	iface::TensorType TflmTensor::Type()
+    58	{
+    59	    assert(this->m_tensor);
+    60	
+    61	    switch (this->m_tensor->type) {
+    62	    case kTfLiteUInt8:
+    63	        return iface::TensorType::UINT8;
+    64	    case kTfLiteInt8:
+    65	        return iface::TensorType::INT8;
+    66	    case kTfLiteInt16:
+    67	        return iface::TensorType::INT16;
+    68	    case kTfLiteInt32:
+    69	        return iface::TensorType::INT32;
+    70	    case kTfLiteFloat16:
+    71	        return iface::TensorType::FP16;
+    72	    case kTfLiteFloat32:
+    73	        return iface::TensorType::FP32;
+    74	    default:
+    75	        return iface::TensorType::INVALID;
+    76	    }
+    77	}
+    78	
+    79	iface::TensorLayout TflmTensor::Layout()
+    80	{
+    81	    return iface::TensorLayout::NHWC;
+    82	}
+    83	
+    84	iface::QuantParams TflmTensor::GetQuantParams()
+    85	{
+    86	    iface::QuantParams params{0.f, 0};
+    87	    assert(this->m_tensor);
+    88	    if (kTfLiteAffineQuantization == this->m_tensor->quantization.type) {
+    89	        auto* quantParams =
+    90	            reinterpret_cast<TfLiteAffineQuantization*>(this->m_tensor->quantization.params);
+    91	        if (quantParams && 0 == quantParams->quantized_dimension) {
+    92	            if (quantParams->scale->size) {
+    93	                params.scale = quantParams->scale->data[0];
+    94	            }
+    95	            if (quantParams->zero_point->size) {
+    96	                params.offset = quantParams->zero_point->data[0];
+    97	            }
+    98	        } else if (this->m_tensor->params.scale != 0.0) {
+    99	            /* Legacy tensorflow quantisation parameters */
+   100	            params.scale  = this->m_tensor->params.scale;
+   101	            params.offset = this->m_tensor->params.zero_point;
+   102	        }
+   103	    }
+   104	    return params;
+   105	}
+   106	
+   107	} // namespace arm::app::fwk::tflm
+
+===== SELECTIVE RESOLVER API =====
+--- lines 125,225 ---
+    new_registration->builtin_code = BuiltinOperator_CUSTOM;
+    new_registration->custom_name = name;
+    return kTfLiteOk;
+  }
+
+  // The Add* functions below add the various Builtin operators to the
+  // MicroMutableOpResolver object.
+
+  TfLiteStatus AddAbs() {
+    return AddBuiltin(BuiltinOperator_ABS, Register_ABS(), ParseAbs);
+  }
+
+  TfLiteStatus AddAdd(const TFLMRegistration& registration = Register_ADD()) {
+    return AddBuiltin(BuiltinOperator_ADD, registration, ParseAdd);
+  }
+
+  TfLiteStatus AddAddN() {
+    return AddBuiltin(BuiltinOperator_ADD_N, tflite::Register_ADD_N(),
+                      ParseAddN);
+  }
+
+  TfLiteStatus AddArgMax() {
+    return AddBuiltin(BuiltinOperator_ARG_MAX, Register_ARG_MAX(), ParseArgMax);
+  }
+
+  TfLiteStatus AddArgMin() {
+    return AddBuiltin(BuiltinOperator_ARG_MIN, Register_ARG_MIN(), ParseArgMin);
+  }
+
+  TfLiteStatus AddAssignVariable() {
+    return AddBuiltin(BuiltinOperator_ASSIGN_VARIABLE,
+                      tflite::Register_ASSIGN_VARIABLE(), ParseAssignVariable);
+  }
+
+  TfLiteStatus AddAveragePool2D(
+      const TFLMRegistration& registration = Register_AVERAGE_POOL_2D()) {
+    return AddBuiltin(BuiltinOperator_AVERAGE_POOL_2D, registration, ParsePool);
+  }
+
+  TfLiteStatus AddBatchMatMul(
+      const TFLMRegistration& registration = Register_BATCH_MATMUL()) {
+    return AddBuiltin(BuiltinOperator_BATCH_MATMUL, registration,
+                      ParseBatchMatMul);
+  }
+
+  TfLiteStatus AddBatchToSpaceNd() {
+    return AddBuiltin(BuiltinOperator_BATCH_TO_SPACE_ND,
+                      Register_BATCH_TO_SPACE_ND(), ParseBatchToSpaceNd);
+  }
+
+  TfLiteStatus AddBroadcastArgs() {
+    return AddBuiltin(BuiltinOperator_BROADCAST_ARGS, Register_BROADCAST_ARGS(),
+                      ParseBroadcastArgs);
+  }
+
+  TfLiteStatus AddBroadcastTo() {
+    return AddBuiltin(BuiltinOperator_BROADCAST_TO, Register_BROADCAST_TO(),
+                      ParseBroadcastTo);
+  }
+
+  TfLiteStatus AddCallOnce() {
+    return AddBuiltin(BuiltinOperator_CALL_ONCE, Register_CALL_ONCE(),
+                      ParseCallOnce);
+  }
+
+  TfLiteStatus AddCast() {
+    return AddBuiltin(BuiltinOperator_CAST, Register_CAST(), ParseCast);
+  }
+
+  TfLiteStatus AddCeil() {
+    return AddBuiltin(BuiltinOperator_CEIL, Register_CEIL(), ParseCeil);
+  }
+
+  TfLiteStatus AddCircularBuffer() {
+    return AddCustom("CIRCULAR_BUFFER", tflite::Register_CIRCULAR_BUFFER());
+  }
+
+  TfLiteStatus AddConcatenation() {
+    return AddBuiltin(BuiltinOperator_CONCATENATION, Register_CONCATENATION(),
+                      ParseConcatenation);
+  }
+
+  TfLiteStatus AddConv2D(
+      const TFLMRegistration& registration = Register_CONV_2D()) {
+    return AddBuiltin(BuiltinOperator_CONV_2D, registration, ParseConv2D);
+  }
+
+  TfLiteStatus AddCos() {
+    return AddBuiltin(BuiltinOperator_COS, tflite::Register_COS(), ParseCos);
+  }
+
+  TfLiteStatus AddCumSum() {
+    return AddBuiltin(BuiltinOperator_CUMSUM, tflite::Register_CUMSUM(),
+                      ParseCumsum);
+  }
+
+  TfLiteStatus AddTopKV2() {
+    return AddBuiltin(BuiltinOperator_TOPK_V2,
+                      tflite::Register_TOPK_V2(), ParseTopK);
+  }
+
+--- lines 230,285 ---
+
+  TfLiteStatus AddDepthToSpace() {
+    return AddBuiltin(BuiltinOperator_DEPTH_TO_SPACE,
+                      tflite::Register_DEPTH_TO_SPACE(), ParseDepthToSpace);
+  }
+
+  TfLiteStatus AddDepthwiseConv2D(
+      const TFLMRegistration& registration = Register_DEPTHWISE_CONV_2D()) {
+    return AddBuiltin(BuiltinOperator_DEPTHWISE_CONV_2D, registration,
+                      ParseDepthwiseConv2D);
+  }
+
+  TfLiteStatus AddDequantize() {
+    return AddBuiltin(BuiltinOperator_DEQUANTIZE, tflite::Register_DEQUANTIZE(),
+                      ParseDequantize);
+  }
+
+  TfLiteStatus AddDetectionPostprocess() {
+    return AddCustom("TFLite_Detection_PostProcess",
+                     tflite::Register_DETECTION_POSTPROCESS());
+  }
+
+  TfLiteStatus AddDiv() {
+    return AddBuiltin(BuiltinOperator_DIV, tflite::Register_DIV(), ParseDiv);
+  }
+
+  TfLiteStatus AddEmbeddingLookup() {
+    return AddBuiltin(BuiltinOperator_EMBEDDING_LOOKUP,
+                      Register_EMBEDDING_LOOKUP(), ParseEmbeddingLookup);
+  }
+
+  TfLiteStatus AddEnergy() {
+    // TODO(b/286250473): change back name to "Energy" and remove namespace
+    return AddCustom("SignalEnergy", tflite::tflm_signal::Register_ENERGY());
+  }
+
+  TfLiteStatus AddElu() {
+    return AddBuiltin(BuiltinOperator_ELU, tflite::Register_ELU(), ParseElu);
+  }
+
+  TfLiteStatus AddEqual() {
+    return AddBuiltin(BuiltinOperator_EQUAL, Register_EQUAL(), ParseEqual);
+  }
+
+  TfLiteStatus AddEthosU() {
+    TFLMRegistration* registration = tflite::Register_ETHOSU();
+    if (registration) {
+      return AddCustom(tflite::GetString_ETHOSU(), registration);
+    }
+    return kTfLiteOk;
+  }
+
+  TfLiteStatus AddExp() {
+    return AddBuiltin(BuiltinOperator_EXP, Register_EXP(), ParseExp);
+  }
+
+--- lines 330,480 ---
+  TfLiteStatus AddFloorDiv() {
+    return AddBuiltin(BuiltinOperator_FLOOR_DIV, tflite::Register_FLOOR_DIV(),
+                      ParseFloorDiv);
+  }
+
+  TfLiteStatus AddFloorMod() {
+    return AddBuiltin(BuiltinOperator_FLOOR_MOD, tflite::Register_FLOOR_MOD(),
+                      ParseFloorMod);
+  }
+
+  TfLiteStatus AddFramer() {
+    // TODO(b/286250473): change back name to "Framer" and remove namespace
+    return AddCustom("SignalFramer", tflite::tflm_signal::Register_FRAMER());
+  }
+
+  TfLiteStatus AddFullyConnected(
+      const TFLMRegistration& registration = Register_FULLY_CONNECTED()) {
+    return AddBuiltin(BuiltinOperator_FULLY_CONNECTED, registration,
+                      ParseFullyConnected);
+  }
+
+  TfLiteStatus AddGather() {
+    return AddBuiltin(BuiltinOperator_GATHER, tflite::Register_GATHER(),
+                      ParseGather);
+  }
+
+  TfLiteStatus AddGatherNd() {
+    return AddBuiltin(BuiltinOperator_GATHER_ND, tflite::Register_GATHER_ND(),
+                      ParseGatherNd);
+  }
+
+  TfLiteStatus AddGreater() {
+    return AddBuiltin(BuiltinOperator_GREATER, Register_GREATER(),
+                      ParseGreater);
+  }
+
+  TfLiteStatus AddGreaterEqual() {
+    return AddBuiltin(BuiltinOperator_GREATER_EQUAL, Register_GREATER_EQUAL(),
+                      ParseGreaterEqual);
+  }
+
+  TfLiteStatus AddHardSwish() {
+    return AddBuiltin(BuiltinOperator_HARD_SWISH, tflite::Register_HARD_SWISH(),
+                      ParseHardSwish);
+  }
+
+  TfLiteStatus AddIf() {
+    return AddBuiltin(BuiltinOperator_IF, tflite::Register_IF(), ParseIf);
+  }
+
+  TfLiteStatus AddIrfft(const TFLMRegistration* registration =
+                            tflite::tflm_signal::Register_IRFFT()) {
+    // TODO(b/286250473): change back name and remove namespace
+    return AddCustom("SignalIrfft", registration);
+  }
+
+  TfLiteStatus AddL2Normalization() {
+    return AddBuiltin(BuiltinOperator_L2_NORMALIZATION,
+                      Register_L2_NORMALIZATION(), ParseL2Normalization);
+  }
+
+  TfLiteStatus AddL2Pool2D() {
+    return AddBuiltin(BuiltinOperator_L2_POOL_2D, tflite::Register_L2_POOL_2D(),
+                      ParsePool);
+  }
+
+  TfLiteStatus AddLeakyRelu() {
+    return AddBuiltin(BuiltinOperator_LEAKY_RELU, tflite::Register_LEAKY_RELU(),
+                      ParseLeakyRelu);
+  }
+
+  TfLiteStatus AddLess() {
+    return AddBuiltin(BuiltinOperator_LESS, Register_LESS(), ParseLess);
+  }
+
+  TfLiteStatus AddLessEqual() {
+    return AddBuiltin(BuiltinOperator_LESS_EQUAL, Register_LESS_EQUAL(),
+                      ParseLessEqual);
+  }
+
+  TfLiteStatus AddLog() {
+    return AddBuiltin(BuiltinOperator_LOG, Register_LOG(), ParseLog);
+  }
+
+  TfLiteStatus AddLogicalAnd() {
+    return AddBuiltin(BuiltinOperator_LOGICAL_AND,
+                      tflite::Register_LOGICAL_AND(), ParseLogicalAnd);
+  }
+
+  TfLiteStatus AddLogicalNot() {
+    return AddBuiltin(BuiltinOperator_LOGICAL_NOT, Register_LOGICAL_NOT(),
+                      ParseLogicalNot);
+  }
+
+  TfLiteStatus AddLogicalOr() {
+    return AddBuiltin(BuiltinOperator_LOGICAL_OR, tflite::Register_LOGICAL_OR(),
+                      ParseLogicalOr);
+  }
+
+  TfLiteStatus AddLogistic() {
+    return AddBuiltin(BuiltinOperator_LOGISTIC, tflite::Register_LOGISTIC(),
+                      ParseLogistic);
+  }
+
+  TfLiteStatus AddLogSoftmax() {
+    return AddBuiltin(BuiltinOperator_LOG_SOFTMAX,
+                      tflite::Register_LOG_SOFTMAX(), ParseLogSoftmax);
+  }
+
+  TfLiteStatus AddMaximum(
+      const TFLMRegistration& registration = Register_MAXIMUM()) {
+    return AddBuiltin(BuiltinOperator_MAXIMUM, registration, ParseMaximum);
+  }
+
+  TfLiteStatus AddMaxPool2D(
+      const TFLMRegistration& registration = Register_MAX_POOL_2D()) {
+    return AddBuiltin(BuiltinOperator_MAX_POOL_2D, registration, ParsePool);
+  }
+
+  TfLiteStatus AddMirrorPad() {
+    return AddBuiltin(BuiltinOperator_MIRROR_PAD, tflite::Register_MIRROR_PAD(),
+                      ParseMirrorPad);
+  }
+
+  TfLiteStatus AddMean() {
+    return AddBuiltin(BuiltinOperator_MEAN, Register_MEAN(), ParseReducer);
+  }
+
+  TfLiteStatus AddMinimum(
+      const TFLMRegistration& registration = Register_MINIMUM()) {
+    return AddBuiltin(BuiltinOperator_MINIMUM, registration, ParseMinimum);
+  }
+
+  TfLiteStatus AddMul(const TFLMRegistration& registration = Register_MUL()) {
+    return AddBuiltin(BuiltinOperator_MUL, registration, ParseMul);
+  }
+
+  TfLiteStatus AddNeg() {
+    return AddBuiltin(BuiltinOperator_NEG, Register_NEG(), ParseNeg);
+  }
+
+  TfLiteStatus AddNotEqual() {
+    return AddBuiltin(BuiltinOperator_NOT_EQUAL, Register_NOT_EQUAL(),
+                      ParseNotEqual);
+  }
+
+  TfLiteStatus AddOverlapAdd() {
+    // TODO(b/286250473): change back name to "OverlapAdd" and remove
+    // namespace
+    return AddCustom("SignalOverlapAdd",
+                     tflite::tflm_signal::Register_OVERLAP_ADD());
+--- lines 520,665 ---
+  TfLiteStatus AddRelu() {
+    return AddBuiltin(BuiltinOperator_RELU, tflite::Register_RELU(), ParseRelu);
+  }
+
+  TfLiteStatus AddRelu6() {
+    return AddBuiltin(BuiltinOperator_RELU6, tflite::Register_RELU6(),
+                      ParseRelu6);
+  }
+
+  TfLiteStatus AddReshape() {
+    return AddBuiltin(BuiltinOperator_RESHAPE, Register_RESHAPE(),
+                      ParseReshape);
+  }
+
+  TfLiteStatus AddResizeBilinear() {
+    return AddBuiltin(BuiltinOperator_RESIZE_BILINEAR,
+                      Register_RESIZE_BILINEAR(), ParseResizeBilinear);
+  }
+
+  TfLiteStatus AddResizeNearestNeighbor() {
+    return AddBuiltin(BuiltinOperator_RESIZE_NEAREST_NEIGHBOR,
+                      Register_RESIZE_NEAREST_NEIGHBOR(),
+                      ParseResizeNearestNeighbor);
+  }
+
+  TfLiteStatus AddRfft(const TFLMRegistration* registration =
+                           tflite::tflm_signal::Register_RFFT()) {
+    // TODO(b/286250473): change back name and remove namespace
+    return AddCustom("SignalRfft", registration);
+  }
+
+  TfLiteStatus AddRound() {
+    return AddBuiltin(BuiltinOperator_ROUND, Register_ROUND(), ParseRound);
+  }
+
+  TfLiteStatus AddRsqrt() {
+    return AddBuiltin(BuiltinOperator_RSQRT, Register_RSQRT(), ParseRsqrt);
+  }
+
+  TfLiteStatus AddSelectV2() {
+    return AddBuiltin(BuiltinOperator_SELECT_V2, Register_SELECT_V2(),
+                      ParseSelectV2);
+  }
+
+  TfLiteStatus AddShape() {
+    return AddBuiltin(BuiltinOperator_SHAPE, Register_SHAPE(), ParseShape);
+  }
+
+  TfLiteStatus AddSin() {
+    return AddBuiltin(BuiltinOperator_SIN, Register_SIN(), ParseSin);
+  }
+
+  TfLiteStatus AddSlice() {
+    return AddBuiltin(BuiltinOperator_SLICE, Register_SLICE(), ParseSlice);
+  }
+
+  TfLiteStatus AddSoftmax(
+      const TFLMRegistration& registration = Register_SOFTMAX()) {
+    return AddBuiltin(BuiltinOperator_SOFTMAX, registration, ParseSoftmax);
+  }
+
+  TfLiteStatus AddSpaceToBatchNd() {
+    return AddBuiltin(BuiltinOperator_SPACE_TO_BATCH_ND,
+                      Register_SPACE_TO_BATCH_ND(), ParseSpaceToBatchNd);
+  }
+
+  TfLiteStatus AddSpaceToDepth() {
+    return AddBuiltin(BuiltinOperator_SPACE_TO_DEPTH, Register_SPACE_TO_DEPTH(),
+                      ParseSpaceToDepth);
+  }
+
+  TfLiteStatus AddSplit() {
+    return AddBuiltin(BuiltinOperator_SPLIT, Register_SPLIT(), ParseSplit);
+  }
+
+  TfLiteStatus AddSplitV() {
+    return AddBuiltin(BuiltinOperator_SPLIT_V, Register_SPLIT_V(), ParseSplitV);
+  }
+
+  TfLiteStatus AddSqueeze() {
+    return AddBuiltin(BuiltinOperator_SQUEEZE, Register_SQUEEZE(),
+                      ParseSqueeze);
+  }
+
+  TfLiteStatus AddSqrt() {
+    return AddBuiltin(BuiltinOperator_SQRT, Register_SQRT(), ParseSqrt);
+  }
+
+  TfLiteStatus AddSquare() {
+    return AddBuiltin(BuiltinOperator_SQUARE, Register_SQUARE(), ParseSquare);
+  }
+
+  TfLiteStatus AddSquaredDifference() {
+    return AddBuiltin(BuiltinOperator_SQUARED_DIFFERENCE,
+                      tflite::Register_SQUARED_DIFFERENCE(),
+                      ParseSquaredDifference);
+  }
+
+  TfLiteStatus AddStridedSlice() {
+    return AddBuiltin(BuiltinOperator_STRIDED_SLICE, Register_STRIDED_SLICE(),
+                      ParseStridedSlice);
+  }
+
+  TfLiteStatus AddStacker() {
+    // TODO(b/286250473): change back name to "Stacker" and remove namespace
+    return AddCustom("SignalStacker", tflite::tflm_signal::Register_STACKER());
+  }
+
+  TfLiteStatus AddSub() {
+    return AddBuiltin(BuiltinOperator_SUB, tflite::Register_SUB(), ParseSub);
+  }
+
+  TfLiteStatus AddSum() {
+    return AddBuiltin(BuiltinOperator_SUM, Register_SUM(), ParseReducer);
+  }
+
+  TfLiteStatus AddSvdf(const TFLMRegistration& registration = Register_SVDF()) {
+    return AddBuiltin(BuiltinOperator_SVDF, registration, ParseSvdf);
+  }
+
+  TfLiteStatus AddTanh() {
+    return AddBuiltin(BuiltinOperator_TANH, Register_TANH(), ParseTanh);
+  }
+
+  TfLiteStatus AddTransposeConv(
+      const TFLMRegistration& registration = Register_TRANSPOSE_CONV()) {
+    return AddBuiltin(BuiltinOperator_TRANSPOSE_CONV, registration,
+                      ParseTransposeConv);
+  }
+
+  TfLiteStatus AddTranspose() {
+    return AddBuiltin(BuiltinOperator_TRANSPOSE, Register_TRANSPOSE(),
+                      ParseTranspose);
+  }
+
+  TfLiteStatus AddUnpack() {
+    return AddBuiltin(BuiltinOperator_UNPACK, Register_UNPACK(), ParseUnpack);
+  }
+
+  TfLiteStatus AddUnidirectionalSequenceLSTM(
+      const TFLMRegistration& registration =
+          Register_UNIDIRECTIONAL_SEQUENCE_LSTM()) {
+    return AddBuiltin(BuiltinOperator_UNIDIRECTIONAL_SEQUENCE_LSTM,
+                      registration, ParseUnidirectionalSequenceLSTM);
+  }
+
+
+===== ETHOS-U REGISTRATION IMPLEMENTATION =====
+   145	  //
+   146	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   147	  // buffers using base address 1. This means that it is not possible to point
+   148	  // the input and output tensors outside of the TFLM arena.
+   149	  num_tensors = std::min(num_tensors, 8);
+   150	
+   151	  struct ethosu_driver* drv = ethosu_reserve_driver();
+   152	  result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+   153	                            base_addrs_size, num_tensors,
+   154	                            GetMicroContext(context)->external_context());
+   155	  ethosu_release_driver(drv);
+   156	
+   157	  if (-1 == result) {
+   158	    return kTfLiteError;
+   159	  } else {
+   160	    return kTfLiteOk;
+   161	  }
+   162	}
+   163	
+   164	}  // namespace
+   165	
+   166	TFLMRegistration* Register_ETHOSU() {
+   167	  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+   168	  return &r;
+   169	}
+   170	
+   171	const char* GetString_ETHOSU() { return "ethos-u"; }
+   172	
+   173	}  // namespace tflite
+
+===== EXISTING E8 RTSS-HE CONFIGURATION =====
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay ---
+     1	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 *
+     9	 */
+    10	
+    11	/ {
+    12		aliases {
+    13			audio-codec = &wm8904;
+    14			spi-flash0 = &ospi_flash;
+    15		};
+    16	};
+    17	
+    18	/ {
+    19		ext_flash_xip: memory@c0000000 {
+    20			compatible = "zephyr,memory-region";
+    21			reg = <0xc0000000 DT_SIZE_M(64)>;
+    22			zephyr,memory-region = "OSPI1";
+    23		};
+    24	};
+    25	
+    26	&ospi1 {
+    27		pinctrl-0 = <&pinctrl_flash>;
+    28		status = "okay";
+    29	};
+    30	
+    31	&ospi_flash {
+    32		status = "okay";
+    33	};
+    34	
+    35	&pinctrl_lpgpio {
+    36		group0 {
+    37			pinmux = <PIN_P15_4__LPGPIO>;
+    38			read-enable = <1>;
+    39			driver-state-control = <1>;
+    40			drive-strength = <8>;
+    41		};
+    42	};
+    43	
+    44	&lpgpio {
+    45		pinctrl-0 = < &pinctrl_lpgpio >;
+    46		pinctrl-names = "default";
+    47		status = "okay";
+    48	};
+    49	
+    50	/ {
+    51		wakeup_pins: wakeup_pins {
+    52			compatible = "lpgpio-wakeup-pin";
+    53			lpgpios = <&lpgpio 4 GPIO_ACTIVE_LOW>;
+    54		};
+    55	};
+    56	
+    57	&pinctrl {
+    58		pinctrl_flash:pinctrl_flash {
+    59			group0 {
+    60				pinmux = <PIN_P5_5__OSPI1_SCLK_C>,
+    61					 <PIN_P5_7__OSPI1_SS0_C>;
+    62				read-enable = <0x0>;
+    63				drive-strength = <12>;
+    64				slew-rate = <0x1>;
+    65			};
+    66			group1 {
+    67				pinmux = <PIN_P9_5__OSPI1_D0_C>,
+    68					 <PIN_P9_6__OSPI1_D1_C>,
+    69					 <PIN_P9_7__OSPI1_D2_C>,
+    70					 <PIN_P10_0__OSPI1_D3_C>,
+    71					 <PIN_P10_1__OSPI1_D4_C>,
+    72					 <PIN_P10_2__OSPI1_D5_C>,
+    73					 <PIN_P10_3__OSPI1_D6_C>,
+    74					 <PIN_P10_4__OSPI1_D7_C>,
+    75					 <PIN_P10_7__OSPI1_RXDS0_C>;
+    76				read-enable = <0x1>;
+    77				drive-strength = <12>;
+    78				slew-rate = <0x1>;
+    79			};
+    80		};
+    81	};
+    82	
+    83	&i2c1 {
+    84		clock-frequency = <I2C_BITRATE_STANDARD>;
+    85		status = "okay";
+    86		wm8904: wm8904@1a {
+    87			compatible = "cirrus,wm8904";
+    88			reg = <0x1a>;
+    89			status = "okay";
+    90		};
+    91	};
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf ---
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https: //alifsemi.com/license
+     8	#
+     9	
+    10	CONFIG_SYSTEM_HEAP_SRAM0=y
+    11	CONFIG_LPGPIO_WAKEUP_SOURCE=0
+    12	CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+    13	CONFIG_I2S=y
+    14	CONFIG_ACTIVATION_BUF_SZ=0x200000
+
+--- /home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig ---
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	
+     9	source "Kconfig.zephyr"
+    10	
+    11	config USE_APP_MENU
+    12		bool "Use application menu to choose a test case"
+    13		default false
+    14	
+    15	config ACTIVATION_BUF_SECTION
+    16		string "Linker section where activation buffer (tensor arena) is placed"
+    17		default ".bss.activation_buf"
+    18	
+    19	config ACTIVATION_BUF_SZ
+    20		hex "Tensor arena size"
+    21		default 0x00091000
+    22	
+    23	config MODEL_IN_EXT_FLASH
+    24		bool "Put ML model to external flash"
+    25		select FLASH
+    26		select ALIF_OSPI_FLASH_XIP
+    27		help
+    28			Initialize OSPI controller to XIP mode. Initialize the onboard flash device. Link ML model data to external flash address space.
+    29			In addition to normal zephyr.bin output, ospi0/1.bin is generated. When enabled, the model memory section is set automatically (See BufAttributes.h)
+    30	
+    31	config MODEL_SECTION
+    32		string "Linker section where ML model is placed"
+    33		depends on !MODEL_IN_EXT_FLASH
+    34		default ".rodata.tflm_model"
+    35	
+    36	config ETHOS_U_AXI0_ONLY
+    37		bool "Only use AXI0 port on the Ethos"
+    38		default false
+    39	
+    40	config AUDIO_SAMPLES
+    41		int "Number of audio samples to store"
+    42		default 16000
+    43	
+    44	config AUDIO_STRIDE
+    45		int "Number of audio samples in a single stride"
+    46		default 8000
+    47	
+    48	config RESULTS_MEMORY
+    49		int "Number of inference results to keep in memory"
+    50		default 8
+    51	
+    52	config AUDIO_CHANNELS
+    53		int "Number of input audio channels"
+    54		default 2
+    55	
+    56	config SAMPLE_CNT
+    57		int "Number of samples per slab buffer"
+    58		default 400
+    59	
+    60	config NUM_BUFFERS
+    61		int "Number of slab buffers to allocate"
+    62		default 4
+    63	
+    64	config I2S_GAIN
+    65		int "Fixed linear again applied to I2S samples (e.g 10 = 20dB gain)"
+    66		default 20
+    67	
+    68	config THREAD_STACK_SIZE
+    69		int "Stack size of audio thread"
+    70		default 1024
+    71	
+    72	config THREAD_PRIORITY
+    73		int "Priority of audio thread"
+    74		default 0
+    75	
+    76	config PUSH_TO_TALK
+    77		bool "Use push to talk power example"
+    78		default false
+    79	
+    80	config OUTPUT_TO_LINE_OUT
+    81		depends on I2S
+    82		bool "Output audio to line out"
+    83		default false
+    84	
+    85	config LPGPIO_WAKEUP_SOURCE
+    86		depends on "$(dt_nodelabel_enabled,lpgpio)"
+    87		int "LPGPIO Wakeup source will be used to wakeup from sleep"
+    88		range 0 4
+    89		default 1
+    90		help
+    91		  Defines which LPGPIO pin will be used as wakeup source from sleep.
+    92		  0 - LPGPIO0, 1 - LPGPIO1, ...
+    93	
+    94	config LPGPIO_M55_IRQ_ENABLED
+    95		depends on "$(dt_nodelabel_enabled,lpgpio)"
+    96		bool "LPGPIO M55 core IRQ enabled"
+    97		default y
+    98		help
+    99		  Configures LPGPIO to generate interrupt on M55 core when M55 is
+   100		  running.
+   101	
+   102	choice
+   103		depends on LPGPIO_M55_IRQ_ENABLED
+   104		prompt "LPGPIO IRQ edge trigger select"
+   105		default LPGPIO_M55_IRQ_EDGE_FALLING
+   106		help
+   107		  Select which signal edge will trigger the interrupt.
+   108		config LPGPIO_M55_IRQ_EDGE_RISING
+   109		bool "Rising edge"
+   110		config LPGPIO_M55_IRQ_EDGE_FALLING
+   111		bool "Falling edge"
+   112		config LPGPIO_M55_IRQ_EDGE_BOTH
+   113		bool "Rising and falling edges"
+   114	endchoice
+
+===== BOOL SUPPORT SEARCH =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:932:                   TensorType_BOOL, 0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:1051:                   TensorType_BOOL, 0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:1182:                   TensorType_BOOL, 0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:1350:                   TensorType_BOOL, 0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.cc:102:    case kTfLiteBool: {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc:86:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers_test.cc:172:                          tflite::TfLiteTypeSizeOf(kTfLiteBool, &size));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/layer_by_layer_schema_generated.h:49:  TensorTypes_BOOL = 6,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/layer_by_layer_schema_generated.h:74:    TensorTypes_BOOL,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/layer_by_layer.cc:105:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/layer_by_layer.cc:106:      tensor_type = TensorTypes_BOOL;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/select.cc:95:  TF_LITE_ENSURE_TYPES_EQ(context, input_condition->type, kTfLiteBool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/strided_slice.cc:128:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elementwise.cc:51:  return type == kTfLiteBool;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elementwise.cc:224:                        /*validate_input_func=*/nullptr, kTfLiteBool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc:151:                     input_type == kTfLiteInt64 || input_type == kTfLiteBool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc:209:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc:252:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/if.cc:61:  TF_LITE_ENSURE_EQ(context, cond->type, kTfLiteBool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc:104:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/comparisons.cc:54:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/comparisons.cc:146:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice.cc:70:    case kTfLiteBool:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/slice.cc:143:    case kTfLiteBool:
+
+INSPECTION COMPLETE - NO SOURCE FILES MODIFIED
