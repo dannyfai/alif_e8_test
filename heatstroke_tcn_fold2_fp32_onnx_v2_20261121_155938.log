@@ -115,4 +115,510 @@ IMPORTANT: compact_values is a fourth model input and needs a firmware preproces
 No classifier, quantization, Vela, firmware, or flash actions performed.
 ]3008;start=a7e29560-9cd4-4a77-bc0a-0363d510177d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
 ]3008;start=a7e29560-9cd4-4a77-bc0a-0363d510177d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== EXPORT V2 FINISHED =====
-]3008;end=a7e29560-9cd4-4a77-bc0a-0363d510177d;exit=success\]3008;start=5ebf91f2-447b-40f9-bead-057f10c226ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=a7e29560-9cd4-4a77-bc0a-0363d510177d;exit=success\]3008;start=5ebf91f2-447b-40f9-bead-057f10c226ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set -Eeuo pipefail
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+ONNX="$PROJECT/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx" 
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+
+mkdir -p "$LOGDIR"
+LOG="$LOGDIR/heatstroke_tcn_onnx2tflite_preflight_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee "$LOG") 2>&1
+
+trap 'rc=$?; trap - EXIT; echo; echo "PREFLIGHT EXIT CODE: $rc"; echo "LOG: $LOG"; if [ -t 0 ]; then read -r -p "Press Enter to close..."; fi; exit "$rc"' EXIT 
+
+echo "===== TCN ONNX-TO-TFLITE PREFLIGHT ====="
+date
+
+echo
+echo "===== ONNX MODEL ====="
+test -f "$ONNX"
+ls -lh "$ONNX"
+sha256sum "$ONNX"
+
+echo
+echo "===== PYTHON ENVIRONMENT ====="
+"$PYTHON" --version
+"$PYTHON" -m pip show eiq-onnx2tflite onnx onnxruntime tensorflow
+
+echo
+echo "===== DISCOVER CONVERTER ENTRY POINTS ====="
+"$PYTHON" - <<'PY'
+import importlib.metadata as md
+import shutil
+import subprocess
+import os
+import sys
+
+try:
+    dist = md.distribution("eiq-onnx2tflite")
+except md.PackageNotFoundError:
+    raise SystemExit("ERROR: eiq-onnx2tflite is not installed in this environment.") 
+
+print("Distribution:", dist.metadata["Name"])
+print("Version:", dist.version)
+print("Python:", sys.executable)
+
+env = os.environ.copy()
+env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + env.get("PATH", "") 
+
+entries = [
+    ep for ep in dist.entry_points
+    if ep.group == "console_scripts"
+]
+
+if not entries:
+    print("No console_scripts entry points found.")
+    raise SystemExit(0)
+
+[7mfor ep in entries:[27m
+[7m    print()[27m
+[7m    print("ENTRY POINT:", ep.name, "=", ep.value)[27m
+[7m    executable = shutil.which(ep.name, path=env["PATH"])[27m
+[7m    print("EXECUTABLE:", executable)[27m
+
+[7m    if executable is None:[27m
+[7m        print("Executable not found; skipping help invocation.")[27m
+[7m        continue[27m
+
+[7m    result = subprocess.run([27m
+[7m        [executable, "--help"],[27m
+[7m        env=env,[27m
+[7m        text=True,[27m
+[7m        stdout=subprocess.PIPE,[27m
+[7m        stderr=subprocess.STDOUT,[27m
+[7m        timeout=60,[27m
+[7m    )[27m
+[7m    print("HELP EXIT CODE:", result.returncode)[27m
+[7m    print(result.stdout[:16000])[27m
+[7mPY[27m
+
+[7mecho[27m
+[7mecho "===== PREFLIGHT FINISHED ====="[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Afor ep in entries:
+    print()
+    print("ENTRY POINT:", ep.name, "=", ep.value)
+    executable = shutil.which(ep.name, path=env["PATH"])
+    print("EXECUTABLE:", executable)
+
+    if executable is None:
+        print("Executable not found; skipping help invocation.")
+        continue
+
+    result = subprocess.run(
+        [executable, "--help"],
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=60,
+    )
+    print("HELP EXIT CODE:", result.returncode)
+    print(result.stdout[:16000])
+PY
+
+echo
+echo "===== PREFLIGHT FINISHED ====="
+[?2004l]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== TCN ONNX-TO-TFLITE PREFLIGHT =====
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Sat Nov 21 04:01:39 PM HKT 2026
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== ONNX MODEL =====
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\-rw-rw-r-- 1 user user 38M Nov 21 15:59 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\af12038379eb01732f025b20c5608544ac0d405738e3314c0b49fc3dae248b10  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== PYTHON ENVIRONMENT =====
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Python 3.12.15
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Name: eiq-onnx2tflite
+Version: 0.11.0
+Summary: ONNX2TFLite project offers tools for ONNX models quantization and their conversion into TFLite
+Home-page: 
+Author: NXP
+Author-email: 
+License: PROPRIETARY
+Location: /home/user/onnx2tflite_env/lib/python3.12/site-packages
+Requires: deprecated, flatbuffers, numpy, onnx, onnxruntime, protobuf, sympy
+Required-by: 
+---
+Name: onnx
+Version: 1.20.1
+Summary: Open Neural Network Exchange
+Home-page: https://onnx.ai/
+Author: 
+Author-email: ONNX Contributors <onnx-technical-discuss@lists.lfaidata.foundation>
+License-Expression: Apache-2.0
+Location: /home/user/onnx2tflite_env/lib/python3.12/site-packages
+Requires: ml_dtypes, numpy, protobuf, typing_extensions
+Required-by: eiq-onnx2tflite
+---
+Name: onnxruntime
+Version: 1.24.4
+Summary: ONNX Runtime is a runtime accelerator for Machine Learning models
+Home-page: https://onnxruntime.ai
+Author: Microsoft Corporation
+Author-email: onnxruntime@microsoft.com
+License: MIT License
+Location: /home/user/onnx2tflite_env/lib/python3.12/site-packages
+Requires: flatbuffers, numpy, packaging, protobuf, sympy
+Required-by: eiq-onnx2tflite
+---
+Name: tensorflow
+Version: 2.21.0
+Summary: TensorFlow is an open source machine learning framework for everyone.
+Home-page: https://www.tensorflow.org/
+Author: Google Inc.
+Author-email: packages@tensorflow.org
+License: Apache 2.0
+Location: /home/user/onnx2tflite_env/lib/python3.12/site-packages
+Requires: absl-py, astunparse, flatbuffers, gast, google_pasta, grpcio, h5py, keras, libclang, ml_dtypes, numpy, opt_einsum, packaging, protobuf, requests, setuptools, six, termcolor, typing_extensions, wrapt
+Required-by: 
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== DISCOVER CONVERTER ENTRY POINTS =====
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Distribution: eiq-onnx2tflite
+Version: 0.11.0
+Python: /home/user/onnx2tflite_env/bin/python
+
+ENTRY POINT: onnx2quant = onnx2quant.__main__:run_quantization_wrapper
+EXECUTABLE: /home/user/onnx2tflite_env/bin/onnx2quant
+HELP EXIT CODE: 0
+usage: onnx2quant [-h] [--replace-div-with-mul | --no-replace-div-with-mul]
+                  [--replace-constant-with-static-tensor | --no-replace-constant-with-static-tensor]
+                  [-o OUTPUT] [--per-channel | --no-per-channel]
+                  [-l | --allow-opset-10-and-lower | --no-allow-opset-10-and-lower]
+                  [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                  [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                  [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                  (-c INPUT_NAME;DATASET_PATH [INPUT_NAME;DATASET_PATH ...] | -u)
+                  onnx_model
+
+Quantize ONNX model in 'TFLite conversion optimized way'. This tool produces
+QDQ model with per-tensor/per-channel quantization and INT8 activations. Some
+operators can be QDQ quantized even if there isn't quantized variant in ONNX
+but TFLite supports quantized version of this specific operator.
+
+positional arguments:
+  onnx_model            Path to input ONNX '*.onnx' model.
+
+options:
+  -h, --help            show this help message and exit
+  --replace-div-with-mul, --no-replace-div-with-mul
+                        Replace some 'Div' operators with 'Mul'. 'Div' doesn't
+                        support int8 quantization in TFLite so this is
+                        replacement can avoid having to compute 'Div' in
+                        float32.
+  --replace-constant-with-static-tensor, --no-replace-constant-with-static-tensor
+                        Remove 'Constant' nodes and directly assign static
+                        data to their output tensors.
+  -o OUTPUT, --output OUTPUT
+                        Path to the resulting quantized ONNX model. (default:
+                        '<input_model_name>_quant.onnx')
+  --per-channel, --no-per-channel
+                        Quantize some weight tensors per-channel instead of
+                        per-tensor. This should result in a higher accuracy.
+  -l, --allow-opset-10-and-lower, --no-allow-opset-10-and-lower
+                        Allow quantization of models with opset version 10 and
+                        lower. Quantization of such models can produce invalid
+                        models because opset is forcefully updated to version
+                        11. This applies especially to models with operators:
+                        Clip, Dropout, BatchNormalization and Split.
+  -s DIM_NAME:SIZE [DIM_NAME:SIZE ...], --symbolic-dimension-into-static DIM_NAME:SIZE [DIM_NAME:SIZE ...]
+                        Change symbolic dimension in model to static (fixed)
+                        value. Provided mapping must follow this format
+                        '<dim_name>:<dim_size>', for example 'batch:1'. This
+                        argument can be used multiple times.
+  -m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...], --set-input-shape INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]
+                        Override model input shape. Provided mapping must
+                        follow format '<input_name>:(<dim_0>,<dim_1>,...)',
+                        for example 'input_1:(1,3,224,224)'. This argument can
+                        be used multiple times.
+  --generate-artifacts-after-failed-shape-inference, --no-generate-artifacts-after-failed-shape-inference
+                        If the shape inference fails or is incomplete,
+                        generate the partially inferred ONNX model as
+                        'sym_shape_infer_temp.onnx'.
+  -c INPUT_NAME;DATASET_PATH [INPUT_NAME;DATASET_PATH ...], --calibration-dataset-mapping INPUT_NAME;DATASET_PATH [INPUT_NAME;DATASET_PATH ...]
+                        Mapping between model input and calibration dataset
+                        directory with *.npy files. Value must be in format
+                        '<input_name>;<path_to_dir>', for example
+                        'input_1;data_3_224/'. Argument can be used multiple
+                        times to specify multiple inputs for the model. In
+                        case model has semicolon in input tensor's name, it
+                        has to be renamed.
+  -u, --use-random-calibration-dataset
+                        Use a random dataset for calibration instead of
+                        providing a real calibration dataset. Note that random
+                        dataset does not provide reliable quantization
+                        results.
+
+
+ENTRY POINT: onnx2tflite = onnx2tflite.__main__:run_conversion_wrapper
+EXECUTABLE: /home/user/onnx2tflite_env/bin/onnx2tflite
+HELP EXIT CODE: 0
+usage: onnx2tflite [-h]
+                   [--allow-inputs-stripping | --no-allow-inputs-stripping]
+                   [--keep-io-tensors-format | --no-keep-io-tensors-format]
+                   [--skip-shape-inference | --no-skip-shape-inference]
+                   [--qdq-aware-conversion | --no-qdq-aware-conversion]
+                   [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                   [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                   [--dont-skip-nodes-with-known-outputs | --no-dont-skip-nodes-with-known-outputs]
+                   [--allow-select-ops | --no-allow-select-ops]
+                   [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                   [--duplicate-dequantize-linear | --no-duplicate-dequantize-linear]
+                   [--guarantee-non-negative-indices | --no-guarantee-non-negative-indices]
+                   [--cast-int64-to-int32 | --no-cast-int64-to-int32]
+                   [--accept-resize-rounding-error | --no-accept-resize-rounding-error]
+                   [--skip-opset-version-check | --no-skip-opset-version-check]
+                   [-o out] [-v]
+                   onnx_file
+
+Convert a '.onnx' DNN model to an equivalent '.tflite' model. By default the
+output '.tflite' file will be generated in the current working directory and
+have the same name as the input '.onnx' file.
+
+positional arguments:
+  onnx_file             Path to ONNX (*.onnx) model.
+
+options:
+  -h, --help            show this help message and exit
+  --allow-inputs-stripping, --no-allow-inputs-stripping
+                        Model inputs will be removed if they are not necessary
+                        for inference and their values are derived during the
+                        conversion.
+  --keep-io-tensors-format, --no-keep-io-tensors-format
+                        Keep the format of input and output tensors of the
+                        converted model the same, as in the original ONNX
+                        model (NCHW).
+  --skip-shape-inference, --no-skip-shape-inference
+                        Shape inference will be skipped before model
+                        conversion. This option can be used only if model's
+                        shapes are fully defined. Defined shapes are necessary
+                        for successful conversion.
+  --qdq-aware-conversion, --no-qdq-aware-conversion
+                        Quantized QDQ model with QDQ pairs (Q-Ops created by
+                        QDQ quantizer) will be converted into optimized
+                        variant with QDQ pairs represented as tensors'
+                        quantization parameters.
+  -s DIM_NAME:SIZE [DIM_NAME:SIZE ...], --symbolic-dimension-into-static DIM_NAME:SIZE [DIM_NAME:SIZE ...]
+                        Change symbolic dimension in model to static (fixed)
+                        value. Provided mapping must follow this format
+                        '<dim_name>:<dim_size>', for example 'batch:1'. This
+                        argument can be used multiple times.
+  -m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...], --set-input-shape INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]
+                        Override model input shape. Provided mapping must
+                        follow format '<input_name>:(<dim_0>,<dim_1>,...)',
+                        for example 'input_1:(1,3,224,224)'. This argument can
+                        be used multiple times.
+  --dont-skip-nodes-with-known-outputs, --no-dont-skip-nodes-with-known-outputs
+                        Sometimes it is possible to statically infer the
+                        output data of some nodes. These nodes will then not
+                        be a part of the output model. This flag will force
+                        the converter to keep them in anyway.
+  --allow-select-ops, --no-allow-select-ops
+                        Allow the converter to use the `SELECT_TF_OPS`
+                        operators, which require Flex delegate at runtime.
+  --generate-artifacts-after-failed-shape-inference, --no-generate-artifacts-after-failed-shape-inference
+                        If the shape inference fails or is incomplete,
+                        generate the partly inferred ONNX model as
+                        `sym_shape_infer_temp.onnx`.
+  --duplicate-dequantize-linear, --no-duplicate-dequantize-linear
+                        Duplicate DequantizeLinear nodes with static inputs
+                        and multiple consumers. It increases success rate of
+                        QDQ cluster recognition leading to more quantized
+                        nodes.
+  --guarantee-non-negative-indices, --no-guarantee-non-negative-indices
+                        Guarantee that an 'indices' input tensor will always
+                        contain non-negative values. This applies to
+                        operators: 'Gather', 'GatherND', 'OneHot' and
+                        'ScatterND'.
+  --cast-int64-to-int32, --no-cast-int64-to-int32
+                        Cast some nodes with type INT64 to INT32 when TFLite
+                        doesn't support INT64. Such nodes are often used in
+                        ONNX to calculate shapes/indices, so full range of
+                        INT64 isn't necessary. This applies to operators:
+                        `Abs` and `Div`.
+  --accept-resize-rounding-error, --no-accept-resize-rounding-error
+                        Accept the error caused by a different rounding
+                        approach of the ONNX 'Resize' and TFLite
+                        'ResizeNearestNeighbor' operators, and convert the
+                        model anyway.
+  --skip-opset-version-check, --no-skip-opset-version-check
+                        Ignore the checks for supported opset versions of the
+                        ONNX model and try to convert it anyway. This can
+                        result in an invalid output TFLite model.
+  -o out, --output out  Path to output '.tflite' file.
+  -v, --verbose         Print detailed information related to conversion
+                        process.
+
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== PREFLIGHT FINISHED =====
+]3008;end=55c7b404-7709-4952-b1b5-e7cbd352c46d;exit=success\]3008;start=5ebf91f2-447b-40f9-bead-057f10c226ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set -Eeuo pipefail
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+OUTDIR="$PROJECT/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940" 
+ONNX="$OUTDIR/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx"
+TFLITE="$OUTDIR/heatstroke_tcn_reg_fold2_fp32_external_compact.tflite"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+CONVERTER="/home/user/onnx2tflite_env/bin/onnx2tflite"
+
+mkdir -p "$LOGDIR"
+LOG="$LOGDIR/heatstroke_tcn_fp32_onnx2tflite_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee "$LOG") 2>&1
+
+trap 'rc=$?; trap - EXIT; echo; echo "CONVERSION EXIT CODE: $rc"; echo "LOG: $LOG"; if [ -t 0 ]; then read -r -p "Press Enter to close..."; fi; exit "$rc"' EXIT 
+
+echo "===== TCN FOLD-2 FP32 ONNX TO TFLITE ====="
+date
+
+echo
+echo "===== VERIFY INPUT FILES AND CONVERTER ====="
+test -s "$ONNX"
+test -x "$CONVERTER"
+test ! -e "$TFLITE"
+
+ls -lh "$ONNX"
+sha256sum "$ONNX"
+"$CONVERTER" --help | head -45
+
+echo
+echo "===== CONVERT FP32 MODEL ====="
+"$CONVERTER" "$ONNX" \
+    --cast-int64-to-int32 \
+    --guarantee-non-negative-indices \
+    --verbose \
+    -o "$TFLITE"
+
+echo
+echo "===== VERIFY TFLITE FILE ====="
+test -s "$TFLITE"
+ls -lh "$TFLITE"
+sha256sum "$TFLITE"
+
+echo
+echo "===== LOAD TFLITE AND INSPECT OPERATORS ====="
+"$PYTHON" -u - "$TFLITE" <<'PY'
+import sys
+from collections import Counter
+import tensorflow as tf
+
+path = sys.argv[1]
+print("TensorFlow:", tf.__version__)
+print("TFLite:", path)
+
+interpreter = tf.lite.Interpreter(model_path=path)
+interpreter.allocate_tensors()
+
+inputs = interpreter.get_input_details()
+outputs = interpreter.get_output_details()
+ops = interpreter._get_ops_details()
+
+print("\nINPUT TENSORS:")
+for x in inputs:
+    print({
+        "name": x["name"],
+[7m        "shape": x["shape"].tolist(),[27m
+[7m        "dtype": str(x["dtype"]),[27m
+[7m        "quantization": x["quantization"],[27m
+[7m    })[27m
+
+[7mprint("\nOUTPUT TENSORS:")[27m
+[7mfor x in outputs:[27m
+[7m    print({[27m
+[7m        "name": x["name"],[27m
+[7m        "shape": x["shape"].tolist(),[27m
+[7m        "dtype": str(x["dtype"]),[27m
+[7m        "quantization": x["quantization"],[27m
+[7m    })[27m
+
+[7mprint("\nTFLITE OPERATOR COUNTS:")[27m
+[7mfor name, count in sorted(Counter(x["op_name"] for x in ops).items()):[27m
+[7m    print(f"{name}: {count}")[27m
+
+[7mprint("\nTOTAL OPERATORS:", len(ops))[27m
+[7mprint("TFLITE INTERPRETER ALLOCATION: PASS")[27m
+[7mPY[27m
+
+[7mecho[27m
+[7mecho "===== FP32 CONVERSION AND INSPECTION FINISHED ====="[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A        "shape": x["shape"].tolist(),
+        "dtype": str(x["dtype"]),
+        "quantization": x["quantization"],
+    })
+
+print("\nOUTPUT TENSORS:")
+for x in outputs:
+    print({
+        "name": x["name"],
+        "shape": x["shape"].tolist(),
+        "dtype": str(x["dtype"]),
+        "quantization": x["quantization"],
+    })
+
+print("\nTFLITE OPERATOR COUNTS:")
+for name, count in sorted(Counter(x["op_name"] for x in ops).items()):
+    print(f"{name}: {count}")
+
+print("\nTOTAL OPERATORS:", len(ops))
+print("TFLITE INTERPRETER ALLOCATION: PASS")
+PY
+
+echo
+echo "===== FP32 CONVERSION AND INSPECTION FINISHED ====="
+[?2004l]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== TCN FOLD-2 FP32 ONNX TO TFLITE =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Sat Nov 21 04:03:11 PM HKT 2026
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== VERIFY INPUT FILES AND CONVERTER =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\-rw-rw-r-- 1 user user 38M Nov 21 15:59 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\af12038379eb01732f025b20c5608544ac0d405738e3314c0b49fc3dae248b10  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\usage: onnx2tflite [-h]
+                   [--allow-inputs-stripping | --no-allow-inputs-stripping]
+                   [--keep-io-tensors-format | --no-keep-io-tensors-format]
+                   [--skip-shape-inference | --no-skip-shape-inference]
+                   [--qdq-aware-conversion | --no-qdq-aware-conversion]
+                   [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                   [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                   [--dont-skip-nodes-with-known-outputs | --no-dont-skip-nodes-with-known-outputs]
+                   [--allow-select-ops | --no-allow-select-ops]
+                   [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                   [--duplicate-dequantize-linear | --no-duplicate-dequantize-linear]
+                   [--guarantee-non-negative-indices | --no-guarantee-non-negative-indices]
+                   [--cast-int64-to-int32 | --no-cast-int64-to-int32]
+                   [--accept-resize-rounding-error | --no-accept-resize-rounding-error]
+                   [--skip-opset-version-check | --no-skip-opset-version-check]
+                   [-o out] [-v]
+                   onnx_file
+
+Convert a '.onnx' DNN model to an equivalent '.tflite' model. By default the
+output '.tflite' file will be generated in the current working directory and
+have the same name as the input '.onnx' file.
+
+positional arguments:
+  onnx_file             Path to ONNX (*.onnx) model.
+
+options:
+  -h, --help            show this help message and exit
+  --allow-inputs-stripping, --no-allow-inputs-stripping
+                        Model inputs will be removed if they are not necessary
+                        for inference and their values are derived during the
+                        conversion.
+  --keep-io-tensors-format, --no-keep-io-tensors-format
+                        Keep the format of input and output tensors of the
+                        converted model the same, as in the original ONNX
+                        model (NCHW).
+  --skip-shape-inference, --no-skip-shape-inference
+                        Shape inference will be skipped before model
+                        conversion. This option can be used only if model's
+                        shapes are fully defined. Defined shapes are necessary
+                        for successful conversion.
+  --qdq-aware-conversion, --no-qdq-aware-conversion
+                        Quantized QDQ model with QDQ pairs (Q-Ops created by
+                        QDQ quantizer) will be converted into optimized
+                        variant with QDQ pairs represented as tensors'
+                        quantization parameters.
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== CONVERT FP32 MODEL =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\[2026-11-21 16:03:14,590] [ERROR] [Code.UNSUPPORTED_OPERATOR] - ONNX operator 'IsInf' is not yet supported!
+[2026-11-21 16:03:14,590] [ERROR] [Code.UNSUPPORTED_OPERATOR] - ONNX operator 'IsInf' is not yet supported!
+[2026-11-21 16:03:14,591] [ERROR] [Code.UNSUPPORTED_OPERATOR] - Model contains unsupported nodes: [IsInf].
+
+CONVERSION EXIT CODE: 21
+LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_fp32_onnx2tflite_20261121_160311.log
+Press Enter to close...

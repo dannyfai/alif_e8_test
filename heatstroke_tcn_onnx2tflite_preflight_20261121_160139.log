@@ -229,4 +229,175 @@ options:
 
 ]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
 ]3008;start=55c7b404-7709-4952-b1b5-e7cbd352c46d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== PREFLIGHT FINISHED =====
-]3008;end=55c7b404-7709-4952-b1b5-e7cbd352c46d;exit=success\]3008;start=5ebf91f2-447b-40f9-bead-057f10c226ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=55c7b404-7709-4952-b1b5-e7cbd352c46d;exit=success\]3008;start=5ebf91f2-447b-40f9-bead-057f10c226ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set -Eeuo pipefail
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+OUTDIR="$PROJECT/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940" 
+ONNX="$OUTDIR/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx"
+TFLITE="$OUTDIR/heatstroke_tcn_reg_fold2_fp32_external_compact.tflite"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+CONVERTER="/home/user/onnx2tflite_env/bin/onnx2tflite"
+
+mkdir -p "$LOGDIR"
+LOG="$LOGDIR/heatstroke_tcn_fp32_onnx2tflite_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee "$LOG") 2>&1
+
+trap 'rc=$?; trap - EXIT; echo; echo "CONVERSION EXIT CODE: $rc"; echo "LOG: $LOG"; if [ -t 0 ]; then read -r -p "Press Enter to close..."; fi; exit "$rc"' EXIT 
+
+echo "===== TCN FOLD-2 FP32 ONNX TO TFLITE ====="
+date
+
+echo
+echo "===== VERIFY INPUT FILES AND CONVERTER ====="
+test -s "$ONNX"
+test -x "$CONVERTER"
+test ! -e "$TFLITE"
+
+ls -lh "$ONNX"
+sha256sum "$ONNX"
+"$CONVERTER" --help | head -45
+
+echo
+echo "===== CONVERT FP32 MODEL ====="
+"$CONVERTER" "$ONNX" \
+    --cast-int64-to-int32 \
+    --guarantee-non-negative-indices \
+    --verbose \
+    -o "$TFLITE"
+
+echo
+echo "===== VERIFY TFLITE FILE ====="
+test -s "$TFLITE"
+ls -lh "$TFLITE"
+sha256sum "$TFLITE"
+
+echo
+echo "===== LOAD TFLITE AND INSPECT OPERATORS ====="
+"$PYTHON" -u - "$TFLITE" <<'PY'
+import sys
+from collections import Counter
+import tensorflow as tf
+
+path = sys.argv[1]
+print("TensorFlow:", tf.__version__)
+print("TFLite:", path)
+
+interpreter = tf.lite.Interpreter(model_path=path)
+interpreter.allocate_tensors()
+
+inputs = interpreter.get_input_details()
+outputs = interpreter.get_output_details()
+ops = interpreter._get_ops_details()
+
+print("\nINPUT TENSORS:")
+for x in inputs:
+    print({
+        "name": x["name"],
+[7m        "shape": x["shape"].tolist(),[27m
+[7m        "dtype": str(x["dtype"]),[27m
+[7m        "quantization": x["quantization"],[27m
+[7m    })[27m
+
+[7mprint("\nOUTPUT TENSORS:")[27m
+[7mfor x in outputs:[27m
+[7m    print({[27m
+[7m        "name": x["name"],[27m
+[7m        "shape": x["shape"].tolist(),[27m
+[7m        "dtype": str(x["dtype"]),[27m
+[7m        "quantization": x["quantization"],[27m
+[7m    })[27m
+
+[7mprint("\nTFLITE OPERATOR COUNTS:")[27m
+[7mfor name, count in sorted(Counter(x["op_name"] for x in ops).items()):[27m
+[7m    print(f"{name}: {count}")[27m
+
+[7mprint("\nTOTAL OPERATORS:", len(ops))[27m
+[7mprint("TFLITE INTERPRETER ALLOCATION: PASS")[27m
+[7mPY[27m
+
+[7mecho[27m
+[7mecho "===== FP32 CONVERSION AND INSPECTION FINISHED ====="[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A        "shape": x["shape"].tolist(),
+        "dtype": str(x["dtype"]),
+        "quantization": x["quantization"],
+    })
+
+print("\nOUTPUT TENSORS:")
+for x in outputs:
+    print({
+        "name": x["name"],
+        "shape": x["shape"].tolist(),
+        "dtype": str(x["dtype"]),
+        "quantization": x["quantization"],
+    })
+
+print("\nTFLITE OPERATOR COUNTS:")
+for name, count in sorted(Counter(x["op_name"] for x in ops).items()):
+    print(f"{name}: {count}")
+
+print("\nTOTAL OPERATORS:", len(ops))
+print("TFLITE INTERPRETER ALLOCATION: PASS")
+PY
+
+echo
+echo "===== FP32 CONVERSION AND INSPECTION FINISHED ====="
+[?2004l]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== TCN FOLD-2 FP32 ONNX TO TFLITE =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\Sat Nov 21 04:03:11 PM HKT 2026
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== VERIFY INPUT FILES AND CONVERTER =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\-rw-rw-r-- 1 user user 38M Nov 21 15:59 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\af12038379eb01732f025b20c5608544ac0d405738e3314c0b49fc3dae248b10  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_external_compact_20261121_155940/heatstroke_tcn_reg_fold2_fp32_external_compact.onnx
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\usage: onnx2tflite [-h]
+                   [--allow-inputs-stripping | --no-allow-inputs-stripping]
+                   [--keep-io-tensors-format | --no-keep-io-tensors-format]
+                   [--skip-shape-inference | --no-skip-shape-inference]
+                   [--qdq-aware-conversion | --no-qdq-aware-conversion]
+                   [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                   [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                   [--dont-skip-nodes-with-known-outputs | --no-dont-skip-nodes-with-known-outputs]
+                   [--allow-select-ops | --no-allow-select-ops]
+                   [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                   [--duplicate-dequantize-linear | --no-duplicate-dequantize-linear]
+                   [--guarantee-non-negative-indices | --no-guarantee-non-negative-indices]
+                   [--cast-int64-to-int32 | --no-cast-int64-to-int32]
+                   [--accept-resize-rounding-error | --no-accept-resize-rounding-error]
+                   [--skip-opset-version-check | --no-skip-opset-version-check]
+                   [-o out] [-v]
+                   onnx_file
+
+Convert a '.onnx' DNN model to an equivalent '.tflite' model. By default the
+output '.tflite' file will be generated in the current working directory and
+have the same name as the input '.onnx' file.
+
+positional arguments:
+  onnx_file             Path to ONNX (*.onnx) model.
+
+options:
+  -h, --help            show this help message and exit
+  --allow-inputs-stripping, --no-allow-inputs-stripping
+                        Model inputs will be removed if they are not necessary
+                        for inference and their values are derived during the
+                        conversion.
+  --keep-io-tensors-format, --no-keep-io-tensors-format
+                        Keep the format of input and output tensors of the
+                        converted model the same, as in the original ONNX
+                        model (NCHW).
+  --skip-shape-inference, --no-skip-shape-inference
+                        Shape inference will be skipped before model
+                        conversion. This option can be used only if model's
+                        shapes are fully defined. Defined shapes are necessary
+                        for successful conversion.
+  --qdq-aware-conversion, --no-qdq-aware-conversion
+                        Quantized QDQ model with QDQ pairs (Q-Ops created by
+                        QDQ quantizer) will be converted into optimized
+                        variant with QDQ pairs represented as tensors'
+                        quantization parameters.
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\===== CONVERT FP32 MODEL =====
+]3008;start=9cb517a9-d204-4a6c-a358-d86ae68ba3aa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000115859;type=command;cwd=/home/user/sdk-alif\[2026-11-21 16:03:14,590] [ERROR] [Code.UNSUPPORTED_OPERATOR] - ONNX operator 'IsInf' is not yet supported!
+[2026-11-21 16:03:14,590] [ERROR] [Code.UNSUPPORTED_OPERATOR] - ONNX operator 'IsInf' is not yet supported!
+[2026-11-21 16:03:14,591] [ERROR] [Code.UNSUPPORTED_OPERATOR] - Model contains unsupported nodes: [IsInf].
+
+CONVERSION EXIT CODE: 21
+LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_fp32_onnx2tflite_20261121_160311.log
+Press Enter to close...
