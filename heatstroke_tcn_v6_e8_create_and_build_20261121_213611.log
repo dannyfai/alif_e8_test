@@ -1,0 +1,548 @@
+CREATE AND BUILD HEATSTROKE TCN V6 - E8 RTSS-HE / U55-128
+Sat Nov 21 09:36:11 PM HKT 2026
+APP=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+MODEL_SHA256=4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870
+
+===== CREATE NEW APPLICATION DIRECTORY =====
+
+===== NEW APPLICATION FILES =====
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_common.overlay
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/Kconfig
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/include/BufAttributes.hpp
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/include/TcnV6Model.hpp
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/Main.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/MainLoop.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/TcnV6Model.cc
+
+===== VERIFY APPLICATION MODEL SETTINGS =====
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf:26:CONFIG_ARM_ETHOS_U=y
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf:29:CONFIG_MODEL_IN_EXT_FLASH=y
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf:37:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf:40:CONFIG_ACTIVATION_BUF_SZ=0x280000
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:2:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:3:CONFIG_ACTIVATION_BUF_SZ=0x280000
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:27:set(ETHOS_U_NPU_CONFIG_ID "H128")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:28:set(ETHOS_U_NPU_MEMORY_MODE "Shared_Sram")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:29:set(CONFIG_ARM_ETHOS_U55_128 y
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:55:set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:58:set(POLYU_MODEL_SHA256_EXPECTED
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:61:if(NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:62:    message(FATAL_ERROR "V6 Vela model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:65:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:66:if(NOT POLYU_MODEL_SHA256_ACTUAL STREQUAL POLYU_MODEL_SHA256_EXPECTED)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:68:        "V6 Vela model SHA256 mismatch: ${POLYU_MODEL_SHA256_ACTUAL}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:71:message(STATUS "TCN V6 model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:72:message(STATUS "TCN V6 model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:73:message(STATUS "Ethos-U config: ${ETHOS_U_NPU_CONFIG_ID}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:74:message(STATUS "Ethos-U memory mode: ${ETHOS_U_NPU_MEMORY_MODE}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:77:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:82:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:83:set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:84:set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:92:    ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:99:    "${POLYU_MODEL_CPP}"
+
+===== ACTIVATE WEST ENVIRONMENT =====
+WEST_VERSION:
+West version: v1.5.0
+
+===== BUILD V6 APPLICATION FOR E8 RTSS-HE / U55-128 =====
+-- west build: generating a build system
+Loading Zephyr default modules (Zephyr base).
+-- Application: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8
+-- CMake version: 3.31.10
+-- Found Python3: /home/user/zephyrproject/.py3.12_venv/bin/python3.12 (found suitable version "3.12.15", minimum required is "3.10") found components: Interpreter
+-- Cache files will be written to: /home/user/.cache/zephyr
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr)
+-- Found west (found suitable version "1.5.0", minimum required is "0.14.0")
+-- Board: alif_e8_dk, qualifiers: ae822fa0e5597xx0/rtss_he
+-- Snippet(s): ospi-flash ethos-u55-enable
+-- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
+-- Found host-tools: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found Dtc: /home/user/zephyr-sdk-0.17.0/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6")
+-- Found BOARD.dts: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he.dts
+-- Found devicetree overlay: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_common.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ospi-flash/e8_ospi1.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ethos-u55-enable/snippet.overlay
+-- Generated zephyr.dts: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/zephyr.dts
+-- Generated pickled edt: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/dts.cmake
+Parsing /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/Kconfig
+Loaded configuration '/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he_defconfig'
+Merged configuration '/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf'
+Merged configuration '/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf'
+Merged configuration '/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/misc/generated/extra_kconfig_options.conf'
+Configuration saved to '/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/.config'
+Kconfig header saved to '/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr/autoconf.h'
+-- Found GnuLd: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd (found version "2.38")
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
+CMake Warning at /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/debug_metadata.cmake:23 (message):
+  Alif SVD file not found:
+  /home/user/sdk-alif/tools/alif_ensemble-cmsis-dfp/Debug/SVD/AE822FA0E5597BS0_CM55_HE_View.svd
+Call Stack (most recent call first):
+  /home/user/sdk-alif/zephyr/soc/alif/ensemble/CMakeLists.txt:8 (include)
+
+
+-- *******************************************************
+-- PROJECT_NAME                           : ethosu_core_driver
+-- ETHOSU_TARGET_NPU_CONFIG               : ethos-u55-128
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- CMSIS_PATH                             : /home/user/sdk-alif/modules/hal/ethos_u/../cmsis
+-- ETHOSU_LOG_ENABLE                      : ON
+-- ETHOSU_LOG_SEVERITY                    : warning
+-- ETHOSU_INFERENCE_TIMEOUT               : Default (no timeout)
+-- *******************************************************
+-- Including default API config parameters...
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- MLEK log is disabled
+-- **************************************************
+-- Library:                mlek_log
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- **************************************************
+-- *******************************************************
+-- Library                    : arm_math
+-- CMAKE_SYSTEM_PROCESSOR     : arm
+-- *******************************************************
+-- Adding TensorFlow Lite Micro framework to the build...
+-- *******************************************************
+-- Library: ml_framework_tflm
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library: ml_framework_iface
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                common_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : asr_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : kws_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : noise_reduction_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : img_class_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : object_detection_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : vww_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : ad_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                inference_runner_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- Created interface target: mlek::asr_impl
+-- Created interface target: mlek::kws_impl
+-- Created interface target: mlek::noise_reduction_impl
+-- Created interface target: mlek::img_class_impl
+-- Created interface target: mlek::object_detection_impl
+-- Created interface target: mlek::vww_impl
+-- Created interface target: mlek::ad_impl
+-- Created interface target: mlek::inference_runner_impl
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2224 (message):
+  
+
+        The CMake build type was set to 'Release', but the optimization flag was set to '-Os'.
+        This may be intentional and the warning can be turned off by setting the CMake variable 'NO_BUILD_TYPE_WARNING'
+
+
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- TCN V6 model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+-- TCN V6 model SHA256: 4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870
+-- Ethos-U config: H128
+-- Ethos-U memory mode: Shared_Sram
+-- Using /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+++ Converting heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite to    heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite.cc
+-- Configuring done (5.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128
+-- west build: building application
+[1/627] Preparing syscall dependency handling
+
+[2/627] Generating misc/generated/syscalls_subdirs.trigger
+[3/627] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[4/627] Generating include/generated/device-api-sections.ld, include/generated/device-api-sections.cmake
+[5/627] Generating include/generated/zephyr/syscall_dispatch.c, include/generated/zephyr/syscall_exports_llext.c, syscall_weakdefs_llext.c, include/generated/zephyr/syscall_list.h
+[6/627] Generating include/generated/zephyr/kobj-types-enum.h, include/generated/zephyr/otype-to-str.h, include/generated/zephyr/otype-to-size.h
+[7/627] Generating include/generated/zephyr/driver-validation.h
+[8/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj
+[9/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj
+[10/627] Building C object zephyr/CMakeFiles/offsets.dir/arch/arm/core/offsets/offsets.c.obj
+[11/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj
+[12/627] Linking C static library modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a
+[13/627] Generating include/generated/zephyr/offsets.h
+[14/627] Generating include/generated/zephyr/version.h
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr), build: f7f3f548f357
+[15/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window_flexbuffers_generated_data.cc.obj
+[16/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/fft_flexbuffers_generated_data.cc.obj
+[17/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/window.cc.obj
+[18/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int16.cc.obj
+[19/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int32.cc.obj
+[20/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_float.cc.obj
+[21/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/debug_log.cc.obj
+[22/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/core/api/error_reporter.cc.obj
+[23/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/common.cc.obj
+[24/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj
+FAILED: [code=1] modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj 
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++11 -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -MD -MT modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj -MF modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj.d -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc
+In file included from /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:15:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:25: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   26 | void hexdump(Span<const std::byte> region);
+      |                         ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:34: error: template argument 1 is invalid
+   26 | void hexdump(Span<const std::byte> region);
+      |                                  ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:25: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   26 | void hexdump(Span<const std::byte> region);
+      |                         ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:34: error: template argument 1 is invalid
+   26 | void hexdump(Span<const std::byte> region);
+      |                                  ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:25: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   26 | void hexdump(Span<const std::byte> region);
+      |                         ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:34: error: template argument 1 is invalid
+   26 | void hexdump(Span<const std::byte> region);
+      |                                  ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:6: error: variable or field 'hexdump' declared void
+   26 | void hexdump(Span<const std::byte> region);
+      |      ^~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:25: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   26 | void hexdump(Span<const std::byte> region);
+      |                         ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:26:34: error: template argument 1 is invalid
+   26 | void hexdump(Span<const std::byte> region);
+      |                                  ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:31: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:40: error: template argument 1 is invalid
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:31: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:40: error: template argument 1 is invalid
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:31: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:40: error: template argument 1 is invalid
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:31: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:40: error: template argument 1 is invalid
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:61: error: expected primary-expression before 'buffer'
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |                                                             ^~~~~~
+In file included from /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:21:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/static_vector.h:79:59: error: expected constructor, destructor, or type conversion before ';' token
+   79 | StaticVector(T, U...) -> StaticVector<T, 1 + sizeof...(U)>;
+      |                                                           ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:61: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:70: error: template argument 1 is invalid
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:61: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:70: error: template argument 1 is invalid
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:61: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:70: error: template argument 1 is invalid
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:61: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:70: error: template argument 1 is invalid
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:61: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:70: error: template argument 1 is invalid
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:42: error: invalid use of template-name 'tflite::Span' without an argument list
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                          ^~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:42: note: class template argument deduction is only available with '-std=c++17' or '-std=gnu++17'
+In file included from /home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:20:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note: 'template<class T> class tflite::Span' declared here
+   26 | class Span {
+      |       ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:55:54: error: expected ',' or '...' before '<' token
+   55 | tflite::Span<char> tflite::hexdump(const tflite::Span<const std::byte> region,
+      |                                                      ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:56:64: error: 'tflite::Span<char> tflite::hexdump(int)' should have been declared inside 'tflite'
+   56 |                                    const tflite::Span<char> out) {
+      |                                                                ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:56:64: error: 'tflite::Span<char> tflite::hexdump(int)' redeclared as different kind of entity
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:12: note: previous declaration 'tflite::Span<char> tflite::hexdump'
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |            ^~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc: In function 'tflite::Span<char> tflite::hexdump(int)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:57:29: error: 'out' was not declared in this scope
+   57 |   tflite::Span<char> buffer{out};
+      |                             ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:57:32: error: no matching function for call to 'tflite::Span<char>::Span(<brace-enclosed initializer list>)'
+   57 |   tflite::Span<char> buffer{out};
+      |                                ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:34:13: note: candidate: 'template<unsigned int N> constexpr tflite::Span<T>::Span(std::array<T, N>&) [with unsigned int N = N; T = char]'
+   34 |   constexpr Span(std::array<T, N>& array) noexcept
+      |             ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:34:13: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:31:13: note: candidate: 'template<unsigned int N> constexpr tflite::Span<T>::Span(T (&)[N]) [with unsigned int N = N; T = char]'
+   31 |   constexpr Span(T (&data)[N]) noexcept : data_(data), size_(N) {}
+      |             ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:31:13: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:28:13: note: candidate: 'constexpr tflite::Span<T>::Span(T*, size_t) [with T = char; size_t = unsigned int]'
+   28 |   constexpr Span(T* data, size_t size) noexcept : data_(data), size_(size) {}
+      |             ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:28:13: note:   candidate expects 2 arguments, 1 provided
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note: candidate: 'constexpr tflite::Span<char>::Span(const tflite::Span<char>&)'
+   26 | class Span {
+      |       ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note:   conversion of argument 1 would be ill-formed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note: candidate: 'constexpr tflite::Span<char>::Span(tflite::Span<char>&&)'
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note:   conversion of argument 1 would be ill-formed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:60:22: error: 'region' was not declared in this scope
+   60 |   const int lines = (region.size() + per_line - 1) / per_line;  // round up
+      |                      ^~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:98:49: error: could not convert '{<expression error>, <expression error>}' from '<brace-enclosed initializer list>' to 'tflite::Span<char>'
+   98 |   return {out.data(), out.size() - buffer.size()};
+      |                                                 ^
+      |                                                 |
+      |                                                 <brace-enclosed initializer list>
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc: At global scope:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:47: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:56: error: template argument 1 is invalid
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:47: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:56: error: template argument 1 is invalid
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:47: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:56: error: template argument 1 is invalid
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:47: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:56: error: template argument 1 is invalid
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:47: error: ISO C++ forbids declaration of 'type name' with no type [-fpermissive]
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                               ^~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:56: error: template argument 1 is invalid
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:28: error: invalid use of template-name 'tflite::Span' without an argument list
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                            ^~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:28: note: class template argument deduction is only available with '-std=c++17' or '-std=gnu++17'
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/span.h:26:7: note: 'template<class T> class tflite::Span' declared here
+   26 | class Span {
+      |       ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:40: error: expected ',' or '...' before '<' token
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                        ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:64: error: 'void tflite::hexdump(int)' should have been declared inside 'tflite'
+  101 | void tflite::hexdump(const tflite::Span<const std::byte> region) {
+      |                                                                ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:101:64: error: 'void tflite::hexdump(int)' redeclared as different kind of entity
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/micro/hexdump.h:31:12: note: previous declaration 'tflite::Span<char> tflite::hexdump'
+   31 | Span<char> hexdump(Span<const std::byte> region, Span<char> buffer);
+      |            ^~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc: In function 'void tflite::hexdump(int)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc:102:11: error: 'region' was not declared in this scope
+  102 |   hexdump(region, {nullptr, 0});
+      |           ^~~~~~
+[25/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_time.cc.obj
+[26/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_float.cc.obj
+[27/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int16.cc.obj
+[28/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int32.cc.obj
+[29/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj
+FAILED: [code=1] modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj 
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++11 -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -MD -MT modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj -MF modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj.d -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc
+In file included from /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc:16:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:93:29: error: 'conditional_t' in namespace 'std' does not name a template type; did you mean 'conditional'?
+   93 |           class Type = std::conditional_t<std::is_same<T, void>::value, U, T>>
+      |                             ^~~~~~~~~~~~~
+      |                             conditional
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:93:42: error: expected '>' before '<' token
+   93 |           class Type = std::conditional_t<std::is_same<T, void>::value, U, T>>
+      |                                          ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:129:14: error: 'decay_t' in namespace 'std' does not name a template type; did you mean 'decay'?
+  129 |         std::decay_t<decltype(*std::declval<Container>().data())>,
+      |              ^~~~~~~
+      |              decay
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:129:21: error: expected '>' before '<' token
+  129 |         std::decay_t<decltype(*std::declval<Container>().data())>,
+      |                     ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:22: error: 'Type' was not declared in this scope
+  133 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const Container& values) {
+      |                      ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:26: error: template argument 1 is invalid
+  133 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const Container& values) {
+      |                          ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h: In function 'int tflite::BuildTfLiteArray(const Container&)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:134:27: error: 'Type' was not declared in this scope
+  134 |   return BuildTfLiteArray<Type>(static_cast<int>(values.size()), values.data());
+      |                           ^~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h: In function 'tflite::IntArrayUniquePtr tflite::BuildTfLiteArray(const TfLiteIntArray&)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:146:26: error: no matching function for call to 'BuildTfLiteArray(const int&, const int [])'
+  146 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:71:25: note: candidate: 'template<class T> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(int)'
+   71 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(int size);
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:71:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:146:26: note:   candidate expects 1 argument, 2 provided
+  146 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:94:28: note: candidate: 'template<class T, class U, class Type> tflite::TfLiteArrayUniquePtr<Type> tflite::BuildTfLiteArray(int, const U*)'
+   94 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const int size,
+      |                            ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:94:28: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:114:25: note: candidate: 'template<class T, unsigned int N> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(const T (&)[N])'
+  114 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(const T (&values)[N]) {
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:114:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:146:26: note:   mismatched types 'const T [N]' and 'const int'
+  146 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:28: note: candidate: 'template<class T, class Container, class ElementType> int tflite::BuildTfLiteArray(const Container&)'
+  133 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const Container& values) {
+      |                            ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:28: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:146:26: note:   candidate expects 1 argument, 2 provided
+  146 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:139:25: note: candidate: 'template<class T> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(const std::initializer_list<_Tp>&)'
+  139 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:139:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:146:26: note:   mismatched types 'const std::initializer_list<_Tp>' and 'const int'
+  146 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:145:26: note: candidate: 'tflite::IntArrayUniquePtr tflite::BuildTfLiteArray(const TfLiteIntArray&)'
+  145 | inline IntArrayUniquePtr BuildTfLiteArray(const TfLiteIntArray& other) {
+      |                          ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:145:26: note:   candidate expects 1 argument, 2 provided
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h: In function 'tflite::FloatArrayUniquePtr tflite::BuildTfLiteArray(const TfLiteFloatArray&)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:151:26: error: no matching function for call to 'BuildTfLiteArray(const int&, const float [])'
+  151 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:71:25: note: candidate: 'template<class T> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(int)'
+   71 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(int size);
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:71:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:151:26: note:   candidate expects 1 argument, 2 provided
+  151 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:94:28: note: candidate: 'template<class T, class U, class Type> tflite::TfLiteArrayUniquePtr<Type> tflite::BuildTfLiteArray(int, const U*)'
+   94 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const int size,
+      |                            ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:94:28: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:114:25: note: candidate: 'template<class T, unsigned int N> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(const T (&)[N])'
+  114 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(const T (&values)[N]) {
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:114:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:151:26: note:   mismatched types 'const T [N]' and 'const int'
+  151 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:28: note: candidate: 'template<class T, class Container, class ElementType> int tflite::BuildTfLiteArray(const Container&)'
+  133 | TfLiteArrayUniquePtr<Type> BuildTfLiteArray(const Container& values) {
+      |                            ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:133:28: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:151:26: note:   candidate expects 1 argument, 2 provided
+  151 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:139:25: note: candidate: 'template<class T> tflite::TfLiteArrayUniquePtr<T> tflite::BuildTfLiteArray(const std::initializer_list<_Tp>&)'
+  139 | TfLiteArrayUniquePtr<T> BuildTfLiteArray(
+      |                         ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:139:25: note:   template argument deduction/substitution failed:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:151:26: note:   mismatched types 'const std::initializer_list<_Tp>' and 'const int'
+  151 |   return BuildTfLiteArray(other.size, other.data);
+      |          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:145:26: note: candidate: 'tflite::IntArrayUniquePtr tflite::BuildTfLiteArray(const TfLiteIntArray&)'
+  145 | inline IntArrayUniquePtr BuildTfLiteArray(const TfLiteIntArray& other) {
+      |                          ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:145:26: note:   candidate expects 1 argument, 2 provided
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:150:28: note: candidate: 'tflite::FloatArrayUniquePtr tflite::BuildTfLiteArray(const TfLiteFloatArray&)'
+  150 | inline FloatArrayUniquePtr BuildTfLiteArray(const TfLiteFloatArray& other) {
+      |                            ^~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/./tensorflow/lite/array.h:150:28: note:   candidate expects 1 argument, 2 provided
+[30/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc.obj
+[31/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/python_ops_resolver.cc.obj
+[32/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/rfft.cc.obj
+[33/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc.obj
+[34/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/schema/schema_utils.cc.obj
+[35/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc.obj
+[36/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helper_custom_ops.cc.obj
+[37/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window.cc.obj
+[38/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc.obj
+[39/627] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc.obj
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake --build /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128
+
+WEST_BUILD_STATUS=1
+
+===== EFFECTIVE BUILD CONFIGURATION =====
+337:CONFIG_ARM_ETHOS_U55_128=y
+349:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+429:CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+511:CONFIG_SYSTEM_HEAP_SRAM0=y
+1758:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+1759:CONFIG_ACTIVATION_BUF_SZ=0x280000
+1760:CONFIG_MODEL_IN_EXT_FLASH=y
+
+NO FLASH OR HARDWARE PROGRAMMING WAS PERFORMED.
+APPLICATION SOURCE IS ISOLATED AT: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8
