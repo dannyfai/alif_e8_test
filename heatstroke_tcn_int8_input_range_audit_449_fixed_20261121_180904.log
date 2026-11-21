@@ -768,4 +768,820 @@ No training, checkpoint changes, TFLite conversion, firmware build, or flash wri
 
 SCRIPT_EXIT_CODE=0
 LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_sanitized_mask_v6_ort449_20261121.log
-]3008;end=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+MODEL_DIR="$EXP/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+CONVERTER="/home/user/onnx2tflite_env/bin/onnx2tflite"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+
+RUN_TAG="$(date +%Y%m%d_%H%M%S)"
+OUTDIR="$EXP/tflite_fp32_fold2_sanitized_mask_v6_$RUN_TAG"
+SCRIPT="$EXP/validate_tcn_fold2_v6_tflite_all449.py"
+LOG="$LOGDIR/heatstroke_tcn_v6_onnx2tflite_all449_$RUN_TAG.log"
+
+mkdir -p "$OUTDIR"
+
+cat > "$SCRIPT" <<'PY'
+#!/usr/bin/env python3
+from pathlib import Path
+from collections import Counter
+from datetime import datetime
+import argparse
+import hashlib
+import importlib.util
+import json
+import subprocess
+import sys
+
+import numpy as np
+import torch
+import onnxruntime as ort
+import tensorflow as tf
+
+
+SENTINELS = (-9997.0, -9998.0, -9999.0)
+EXPECTED_ONNX_SHA256 = (
+    "1679ccd65d37834014c22f9306241e72"
+    "d57a6ee1e0996584747e8b30f8c0588a"
+)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def import_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot import {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def resolve_input(details, key):
+    matches = [
+        d for d in details
+        if key.lower() in d["name"].lower()
+    ]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"Cannot uniquely identify TFLite input '{key}'. "
+            f"Matches={[x['name'] for x in matches]}; "
+            f"all_inputs={[x['name'] for x in details]}"
+        )
+    return matches[0]
+
+
+def compare(reference, candidate, atol, rtol):
+    delta = np.abs(reference - candidate)
+    return {
+        "max_abs_error": float(delta.max()),
+        "mean_abs_error": float(delta.mean()),
+        "rmse": float(np.sqrt(np.mean(np.square(reference - candidate)))),
+        "allclose": bool(
+            np.allclose(reference, candidate, atol=atol, rtol=rtol)
+        ),
+        "finite": bool(np.isfinite(candidate).all()),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--model-dir", required=True)
+    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--converter", required=True)
+    ap.add_argument("--seed", type=int, default=20261121)
+    ap.add_argument("--group-column", default="worker_id")
+    ap.add_argument("--atol", type=float, default=2e-4)
+    ap.add_argument("--rtol", type=float, default=2e-4)
+    args = ap.parse_args()
+
+    project = Path(args.project).resolve()
+    model_dir = Path(args.model_dir).resolve()
+    out_dir = Path(args.out_dir).resolve()
+    converter = Path(args.converter).resolve()
+
+    onnx_path = (
+        model_dir /
+        "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx"
+    )
+    tflite_path = (
+        out_dir /
+        "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite"
+    )
+
+    exp = project / "experiments" / "tcn_reg_20261120"
+    exporter_path = (
+        exp / "export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py"
+    )
+    helper_path = exp / "train_tcn_reg_testdev_experiment.py"
+    data_dir = project / "data" / "split_byid"
+
+    print("===== TCN FOLD-2 V6 FP32 TFLITE CONVERSION =====")
+    print("Timestamp:", datetime.now().astimezone().isoformat())
+    print("Python:", sys.version.replace("\n", " "))
+    print("TensorFlow:", tf.__version__)
+    print("ONNX Runtime:", ort.__version__)
+    print("Project:", project)
+    print("ONNX:", onnx_path)
+    print("Output:", tflite_path)
+
+    for path in (
+        onnx_path,
+        exporter_path,
+        helper_path,
+        data_dir / "test_seq.feather",
+        data_dir / "test_non_seq.csv",
+        converter,
+    ):
+        if not path.is_file():
+            raise FileNotFoundError(f"Required file missing: {path}")
+
+    if tflite_path.exists():
+        raise FileExistsError(f"Refusing to overwrite: {tflite_path}")
+
+    actual_sha = sha256(onnx_path)
+    print("V6 ONNX SHA256:", actual_sha)
+    if actual_sha != EXPECTED_ONNX_SHA256:
+        raise RuntimeError(
+            "ONNX SHA256 does not match the validated V6 model. "
+            "Refusing conversion."
+        )
+
+    # ------------------------------------------------------------
+    # 1. Convert ONNX to FP32 TFLite.
+    # ------------------------------------------------------------
+    command = [
+        str(converter),
+        str(onnx_path),
+        "--cast-int64-to-int32",
+        "--guarantee-non-negative-indices",
+        "--verbose",
+        "-o",
+        str(tflite_path),
+    ]
+
+    print("\n===== ONNX2TFLITE COMMAND =====")
+    print(" ".join(command))
+    subprocess.run(command, check=True)
+
+    if not tflite_path.is_file() or tflite_path.stat().st_size == 0:
+        raise RuntimeError("Converter did not produce a valid TFLite file.")
+
+    print("TFLite bytes:", tflite_path.stat().st_size)
+    print("TFLite SHA256:", sha256(tflite_path))
+
+    # ------------------------------------------------------------
+    # 2. Allocate interpreter tensors and inspect operations.
+    # ------------------------------------------------------------
+    print("\n===== TFLITE INTERPRETER PREFLIGHT =====")
+    interpreter = tf.lite.Interpreter(
+        model_path=str(tflite_path)
+    )
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    print("TFLite inputs:")
+    for d in input_details:
+        print(
+            " ",
+            d["name"],
+            "shape=", d["shape"].tolist(),
+            "dtype=", d["dtype"],
+            "bytes=", int(np.prod(d["shape"])) * np.dtype(d["dtype"]).itemsize,
+        )
+
+    print("TFLite outputs:")
+    for d in output_details:
+        print(
+            " ",
+            d["name"],
+            "shape=", d["shape"].tolist(),
+            "dtype=", d["dtype"],
+        )
+
+    if len(output_details) != 1:
+        raise RuntimeError(
+            f"Expected one output, found {len(output_details)}"
+        )
+
+    input_keys = [
+        "x_values",
+        "missing_mask",
+        "x_mark",
+        "worker_features_18",
+        "compact_values",
+    ]
+
+    resolved = {
+        key: resolve_input(input_details, key)
+        for key in input_keys
+    }
+
+    expected_shapes = {
+        "x_values": (1, 900, 6),
+        "missing_mask": (1, 900, 6),
+        "x_mark": (1, 900, 3),
+        "worker_features_18": (1, 18),
+        "compact_values": (1, 1800, 6),
+    }
+
+    for key, detail in resolved.items():
+        shape = tuple(int(v) for v in detail["shape"])
+        if shape != expected_shapes[key]:
+            raise RuntimeError(
+                f"TFLite input {key} shape mismatch: {shape}"
+            )
+
+        if key == "missing_mask":
+            if np.dtype(detail["dtype"]) != np.dtype(np.bool_):
+                raise RuntimeError(
+                    "The missing_mask input is not Boolean in TFLite: "
+                    f"{detail['dtype']}. Stop and inspect conversion."
+                )
+        elif np.dtype(detail["dtype"]) != np.dtype(np.float32):
+            raise RuntimeError(
+                f"Expected FP32 input {key}; got {detail['dtype']}"
+            )
+
+    ops = interpreter._get_ops_details()
+    op_counts = Counter(str(op.get("op_name", "UNKNOWN")) for op in ops)
+
+    custom_ops = sorted(
+        name for name in op_counts
+        if name.upper() == "CUSTOM" or name.upper().startswith("FLEX")
+    )
+
+    print("\nTFLite operator count:", len(ops))
+    print("TFLite operator histogram:")
+    print(json.dumps(dict(sorted(op_counts.items())), indent=2))
+    print("CUSTOM/FLEX operators:", custom_ops)
+
+    if custom_ops:
+        raise RuntimeError(
+            f"Flex/custom operators detected: {custom_ops}"
+        )
+
+    print("Interpreter allocate_tensors(): PASS")
+    print("No CUSTOM/FLEX operators: PASS")
+
+    # ------------------------------------------------------------
+    # 3. Set up the deterministic 449-sample dataset and V6 ORT.
+    # ------------------------------------------------------------
+    print("\n===== PREPARING 449-SAMPLE VALIDATION =====")
+    exporter = import_module(
+        exporter_path,
+        "tcn_fold2_v5_exporter_for_v6_tflite_validation",
+    )
+    helper = exporter.import_helper(helper_path)
+    project_run = helper.import_project(project)
+
+    dataset = helper.ImputationDataset(
+        project_run,
+        data_dir,
+        "test",
+        args.seed,
+        args.group_column,
+    )
+    dataset.set_epoch(0)
+
+    if len(dataset) != 449:
+        raise RuntimeError(
+            f"Expected 449 samples, found {len(dataset)}"
+        )
+
+    ort_session = ort.InferenceSession(
+        str(onnx_path),
+        providers=["CPUExecutionProvider"],
+    )
+    print("ONNX Runtime input names:")
+    print([
+        (d.name, d.shape, d.type)
+        for d in ort_session.get_inputs()
+    ])
+
+    ort_output_name = ort_session.get_outputs()[0].name
+    tflite_output = output_details[0]
+
+    # ------------------------------------------------------------
+    # 4. Compare TFLite with V6 ONNX Runtime on every sample.
+    # ------------------------------------------------------------
+    failures = []
+    global_max = 0.0
+    abs_sum = 0.0
+    square_sum = 0.0
+    total_values = 0
+    worst_sample = -1
+    missing_entries = 0
+
+    for index in range(len(dataset)):
+        x, mark, worker, compact = exporter.make_sample_inputs(
+            dataset, index
+        )
+
+        mask = (
+            (x == -9997) |
+            (x == -9998) |
+            (x == -9999)
+        )
+        sanitized = torch.where(
+            mask,
+            torch.zeros_like(x),
+            x,
+        )
+
+        feed = {
+            "x_values": sanitized.cpu().numpy().astype(np.float32),
+            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+            "x_mark": mark.cpu().numpy().astype(np.float32),
+            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+            "compact_values": compact.cpu().numpy().astype(np.float32),
+        }
+
+        # Reference: validated V6 ONNX Runtime model.
+        reference = ort_session.run(
+            [ort_output_name],
+            feed,
+        )[0]
+
+        # Candidate: converted FP32 TFLite model.
+        for key in input_keys:
+            detail = resolved[key]
+            value = feed[key].astype(detail["dtype"], copy=False)
+            interpreter.set_tensor(detail["index"], value)
+
+        interpreter.invoke()
+        candidate = interpreter.get_tensor(
+            tflite_output["index"]
+        )
+
+        if reference.shape != candidate.shape:
+            raise RuntimeError(
+                f"Sample {index}: output shape mismatch "
+                f"{reference.shape} vs {candidate.shape}"
+            )
+
+        metrics = compare(
+            reference,
+            candidate,
+            args.atol,
+            args.rtol,
+        )
+
+        delta = np.abs(reference - candidate)
+        sample_max = metrics["max_abs_error"]
+
+        if sample_max > global_max:
+            global_max = sample_max
+            worst_sample = index
+
+        abs_sum += float(delta.sum())
+        square_sum += float(np.square(reference - candidate).sum())
+        total_values += delta.size
+        missing_entries += int(feed["missing_mask"].sum())
+
+        if not metrics["allclose"] or not metrics["finite"]:
+            failures.append({
+                "sample": index,
+                **metrics,
+            })
+
+        if index % 25 == 0 or index == len(dataset) - 1:
+            print(
+                f"Progress {index + 1}/{len(dataset)}; "
+                f"sample_max_abs={sample_max:.9g}; "
+                f"failed_samples={len(failures)}"
+            )
+
+    report = {
+        "model": "Fold-2 TCN regression/imputation stage, FP32",
+        "onnx": str(onnx_path),
+        "onnx_sha256": actual_sha,
+        "tflite": str(tflite_path),
+        "tflite_sha256": sha256(tflite_path),
+        "dataset": "split_byid/test",
+        "sample_count": len(dataset),
+        "comparison": "TFLite versus V6 ONNX Runtime",
+        "atol": args.atol,
+        "rtol": args.rtol,
+        "all_samples_pass": len(failures) == 0,
+        "failed_samples": failures[:50],
+        "global_max_abs_error": global_max,
+        "global_mean_abs_error": abs_sum / max(total_values, 1),
+        "global_rmse": float(
+            np.sqrt(square_sum / max(total_values, 1))
+        ),
+        "worst_sample_index": worst_sample,
+        "missing_sensor_entries": missing_entries,
+        "operator_count": len(ops),
+        "operator_histogram": dict(sorted(op_counts.items())),
+        "custom_flex_operators": custom_ops,
+        "input_specs": {
+            key: {
+                "shape": list(resolved[key]["shape"]),
+                "dtype": str(resolved[key]["dtype"]),
+            }
+            for key in input_keys
+        },
+    }
+
+    report_path = out_dir / "tflite_vs_onnx_all449_report.json"
+    report_path.write_text(json.dumps(report, indent=2))
+
+    print("\n===== ALL-449 TFLITE VALIDATION SUMMARY =====")
+    print(json.dumps(report, indent=2))
+    print("JSON report:", report_path)
+
+    if failures:
+        raise RuntimeError(
+            f"TFLite validation FAILED: {len(failures)} / "
+            f"{len(dataset)} samples outside tolerance. "
+            "Do not quantize this model."
+        )
+
+    print("\n<TCN_V6_FP32_TFLITE_ALL449> PASS </TCN_V6_FP32_TFLITE_ALL449>")
+    print("No INT8 quantization, Vela, firmware or flash operation performed.")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(
+            "\n<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>",
+            file=sys.stderr,
+        )
+        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+        raise
+PY
+
+[7mecho "Script: $SCRIPT"[27m
+[7mecho "Output directory: $OUTDIR"[27m
+[7mecho "Log: $LOG"[27m
+
+[7m([27m
+[7m  set -o pipefail[27m
+
+[7m  "$PYTHON" -u "$SCRIPT" \[27m
+[7m    --project "$PROJECT" \[27m
+[7m    --model-dir "$MODEL_DIR" \[27m
+[7m    --out-dir "$OUTDIR" \[27m
+[7m    --converter "$CONVERTER" \[27m
+[7m    2>&1 | tee "$LOG"[27m
+
+[7m  RC=${PIPESTATUS[0]}[27m
+
+[7m  echo[27m
+[7m  echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m  echo "LOG_FILE=$LOG"[27m
+[7m  echo "OUTPUT_DIR=$OUTDIR"[27m
+
+[7m  exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Aecho "Script: $SCRIPT"
+echo "Output directory: $OUTDIR"
+echo "Log: $LOG"
+
+(
+  set -o pipefail
+
+  "$PYTHON" -u "$SCRIPT" \
+    --project "$PROJECT" \
+    --model-dir "$MODEL_DIR" \
+    --out-dir "$OUTDIR" \
+    --converter "$CONVERTER" \
+    2>&1 | tee "$LOG"
+
+  RC=${PIPESTATUS[0]}
+
+  echo
+  echo "SCRIPT_EXIT_CODE=$RC"
+  echo "LOG_FILE=$LOG"
+  echo "OUTPUT_DIR=$OUTDIR"
+
+  exit "$RC"
+)
+[?2004l]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Script: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py
+]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Output directory: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636
+]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Log: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_onnx2tflite_all449_20261121_181636.log
+]3008;start=ecfa1420-29e1-4932-83a5-9836c7baf9a7;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256197.811730  120317 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256197.843756  120317 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256198.611248  120317 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256198.611457  120317 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== TCN FOLD-2 V6 FP32 TFLITE CONVERSION =====
+Timestamp: 2026-11-21T18:16:39.269304+08:00
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+TensorFlow: 2.21.0
+ONNX Runtime: 1.24.4
+Project: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+Output: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+V6 ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+
+===== ONNX2TFLITE COMMAND =====
+/home/user/onnx2tflite_env/bin/onnx2tflite /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx --cast-int64-to-int32 --guarantee-non-negative-indices --verbose -o /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+[2026-11-21 18:16:40,532] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-21 18:16:40,533] [DEBUG] Tensor '' is not yet in the tensors. Adding it!
+[2026-11-21 18:16:40,533] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-21 18:16:40,533] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-21 18:16:40,534] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-21 18:16:40,535] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-21 18:16:40,535] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-21 18:16:40,537] [DEBUG] ADDING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,537] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,538] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,539] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,539] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,539] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,539] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,539] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,540] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,540] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,540] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,540] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,540] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,541] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,541] [DEBUG] REUSING zero tensor of size 32 with type float32.
+[2026-11-21 18:16:40,541] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+	Constant(/Constant_1)
+	Constant(/Constant_2)
+	Constant(/Constant_3)
+	Constant(/Constant_4)
+	Constant(/Constant_5)
+	Constant(/Constant_6)
+	Constant(/Constant_7)
+	Constant(/Constant_8)
+	Constant(/Constant_9)
+	Constant(/Constant_10)
+	Constant(/Constant_11)
+	Constant(/Constant_12)
+	Constant(/Constant_13)
+	Constant(/Constant_14)
+	Constant(/Constant_15)
+	Constant(/Constant_16)
+	Constant(/Constant_17)
+	Constant(Constant_145)
+	Constant(/Constant_18)
+	Constant(/Constant_19)
+	Constant(/Constant_20)
+	ConstantOfShape(/ConstantOfShape)
+	Constant(/Constant_21)
+	Mul(/Mul)
+	Equal(/Equal_3)
+	Where(/Where_2)
+	Constant(/cvf/cvf.0/Constant)
+	Constant(/cvf/cvf.0/Constant_1)
+	ConstantOfShape(/cvf/cvf.0/ConstantOfShape)
+	Concat(/cvf/cvf.0/Concat)
+	Constant(/cvf/cvf.0/Constant_2)
+	Reshape(/cvf/cvf.0/Reshape)
+	Constant(/cvf/cvf.0/Constant_3)
+	Constant(/cvf/cvf.0/Constant_4)
+	Constant(/cvf/cvf.0/Constant_5)
+	Constant(/cvf/cvf.0/Constant_6)
+	Slice(/cvf/cvf.0/Slice)
+	Transpose(/cvf/cvf.0/Transpose)
+	Constant(/cvf/cvf.0/Constant_7)
+	Reshape(/cvf/cvf.0/Reshape_1)
+	Cast(/cvf/cvf.0/Cast)
+	Constant(/cvf/cvf.1/Constant)
+	Constant(/cvf/cvf.1/Constant_1)
+	ConstantOfShape(/cvf/cvf.1/ConstantOfShape)
+	Concat(/cvf/cvf.1/Concat)
+	Constant(/cvf/cvf.1/Constant_2)
+	Reshape(/cvf/cvf.1/Reshape)
+	Constant(/cvf/cvf.1/Constant_3)
+	Constant(/cvf/cvf.1/Constant_4)
+	Constant(/cvf/cvf.1/Constant_5)
+	Constant(/cvf/cvf.1/Constant_6)
+	Slice(/cvf/cvf.1/Slice)
+	Transpose(/cvf/cvf.1/Transpose)
+	Constant(/cvf/cvf.1/Constant_7)
+	Reshape(/cvf/cvf.1/Reshape_1)
+	Cast(/cvf/cvf.1/Cast)
+	Constant(/cvf/cvf.2/Constant)
+	Constant(/cvf/cvf.2/Constant_1)
+	Constant(/cvf/cvf.2/Constant_2)
+	Constant(/cvf/cvf.3/Constant)
+	Constant(/cvf/cvf.3/Constant_1)
+	Constant(/cvf/cvf.3/Constant_2)
+	Constant(/cvf/cvf.3/Constant_3)
+	Constant(/cvf/cvf.3/Constant_4)
+	Constant(/cvf/cvf.3/Constant_5)
+	Constant(/cvf/cvf.3/Constant_6)
+	Constant(/cvf/cvf.3/Constant_7)
+	Constant(/cvf/cvf.3/Constant_8)
+	Constant(/cvf/cvf.3/Constant_9)
+	Constant(/cvf/cvf.3/Constant_10)
+	Constant(/cvf/cvf.3/Constant_11)
+	Constant(/cvf/cvf.3/Constant_12)
+	Constant(/cvf/cvf.4/Constant)
+	Constant(/cvf/cvf.4/Constant_1)
+	ConstantOfShape(/cvf/cvf.4/ConstantOfShape)
+	Concat(/cvf/cvf.4/Concat)
+	Constant(/cvf/cvf.4/Constant_2)
+	Reshape(/cvf/cvf.4/Reshape)
+	Constant(/cvf/cvf.4/Constant_3)
+	Constant(/cvf/cvf.4/Constant_4)
+	Constant(/cvf/cvf.4/Constant_5)
+	Constant(/cvf/cvf.4/Constant_6)
+	Slice(/cvf/cvf.4/Slice)
+	Transpose(/cvf/cvf.4/Transpose)
+	Constant(/cvf/cvf.4/Constant_7)
+	Reshape(/cvf/cvf.4/Reshape_1)
+	Cast(/cvf/cvf.4/Cast)
+	Constant(/cvf/cvf.5/Constant)
+	Constant(/cvf/cvf.5/Constant_1)
+	ConstantOfShape(/cvf/cvf.5/ConstantOfShape)
+	Concat(/cvf/cvf.5/Concat)
+	Constant(/cvf/cvf.5/Constant_2)
+	Reshape(/cvf/cvf.5/Reshape)
+	Constant(/cvf/cvf.5/Constant_3)
+	Constant(/cvf/cvf.5/Constant_4)
+	Constant(/cvf/cvf.5/Constant_5)
+	Constant(/cvf/cvf.5/Constant_6)
+	Slice(/cvf/cvf.5/Slice)
+	Transpose(/cvf/cvf.5/Transpose)
+	Constant(/cvf/cvf.5/Constant_7)
+	Reshape(/cvf/cvf.5/Reshape_1)
+	Cast(/cvf/cvf.5/Cast)
+	Constant(/cvf/cvf.6/Constant)
+	Constant(/cvf/cvf.6/Constant_1)
+	Constant(/cvf/cvf.6/Constant_2)
+	Constant(/cvf/cvf.7/Constant)
+	Constant(/cvf/cvf.7/Constant_1)
+	Constant(/cvf/cvf.7/Constant_2)
+	Constant(/cvf/cvf.7/Constant_3)
+	Constant(/cvf/cvf.7/Constant_4)
+	Constant(/cvf/cvf.7/Constant_5)
+	Constant(/cvf/cvf.7/Constant_6)
+	Constant(/cvf/cvf.7/Constant_7)
+	Constant(/cvf/cvf.7/Constant_8)
+	Constant(/cvf/cvf.7/Constant_9)
+	Constant(/cvf/cvf.7/Constant_10)
+	Constant(/cvf/cvf.7/Constant_11)
+	Constant(/cvf/cvf.7/Constant_12)
+	Constant(/cvf/cvf.8/Constant)
+	Constant(/cvf/cvf.8/Constant_1)
+	ConstantOfShape(/cvf/cvf.8/ConstantOfShape)
+	Concat(/cvf/cvf.8/Concat)
+	Constant(/cvf/cvf.8/Constant_2)
+	Reshape(/cvf/cvf.8/Reshape)
+	Constant(/cvf/cvf.8/Constant_3)
+	Constant(/cvf/cvf.8/Constant_4)
+	Constant(/cvf/cvf.8/Constant_5)
+	Constant(/cvf/cvf.8/Constant_6)
+	Slice(/cvf/cvf.8/Slice)
+	Transpose(/cvf/cvf.8/Transpose)
+	Constant(/cvf/cvf.8/Constant_7)
+	Reshape(/cvf/cvf.8/Reshape_1)
+	Cast(/cvf/cvf.8/Cast)
+	Shape(/Shape)
+	ConstantOfShape(/ConstantOfShape_1)
+	Constant(/Constant_22)
+	Constant(/Constant_23)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-21 18:16:40,708] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx' model to '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite'.
+TFLite bytes: 39684152
+TFLite SHA256: 8c11e597db67e17795e2975664c97c7c6a1a525663de15415ae96d051dbedf6c
+
+===== TFLITE INTERPRETER PREFLIGHT =====
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+TFLite inputs:
+  x_values shape= [1, 900, 6] dtype= <class 'numpy.float32'> bytes= 21600
+  missing_mask shape= [1, 900, 6] dtype= <class 'numpy.bool'> bytes= 5400
+  x_mark shape= [1, 900, 3] dtype= <class 'numpy.float32'> bytes= 10800
+  worker_features_18 shape= [1, 18] dtype= <class 'numpy.float32'> bytes= 72
+  compact_values shape= [1, 1800, 6] dtype= <class 'numpy.float32'> bytes= 43200
+TFLite outputs:
+  reconstructed_values shape= [1, 900, 6] dtype= <class 'numpy.float32'>
+
+TFLite operator count: 261
+TFLite operator histogram:
+{
+  "ABS": 2,
+  "ADD": 23,
+  "BROADCAST_ARGS": 1,
+  "BROADCAST_TO": 1,
+  "CAST": 1,
+  "CONCATENATION": 2,
+  "CONV_2D": 27,
+  "DELEGATE": 9,
+  "DEPTHWISE_CONV_2D": 20,
+  "DIV": 6,
+  "EXP": 2,
+  "FULLY_CONNECTED": 7,
+  "GATHER": 6,
+  "GREATER_EQUAL": 2,
+  "LOGICAL_NOT": 1,
+  "LOGICAL_OR": 2,
+  "MAXIMUM": 1,
+  "MEAN": 4,
+  "MIRROR_PAD": 5,
+  "MUL": 26,
+  "NEG": 4,
+  "RELU": 21,
+  "RESHAPE": 65,
+  "SELECT_V2": 7,
+  "SQRT": 2,
+  "SUB": 8,
+  "SUM": 2,
+  "TRANSPOSE": 4
+}
+CUSTOM/FLEX operators: []
+Interpreter allocate_tensors(): PASS
+No CUSTOM/FLEX operators: PASS
+
+===== PREPARING 449-SAMPLE VALIDATION =====
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+[0;93m2026-11-21 18:16:42.121991058 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:16:42.122012255 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:16:42.122015008 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+ONNX Runtime input names:
+[('x_values', [1, 900, 6], 'tensor(float)'), ('missing_mask', [1, 900, 6], 'tensor(bool)'), ('x_mark', [1, 900, 3], 'tensor(float)'), ('worker_features_18', [1, 18], 'tensor(float)'), ('compact_values', [1, 1800, 6], 'tensor(float)')]
+Progress 1/449; sample_max_abs=1.1920929e-06; failed_samples=0
+Progress 26/449; sample_max_abs=2.32458115e-06; failed_samples=0
+Progress 51/449; sample_max_abs=3.09944153e-06; failed_samples=0
+Progress 76/449; sample_max_abs=1.54972076e-06; failed_samples=0
+Progress 101/449; sample_max_abs=1.43051147e-06; failed_samples=0
+Progress 126/449; sample_max_abs=6.43730164e-06; failed_samples=0
+Progress 151/449; sample_max_abs=6.43730164e-06; failed_samples=0
+Progress 176/449; sample_max_abs=1.07288361e-06; failed_samples=0
+Progress 201/449; sample_max_abs=4.29153442e-06; failed_samples=0
+Progress 226/449; sample_max_abs=5.24520874e-06; failed_samples=0
+Progress 251/449; sample_max_abs=2.50339508e-06; failed_samples=0
+Progress 276/449; sample_max_abs=2.62260437e-06; failed_samples=0
+Progress 301/449; sample_max_abs=2.2649765e-06; failed_samples=0
+Progress 326/449; sample_max_abs=1.31130219e-06; failed_samples=0
+Progress 351/449; sample_max_abs=3.09944153e-06; failed_samples=0
+Progress 376/449; sample_max_abs=3.33786011e-06; failed_samples=0
+Progress 401/449; sample_max_abs=7.27176666e-06; failed_samples=0
+Progress 426/449; sample_max_abs=7.39097595e-06; failed_samples=0
+Progress 449/449; sample_max_abs=7.09295273e-06; failed_samples=0
+
+<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>
+ERROR: TypeError: Object of type int32 is not JSON serializable
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py", line 433, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py", line 413, in main
+    report_path.write_text(json.dumps(report, indent=2))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+    chunks = list(chunks)
+             ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 326, in _iterencode_list
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type int32 is not JSON serializable
+
+SCRIPT_EXIT_CODE=1
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_onnx2tflite_all449_20261121_181636.log
+OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636
+]3008;end=ecfa1420-29e1-4932-83a5-9836c7baf9a7;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
