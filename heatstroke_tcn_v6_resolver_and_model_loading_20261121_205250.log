@@ -1,0 +1,2067 @@
+TCN V6 RESOLVER AND MODEL-LOADING INSPECTION
+Sat Nov 21 08:52:50 PM HKT 2026
+SDK=/home/user/sdk-alif
+
+===== 1. POLYU MODEL RESOLVER IMPLEMENTATION =====
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc [1-210] =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2025 Arm Limited
+     3	 * SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Application-local heat-stress TFLM operator registrations.
+     6	 */
+     7	
+     8	#include "PolyUModel1.hpp"
+     9	
+    10	#if defined(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+    11	#include "heatstroke_int64_cast_sum.hpp"
+    12	#endif
+    13	
+    14	#if defined(HEATSTROKE_INT64_MUL_EXPERIMENT)
+    15	#include "heatstroke_int64_mul.hpp"
+    16	#endif
+    17	
+    18	#if defined(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+    19	#include "heatstroke_int64_floor_mod.hpp"
+    20	#endif
+    21	
+    22	#if defined(HEATSTROKE_INT64_SUB_EXPERIMENT)
+    23	#include "heatstroke_int64_sub.hpp"
+    24	#endif
+    25	
+    26	#if defined(HEATSTROKE_INT64_ADD_EXPERIMENT)
+    27	#include "heatstroke_int64_add.hpp"
+    28	#endif
+    29	
+    30	#if defined(HEATSTROKE_INT64_SPLIT_V_EXPERIMENT)
+    31	#include "heatstroke_int64_split_v.hpp"
+    32	#endif
+    33	
+    34	
+    35	#include <cstdint>
+    36	
+    37	#include <cstddef>
+    38	#include <cstring>
+    39	#include <limits>
+    40	
+    41	#include <zephyr/kernel.h>
+    42	#include <zephyr/sys/printk.h>
+    43	
+    44	#include "tensorflow/lite/c/builtin_op_data.h"
+    45	#include "tensorflow/lite/c/common.h"
+    46	#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
+    47	#include "tensorflow/lite/kernels/kernel_util.h"
+    48	#include "tensorflow/lite/micro/micro_utils.h"
+    49	
+    50	#include "tensorflow/lite/core/api/flatbuffer_conversions.h"
+    51	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    52	#include "tensorflow/lite/micro/micro_log.h"
+    53	
+    54	#include "mlek/log/log_macros.h"
+    55	#include "heatstroke_bidirectional_lstm.h"
+    56	
+    57	
+    58	namespace
+    59	{
+    60	using HeatstrokeInvokeFunction =
+    61	    TfLiteStatus (*)(TfLiteContext*, TfLiteNode*);
+    62	
+    63	struct HeatstrokeOperatorTiming
+    64	{
+    65	    std::uint32_t calls{0};
+    66	    std::uint64_t total_cycles{0};
+    67	    std::uint64_t total_wall_ms{0};
+    68	    std::uint64_t max_wall_ms{0};
+    69	};
+    70	
+    71	constexpr std::uint32_t kHeatstrokeMaxBiLstmCalls = 4;
+    72	
+    73	struct HeatstrokeBiLstmCallDetail
+    74	{
+    75	    std::uint64_t cycles{0};
+    76	    std::uint64_t wall_ms{0};
+    77	    std::int32_t input_count{-1};
+    78	    std::int32_t output_count{-1};
+    79	    std::int32_t input_indices[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
+    80	    std::int32_t output_indices[4] = {-1,-1,-1,-1};
+    81	};
+    82	
+    83	HeatstrokeBiLstmCallDetail
+    84	    g_heatstrokeBiLstmCallDetails[kHeatstrokeMaxBiLstmCalls]{};
+    85	
+    86	HeatstrokeInvokeFunction g_heatstrokeOriginalEthosUInvoke = nullptr;
+    87	HeatstrokeInvokeFunction g_heatstrokeOriginalBiLstmInvoke = nullptr;
+    88	
+    89	HeatstrokeOperatorTiming g_heatstrokeEthosUTiming{};
+    90	HeatstrokeOperatorTiming g_heatstrokeBiLstmTiming{};
+    91	
+    92	bool g_heatstrokeTimingHookStatusLogged = false;
+    93	
+    94	void RecordHeatstrokeOperatorTiming(
+    95	    HeatstrokeOperatorTiming& stats,
+    96	    std::uint64_t elapsed_cycles,
+    97	    std::uint64_t elapsed_ms)
+    98	{
+    99	    ++stats.calls;
+   100	    stats.total_cycles += elapsed_cycles;
+   101	    stats.total_wall_ms += elapsed_ms;
+   102	
+   103	    if (elapsed_ms > stats.max_wall_ms) {
+   104	        stats.max_wall_ms = elapsed_ms;
+   105	    }
+   106	}
+   107	
+   108	TfLiteStatus HeatstrokeTimedEthosUInvoke(
+   109	    TfLiteContext* context,
+   110	    TfLiteNode* node)
+   111	{
+   112	    if (g_heatstrokeOriginalEthosUInvoke == nullptr) {
+   113	        return kTfLiteError;
+   114	    }
+   115	
+   116	    const std::uint64_t cycles_start = k_cycle_get_64();
+   117	    const std::int64_t time_start_ms = k_uptime_get();
+   118	
+   119	    const TfLiteStatus result =
+   120	        g_heatstrokeOriginalEthosUInvoke(context, node);
+   121	
+   122	    const std::int64_t time_end_ms = k_uptime_get();
+   123	    const std::uint64_t cycles_end = k_cycle_get_64();
+   124	
+   125	    const std::uint64_t elapsed_ms =
+   126	        (time_end_ms >= time_start_ms)
+   127	            ? static_cast<std::uint64_t>(time_end_ms - time_start_ms)
+   128	            : 0U;
+   129	
+   130	    RecordHeatstrokeOperatorTiming(
+   131	        g_heatstrokeEthosUTiming,
+   132	        cycles_end - cycles_start,
+   133	        elapsed_ms);
+   134	
+   135	    return result;
+   136	}
+   137	
+   138	TfLiteStatus HeatstrokeTimedBiLstmInvoke(
+   139	    TfLiteContext* context,
+   140	    TfLiteNode* node)
+   141	{
+   142	    if (g_heatstrokeOriginalBiLstmInvoke == nullptr) {
+   143	        return kTfLiteError;
+   144	    }
+   145	
+   146	
+   147	    const std::uint32_t call_index = g_heatstrokeBiLstmTiming.calls;
+   148	    HeatstrokeBiLstmCallDetail* call_detail =
+   149	        (call_index < kHeatstrokeMaxBiLstmCalls)
+   150	            ? &g_heatstrokeBiLstmCallDetails[call_index]
+   151	            : nullptr;
+   152	
+   153	    if (call_detail != nullptr && node != nullptr) {
+   154	        if (node->inputs != nullptr) {
+   155	            call_detail->input_count = node->inputs->size;
+   156	            for (int i = 0; i < node->inputs->size && i < 8; ++i) {
+   157	                call_detail->input_indices[i] = node->inputs->data[i];
+   158	            }
+   159	        }
+   160	
+   161	        if (node->outputs != nullptr) {
+   162	            call_detail->output_count = node->outputs->size;
+   163	            for (int i = 0; i < node->outputs->size && i < 4; ++i) {
+   164	                call_detail->output_indices[i] = node->outputs->data[i];
+   165	            }
+   166	        }
+   167	    }
+   168	
+   169	    const std::uint64_t cycles_start = k_cycle_get_64();
+   170	    const std::int64_t time_start_ms = k_uptime_get();
+   171	
+   172	    const TfLiteStatus result =
+   173	        g_heatstrokeOriginalBiLstmInvoke(context, node);
+   174	
+   175	    const std::int64_t time_end_ms = k_uptime_get();
+   176	    const std::uint64_t cycles_end = k_cycle_get_64();
+   177	
+   178	    const std::uint64_t elapsed_ms =
+   179	        (time_end_ms >= time_start_ms)
+   180	            ? static_cast<std::uint64_t>(time_end_ms - time_start_ms)
+   181	            : 0U;
+   182	
+   183	    if (call_detail != nullptr) {
+   184	        call_detail->cycles = cycles_end - cycles_start;
+   185	        call_detail->wall_ms = elapsed_ms;
+   186	    }
+   187	
+   188	    RecordHeatstrokeOperatorTiming(
+   189	        g_heatstrokeBiLstmTiming,
+   190	        cycles_end - cycles_start,
+   191	        elapsed_ms);
+   192	
+   193	    return result;
+   194	}
+   195	} // namespace
+   196	
+   197	const tflite::MicroOpResolver&
+   198	arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+   199	{
+   200	    const char* ethos_name = tflite::GetString_ETHOSU();
+   201	
+   202	    /*
+   203	     * The resolver's registrations_ array is public and mutable in this
+   204	     * SDK version. Modify its entries directly before the interpreter
+   205	     * captures their registration pointers.
+   206	     *
+   207	     * Keep every original callback and replace only invoke.
+   208	     */
+   209	    for (unsigned int i = 0;
+   210	         i < this->m_opResolver.registrations_len_;
+
+--- Resolver method location ---
+198:arm::app::fwk::tflm::PolyUModel1::GetOpResolver()
+882:bool arm::app::fwk::tflm::PolyUModel1::EnlistOperations()
+1085:     * AddEthosU() in this SDK can report success even when the hardware
+1088:    if (this->m_opResolver.AddEthosU() != kTfLiteOk) {
+
+===== 2. CURRENT HEAT-STRESS MODEL INITIALIZATION =====
+31:#include "PolyUModel1.hpp"
+42:using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+51:LOG_MODULE_REGISTER(MainLoop);
+165:extern const uint8_t* GetModelPointer();
+308:static bool VerifyTensorInterface(const arm::app::fwk::iface::Model& model)
+356:    PolyUModel1& model,
+413:static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+578:void MainLoop()
+580:    printk("HP_BOOT_TRACE: MainLoop entered\r\n");
+593:        arm::app::polyu_heatstroke::GetModelPointer();
+618:    PolyUModel1 model;
+620:    printk("HP_BOOT_TRACE: entering model.Init\r\n");
+621:    if (!model.Init(computeMem, modelMem)) {
+626:    printk("HP_BOOT_TRACE: model.Init SUCCESS\r\n");
+631:    if (!VerifyTensorInterface(model)) {
+637:    if (!RunHeatstrokeSmokeInference(model)) {
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc [1-135] =====
+     1	/* This file was ported to work on Alif Semiconductor devices. */
+     2	
+     3	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     4	 * Use, distribution and modification of this code is permitted under the
+     5	 * terms stated in the Alif Semiconductor Software License Agreement
+     6	 *
+     7	 * You should have received a copy of the Alif Semiconductor Software
+     8	 * License Agreement with this file. If not, please write to:
+     9	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+    10	 *
+    11	 */
+    12	
+    13	/*
+    14	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+    15	 * affiliates <open-source-office@arm.com>
+    16	 * SPDX-License-Identifier: Apache-2.0
+    17	 *
+    18	 * Licensed under the Apache License, Version 2.0 (the "License");
+    19	 * you may not use this file except in compliance with the License.
+    20	 * You may obtain a copy of the License at
+    21	 *
+    22	 *     http://www.apache.org/licenses/LICENSE-2.0
+    23	 *
+    24	 * Unless required by applicable law or agreed to in writing, software
+    25	 * distributed under the License is distributed on an "AS IS" BASIS,
+    26	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    27	 * See the License for the specific language governing permissions and
+    28	 * limitations under the License.
+    29	 */
+    30	#include "BufAttributes.hpp"
+    31	#include "PolyUModel1.hpp"
+    32	#include "heatstroke_smoke_test_vector.hpp"
+    33	#include "mlek/fwk/iface/Tensor.hpp"
+    34	
+    35	#include <cstddef>
+    36	#include <cstdint>
+    37	#include <cstring>
+    38	#include <cmath>
+    39	#include <memory>
+    40	#include <vector>
+    41	
+    42	using PolyUModel1 = arm::app::fwk::tflm::PolyUModel1;
+    43	
+    44	#include "power_mgr.h"             /* power management APIs */
+    45	#include <zephyr/logging/log.h>
+    46	#include <zephyr/kernel.h>
+    47	#include <zephyr/drivers/gpio.h>
+    48	#include <cmsis_core.h>
+    49	#include <zephyr/sys/printk.h>
+    50	
+    51	LOG_MODULE_REGISTER(MainLoop);
+    52	
+    53	
+    54	/*
+    55	 * Application-local Ethos-U runtime diagnostic.
+    56	 * Reads NPU STATUS and NVIC IRQ 55 only; does not alter either.
+    57	 */
+    58	namespace {
+    59	
+    60	constexpr std::uintptr_t kHeatstrokeEthosuStatusAddress = 0x400E1004UL;
+    61	constexpr IRQn_Type kHeatstrokeEthosuIrq =
+    62	    static_cast<IRQn_Type>(55);
+    63	
+    64	struct k_work g_heatstrokeEthosuMonitorWork;
+    65	struct k_timer g_heatstrokeEthosuMonitorTimer;
+    66	
+    67	void HeatstrokeEthosuMonitorWorkHandler(struct k_work* work)
+    68	{
+    69	    (void)work;
+    70	
+    71	    const auto* statusRegister =
+    72	        reinterpret_cast<volatile const std::uint32_t*>(
+    73	            kHeatstrokeEthosuStatusAddress);
+    74	    const std::uint32_t status = *statusRegister;
+    75	
+    76	    const unsigned int enabled = static_cast<unsigned int>(
+    77	        NVIC_GetEnableIRQ(kHeatstrokeEthosuIrq));
+    78	    const unsigned int pending = static_cast<unsigned int>(
+    79	        NVIC_GetPendingIRQ(kHeatstrokeEthosuIrq));
+    80	    const unsigned int active = static_cast<unsigned int>(
+    81	        NVIC_GetActive(kHeatstrokeEthosuIrq));
+    82	
+    83	    LOG_INF(
+    84	        "ETHOSU_DIAG: status=0x%08x run=%u irq=%u bus=%u reset=%u "
+    85	        "parse=%u end=%u pmu=%u wd=%u ecc=%u "
+    86	        "IRQ55[en=%u pend=%u active=%u]",
+    87	        static_cast<unsigned int>(status),
+    88	        static_cast<unsigned int>((status >> 0U) & 1U),
+    89	        static_cast<unsigned int>((status >> 1U) & 1U),
+    90	        static_cast<unsigned int>((status >> 2U) & 1U),
+    91	        static_cast<unsigned int>((status >> 3U) & 1U),
+    92	        static_cast<unsigned int>((status >> 4U) & 1U),
+    93	        static_cast<unsigned int>((status >> 5U) & 1U),
+    94	        static_cast<unsigned int>((status >> 6U) & 1U),
+    95	        static_cast<unsigned int>((status >> 7U) & 1U),
+    96	        static_cast<unsigned int>((status >> 8U) & 1U),
+    97	        enabled, pending, active);
+    98	}
+    99	
+   100	void HeatstrokeEthosuMonitorTimerHandler(struct k_timer* timer)
+   101	{
+   102	    (void)timer;
+   103	    (void)k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   104	}
+   105	
+   106	void StartHeatstrokeEthosuMonitor()
+   107	{
+   108	    k_work_init(
+   109	        &g_heatstrokeEthosuMonitorWork,
+   110	        HeatstrokeEthosuMonitorWorkHandler);
+   111	
+   112	    k_timer_init(
+   113	        &g_heatstrokeEthosuMonitorTimer,
+   114	        HeatstrokeEthosuMonitorTimerHandler,
+   115	        nullptr);
+   116	
+   117	    const int initialSubmit =
+   118	        k_work_submit(&g_heatstrokeEthosuMonitorWork);
+   119	
+   120	    if (initialSubmit < 0) {
+   121	        LOG_WRN("ETHOSU_DIAG: initial snapshot submission failed: %d",
+   122	                initialSubmit);
+   123	    }
+   124	
+   125	    k_timer_start(
+   126	        &g_heatstrokeEthosuMonitorTimer,
+   127	        K_SECONDS(1),
+   128	        K_SECONDS(1));
+   129	
+   130	    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+   131	}
+   132	
+   133	void StopHeatstrokeEthosuMonitor()
+   134	{
+   135	    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc [250-620] =====
+   250		LOG_INF("LPGPIO%d configured", spec->pin);
+   251	
+   252		return 0;
+   253	}
+   254	
+   255	/** @brief   Verify input and output tensor are of certain min dimensions. */
+   256	
+   257	static bool VerifyOneTensor(
+   258	    const char* label,
+   259	    size_t index,
+   260	    const std::shared_ptr<arm::app::fwk::iface::TensorIface>& tensor,
+   261	    const std::vector<size_t>& expectedShape)
+   262	{
+   263	    using arm::app::fwk::iface::TensorType;
+   264	
+   265	    if (!tensor) {
+   266	        LOG_ERR("%s[%u] tensor handle is null",
+   267	                label, static_cast<unsigned int>(index));
+   268	        return false;
+   269	    }
+   270	
+   271	    const std::vector<size_t> actualShape = tensor->Shape();
+   272	    if (actualShape != expectedShape) {
+   273	        LOG_ERR("%s[%u] shape mismatch",
+   274	                label, static_cast<unsigned int>(index));
+   275	        return false;
+   276	    }
+   277	
+   278	    if (tensor->Type() != TensorType::FP32) {
+   279	        LOG_ERR("%s[%u] must be FP32; got %s",
+   280	                label,
+   281	                static_cast<unsigned int>(index),
+   282	                arm::app::fwk::iface::GetTensorDataTypeName(tensor->Type()));
+   283	        return false;
+   284	    }
+   285	
+   286	    size_t expectedElements = 1U;
+   287	    for (const size_t dimension : expectedShape) {
+   288	        expectedElements *= dimension;
+   289	    }
+   290	
+   291	    if (tensor->GetNumElements() != expectedElements ||
+   292	        tensor->Bytes() != expectedElements * sizeof(float) ||
+   293	        tensor->GetData() == nullptr) {
+   294	        LOG_ERR("%s[%u] element count, byte size, or data pointer is invalid",
+   295	                label, static_cast<unsigned int>(index));
+   296	        return false;
+   297	    }
+   298	
+   299	    LOG_INF("%s[%u]: FP32, elements=%u, bytes=%u",
+   300	            label,
+   301	            static_cast<unsigned int>(index),
+   302	            static_cast<unsigned int>(tensor->GetNumElements()),
+   303	            static_cast<unsigned int>(tensor->Bytes()));
+   304	
+   305	    return true;
+   306	}
+   307	
+   308	static bool VerifyTensorInterface(const arm::app::fwk::iface::Model& model)
+   309	{
+   310	    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+   311	        LOG_ERR("Model I/O count mismatch: inputs=%u outputs=%u; expected 4/2",
+   312	                static_cast<unsigned int>(model.GetNumInputs()),
+   313	                static_cast<unsigned int>(model.GetNumOutputs()));
+   314	        return false;
+   315	    }
+   316	
+   317	    const std::vector<std::vector<size_t>> expectedInputs = {
+   318	        {1U, 900U, 6U},  /* x_values */
+   319	        {1U, 900U, 6U},  /* missing_mask */
+   320	        {1U, 900U, 3U},  /* x_mark */
+   321	        {1U, 30U}        /* worker_features */
+   322	    };
+   323	
+   324	    const char* inputNames[] = {
+   325	        "x_values", "missing_mask", "x_mark", "worker_features"
+   326	    };
+   327	
+   328	    for (size_t i = 0; i < expectedInputs.size(); ++i) {
+   329	        if (!VerifyOneTensor(
+   330	                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+   331	            LOG_ERR("Input contract failed for %s", inputNames[i]);
+   332	            return false;
+   333	        }
+   334	    }
+   335	
+   336	    const std::vector<std::vector<size_t>> expectedOutputs = {
+   337	        {1U, 4U},  /* rpe_logits */
+   338	        {1U, 4U}   /* psi_logits */
+   339	    };
+   340	
+   341	    const char* outputNames[] = {"rpe_logits", "psi_logits"};
+   342	
+   343	    for (size_t i = 0; i < expectedOutputs.size(); ++i) {
+   344	        if (!VerifyOneTensor(
+   345	                "Output", i, model.GetOutputTensor(i), expectedOutputs[i])) {
+   346	            LOG_ERR("Output contract failed for %s", outputNames[i]);
+   347	            return false;
+   348	        }
+   349	    }
+   350	
+   351	    return true;
+   352	}
+   353	
+   354	
+   355	static bool BindSmokeInputTensor(
+   356	    PolyUModel1& model,
+   357	    size_t index,
+   358	    const char* name,
+   359	    const std::uint32_t* sourceBits,
+   360	    size_t sourceBytes,
+   361	    const std::vector<size_t>& expectedShape)
+   362	{
+   363	    auto tensor = model.GetInputTensor(index);
+   364	    if (!VerifyOneTensor(name, index, tensor, expectedShape)) {
+   365	        return false;
+   366	    }
+   367	
+   368	    if (tensor->Bytes() != sourceBytes || sourceBits == nullptr) {
+   369	        LOG_ERR("%s[%u] input payload size mismatch",
+   370	                name, static_cast<unsigned int>(index));
+   371	        return false;
+   372	    }
+   373	
+   374	    std::memcpy(tensor->GetData(), sourceBits, sourceBytes);
+   375	    LOG_INF("%s[%u] bound: %u bytes",
+   376	            name,
+   377	            static_cast<unsigned int>(index),
+   378	            static_cast<unsigned int>(sourceBytes));
+   379	    return true;
+   380	}
+   381	
+   382	static float DecodeSmokeReference(const std::uint32_t bits)
+   383	{
+   384	    float value = 0.0F;
+   385	    std::memcpy(&value, &bits, sizeof(value));
+   386	    return value;
+   387	}
+   388	
+   389	static int SmokeFloatToMicro(const float value)
+   390	{
+   391	    const double scaled = static_cast<double>(value) * 1000000.0;
+   392	    if (scaled > 2147483647.0) {
+   393	        return 2147483647;
+   394	    }
+   395	    if (scaled < -2147483648.0) {
+   396	        return (-2147483647 - 1);
+   397	    }
+   398	    return static_cast<int>(scaled >= 0.0 ? scaled + 0.5 : scaled - 0.5);
+   399	}
+   400	
+   401	static unsigned int SmokeArgMax4(const float* values)
+   402	{
+   403	    unsigned int best = 0U;
+   404	    for (unsigned int i = 1U; i < 4U; ++i) {
+   405	        if (values[i] > values[best]) {
+   406	            best = i;
+   407	        }
+   408	    }
+   409	    return best;
+   410	}
+   411	
+   412	
+   413	static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+   414	{
+   415	    static_assert(sizeof(float) == sizeof(std::uint32_t),
+   416	                  "Smoke test requires 32-bit FP32");
+   417	
+   418	    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+   419	    LOG_INF("Multi-sample vector count: %u",
+   420	            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+   421	
+   422	    const auto& backendData = model.GetBackendData();
+   423	    if (!backendData.m_pInterpreter) {
+   424	        LOG_ERR("TFLM backend interpreter pointer is null");
+   425	        return false;
+   426	    }
+   427	
+   428	    for (std::uint32_t slot = 0U;
+   429	         slot < heatstroke_smoke::kSampleCount; ++slot) {
+   430	        const auto& sample = heatstroke_smoke::kSamples[slot];
+   431	
+   432	        LOG_INF("=== SAMPLE %u / %u ===",
+   433	                static_cast<unsigned int>(slot + 1U),
+   434	                static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+   435	        LOG_INF("Dataset position: %u; sample ID: %u",
+   436	                static_cast<unsigned int>(sample.dataset_position),
+   437	                static_cast<unsigned int>(sample.dataset_sample_id));
+   438	        LOG_INF("Missing positions: %u",
+   439	                static_cast<unsigned int>(sample.missing_count));
+   440	        LOG_INF("Ground-truth labels RPE=%u PSI=%u",
+   441	                static_cast<unsigned int>(sample.rpe_label),
+   442	                static_cast<unsigned int>(sample.psi_label));
+   443	        LOG_INF("Input-vector SHA256: %s", sample.input_sha256);
+   444	
+   445	        const auto resetStatus = backendData.m_pInterpreter->Reset();
+   446	        if (resetStatus != kTfLiteOk) {
+   447	            LOG_ERR("MicroInterpreter::Reset failed; status=%d",
+   448	                    static_cast<int>(resetStatus));
+   449	            return false;
+   450	        }
+   451	        LOG_INF("MicroInterpreter::Reset: SUCCESS");
+   452	
+   453	        if (!BindSmokeInputTensor(
+   454	                model, 0U, "x_values", sample.x_values_bits,
+   455	                5400U * sizeof(std::uint32_t),
+   456	                std::vector<size_t>{1U, 900U, 6U})) {
+   457	            return false;
+   458	        }
+   459	        if (!BindSmokeInputTensor(
+   460	                model, 1U, "missing_mask", sample.missing_mask_bits,
+   461	                5400U * sizeof(std::uint32_t),
+   462	                std::vector<size_t>{1U, 900U, 6U})) {
+   463	            return false;
+   464	        }
+   465	        if (!BindSmokeInputTensor(
+   466	                model, 2U, "x_mark", sample.x_mark_bits,
+   467	                2700U * sizeof(std::uint32_t),
+   468	                std::vector<size_t>{1U, 900U, 3U})) {
+   469	            return false;
+   470	        }
+   471	        if (!BindSmokeInputTensor(
+   472	                model, 3U, "worker_features", sample.worker_features_bits,
+   473	                30U * sizeof(std::uint32_t),
+   474	                std::vector<size_t>{1U, 30U})) {
+   475	            return false;
+   476	        }
+   477	
+   478	        arm::app::fwk::tflm::ResetHeatstrokeOperatorTiming();
+   479	        const std::int64_t startMs = k_uptime_get();
+   480	        LOG_INF("HEATSTROKE_DIAG: entering TFLM RunInference()");
+   481	        StartHeatstrokeEthosuMonitor();
+   482	        const bool inferenceOk = model.RunInference();
+   483	        StopHeatstrokeEthosuMonitor();
+   484	        arm::app::fwk::tflm::LogHeatstrokeOperatorTiming();
+   485	
+   486	        if (!inferenceOk) {
+   487	            LOG_ERR("TFLM RunInference() returned false for slot %u",
+   488	                    static_cast<unsigned int>(slot));
+   489	            return false;
+   490	        }
+   491	        const std::int64_t elapsedMs = k_uptime_get() - startMs;
+   492	
+   493	        auto rpeTensor = model.GetOutputTensor(0U);
+   494	        auto psiTensor = model.GetOutputTensor(1U);
+   495	        if (!VerifyOneTensor("Output rpe_logits", 0U, rpeTensor,
+   496	                             std::vector<size_t>{1U, 4U}) ||
+   497	            !VerifyOneTensor("Output psi_logits", 1U, psiTensor,
+   498	                             std::vector<size_t>{1U, 4U})) {
+   499	            return false;
+   500	        }
+   501	
+   502	        const float* rpe = rpeTensor->GetData<float>();
+   503	        const float* psi = psiTensor->GetData<float>();
+   504	        if (rpe == nullptr || psi == nullptr) {
+   505	            LOG_ERR("Inference output data pointer is null");
+   506	            return false;
+   507	        }
+   508	
+   509	        float rpeRef[4];
+   510	        float psiRef[4];
+   511	        float rpeMaxError = 0.0F;
+   512	        float psiMaxError = 0.0F;
+   513	        double rpeErrorSum = 0.0;
+   514	        double psiErrorSum = 0.0;
+   515	
+   516	        for (unsigned int i = 0U; i < 4U; ++i) {
+   517	            rpeRef[i] = DecodeSmokeReference(sample.reference_rpe_bits[i]);
+   518	            psiRef[i] = DecodeSmokeReference(sample.reference_psi_bits[i]);
+   519	            if (!std::isfinite(rpe[i]) || !std::isfinite(psi[i]) ||
+   520	                !std::isfinite(rpeRef[i]) || !std::isfinite(psiRef[i])) {
+   521	                LOG_ERR("Non-finite output/reference at class index %u", i);
+   522	                return false;
+   523	            }
+   524	            const float re = std::fabs(rpe[i] - rpeRef[i]);
+   525	            const float pe = std::fabs(psi[i] - psiRef[i]);
+   526	            if (re > rpeMaxError) rpeMaxError = re;
+   527	            if (pe > psiMaxError) psiMaxError = pe;
+   528	            rpeErrorSum += re;
+   529	            psiErrorSum += pe;
+   530	        }
+   531	
+   532	        const float rpeMeanError = static_cast<float>(rpeErrorSum / 4.0);
+   533	        const float psiMeanError = static_cast<float>(psiErrorSum / 4.0);
+   534	        const unsigned int rpeRefClass = SmokeArgMax4(rpeRef);
+   535	        const unsigned int psiRefClass = SmokeArgMax4(psiRef);
+   536	        const unsigned int rpeMcuClass = SmokeArgMax4(rpe);
+   537	        const unsigned int psiMcuClass = SmokeArgMax4(psi);
+   538	
+   539	        LOG_INF("TFLM RunInference: SUCCESS; elapsed=%u ms",
+   540	                static_cast<unsigned int>(elapsedMs));
+   541	        LOG_INF("RPE reference micro: [%d,%d,%d,%d]",
+   542	                SmokeFloatToMicro(rpeRef[0]), SmokeFloatToMicro(rpeRef[1]),
+   543	                SmokeFloatToMicro(rpeRef[2]), SmokeFloatToMicro(rpeRef[3]));
+   544	        LOG_INF("RPE MCU micro:       [%d,%d,%d,%d]",
+   545	                SmokeFloatToMicro(rpe[0]), SmokeFloatToMicro(rpe[1]),
+   546	                SmokeFloatToMicro(rpe[2]), SmokeFloatToMicro(rpe[3]));
+   547	        LOG_INF("PSI reference micro: [%d,%d,%d,%d]",
+   548	                SmokeFloatToMicro(psiRef[0]), SmokeFloatToMicro(psiRef[1]),
+   549	                SmokeFloatToMicro(psiRef[2]), SmokeFloatToMicro(psiRef[3]));
+   550	        LOG_INF("PSI MCU micro:       [%d,%d,%d,%d]",
+   551	                SmokeFloatToMicro(psi[0]), SmokeFloatToMicro(psi[1]),
+   552	                SmokeFloatToMicro(psi[2]), SmokeFloatToMicro(psi[3]));
+   553	        LOG_INF("RPE max/mean abs error micro: %d / %d",
+   554	                SmokeFloatToMicro(rpeMaxError), SmokeFloatToMicro(rpeMeanError));
+   555	        LOG_INF("PSI max/mean abs error micro: %d / %d",
+   556	                SmokeFloatToMicro(psiMaxError), SmokeFloatToMicro(psiMeanError));
+   557	        LOG_INF("RPE class reference=%u MCU=%u match=%s",
+   558	                rpeRefClass, rpeMcuClass,
+   559	                rpeRefClass == rpeMcuClass ? "yes" : "no");
+   560	        LOG_INF("PSI class reference=%u MCU=%u match=%s",
+   561	                psiRefClass, psiMcuClass,
+   562	                psiRefClass == psiMcuClass ? "yes" : "no");
+   563	        LOG_INF("RPE ground-truth=%u predicted=%u",
+   564	                static_cast<unsigned int>(sample.rpe_label), rpeMcuClass);
+   565	        LOG_INF("PSI ground-truth=%u predicted=%u",
+   566	                static_cast<unsigned int>(sample.psi_label), psiMcuClass);
+   567	        LOG_INF("Activation arena capacity: %u bytes",
+   568	                static_cast<unsigned int>(model.GetComputeBuffer().size));
+   569	        LOG_INF("Model buffer size: %u bytes",
+   570	                static_cast<unsigned int>(model.GetModelBuffer().size));
+   571	        LOG_INF("=== SAMPLE %u COMPLETE ===", static_cast<unsigned int>(slot));
+   572	    }
+   573	
+   574	    LOG_INF("=== THREE-SAMPLE HEATSTROKE INFERENCE COMPLETE ===");
+   575	    return true;
+   576	}
+   577	
+   578	void MainLoop()
+   579	{
+   580	    printk("HP_BOOT_TRACE: MainLoop entered\r\n");
+   581	    por_boot = true;
+   582	    k_sem_init(&button_wait_sem, 0, 1);
+   583	
+   584	    printk("HP_BOOT_TRACE: before configure_lpgpio\r\n");
+   585	    const int lpgpioRet = configure_lpgpio();
+   586	    printk("HP_BOOT_TRACE: configure_lpgpio returned %d\r\n", lpgpioRet);
+   587	    if (lpgpioRet) {
+   588	        LOG_ERR("Failed to configure LPGPIO for button input");
+   589	        return;
+   590	    }
+   591	
+   592	    const uint8_t* modelPointer =
+   593	        arm::app::polyu_heatstroke::GetModelPointer();
+   594	    const size_t modelLength =
+   595	        arm::app::polyu_heatstroke::GetModelLen();
+   596	    printk("HP_BOOT_TRACE: model pointer=%p length=%u\r\n",
+   597	           static_cast<const void*>(modelPointer),
+   598	           static_cast<unsigned int>(modelLength));
+   599	
+   600	    if (modelPointer == nullptr || modelLength == 0U) {
+   601	        LOG_ERR("Combined heat-stress model pointer or length is invalid");
+   602	        return;
+   603	    }
+   604	
+   605	    LOG_INF("=====================");
+   606	    LOG_INF("Combined model pointer: %p",
+   607	            static_cast<const void*>(modelPointer));
+   608	    LOG_INF("Combined model size: %u bytes",
+   609	            static_cast<unsigned int>(modelLength));
+   610	
+   611	    /* MLEK MemoryRegion is mutable; the generated model itself is const. */
+   612	    arm::app::fwk::iface::MemoryRegion modelMem{
+   613	        const_cast<uint8_t*>(modelPointer), modelLength};
+   614	
+   615	    arm::app::fwk::iface::MemoryRegion computeMem{
+   616	        arm::app::activationBuf, sizeof(arm::app::activationBuf)};
+   617	
+   618	    PolyUModel1 model;
+   619	
+   620	    printk("HP_BOOT_TRACE: entering model.Init\r\n");
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc [620-900] =====
+   620	    printk("HP_BOOT_TRACE: entering model.Init\r\n");
+   621	    if (!model.Init(computeMem, modelMem)) {
+   622	        LOG_ERR("Failed to initialise combined heat-stress model");
+   623	        return;
+   624	    }
+   625	
+   626	    printk("HP_BOOT_TRACE: model.Init SUCCESS\r\n");
+   627	    LOG_INF("Combined heat-stress model initialisation: OK");
+   628	    LOG_INF("Contains Ethos-U operators: %s",
+   629	            model.ContainsEthosUOperator() ? "yes" : "no");
+   630	
+   631	    if (!VerifyTensorInterface(model)) {
+   632	        LOG_ERR("Combined heat-stress model I/O contract verification failed");
+   633	        return;
+   634	    }
+   635	
+   636	    LOG_INF("Combined heat-stress model I/O contract verified.");
+   637	    if (!RunHeatstrokeSmokeInference(model)) {
+   638	        LOG_ERR("One-sample heat-stress inference failed");
+   639	        return;
+   640	    }
+   641	    LOG_INF("One-sample heat-stress inference: COMPLETE.");
+   642	}
+
+===== 3. MLEK TFLM MODEL BASE CLASS =====
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TensorFlowLiteMicro.hpp
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+
+===== FILE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TensorFlowLiteMicro.hpp [1-360] =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	#ifndef TENSORFLOW_LITE_MICRO_LOCAL_HPP
+    19	#define TENSORFLOW_LITE_MICRO_LOCAL_HPP
+    20	
+    21	/* We include all our TensorFlow Lite Micro headers here */
+    22	
+    23	/**
+    24	 * TensorFlow Lite Micro sources can generate a lot of warnings from the usage
+    25	 * of a single macro (TF_LITE_REMOVE_VIRTUAL_DELETE). Suppress the known ones
+    26	 * here to prevent them from masking warnings that might be generated by our
+    27	 * application sources.
+    28	 */
+    29	#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+    30	#pragma clang diagnostic push
+    31	#pragma clang diagnostic ignored "-Wunused-parameter"
+    32	#include "tensorflow/lite/micro/micro_interpreter.h"
+    33	#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+    34	#pragma clang diagnostic pop
+    35	#elif defined(__GNUC__)
+    36	#pragma GCC diagnostic push
+    37	#pragma GCC diagnostic ignored "-Wunused-parameter"
+    38	#include "tensorflow/lite/micro/micro_interpreter.h"
+    39	#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+    40	#pragma GCC diagnostic pop
+    41	#else
+    42	#include "tensorflow/lite/micro/micro_interpreter.h"
+    43	#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+    44	#endif
+    45	
+    46	#include "tensorflow/lite/c/common.h"
+    47	#include "tensorflow/lite/micro/debug_log.h"
+    48	#include "tensorflow/lite/micro/kernels/micro_ops.h"
+    49	#include "tensorflow/lite/schema/schema_generated.h"
+    50	#include "tensorflow/lite/schema/schema_utils.h"
+    51	
+    52	#if defined(TESTS)
+    53	#include "tensorflow/lite/micro/test_helpers.h"
+    54	#endif /* defined (TESTS) */
+    55	
+    56	namespace arm::app::fwk::tflm {
+    57	/**
+    58	 * @brief Enables TensorFlow Lite Micro's error reporter to log to standard
+    59	 *        output stream.
+    60	 */
+    61	void EnableTFLMLog();
+    62	
+    63	} /* namespace arm::app::fwk::tflm */
+    64	
+    65	#endif /* TENSORFLOW_LITE_MICRO_LOCAL_HPP */
+
+===== FILE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc [1-360] =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#include "mlek/fwk/tflm/TflmModel.hpp"
+    18	#include "mlek/fwk/iface/Model.hpp"
+    19	#include "mlek/fwk/tflm/TflmTensor.hpp"
+    20	#include "mlek/log/log_macros.h"
+    21	
+    22	#include <cinttypes>
+    23	#include <cstring>
+    24	#include <memory>
+    25	#include <string>
+    26	
+    27	namespace arm::app::fwk::tflm {
+    28	namespace {
+    29	/**
+    30	 * @brief   Infer Arm Ethos-U NPU memory mode from Ethos-U operator inputs.
+    31	 * @param[in] model     Pointer the the model object.
+    32	 * @return  Memory mode string if detected, or empty string otherwise.
+    33	 */
+    34	std::string InferNpuMemoryModeFromEthosUOp(const tflite::Model* model)
+    35	{
+    36	    if (!model || !model->subgraphs() || model->subgraphs()->size() == 0 ||
+    37	        !model->operator_codes()) {
+    38	        return {};
+    39	    }
+    40	
+    41	    const tflite::SubGraph* subgraph = model->subgraphs()->Get(0);
+    42	    if (!subgraph || !subgraph->operators()) {
+    43	        return {};
+    44	    }
+    45	
+    46	    int ethos_u_opcode = -1;
+    47	    for (uint32_t i = 0; i < model->operator_codes()->size(); ++i) {
+    48	        const tflite::OperatorCode* opcode = model->operator_codes()->Get(i);
+    49	        if (!opcode || opcode->builtin_code() != tflite::BuiltinOperator_CUSTOM) {
+    50	            continue;
+    51	        }
+    52	        const auto* custom = opcode->custom_code();
+    53	        if (custom && (std::strcmp(custom->c_str(), "ethos-u") == 0)) {
+    54	            ethos_u_opcode = static_cast<int>(i);
+    55	            break;
+    56	        }
+    57	    }
+    58	
+    59	    if (ethos_u_opcode < 0) {
+    60	        return {};
+    61	    }
+    62	
+    63	    for (uint32_t i = 0; i < subgraph->operators()->size(); ++i) {
+    64	        const tflite::Operator* op = subgraph->operators()->Get(i);
+    65	        if (!op || op->opcode_index() != ethos_u_opcode) {
+    66	            continue;
+    67	        }
+    68	        const auto* inputs = op->inputs();
+    69	        if (!inputs || inputs->size() <= 3) {
+    70	            continue;
+    71	        }
+    72	
+    73	        /* Vela places tensor arena at index 2 and fast scratch buffer at index 3. */
+    74	        const int32_t arena_idx = inputs->Get(2);
+    75	        const int32_t scratch_idx = inputs->Get(3);
+    76	        if (arena_idx < 0 || scratch_idx < 0) {
+    77	            continue;
+    78	        }
+    79	
+    80	        const tflite::Tensor* arena = subgraph->tensors()->Get(arena_idx);
+    81	        const tflite::Tensor* scratch = subgraph->tensors()->Get(scratch_idx);
+    82	        if (!arena || !scratch) {
+    83	            continue;
+    84	        }
+    85	
+    86	        const auto arena_shape = arena->shape();
+    87	        const auto scratch_shape = scratch->shape();
+    88	        if (!arena_shape || !scratch_shape || arena_shape->size() < 1 ||
+    89	            scratch_shape->size() < 1 || arena_shape->Get(0) < 1) {
+    90	            continue;
+    91	        }
+    92	
+    93	        if (arena_shape->Get(0) == scratch_shape->Get(0)) {
+    94	            return "Sram_Only/Shared_Sram";
+    95	        }
+    96	        return "Dedicated_Sram";
+    97	    }
+    98	
+    99	    return {};
+   100	}
+   101	} /* anonymous namespace */
+   102	
+   103	TflmModel::TflmModel() {}
+   104	
+   105	/* Initialise the model */
+   106	bool TflmModel::Init(iface::MemoryRegion& computeBuffer,
+   107	                     iface::MemoryRegion& nnModel,
+   108	                     const void* backendData)
+   109	{
+   110	    /* Following tf lite micro example:
+   111	     * Map the model into a usable data structure. This doesn't involve any
+   112	     * copying or parsing, it's a very lightweight operation. */
+   113	    debug("loading model from @ 0x%p\n", nnModel.data);
+   114	    debug("model size: %" PRIu32 " bytes.\n", nnModel.size);
+   115	
+   116	    /* Enable logging before we start interacting with the framework. */
+   117	    EnableTFLMLog();
+   118	
+   119	    this->m_backendData.m_pModel = ::tflite::GetModel(nnModel.data);
+   120	
+   121	    if (this->m_backendData.m_pModel->version() != TFLITE_SCHEMA_VERSION) {
+   122	        printf_err("Model's schema version %" PRIu32 " is not equal "
+   123	                   "to supported version %d.",
+   124	                   this->m_backendData.m_pModel->version(),
+   125	                   TFLITE_SCHEMA_VERSION);
+   126	        return false;
+   127	    }
+   128	
+   129	    this->m_computeBuffer = computeBuffer;
+   130	    this->m_modelBuffer   = nnModel;
+   131	
+   132	    /* Pull in only the operation implementations we need.
+   133	     * This relies on a complete list of all the ops needed by this graph.
+   134	     * An easier approach is to just use the AllOpsResolver, but this will
+   135	     * incur some penalty in code space for op implementations that are not
+   136	     * needed by this graph.
+   137	     * static ::tflite::ops::micro::AllOpsResolver resolver; */
+   138	    /* NOLINTNEXTLINE(runtime-global-variables) */
+   139	    debug("loading op resolver\n");
+   140	
+   141	    this->EnlistOperations();
+   142	
+   143	    /** If backend data has been provided, re-use the allocator */
+   144	    if (backendData) {
+   145	        this->m_backendData.m_pAllocator =
+   146	            reinterpret_cast<const TflmBackendData*>(backendData)->m_pAllocator;
+   147	    }
+   148	
+   149	    /* Create allocator instance, if it doesn't exist */
+   150	    if (!this->m_backendData.m_pAllocator) {
+   151	        /* Create an allocator instance */
+   152	        info("Creating allocator using tensor arena at 0x%p\n", computeBuffer.data);
+   153	
+   154	        this->m_backendData.m_pAllocator =
+   155	            tflite::MicroAllocator::Create(computeBuffer.data, computeBuffer.size);
+   156	
+   157	        if (!this->m_backendData.m_pAllocator) {
+   158	            printf_err("Failed to create allocator\n");
+   159	            return false;
+   160	        }
+   161	        debug("Created new allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+   162	    } else {
+   163	        debug("Using existing allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+   164	    }
+   165	
+   166	    this->m_backendData.m_pInterpreter = std::make_unique<tflite::MicroInterpreter>(
+   167	        this->m_backendData.m_pModel, this->GetOpResolver(), this->m_backendData.m_pAllocator);
+   168	
+   169	    if (!this->m_backendData.m_pInterpreter) {
+   170	        printf_err("Failed to allocate interpreter\n");
+   171	        return false;
+   172	    }
+   173	
+   174	    /* Allocate memory from the tensor_arena for the model's tensors. */
+   175	    info("Allocating tensors\n");
+   176	    TfLiteStatus allocate_status = this->m_backendData.m_pInterpreter->AllocateTensors();
+   177	
+   178	    if (allocate_status != kTfLiteOk) {
+   179	        printf_err("tensor allocation failed!\n");
+   180	        return false;
+   181	    }
+   182	
+   183	    /* Get information about the memory area to use for the model's input. */
+   184	    this->m_input.resize(this->GetNumInputs());
+   185	    for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+   186	        this->m_input[inIndex] =
+   187	            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->input(inIndex));
+   188	    }
+   189	
+   190	    this->m_output.resize(this->GetNumOutputs());
+   191	    for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+   192	        this->m_output[outIndex] =
+   193	            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->output(outIndex));
+   194	    }
+   195	
+   196	    if (this->m_input.empty() || this->m_output.empty()) {
+   197	        printf_err("failed to get tensors\n");
+   198	        return false;
+   199	    } else {
+   200	        this->m_type = this->m_input[0]->Type(); /* Input 0 should be the main input */
+   201	
+   202	        /* Clear the input & output tensors */
+   203	        for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+   204	            std::memset(this->m_input[inIndex]->GetData(), 0, this->m_input[inIndex]->Bytes());
+   205	        }
+   206	        for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+   207	            std::memset(this->m_output[outIndex]->GetData(), 0, this->m_output[outIndex]->Bytes());
+   208	        }
+   209	
+   210	        this->LogInterpreterInfo();
+   211	    }
+   212	
+   213	    this->m_inited = true;
+   214	    return true;
+   215	}
+   216	
+   217	std::shared_ptr<iface::TensorIface> TflmModel::GetInputTensor(size_t index) const
+   218	{
+   219	    if (index < this->GetNumInputs()) {
+   220	        return this->m_input.at(index);
+   221	    }
+   222	    return {};
+   223	}
+   224	
+   225	std::shared_ptr<iface::TensorIface> TflmModel::GetOutputTensor(size_t index) const
+   226	{
+   227	    if (index < this->GetNumOutputs()) {
+   228	        return this->m_output.at(index);
+   229	    }
+   230	    return nullptr;
+   231	}
+   232	
+   233	void TflmModel::LogTensorInfo(std::shared_ptr<iface::TensorIface> tensor)
+   234	{
+   235	    if (!tensor) {
+   236	        printf_err("Invalid tensor\n");
+   237	        assert(tensor);
+   238	        return;
+   239	    }
+   240	
+   241	    debug("\ttensor is assigned to 0x%p\n", tensor.get());
+   242	    info("\ttensor type is %s\n", GetTensorDataTypeName(tensor->Type()));
+   243	    info("\ttensor occupies %zu bytes with dimensions\n", tensor->Bytes());
+   244	    const auto shape = tensor->Shape();
+   245	    for (size_t i = 0; i < shape.size(); ++i) {
+   246	        info("\t\t%zu: %3d\n", i, static_cast<int>(shape[i]));
+   247	    }
+   248	
+   249	    const auto quant = tensor->GetQuantParams();
+   250	    info("Scale = %f\n", quant.scale);
+   251	    info("ZeroPoint = %d\n", quant.offset);
+   252	}
+   253	
+   254	void TflmModel::LogInterpreterInfo()
+   255	{
+   256	    if (!this->m_backendData.m_pInterpreter) {
+   257	        printf_err("Invalid interpreter\n");
+   258	        return;
+   259	    }
+   260	
+   261	    info("Model INPUT tensors: \n");
+   262	    for (auto& input : this->m_input) {
+   263	        this->LogTensorInfo(input);
+   264	    }
+   265	
+   266	    info("Model OUTPUT tensors: \n");
+   267	    for (auto& output : this->m_output) {
+   268	        this->LogTensorInfo(output);
+   269	    }
+   270	
+   271	    info("Activation buffer (a.k.a tensor arena) size used: %zu\n",
+   272	         this->m_backendData.m_pInterpreter->arena_used_bytes());
+   273	
+   274	    /* We expect there to be only one subgraph. */
+   275	    const uint32_t nOperators = tflite::NumSubgraphOperators(this->m_backendData.m_pModel, 0);
+   276	    info("Number of operators: %" PRIu32 "\n", nOperators);
+   277	
+   278	    const tflite::SubGraph* subgraph = this->m_backendData.m_pModel->subgraphs()->Get(0);
+   279	
+   280	    auto* opcodes = this->m_backendData.m_pModel->operator_codes();
+   281	
+   282	    /* For each operator, display registration information. */
+   283	    for (size_t i = 0; i < nOperators; ++i) {
+   284	        const tflite::Operator* op         = subgraph->operators()->Get(i);
+   285	        const tflite::OperatorCode* opcode = opcodes->Get(op->opcode_index());
+   286	        const TFLMRegistration* reg        = nullptr;
+   287	
+   288	        tflite::GetRegistrationFromOpCode(opcode, this->GetOpResolver(), &reg);
+   289	        std::string opName;
+   290	
+   291	        if (reg) {
+   292	            if (tflite::BuiltinOperator_CUSTOM == reg->builtin_code) {
+   293	                opName = std::string(reg->custom_name);
+   294	            } else {
+   295	                opName = std::string(
+   296	                    EnumNameBuiltinOperator(tflite::BuiltinOperator(reg->builtin_code)));
+   297	            }
+   298	        }
+   299	        info("\tOperator %zu: %s\n", i, opName.c_str());
+   300	    }
+   301	
+   302	    if (this->ContainsEthosUOperator()) {
+   303	        const std::string mode = InferNpuMemoryModeFromEthosUOp(this->m_backendData.m_pModel);
+   304	        if (!mode.empty()) {
+   305	            info("NPU memory mode likely to be: %s\n", mode.c_str());
+   306	        } else {
+   307	            warn("Unable to infer NPU memory mode.\n");
+   308	        }
+   309	    }
+   310	}
+   311	
+   312	bool TflmModel::IsInited() const
+   313	{
+   314	    return this->m_inited;
+   315	}
+   316	
+   317	bool TflmModel::IsDataSigned() const
+   318	{
+   319	    switch (this->GetType()) {
+   320	    case iface::TensorType::INT8:
+   321	        [[fallthrough]];
+   322	    case iface::TensorType::INT16:
+   323	        [[fallthrough]];
+   324	    case iface::TensorType::INT32:
+   325	        return true;
+   326	    default:
+   327	        return false;
+   328	    }
+   329	}
+   330	
+   331	bool TflmModel::ContainsEthosUOperator() const
+   332	{
+   333	    /* We expect there to be only one subgraph. */
+   334	    const uint32_t nOperators = tflite::NumSubgraphOperators(this->m_backendData.m_pModel, 0);
+   335	    const tflite::SubGraph* subgraph = this->m_backendData.m_pModel->subgraphs()->Get(0);
+   336	    const auto* opcodes              = this->m_backendData.m_pModel->operator_codes();
+   337	
+   338	    /* check for custom operators */
+   339	    for (size_t i = 0; (i < nOperators); ++i) {
+   340	        const tflite::Operator* op         = subgraph->operators()->Get(i);
+   341	        const tflite::OperatorCode* opcode = opcodes->Get(op->opcode_index());
+   342	
+   343	        auto builtin_code = tflite::GetBuiltinCode(opcode);
+   344	        if ((builtin_code == tflite::BuiltinOperator_CUSTOM) &&
+   345	            (nullptr != opcode->custom_code()) &&
+   346	            ("ethos-u" == std::string(opcode->custom_code()->c_str()))) {
+   347	            return true;
+   348	        }
+   349	    }
+   350	    return false;
+   351	}
+   352	
+   353	bool TflmModel::RunInference()
+   354	{
+   355	    bool inference_state = false;
+   356	    if (this->m_backendData.m_pModel && this->m_backendData.m_pInterpreter) {
+   357	        if (kTfLiteOk != this->m_backendData.m_pInterpreter->Invoke()) {
+   358	            printf_err("Invoke failed.\n");
+   359	        } else {
+   360	            inference_state = true;
+
+===== FILE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp [1-360] =====
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2023, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef MLEK_TFLM_MODEL_HPP
+    18	#define MLEK_TFLM_MODEL_HPP
+    19	
+    20	#include "mlek/fwk/iface/Model.hpp"
+    21	#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp"
+    22	#include <cstdint>
+    23	
+    24	namespace arm::app::fwk::tflm {
+    25	
+    26	/**
+    27	 * Backend data for TensorFlow Lite Micro framework.
+    28	 */
+    29	struct TflmBackendData {
+    30	    const tflite::Model* m_pModel{nullptr};        /**< Tflite model pointer. */
+    31	    tflite::MicroAllocator* m_pAllocator{nullptr}; /**< Tflite micro allocator. */
+    32	
+    33	    /** Tflite interpreter. */
+    34	    std::unique_ptr<tflite::MicroInterpreter> m_pInterpreter{nullptr};
+    35	};
+    36	
+    37	/**
+    38	 * @brief   NN model class wrapping the underlying TensorFlow-Lite-Micro API.
+    39	 */
+    40	class TflmModel : public iface::Model {
+    41	public:
+    42	    /** @brief Constructor. */
+    43	    TflmModel();
+    44	
+    45	    /** @brief Destructor. */
+    46	    virtual ~TflmModel() = default;
+    47	
+    48	    /** @brief  Gets the pointer to the model's input tensor at given input index. */
+    49	    std::shared_ptr<iface::TensorIface> GetInputTensor(size_t index) const override;
+    50	
+    51	    /** @brief  Gets the pointer to the model's output tensor at given output index. */
+    52	    std::shared_ptr<iface::TensorIface> GetOutputTensor(size_t index) const override;
+    53	
+    54	    /** @brief  Gets the model's data type. */
+    55	    iface::TensorType GetType() const override;
+    56	
+    57	    /** @brief  Gets the pointer to the model's input shape. */
+    58	    std::vector<size_t> GetInputShape(size_t index) const override;
+    59	
+    60	    /** @brief  Gets the pointer to the model's output shape at given output index. */
+    61	    std::vector<size_t> GetOutputShape(size_t index) const override;
+    62	
+    63	    /** @brief  Gets the number of input tensors the model has. */
+    64	    size_t GetNumInputs() const override;
+    65	
+    66	    /** @brief  Gets the number of output tensors the model has. */
+    67	    size_t GetNumOutputs() const override;
+    68	
+    69	    /** @brief  Logs the tensor information to stdout. */
+    70	    void LogTensorInfo(std::shared_ptr<iface::TensorIface> tensor) override;
+    71	
+    72	    /** @brief  Logs the interpreter information to stdout. */
+    73	    void LogInterpreterInfo() override;
+    74	
+    75	    /** @brief      Initialise the model class object.
+    76	     *  @return     true if initialisation succeeds, false otherwise.
+    77	     **/
+    78	    bool Init(iface::MemoryRegion& computeBuffer,
+    79	              iface::MemoryRegion& nnModel,
+    80	              const void* backendData = nullptr) override;
+    81	
+    82	    /** @brief  Checks if this object has been initialised. */
+    83	    bool IsInited() const override;
+    84	
+    85	    /** @brief  Checks if the model uses signed data. */
+    86	    bool IsDataSigned() const override;
+    87	
+    88	    /** @brief Checks if the model uses Ethos-U operator */
+    89	    bool ContainsEthosUOperator() const override;
+    90	
+    91	    /** @brief  Runs the inference (invokes the interpreter). */
+    92	    bool RunInference() override;
+    93	
+    94	    /**
+    95	     * @brief   Gets memory region information for the backend's compute buffer.
+    96	     * @return  Const reference to MemoryRegion object.
+    97	     */
+    98	    const iface::MemoryRegion& GetComputeBuffer() const override;
+    99	
+   100	    /**
+   101	     * @brief   Gets memory region information for neural network model.
+   102	     * @return  Const reference to MemoryRegion object.
+   103	     */
+   104	    const iface::MemoryRegion& GetModelBuffer() const override;
+   105	
+   106	    /**
+   107	     * @brief       Gets TensorFlow Lite Micro backend data.
+   108	     * @return      Backend data, with pointers to the model, memory allocator and interpreter.
+   109	     **/
+   110	    const TflmBackendData& GetBackendData() const;
+   111	
+   112	protected:
+   113	    /**
+   114	     * @brief       Gets the op resolver for the model instance.
+   115	     * @return      const reference to a tflite::MicroOpResolver object.
+   116	     **/
+   117	    virtual const tflite::MicroOpResolver& GetOpResolver() = 0;
+   118	
+   119	    /**
+   120	     * @brief       Add all the operators required for the given model.
+   121	     *              Implementation of this should come from the use case.
+   122	     * @return      true is ops are successfully added, false otherwise.
+   123	     **/
+   124	    virtual bool EnlistOperations() = 0;
+   125	
+   126	private:
+   127	    TflmBackendData m_backendData{};
+   128	    bool m_inited{false}; /* Indicates whether this object has been initialised. */
+   129	    iface::MemoryRegion m_computeBuffer{};
+   130	    iface::MemoryRegion m_modelBuffer{};
+   131	
+   132	    std::vector<std::shared_ptr<iface::TensorIface>> m_input{}; /* Model's input tensor pointers. */
+   133	    std::vector<std::shared_ptr<iface::TensorIface>>
+   134	        m_output{};                                       /* Model's output tensor pointers. */
+   135	    iface::TensorType m_type{iface::TensorType::INVALID}; /* Model's data type. */
+   136	};
+   137	} /* namespace arm::app::fwk::tflm */
+   138	
+   139	#endif /* MLEK_TFLM_MODEL_HPP */
+
+===== 4. MLEK SOURCE GENERATOR IMPLEMENTATION =====
+/home/user/sdk-alif/modules/alif-mlek/scripts/cmake/source_gen_utils.cmake
+grep: Unmatched ( or \(
+
+===== FILE: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/source_gen_utils.cmake [1-300] =====
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2021, 2024, 2026 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	include_guard()
+    19	
+    20	set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+    21	
+    22	##############################################################################
+    23	# This function generates C++ files for images located in the directory it is
+    24	# pointed at. NOTE: uses python
+    25	##############################################################################
+    26	function(generate_images_code input_dir gen_dir img_size)
+    27	
+    28	    # Absolute paths for passing into python script
+    29	    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    30	    get_filename_component(gen_out_abs ${gen_dir} ABSOLUTE)
+    31	
+    32	    message(STATUS "Generating image files from ${input_dir_abs}")
+    33	    execute_process(
+    34	        COMMAND ${CMAKE_COMMAND} -E env
+    35	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+    36	            ${PYTHON} -m mlek_tools.gen.gen_rgb_cpp
+    37	            --image_path ${input_dir_abs}
+    38	            --package_gen_dir ${gen_out_abs}
+    39	            --image_size ${img_size} ${img_size}
+    40	        RESULT_VARIABLE return_code
+    41	    )
+    42	    if (NOT return_code EQUAL "0")
+    43	        message(FATAL_ERROR "Failed to generate image files.")
+    44	    endif ()
+    45	
+    46	endfunction()
+    47	
+    48	##############################################################################
+    49	# This function generates C++ files for audio files located in the directory it is
+    50	# pointed at. NOTE: uses python
+    51	##############################################################################
+    52	function(generate_audio_code input_dir gen_dir s_rate_opt mono_opt off_opt duration_opt res_type_opt min_sample_opt)
+    53	
+    54	    # Absolute paths for passing into python script
+    55	    get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+    56	    get_filename_component(gen_dir_abs ${gen_dir} ABSOLUTE)
+    57	
+    58	    to_py_bool(mono_opt mono_opt_py)
+    59	
+    60	    message(STATUS "Generating audio files from ${input_dir_abs}")
+    61	    execute_process(
+    62	        COMMAND ${CMAKE_COMMAND} -E env
+    63	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+    64	            ${PYTHON} -m mlek_tools.gen.gen_audio_cpp
+    65	            --audio_path ${input_dir_abs}
+    66	            --package_gen_dir ${gen_dir_abs}
+    67	            --sampling_rate ${s_rate_opt}
+    68	            --mono ${mono_opt_py}
+    69	            --offset ${off_opt}
+    70	            --duration ${duration_opt}
+    71	            --res_type ${res_type_opt}
+    72	            --min_samples ${min_sample_opt}
+    73	        RESULT_VARIABLE return_code
+    74	    )
+    75	    if (NOT return_code EQUAL "0")
+    76	        message(FATAL_ERROR "Failed to generate audio files.")
+    77	    endif ()
+    78	
+    79	endfunction()
+    80	
+    81	##############################################################################
+    82	# This function generates C++ files for tflite NN model files.
+    83	# @param[in]    MODEL_PATH      path to a tflite file
+    84	# @param[in]    DESTINATION     directory in which the output cc must be
+    85	#                               placed
+    86	# @param[in]    EXPRESSIONS     C++ code expressions to add to the generated file
+    87	# @param[in]    NAMESPACE       model name space
+    88	# NOTE: Uses python
+    89	##############################################################################
+    90	function(generate_model_code)
+    91	
+    92	    set(multiValueArgs EXPRESSIONS NAMESPACE)
+    93	    set(oneValueArgs MODEL_PATH DESTINATION)
+    94	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+    95	
+    96	    # Absolute paths for passing into python script
+    97	    get_filename_component(ABS_MODEL_PATH ${PARSED_MODEL_PATH} ABSOLUTE)
+    98	    get_filename_component(ABS_DESTINATION ${PARSED_DESTINATION} ABSOLUTE)
+    99	
+   100	    if (EXISTS ${ABS_MODEL_PATH})
+   101	        message(STATUS "Using ${ABS_MODEL_PATH}")
+   102	    else ()
+   103	        message(FATAL_ERROR "${ABS_MODEL_PATH} not found!")
+   104	    endif ()
+   105	
+   106	
+   107	    foreach(expression ${PARSED_EXPRESSIONS})
+   108	        set(py_arg_exp ${py_arg_exp} --expression=${expression})
+   109	    endforeach()
+   110	
+   111	    foreach(name ${PARSED_NAMESPACE})
+   112	        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+   113	    endforeach()
+   114	
+   115	    # Pass optional Arm Ethos-U NPU validation args if NPU is enabled.
+   116	    if (ETHOS_U_NPU_ENABLED)
+   117	        if (DEFINED ETHOS_U_NPU_MEMORY_MODE)
+   118	            set(py_arg_exp ${py_arg_exp} --ethos_u_memory_mode=${ETHOS_U_NPU_MEMORY_MODE})
+   119	        endif()
+   120	        if (DEFINED ETHOS_U_NPU_CONFIG_ID)
+   121	            # gen_model_cpp.py accepts short forms like H128/Y256/Z256 directly.
+   122	            set(py_arg_exp ${py_arg_exp} --ethos_u_config=${ETHOS_U_NPU_CONFIG_ID})
+   123	        endif()
+   124	    endif()
+   125	
+   126	    execute_process(
+   127	        COMMAND ${CMAKE_COMMAND} -E env
+   128	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+   129	            ${PYTHON} -m mlek_tools.gen.gen_model_cpp
+   130	            --model_path ${ABS_MODEL_PATH}
+   131	            --output_dir ${ABS_DESTINATION} ${py_arg_exp}
+   132	        RESULT_VARIABLE return_code
+   133	    )
+   134	    if (NOT return_code EQUAL "0")
+   135	        message(FATAL_ERROR "Failed to generate model files.")
+   136	    endif ()
+   137	endfunction()
+   138	
+   139	
+   140	##############################################################################
+   141	# This function generates C++ file for a given labels' text file.
+   142	# @param[in]    INPUT          Path to the label text file
+   143	# @param[in]    DESTINATION_SRC directory in which the output cc must be
+   144	#                               placed
+   145	# @param[in]    DESTINATION_HDR directory in which the output h file must be
+   146	#                               placed
+   147	# @param[in]    OUTPUT_FILENAME    Path to required output file
+   148	# @param[in]    NAMESPACE       data name space
+   149	# NOTE: Uses python
+   150	##############################################################################
+   151	function(generate_labels_code)
+   152	
+   153	    set(multiValueArgs NAMESPACE)
+   154	    set(oneValueArgs INPUT DESTINATION_SRC DESTINATION_HDR OUTPUT_FILENAME)
+   155	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+   156	
+   157	    # Absolute paths for passing into python script
+   158	    get_filename_component(input_abs ${PARSED_INPUT} ABSOLUTE)
+   159	    get_filename_component(src_out_abs ${PARSED_DESTINATION_SRC} ABSOLUTE)
+   160	    get_filename_component(hdr_out_abs ${PARSED_DESTINATION_HDR} ABSOLUTE)
+   161	
+   162	    message(STATUS "Generating labels file from ${PARSED_INPUT}")
+   163	    file(REMOVE "${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp")
+   164	    file(REMOVE "${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+   165	
+   166	    foreach(name ${PARSED_NAMESPACE})
+   167	        set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+   168	    endforeach()
+   169	
+   170	    message(STATUS "writing to ${hdr_out_abs}/${PARSED_OUTPUT_FILENAME}.hpp and ${src_out_abs}/${PARSED_OUTPUT_FILENAME}.cc")
+   171	    execute_process(
+   172	        COMMAND ${CMAKE_COMMAND} -E env
+   173	            PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+   174	            ${PYTHON} -m mlek_tools.gen.gen_labels_cpp
+   175	            --labels_file ${input_abs}
+   176	            --source_folder_path ${src_out_abs}
+   177	            --header_folder_path ${hdr_out_abs}
+   178	            --output_file_name ${PARSED_OUTPUT_FILENAME} ${py_arg_exp}
+   179	        RESULT_VARIABLE return_code
+   180	    )
+   181	    if (NOT return_code EQUAL "0")
+   182	        message(FATAL_ERROR "Failed to generate label files.")
+   183	    endif ()
+   184	endfunction()
+   185	
+   186	
+   187	##############################################################################
+   188	# This function generates C++ data files for test located in the directory it is
+   189	# pointed at.
+   190	# @param[in]    INPUT_DIR       directory in which are the npy files
+   191	# @param[in]    DESTINATION_SRC directory in which the output cc must be
+   192	#                               placed
+   193	# @param[in]    DESTINATION_HDR directory in which the output h file must be
+   194	#                               placed
+   195	# @param[in]    NAMESPACE       data name space
+   196	# NOTE: Uses python
+   197	##############################################################################
+   198	function(generate_test_data_code)
+   199	
+   200	    set(multiValueArgs NAMESPACE INPUT_DIR)
+   201	    set(oneValueArgs DESTINATION_SRC DESTINATION_HDR)
+   202	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+   203	
+   204	    list(LENGTH PARSED_INPUT_DIR input_dir_length)
+   205	
+   206	    if (${input_dir_length} GREATER 1)
+   207	        set(add_extra_namespace TRUE)
+   208	    else()
+   209	        set(add_extra_namespace FALSE)
+   210	    endif()
+   211	
+   212	    foreach(input_dir ${PARSED_INPUT_DIR})
+   213	        unset(py_arg_exp)
+   214	        file(GLOB_RECURSE input_data_files
+   215	                "${input_dir}/*.npy"
+   216	                )
+   217	        # no input NPY data found => skip code generation.
+   218	        if(NOT input_data_files)
+   219	            message(WARNING "No files were found to generate input data: ${input_dir}")
+   220	            break()
+   221	        endif()
+   222	
+   223	        # Absolute paths for passing into python script
+   224	        get_filename_component(input_dir_abs ${input_dir} ABSOLUTE)
+   225	        get_filename_component(input_dir_name ${input_dir} NAME)
+   226	        get_filename_component(src_out_abs ${PARSED_DESTINATION_SRC} ABSOLUTE)
+   227	        get_filename_component(hdr_out_abs ${PARSED_DESTINATION_HDR} ABSOLUTE)
+   228	
+   229	        foreach(name ${PARSED_NAMESPACE})
+   230	            set(py_arg_exp ${py_arg_exp} --namespaces=${name})
+   231	        endforeach()
+   232	
+   233	        if (${add_extra_namespace})
+   234	            set(py_arg_exp ${py_arg_exp} --namespaces=${input_dir_name})
+   235	        endif()
+   236	
+   237	        message(STATUS "Generating test ifm and ofm files from ${input_dir_abs}")
+   238	        execute_process(
+   239	            COMMAND ${CMAKE_COMMAND} -E env
+   240	                PYTHONPATH=${MLEK_SCRIPTS_DIR}/py:$ENV{PYTHONPATH}
+   241	                ${PYTHON} -m mlek_tools.gen.gen_test_data_cpp
+   242	                --data_folder_path ${input_dir_abs}
+   243	                --source_folder_path ${src_out_abs}
+   244	                --header_folder_path ${hdr_out_abs}
+   245	                --usecase ${input_dir_name}
+   246	                ${py_arg_exp}
+   247	            RESULT_VARIABLE return_code
+   248	        )
+   249	        if (NOT return_code EQUAL "0")
+   250	            message(FATAL_ERROR "Failed to generate test data files.")
+   251	        endif ()
+   252	    endforeach()
+   253	endfunction()
+   254	
+   255	
+   256	##############################################################################
+   257	# Function to prepare a python virtual environment for running the functions
+   258	# outlined above.
+   259	##############################################################################
+   260	function(setup_source_generator)
+   261	
+   262	    # If a virtual env has been created in the resources_downloaded directory,
+   263	    # use it for source generator. Else, fall back to creating a virtual env
+   264	    # in the current build directory.
+   265	    if (EXISTS ${RESOURCES_PATH}/env)
+   266	        set(DEFAULT_VENV_DIR ${RESOURCES_PATH}/env)
+   267	    else()
+   268	        set(DEFAULT_VENV_DIR ${CMAKE_BINARY_DIR}/venv)
+   269	    endif()
+   270	
+   271	    if (${CMAKE_HOST_WIN32})
+   272	        # Windows Python3 is python.exe
+   273	        set(PY_EXEC python)
+   274	        set(PYTHON ${DEFAULT_VENV_DIR}/Scripts/${PY_EXEC})
+   275	    else()
+   276	        set(PY_EXEC python3)
+   277	        set(PYTHON ${DEFAULT_VENV_DIR}/bin/${PY_EXEC})
+   278	    endif()
+   279	    set(PYTHON ${PYTHON} PARENT_SCOPE)
+   280	    set(PYTHON_VENV ${DEFAULT_VENV_DIR} PARENT_SCOPE)
+   281	
+   282	    if (EXISTS ${PYTHON})
+   283	        message(STATUS "Using existing python at ${PYTHON}")
+   284	        return()
+   285	    endif ()
+   286	
+   287	    # If environment is not found, find a supported Python version
+   288	    # and create it.
+   289	    find_package(Python3 3.10...<3.13
+   290	            COMPONENTS Interpreter
+   291	            REQUIRED)
+   292	
+   293	    if (NOT Python3_FOUND)
+   294	        message(FATAL_ERROR "Required version of Python3 not found!")
+   295	    else()
+   296	        message(STATUS "Python3 (v${Python3_VERSION}) found: ${Python3_EXECUTABLE}")
+   297	    endif()
+   298	
+   299	    message(STATUS "Configuring python environment at ${PYTHON}")
+   300	
+
+===== 5. CURRENT CUSTOM OPERATOR SOURCES =====
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/reverse_v2.cc [1-320] =====
+     1	
+     2	#include "reverse_v2.h"
+     3	
+     4	#include <cstdint>
+     5	#include <cstring>
+     6	
+     7	#include "tensorflow/lite/kernels/kernel_util.h"
+     8	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+     9	
+    10	namespace tflite {
+    11	namespace {
+    12	
+    13	struct ReverseV2OpData {
+    14	  // No persistent or temporary memory required.
+    15	};
+    16	
+    17	// Check whether a dimension is included in the axis tensor.
+    18	template <typename AxisType>
+    19	bool IsDimensionReversed(
+    20	    int dimension,
+    21	    int rank,
+    22	    const AxisType* axes,
+    23	    int num_axes) {
+    24	
+    25	  for (int i = 0; i < num_axes; ++i) {
+    26	    int axis = static_cast<int>(axes[i]);
+    27	
+    28	    // Normalize negative axes.
+    29	    if (axis < 0) {
+    30	      axis += rank;
+    31	    }
+    32	
+    33	    if (axis == dimension) {
+    34	      return true;
+    35	    }
+    36	  }
+    37	
+    38	  return false;
+    39	}
+    40	
+    41	// Validate axis values.
+    42	template <typename AxisType>
+    43	bool ValidateAxes(
+    44	    const AxisType* axes,
+    45	    int num_axes,
+    46	    int rank) {
+    47	
+    48	  for (int i = 0; i < num_axes; ++i) {
+    49	    const int64_t axis = static_cast<int64_t>(axes[i]);
+    50	
+    51	    if (axis < -rank || axis >= rank) {
+    52	      return false;
+    53	    }
+    54	  }
+    55	
+    56	  return true;
+    57	}
+    58	
+    59	// Generic reverse implementation.
+    60	template <typename T, typename AxisType>
+    61	void ReverseTensor(
+    62	    const T* input,
+    63	    T* output,
+    64	    const TfLiteIntArray* dims,
+    65	    const AxisType* axes,
+    66	    int num_axes,
+    67	    int rank,
+    68	    int num_elements) {
+    69	
+    70	  for (int out_index = 0;
+    71	       out_index < num_elements;
+    72	       ++out_index) {
+    73	
+    74	    int input_index = 0;
+    75	
+    76	    // Calculate the corresponding input offset.
+    77	    for (int d = 0; d < rank; ++d) {
+    78	
+    79	      const int dim_size = dims->data[d];
+    80	
+    81	      int stride = 1;
+    82	
+    83	      for (int j = d + 1; j < rank; ++j) {
+    84	        stride *= dims->data[j];
+    85	      }
+    86	
+    87	      const int coordinate =
+    88	          (out_index / stride) % dim_size;
+    89	
+    90	      const bool reverse = IsDimensionReversed(
+    91	          d, rank, axes, num_axes);
+    92	
+    93	      const int input_coordinate =
+    94	          reverse ? (dim_size - 1 - coordinate)
+    95	                  : coordinate;
+    96	
+    97	      input_index += input_coordinate * stride;
+    98	    }
+    99	
+   100	    output[out_index] = input[input_index];
+   101	  }
+   102	}
+   103	
+   104	TfLiteStatus Prepare(
+   105	    TfLiteContext* context,
+   106	    TfLiteNode* node) {
+   107	      
+   108	  MicroContext* micro_context = GetMicroContext(context);
+   109	
+   110	  TF_LITE_ENSURE_EQ(context, NumInputs(node), 2);
+   111	  TF_LITE_ENSURE_EQ(context, NumOutputs(node), 1);
+   112	
+   113	  TfLiteTensor* input = micro_context->AllocateTempInputTensor(node, 0);
+   114	  TfLiteTensor* axis = micro_context->AllocateTempInputTensor(node, 1);
+   115	  TfLiteTensor* output = micro_context->AllocateTempOutputTensor(node, 0);
+   116	
+   117	  TF_LITE_ENSURE(context, input != nullptr);
+   118	  TF_LITE_ENSURE(context, axis != nullptr);
+   119	  TF_LITE_ENSURE(context, output != nullptr);
+   120	
+   121	  TF_LITE_ENSURE_EQ(context, input->type, output->type);
+   122	
+   123	  TF_LITE_ENSURE_EQ(
+   124	      context, input->dims->size, output->dims->size);
+   125	
+   126	  for (int i = 0; i < input->dims->size; ++i) {
+   127	    TF_LITE_ENSURE_EQ(
+   128	        context,
+   129	        input->dims->data[i],
+   130	        output->dims->data[i]);
+   131	  }
+   132	
+   133	  TF_LITE_ENSURE(
+   134	      context,
+   135	      axis->type == kTfLiteInt32 ||
+   136	      axis->type == kTfLiteInt64);
+   137	
+   138	  micro_context->DeallocateTempTfLiteTensor(input);
+   139	  micro_context->DeallocateTempTfLiteTensor(axis);
+   140	  micro_context->DeallocateTempTfLiteTensor(output);
+   141	
+   142	  return kTfLiteOk;
+   143	}
+   144	
+   145	template <typename T, typename AxisType>
+   146	TfLiteStatus EvalTyped(
+   147	    TfLiteContext* context,
+   148	    const TfLiteTensor* input,
+   149	    const TfLiteTensor* axis,
+   150	    TfLiteTensor* output) {
+   151	
+   152	  const AxisType* axes =
+   153	      GetTensorData<AxisType>(axis);
+   154	
+   155	  const int rank = input->dims->size;
+   156	  const int num_axes = NumElements(axis);
+   157	  const int num_elements = NumElements(input);
+   158	
+   159	  if (num_axes > 0) {
+   160	    TF_LITE_ENSURE(context, axes != nullptr);
+   161	
+   162	    TF_LITE_ENSURE(
+   163	        context,
+   164	        ValidateAxes(axes, num_axes, rank));
+   165	  }
+   166	
+   167	  const T* input_data = GetTensorData<T>(input);
+   168	  T* output_data = GetTensorData<T>(output);
+   169	
+   170	  if (num_elements == 0) {
+   171	    return kTfLiteOk;
+   172	  }
+   173	
+   174	  TF_LITE_ENSURE(context, input_data != nullptr);
+   175	  TF_LITE_ENSURE(context, output_data != nullptr);
+   176	
+   177	  ReverseTensor(
+   178	      input_data,
+   179	      output_data,
+   180	      input->dims,
+   181	      axes,
+   182	      num_axes,
+   183	      rank,
+   184	      num_elements);
+   185	
+   186	  return kTfLiteOk;
+   187	}
+   188	
+   189	TfLiteStatus Eval(
+   190	    TfLiteContext* context,
+   191	    TfLiteNode* node) {
+   192	
+   193	  const TfLiteTensor* input =
+   194	      GetInput(context, node, 0);
+   195	
+   196	  const TfLiteTensor* axis =
+   197	      GetInput(context, node, 1);
+   198	
+   199	  TfLiteTensor* output =
+   200	      GetOutput(context, node, 0);
+   201	
+   202	  TF_LITE_ENSURE(context, input != nullptr);
+   203	  TF_LITE_ENSURE(context, axis != nullptr);
+   204	  TF_LITE_ENSURE(context, output != nullptr);
+   205	
+   206	  if (axis->type == kTfLiteInt32) {
+   207	
+   208	    switch (input->type) {
+   209	
+   210	      case kTfLiteFloat32:
+   211	        return EvalTyped<float, int32_t>(
+   212	            context, input, axis, output);
+   213	
+   214	      case kTfLiteInt8:
+   215	        return EvalTyped<int8_t, int32_t>(
+   216	            context, input, axis, output);
+   217	
+   218	      case kTfLiteUInt8:
+   219	        return EvalTyped<uint8_t, int32_t>(
+   220	            context, input, axis, output);
+   221	
+   222	      case kTfLiteInt16:
+   223	        return EvalTyped<int16_t, int32_t>(
+   224	            context, input, axis, output);
+   225	
+   226	      case kTfLiteInt32:
+   227	        return EvalTyped<int32_t, int32_t>(
+   228	            context, input, axis, output);
+   229	
+   230	      default:
+   231	        TF_LITE_KERNEL_LOG(
+   232	            context,
+   233	            "REVERSE_V2: Unsupported input type %d",
+   234	            input->type);
+   235	        return kTfLiteError;
+   236	    }
+   237	  }
+   238	
+   239	  if (axis->type == kTfLiteInt64) {
+   240	
+   241	    switch (input->type) {
+   242	
+   243	      case kTfLiteFloat32:
+   244	        return EvalTyped<float, int64_t>(
+   245	            context, input, axis, output);
+   246	
+   247	      case kTfLiteInt8:
+   248	        return EvalTyped<int8_t, int64_t>(
+   249	            context, input, axis, output);
+   250	
+   251	      case kTfLiteUInt8:
+   252	        return EvalTyped<uint8_t, int64_t>(
+   253	            context, input, axis, output);
+   254	
+   255	      case kTfLiteInt16:
+   256	        return EvalTyped<int16_t, int64_t>(
+   257	            context, input, axis, output);
+   258	
+   259	      case kTfLiteInt32:
+   260	        return EvalTyped<int32_t, int64_t>(
+   261	            context, input, axis, output);
+   262	
+   263	      default:
+   264	        TF_LITE_KERNEL_LOG(
+   265	            context,
+   266	            "REVERSE_V2: Unsupported input type %d",
+   267	            input->type);
+   268	        return kTfLiteError;
+   269	    }
+   270	  }
+   271	
+   272	  return kTfLiteError;
+   273	}
+   274	
+   275	}  // namespace
+   276	
+   277	TFLMRegistration Register_REVERSE_V2() {
+   278	  return tflite::micro::RegisterOp(nullptr, Prepare, Eval);
+   279	}
+   280	
+   281	}  // namespace tflite
+
+===== FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/reverse_v2.h [1-320] =====
+     1	
+     2	#ifndef TENSORFLOW_LITE_MICRO_KERNELS_REVERSE_V2_H_
+     3	#define TENSORFLOW_LITE_MICRO_KERNELS_REVERSE_V2_H_
+     4	
+     5	#include "tensorflow/lite/c/common.h"
+     6	#include "tensorflow/lite/micro/micro_common.h"
+     7	
+     8	namespace tflite {
+     9	
+    10	TFLMRegistration Register_REVERSE_V2();
+    11	
+    12	}  // namespace tflite
+    13	
+    14	#endif  // TENSORFLOW_LITE_MICRO_KERNELS_REVERSE_V2_H_
+
+===== 6. HEAT-STRESS TFLM SOURCE CONFIGURATION =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:21:    OUTPUT_VARIABLE MLEK_ROOT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:23:    RESULT_VARIABLE MLEK_LIST_RESULT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:26:if (MLEK_LIST_RESULT OR NOT EXISTS ${MLEK_ROOT})
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:33:# Register the MLEK Zephyr port as an extra Zephyr module
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:34:list(APPEND ZEPHYR_EXTRA_MODULES ${MLEK_ROOT}/source/lib/ports/zephyr)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:92:# Build-time model and labels generation from MLEK resources
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:94:set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:95:set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded CACHE PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:96:    "Path to MLEK resources (models compiled with Vela)")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:121:option(HEATSTROKE_SINGLE_STEP_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:124:if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:134:if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:140:option(HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:143:if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:150:option(HEATSTROKE_E8_U55_256_VELA_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:153:if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:166:if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:173:if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:177:if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:183:if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:208:target_include_directories(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:215:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:219:target_compile_definitions(app PRIVATE USE_APP_MENU)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:222:target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:231:if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:232:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:234:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:235:        HEATSTROKE_SINGLE_STEP_EXPERIMENT=1)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:237:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:242:option(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:245:if (HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:246:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:249:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:250:        HEATSTROKE_INT64_CAST_SUM_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:254:option(HEATSTROKE_INT64_MUL_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:257:if (HEATSTROKE_INT64_MUL_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:258:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:261:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:262:        HEATSTROKE_INT64_MUL_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:266:option(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:269:if (HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:270:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:273:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:274:        HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:278:option(HEATSTROKE_INT64_SUB_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:281:if (HEATSTROKE_INT64_SUB_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:282:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:285:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:286:        HEATSTROKE_INT64_SUB_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:290:option(HEATSTROKE_INT64_ADD_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:293:if (HEATSTROKE_INT64_ADD_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:294:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:297:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:298:        HEATSTROKE_INT64_ADD_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:302:option(HEATSTROKE_INT64_SPLIT_V_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:305:if (HEATSTROKE_INT64_SPLIT_V_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:306:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:309:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:310:        HEATSTROKE_INT64_SPLIT_V_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:331:option(HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:334:if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:335:    target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:338:    target_compile_definitions(app PRIVATE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:339:        HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT=1
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:348:option(HEATSTROKE_LSTM_EVAL_O3_EXPERIMENT
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:351:if (HEATSTROKE_LSTM_EVAL_O3_EXPERIMENT)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:352:    set(_HEATSTROKE_LSTM_EVAL_SOURCE
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:355:    if (NOT EXISTS "${_HEATSTROKE_LSTM_EVAL_SOURCE}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:357:            "Selective LSTM O3 source not found: ${_HEATSTROKE_LSTM_EVAL_SOURCE}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:366:        "${_HEATSTROKE_LSTM_EVAL_SOURCE}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:372:        "Heatstroke experiment: applying -O3 only to ${_HEATSTROKE_LSTM_EVAL_SOURCE}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:5:CONFIG_MLEK_EXAMPLES_LIB=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:77:CONFIG_MODEL_IN_EXT_FLASH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:88:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:15:config ACTIVATION_BUF_SECTION
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:19:config ACTIVATION_BUF_SZ
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:23:config MODEL_IN_EXT_FLASH
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:31:config MODEL_SECTION
+/home/user/sdk-alif/beeinventor/test_heatstroke/Kconfig:33:	depends on !MODEL_IN_EXT_FLASH
+
+===== 7. V6 MODEL AND MEMORY ARTIFACT =====
+-rw-rw-r-- 1 user user 9.4M Nov 21 20:17 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite: data
+
+===== 8. MODEL STORAGE AND LINKER CONFIGURATION REFERENCES =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay:19:	ext_flash_xip: memory@c0000000 {
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay:29:	ext_flash_xip: memory@b0000000 {
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.conf:1:CONFIG_ACTIVATION_BUF_SECTION=".bss.NoInit.activation_buf_sram"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:10:CONFIG_SYSTEM_HEAP_SRAM0=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf:10:CONFIG_SYSTEM_HEAP_SRAM0=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf:12:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:77:CONFIG_MODEL_IN_EXT_FLASH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:88:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/e8_hp_conf_before_sram0_fix_20261117_153321.conf:1:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/prj_before_sram_activation_section_fix_20261117_154147.conf:77:CONFIG_MODEL_IN_EXT_FLASH=y
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/e8_hp_conf_before_sram_activation_section_fix_20261117_154147.conf:1:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_common_overlay_before_aa0000_20261119_162426.overlay:19:	ext_flash_xip: memory@c0a90000 {
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/apss_sram1_sections.ld:13: *   __attribute__((section("SRAM1.tflm_arena")))
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/apss_sram1_sections.ld:16:SECTION_DATA_PROLOGUE(SRAM1.tflm_arena, (NOLOAD),)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/apss_sram1_sections.ld:19:    *(.SRAM1.tflm_arena)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/apss_sram1_sections.ld:20:    *(.SRAM1.tflm_arena.*)
+
+INSPECTION COMPLETE
+No source files modified.
+No build or flash operation performed.
