@@ -1,0 +1,162 @@
+============================================================
+TCN V6 VELA ARTIFACT AUDIT
+Date: Sat Nov 21 08:21:22 PM HKT 2026
+============================================================
+
+===== 1. CHECK GENERATED MODEL =====
+Model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+Expected SHA256: 4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870
+Actual SHA256:   4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870
+VELA_MODEL_SHA256=PASS
+File size: 9789936 bytes
+
+===== 2. VELA SUMMARY CSV =====
+CSV: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_summary_RTSS_HE_SRAM_MRAM.csv
+CSV file size:
+1684 bytes
+
+experiment,network,accelerator_configuration,system_config,memory_mode,core_clock,arena_cache_size,sram_bandwidth,dram_bandwidth,on_chip_flash_bandwidth,off_chip_flash_bandwidth,weights_storage_area,feature_map_storage_area,inferences_per_second,batch_size,inference_time,passes_before_fusing,passes_after_fusing,sram_memory_used,dram_memory_used,on_chip_flash_memory_used,off_chip_flash_memory_used,total_original_weights,total_npu_encoded_weights,sram_feature_map_read_bytes,sram_feature_map_write_bytes,sram_weight_read_bytes,sram_weight_write_bytes,sram_total_bytes,dram_feature_map_read_bytes,dram_feature_map_write_bytes,dram_weight_read_bytes,dram_weight_write_bytes,dram_total_bytes,on_chip_flash_feature_map_read_bytes,on_chip_flash_feature_map_write_bytes,on_chip_flash_weight_read_bytes,on_chip_flash_weight_write_bytes,on_chip_flash_total_bytes,off_chip_flash_feature_map_read_bytes,off_chip_flash_feature_map_write_bytes,off_chip_flash_weight_read_bytes,off_chip_flash_weight_write_bytes,off_chip_flash_total_bytes,nn_macs,nn_tops,cycles_npu,cycles_sram_access,cycles_dram_access,cycles_on_chip_flash_access,cycles_off_chip_flash_access,cycles_total
+default,heatstroke_tcn_reg_fold2_gemm_only_qdq,Ethos_U55_128,RTSS_HE_SRAM_MRAM,Shared_Sram,160000000.0,4194304.0,1.1920928955078125,1.1920928955078125,1.1920928955078125,0.3612041473388672,Off-chip Flash,SRAM,37.892906108579986,1,0.026390163824715804,281,267,2332.625,0.0,0.0,8856.234375,9736200,8940320,86544.0,6300.0,0.0,0.0,92844.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10172161.137777777,0.0,10235161.137777777,9736200,0.0007378658249087128,1449119.0,11605.5,0.0,0.0,4222426.2119545285,4222426.2119545285
+
+===== 3. INSPECT VELA TFLITE FLATBUFFER =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795263682.995470  125196 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795263682.995638  125196 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795263683.023431  125196 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795263683.792241  125196 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795263683.792506  125196 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TensorFlow: 2.21.0
+
+Subgraphs: 1
+Operator codes: 29
+
+=================================================================
+SUBGRAPH 0
+=================================================================
+Operators: 266
+Tensors: 417
+
+===== OPERATOR COUNTS =====
+RESHAPE                                65
+CONV_2D                                27
+MUL                                    26
+ADD                                    23
+RELU                                   21
+DEPTHWISE_CONV_2D                      20
+SUB                                     8
+QUANTIZE                                7
+CUSTOM:ethos-u                          7
+DEQUANTIZE                              7
+SELECT_V2                               7
+DIV                                     6
+GATHER                                  6
+MIRROR_PAD                              5
+TRANSPOSE                               4
+MEAN                                    4
+NEG                                     4
+LOGICAL_OR                              2
+SUM                                     2
+SQRT                                    2
+ABS                                     2
+EXP                                     2
+GREATER_EQUAL                           2
+CONCATENATION                           2
+BROADCAST_ARGS                          1
+LOGICAL_NOT                             1
+CAST                                    1
+MAXIMUM                                 1
+BROADCAST_TO                            1
+
+===== CUSTOM OPERATORS =====
+ethos-u 7
+
+===== MODEL INPUTS =====
+{'name': 'x_values', 'shape': [1, 900, 6], 'dtype': 'FLOAT32'}
+{'name': 'missing_mask', 'shape': [1, 900, 6], 'dtype': 'BOOL'}
+{'name': 'x_mark', 'shape': [1, 900, 3], 'dtype': 'FLOAT32'}
+{'name': 'worker_features_18', 'shape': [1, 18], 'dtype': 'FLOAT32'}
+{'name': 'compact_values', 'shape': [1, 1800, 6], 'dtype': 'FLOAT32'}
+
+===== MODEL OUTPUTS =====
+{'name': 'reconstructed_values', 'shape': [1, 900, 6], 'dtype': 'FLOAT32'}
+
+===== ETHOS-U CUSTOM OP DETAILS =====
+Operator index: 2
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_1_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': 'worker_features_18_DequantizeLinear_Output', 'shape': [1, 18], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/non_seq_enc/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 116
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_2_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_5_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.5/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 121
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_3_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_4_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.4/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 126
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_4_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_3_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.3/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 131
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_5_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_2_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.2/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 136
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_6_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_1_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.1/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+Operator index: 141
+Custom code: ethos-u
+Inputs:
+  {'name': '_split_7_command_stream', 'shape': [328], 'dtype': 'UINT8'}
+  {'name': '_split_1_flash', 'shape': [9066432], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '_split_1_scratch_fast', 'shape': [2388608], 'dtype': 'UINT8'}
+  {'name': '/Gather_output_0_DequantizeLinear_Output', 'shape': [1, 1800], 'dtype': 'INT8'}
+Outputs:
+  {'name': '/svf.0/Gemm_output_0_QuantizeLinear_Output', 'shape': [1, 900], 'dtype': 'INT8'}
+
+FLATBUFFER_INSPECTION=COMPLETE
+FLATBUFFER_INSPECTION_EXIT_CODE=0
+
+============================================================
+VELA_ARTIFACT_AUDIT_COMPLETE
+============================================================
