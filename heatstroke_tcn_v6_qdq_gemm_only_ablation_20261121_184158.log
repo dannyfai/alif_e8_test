@@ -1,0 +1,416 @@
+===== TCN FOLD-2 V6 STATIC INT8 QDQ EXPERIMENT =====
+Timestamp: 2026-11-21T18:42:18.740106+08:00
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+NumPy: 2.5.4
+ONNX: 1.20.1
+ONNX Runtime: 1.24.4
+FP32 ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+QDQ output: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+FP32 ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+
+Original graph node count: 343
+Original Conv count: 47
+Original Gemm count: 7
+Original operator histogram:
+{
+  "Abs": 2,
+  "Add": 23,
+  "Cast": 6,
+  "Clip": 1,
+  "Concat": 7,
+  "Constant": 97,
+  "ConstantOfShape": 7,
+  "Conv": 47,
+  "Div": 4,
+  "Equal": 1,
+  "Exp": 2,
+  "Expand": 1,
+  "Gather": 6,
+  "Gemm": 7,
+  "GreaterOrEqual": 2,
+  "Mul": 29,
+  "Neg": 4,
+  "Not": 1,
+  "Or": 2,
+  "Pad": 5,
+  "Reciprocal": 2,
+  "ReduceMean": 4,
+  "ReduceSum": 2,
+  "Relu": 31,
+  "Reshape": 11,
+  "Shape": 1,
+  "Slice": 5,
+  "Sqrt": 2,
+  "Sub": 8,
+  "Transpose": 9,
+  "Unsqueeze": 6,
+  "Where": 8
+}
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+
+===== BUILDING CALIBRATION INPUTS =====
+Prepared 1/449 samples
+Prepared 101/449 samples
+Prepared 201/449 samples
+Prepared 301/449 samples
+Prepared 401/449 samples
+Prepared 449/449 samples
+Calibration samples: 449
+Missing sensor entries: 1179526
+Total sensor entries: 2424600
+Missing sensor percentage: 48.64827187989771
+
+===== STATIC QDQ QUANTIZATION CONFIGURATION =====
+{
+  "quant_format": "QDQ",
+  "op_types_to_quantize": [
+    "Gemm"
+  ],
+  "activation_type": "QInt8",
+  "weight_type": "QInt8",
+  "per_channel": true,
+  "calibrate_method": "MinMax",
+  "ActivationSymmetric": true,
+  "WeightSymmetric": true,
+  "calibration_sample_count": 449,
+  "excluded_operator_policy": "All other operators left in their original representation",
+  "missing_mask": "Boolean input; not treated as an INT8 activation"
+}
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+[0;93m2026-11-21 18:42:21.639170616 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:21.639199091 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:21.639201279 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+QDQ ONNX file: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+QDQ file bytes: 10562148
+QDQ SHA256: 52c9ed79e7e43a7892f334f9fb855c41ece37fbf7dd1660cd136f92ca2fc76ac
+
+QDQ ONNX checker: PASS
+QDQ operator summary:
+{
+  "operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 28,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 14,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  },
+  "quantize_linear_nodes": 14,
+  "dequantize_linear_nodes": 28,
+  "qdq_scale_tensor_count": 42,
+  "qdq_scale_value_count": 12628,
+  "qdq_scale_min": 2.882812566440407e-07,
+  "qdq_scale_max": 1.1796505451202393,
+  "direct_graph_input_quantizers": {
+    "x_values": [],
+    "missing_mask": [],
+    "x_mark": [],
+    "worker_features_18": [
+      {
+        "node_name": "worker_features_18_QuantizeLinear",
+        "output": [
+          "worker_features_18_QuantizeLinear_Output"
+        ],
+        "scale_initializer": "worker_features_18_scale",
+        "zero_point_initializer": "worker_features_18_zero_point"
+      }
+    ],
+    "compact_values": []
+  }
+}
+Initializer summary:
+{
+  "initializer_count_by_dtype": {
+    "float32": 106,
+    "int8": 28,
+    "int32": 14
+  },
+  "initializer_bytes_by_dtype": {
+    "float32": 630088,
+    "int8": 9742514,
+    "int32": 50400
+  },
+  "int8_initializer_count": 28,
+  "int8_initializer_bytes": 9742514,
+  "int8_initializer_examples": [
+    "worker_features_18_zero_point",
+    "/non_seq_enc/Gemm_output_0_zero_point",
+    "model.non_seq_enc.weight_zero_point",
+    "model.non_seq_enc.weight_quantized",
+    "/Gather_output_0_zero_point",
+    "/svf.0/Gemm_output_0_zero_point",
+    "model.svf.0.weight_zero_point",
+    "model.svf.0.weight_quantized",
+    "/Gather_1_output_0_zero_point",
+    "/svf.1/Gemm_output_0_zero_point",
+    "model.svf.1.weight_zero_point",
+    "model.svf.1.weight_quantized",
+    "/Gather_2_output_0_zero_point",
+    "/svf.2/Gemm_output_0_zero_point",
+    "model.svf.2.weight_zero_point",
+    "model.svf.2.weight_quantized",
+    "/Gather_3_output_0_zero_point",
+    "/svf.3/Gemm_output_0_zero_point",
+    "model.svf.3.weight_zero_point",
+    "model.svf.3.weight_quantized"
+  ]
+}
+
+===== ONNX RUNTIME QDQ VALIDATION: ALL 449 SAMPLES =====
+[0;93m2026-11-21 18:42:24.426314360 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:24.426338349 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:24.426341014 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:24.464754404 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:24.464777187 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:42:24.464791288 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+FP32 input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+QDQ input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+FP32 output: reconstructed_values
+QDQ output: reconstructed_values
+Progress 1/449; sample_max_abs=0.0515470356; nonfinite_samples=0
+Progress 51/449; sample_max_abs=0.0657461882; nonfinite_samples=0
+Progress 101/449; sample_max_abs=0.05760701; nonfinite_samples=0
+Progress 151/449; sample_max_abs=0.0630750954; nonfinite_samples=0
+Progress 201/449; sample_max_abs=0.061483182; nonfinite_samples=0
+Progress 251/449; sample_max_abs=0.0618883073; nonfinite_samples=0
+Progress 301/449; sample_max_abs=0.0625261664; nonfinite_samples=0
+Progress 351/449; sample_max_abs=0.0533986762; nonfinite_samples=0
+Progress 401/449; sample_max_abs=0.0563333631; nonfinite_samples=0
+Progress 449/449; sample_max_abs=0.0607580915; nonfinite_samples=0
+
+===== STATIC QDQ SUMMARY =====
+{
+  "model": "Fold-2 TCN regression/imputation V6",
+  "quantization": {
+    "quant_format": "QDQ",
+    "op_types_to_quantize": [
+      "Gemm"
+    ],
+    "activation_type": "QInt8",
+    "weight_type": "QInt8",
+    "per_channel": true,
+    "calibrate_method": "MinMax",
+    "ActivationSymmetric": true,
+    "WeightSymmetric": true,
+    "calibration_sample_count": 449,
+    "excluded_operator_policy": "All other operators left in their original representation",
+    "missing_mask": "Boolean input; not treated as an INT8 activation"
+  },
+  "dataset": "split_byid/test",
+  "samples": 449,
+  "note": "Exploratory quantization check. The same 449 samples were used for calibration and comparison; this is not an independent generalization evaluation.",
+  "fp32_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+  "fp32_onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx",
+  "qdq_onnx_sha256": "52c9ed79e7e43a7892f334f9fb855c41ece37fbf7dd1660cd136f92ca2fc76ac",
+  "qdq_bytes": 10562148,
+  "all_outputs_finite": true,
+  "nonfinite_samples": [],
+  "global_max_abs_error": 0.08410800993442535,
+  "global_mean_abs_error": 0.004181878148779921,
+  "global_rmse": 0.0075046324505392255,
+  "worst_sample_index": 44,
+  "median_sample_max_abs_error": 0.05995464324951172,
+  "p99_sample_max_abs_error": 0.07987056851387023,
+  "per_channel_error": {
+    "0": {
+      "max_abs_error": 0.037609800696372986,
+      "mean_abs_error": 0.0028022419308021615,
+      "rmse": 0.004632490873505788
+    },
+    "1": {
+      "max_abs_error": 0.08410800993442535,
+      "mean_abs_error": 0.006180891095458045,
+      "rmse": 0.011669816760428029
+    },
+    "2": {
+      "max_abs_error": 0.05868643522262573,
+      "mean_abs_error": 0.004240055821257058,
+      "rmse": 0.00665916753735703
+    },
+    "3": {
+      "max_abs_error": 0.06205138564109802,
+      "mean_abs_error": 0.004150107988451147,
+      "rmse": 0.007541528114088639
+    },
+    "4": {
+      "max_abs_error": 0.05878263711929321,
+      "mean_abs_error": 0.0032447732710485793,
+      "rmse": 0.00550638345983187
+    },
+    "5": {
+      "max_abs_error": 0.0760965347290039,
+      "mean_abs_error": 0.004473198785662533,
+      "rmse": 0.006980905170402171
+    }
+  },
+  "qdq_graph": {
+    "operator_counts": {
+      "Abs": 2,
+      "Add": 23,
+      "Cast": 6,
+      "Clip": 1,
+      "Concat": 7,
+      "Constant": 97,
+      "ConstantOfShape": 7,
+      "Conv": 47,
+      "DequantizeLinear": 28,
+      "Div": 4,
+      "Equal": 1,
+      "Exp": 2,
+      "Expand": 1,
+      "Gather": 6,
+      "Gemm": 7,
+      "GreaterOrEqual": 2,
+      "Mul": 29,
+      "Neg": 4,
+      "Not": 1,
+      "Or": 2,
+      "Pad": 5,
+      "QuantizeLinear": 14,
+      "Reciprocal": 2,
+      "ReduceMean": 4,
+      "ReduceSum": 2,
+      "Relu": 31,
+      "Reshape": 11,
+      "Shape": 1,
+      "Slice": 5,
+      "Sqrt": 2,
+      "Sub": 8,
+      "Transpose": 9,
+      "Unsqueeze": 6,
+      "Where": 8
+    },
+    "quantize_linear_nodes": 14,
+    "dequantize_linear_nodes": 28,
+    "qdq_scale_tensor_count": 42,
+    "qdq_scale_value_count": 12628,
+    "qdq_scale_min": 2.882812566440407e-07,
+    "qdq_scale_max": 1.1796505451202393,
+    "direct_graph_input_quantizers": {
+      "x_values": [],
+      "missing_mask": [],
+      "x_mark": [],
+      "worker_features_18": [
+        {
+          "node_name": "worker_features_18_QuantizeLinear",
+          "output": [
+            "worker_features_18_QuantizeLinear_Output"
+          ],
+          "scale_initializer": "worker_features_18_scale",
+          "zero_point_initializer": "worker_features_18_zero_point"
+        }
+      ],
+      "compact_values": []
+    }
+  },
+  "initializer_summary": {
+    "initializer_count_by_dtype": {
+      "float32": 106,
+      "int8": 28,
+      "int32": 14
+    },
+    "initializer_bytes_by_dtype": {
+      "float32": 630088,
+      "int8": 9742514,
+      "int32": 50400
+    },
+    "int8_initializer_count": 28,
+    "int8_initializer_bytes": 9742514,
+    "int8_initializer_examples": [
+      "worker_features_18_zero_point",
+      "/non_seq_enc/Gemm_output_0_zero_point",
+      "model.non_seq_enc.weight_zero_point",
+      "model.non_seq_enc.weight_quantized",
+      "/Gather_output_0_zero_point",
+      "/svf.0/Gemm_output_0_zero_point",
+      "model.svf.0.weight_zero_point",
+      "model.svf.0.weight_quantized",
+      "/Gather_1_output_0_zero_point",
+      "/svf.1/Gemm_output_0_zero_point",
+      "model.svf.1.weight_zero_point",
+      "model.svf.1.weight_quantized",
+      "/Gather_2_output_0_zero_point",
+      "/svf.2/Gemm_output_0_zero_point",
+      "model.svf.2.weight_zero_point",
+      "model.svf.2.weight_quantized",
+      "/Gather_3_output_0_zero_point",
+      "/svf.3/Gemm_output_0_zero_point",
+      "model.svf.3.weight_zero_point",
+      "model.svf.3.weight_quantized"
+    ]
+  },
+  "qdq_operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 28,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 14,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  }
+}
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_gemm_only_v6_20261121_184158/qdq_ort_all449_report.json
+
+<TCN_V6_STATIC_INT8_QDQ> PASS </TCN_V6_STATIC_INT8_QDQ>
+QDQ model created and all 449 ORT outputs are finite.
+No TFLite conversion, Vela, firmware, or flash actions performed.
