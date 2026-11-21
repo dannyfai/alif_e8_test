@@ -1,0 +1,1390 @@
+============================================================
+TCN V6 TFLM SAMPLE INSPECTION
+Date: Sat Nov 21 08:47:22 PM HKT 2026
+Workspace: /home/user/sdk-alif
+============================================================
+
+===== 1. U55 SNIPPET =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/snippets/ethos-u55-enable/snippet.yml
+------------------------------------------------------------
+     1	name: ethos-u55-enable
+     2	append:
+     3	  EXTRA_DTC_OVERLAY_FILE: snippet.overlay
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/snippets/ethos-u55-enable/snippet.overlay
+------------------------------------------------------------
+     1	/* Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 *
+     9	 */
+    10	
+    11	/*
+    12	 * Ethos-U55 NPU Enable Overlay
+    13	 *
+    14	 * This overlay enables the Ethos-U55 NPU (ethosu0) for all boards.
+    15	 *
+    16	 * Applicable to ALL Boards:
+    17	 *   - B1 (alif_b1_dk)      - U55 only
+    18	 *   - E1C (alif_e1c_dk)    - U55 only
+    19	 *   - E7 (alif_e7_dk)      - U55 only
+    20	 *   - E8 (alif_e8_dk)      - U55 + U85
+    21	 *
+    22	 * Note: All boards have ethosu0 (U55). E8 additionally has ethosu1 (U85).
+    23	 *
+    24	 * Usage:
+    25	 *   west build -b alif_e8_dk/<variant>/<core> <app_path> -S ethos-u55-enable
+    26	 *
+    27	 * Build-time Safety Check:
+    28	 *   If this overlay is applied to a board without U55 support,
+    29	 *   the build will fail with an error message indicating that ethosu0 node
+    30	 *   does not exist on this board.
+    31	 */
+    32	
+    33	/ {
+    34		/* Compile-time assertion: ethosu0 must exist */
+    35		ethosu_u55_check {
+    36			compatible = "vnd,ethosu-u55-check";
+    37			ethosu-node = <&ethosu0>;
+    38		};
+    39	};
+    40	
+    41	&ethosu0 {
+    42		status = "okay";
+    43	};
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/enable_ethosu55.overlay
+------------------------------------------------------------
+     1	/* Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 *
+     9	 */
+    10	
+    11	/*
+    12	 * Ethos-U55 NPU Enable Overlay
+    13	 * 
+    14	 * This overlay enables the Ethos-U55 NPU (ethosu0) for all boards.
+    15	 * 
+    16	 * Applicable to ALL Boards:
+    17	 *   - B1 (alif_b1_dk)      - U55 only
+    18	 *   - E1C (alif_e1c_dk)    - U55 only
+    19	 *   - E7 (alif_e7_dk)      - U55 only
+    20	 *   - E8 (alif_e8_dk)      - U55 + U85
+    21	 *
+    22	 * Note: All boards have ethosu0 (U55). E8 additionally has ethosu1 (U85).
+    23	 * 
+    24	 * Usage:
+    25	 *   west build -b <board> <app_path> -- \
+    26	 *     -DEXTRA_DTC_OVERLAY_FILE="boards/enable_ethosu55.overlay"
+    27	 * 
+    28	 * Build-time Safety Check:
+    29	 *   If this overlay is applied to a board without U55 support,
+    30	 *   the build will fail with an error message indicating that ethosu0 node
+    31	 *   does not exist on this board.
+    32	 */
+    33	
+    34	/ {
+    35		/* Compile-time assertion: ethosu0 must exist */
+    36		ethosu_u55_check {
+    37			compatible = "vnd,ethosu-u55-check";
+    38			ethosu-node = <&ethosu0>;
+    39		};
+    40	};
+    41	
+    42	&ethosu0 {
+    43		status = "okay";
+    44	};
+
+===== 2. ALIF TFLM ETHOS-U SAMPLE =====
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/CMakeLists.txt (6837 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/sample.yaml (250 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/README.rst (6398 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/enable_ethosu85.overlay (1372 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/alif_e8_dk_ae822fa0e5597xx0_apss.conf (459 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/enable_ethosu55.overlay (1304 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/apss_sram1_sections.ld (737 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/boards/alif_e8_ak_ae822fa0e5597xx0_apss.conf (459 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/prj.conf (564 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/src/main.cpp (9265 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/Kconfig (1038 bytes)
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/CMakeLists.txt
+------------------------------------------------------------
+     1	# Copyright 2021-2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	#
+     3	# SPDX-License-Identifier: Apache-2.0
+     4	
+     5	cmake_minimum_required(VERSION 3.20.0)
+     6	
+     7	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+     8	
+     9	# Detect NPU architecture from ETHOSU_TARGET_NPU_CONFIG
+    10	# This is the SINGLE SOURCE OF TRUTH for NPU configuration
+    11	if(ETHOSU_TARGET_NPU_CONFIG MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+    12	    set(ETHOSU_ARCH "${CMAKE_MATCH_1}")
+    13	    set(ETHOSU_MACS "${CMAKE_MATCH_2}")
+    14	
+    15	    message(STATUS "ETHOSU_TARGET_NPU_CONFIG: ${ETHOSU_TARGET_NPU_CONFIG}")
+    16	    message(STATUS "Detected NPU Architecture: ${ETHOSU_ARCH}, MACs: ${ETHOSU_MACS}")
+    17	
+    18	    # Validate and configure for U55/U65
+    19	    if((ETHOSU_ARCH STREQUAL "u55") OR (ETHOSU_ARCH STREQUAL "u65"))
+    20	        # Validate MAC configuration based on core type (HE vs HP)
+    21	        if(CONFIG_RTSS_HE)
+    22	            # HE core only supports 128 MACs for U55
+    23	            if(NOT (ETHOSU_MACS STREQUAL "128"))
+    24	                message(FATAL_ERROR 
+    25	                    "Core type mismatch: RTSS_HE core with U55 only supports 128 MACs.\n"
+    26	                    "You specified: ${ETHOSU_MACS} MACs\n"
+    27	                    "For HE core, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128\n"
+    28	                    "For 256 MACs, use HP core board variant (rtss_hp)")
+    29	            endif()
+    30	            message(STATUS "Detected RTSS_HE core - U55 restricted to 128 MACs")
+    31	        elseif(CONFIG_RTSS_HP)
+    32	            # HP core only supports 256 MACs for U55
+    33	            if(NOT (ETHOSU_MACS STREQUAL "256"))
+    34	                message(FATAL_ERROR 
+    35	                    "Core type mismatch: RTSS_HP core with U55 only supports 256 MACs.\n"
+    36	                    "You specified: ${ETHOSU_MACS} MACs\n"
+    37	                    "For HP core, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256\n"
+    38	                    "For 128 MACs, use HE core board variant (rtss_he)")
+    39	            endif()
+    40	            message(STATUS "Detected RTSS_HP core - U55 restricted to 256 MACs")
+    41	        elseif(CONFIG_APSS)
+    42	            message(FATAL_ERROR
+    43	                "Ethos-U55 is not directly accessible from APSS (Cortex-A32).\n"
+    44	                "Use Ethos-U85 instead: -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+    45	        else()
+    46	            # Fallback validation for other core types
+    47	            if(NOT (ETHOSU_MACS STREQUAL "64" OR ETHOSU_MACS STREQUAL "128" OR ETHOSU_MACS STREQUAL "256"))
+    48	                message(FATAL_ERROR "Unsupported U55/U65 MAC configuration: ${ETHOSU_MACS}. Valid: 64, 128, 256")
+    49	            endif()
+    50	        endif()
+    51	
+    52	        # Validate overlay file matches NPU type
+    53	        if(DEFINED EXTRA_DTC_OVERLAY_FILE)
+    54	            if(EXTRA_DTC_OVERLAY_FILE MATCHES "ethosu85\\.overlay")
+    55	                message(FATAL_ERROR 
+    56	                    "Overlay mismatch: ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}' (U55) "
+    57	                    "but using U85 overlay '${EXTRA_DTC_OVERLAY_FILE}'.\n"
+    58	                    "For U55, use: -DEXTRA_DTC_OVERLAY_FILE=\"boards/enable_ethosu55.overlay\"")
+    59	            endif()
+    60	        endif()
+    61	
+    62	        # Set architecture flag
+    63	        set(ETHOSU_ARCH_U55 y CACHE BOOL "U55 Flag")
+    64	        add_compile_definitions(ETHOSU_ARCH_U55="${ETHOSU_ARCH_U55}")
+    65	
+    66	        # Automatically set the appropriate CONFIG_ARM_ETHOS_U55_* based on MACS
+    67	        if(ETHOSU_MACS STREQUAL "256")
+    68	            set(CONFIG_ARM_ETHOS_U55_256 y CACHE BOOL "U55 256 MACs" FORCE)
+    69	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_256=y")
+    70	        elseif(ETHOSU_MACS STREQUAL "128")
+    71	            set(CONFIG_ARM_ETHOS_U55_128 y CACHE BOOL "U55 128 MACs" FORCE)
+    72	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_128=y")
+    73	        elseif(ETHOSU_MACS STREQUAL "64")
+    74	            set(CONFIG_ARM_ETHOS_U55_64 y CACHE BOOL "U55 64 MACs" FORCE)
+    75	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_64=y")
+    76	        endif()
+    77	
+    78	        message(STATUS "Building for Ethos-U55 with ${ETHOSU_MACS} MACs")
+    79	
+    80	    # Validate and configure for U85
+    81	    elseif(ETHOSU_ARCH STREQUAL "u85")
+    82	        # Validate board supports U85 FIRST (before MAC check)
+    83	        # Note: E4, E8 boards have dual NPUs (U55 + U85)
+    84	        if(NOT (CONFIG_SOC_SERIES_E8 OR CONFIG_SOC_SERIES_E4))
+    85	            message(FATAL_ERROR 
+    86	                "Ethos-U85 is only available on E4, E8 boards.\n"
+    87	                "Current board does not support U85.\n"
+    88	                "For this board, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256")
+    89	        endif()
+    90	
+    91	        # Validate MAC configuration - U85 only supports 256 MACs on Alif boards
+    92	        if(NOT (ETHOSU_MACS STREQUAL "256"))
+    93	            message(FATAL_ERROR 
+    94	                "Unsupported U85 MAC configuration: ${ETHOSU_MACS}\n"
+    95	                "Alif Ensemble boards only support Ethos-U85 with 256 MACs.\n"
+    96	                "Use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+    97	        endif()
+    98	
+    99	        # Validate overlay file matches NPU type (catches accidental U55 overlay with U85 config)
+   100	        if(DEFINED EXTRA_DTC_OVERLAY_FILE)
+   101	            if(EXTRA_DTC_OVERLAY_FILE MATCHES "ethosu55\\.overlay")
+   102	                message(FATAL_ERROR 
+   103	                    "Overlay mismatch: ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}' (U85) "
+   104	                    "but using U55 overlay '${EXTRA_DTC_OVERLAY_FILE}'.\n"
+   105	                    "For U85 on RTSS, use: -S ethos-u85-enable\n"
+   106	                    "For U85 on APSS,  use: -S ethos-u85-apss-enable")
+   107	            endif()
+   108	        endif()
+   109	
+   110	        # Set architecture flag
+   111	        set(ETHOSU_ARCH_U85 y CACHE BOOL "U85 Flag")
+   112	        add_compile_definitions(ETHOSU_ARCH_U85="${ETHOSU_ARCH_U85}")
+   113	
+   114	        # Automatically set CONFIG_ARM_ETHOS_U85_256 (only 256 MACs supported)
+   115	        set(CONFIG_ARM_ETHOS_U85_256 y CACHE BOOL "U85 256 MACs" FORCE)
+   116	        message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U85_256=y")
+   117	
+   118	        message(STATUS "Building for Ethos-U85 with ${ETHOSU_MACS} MACs")
+   119	
+   120	    else()
+   121	        message(FATAL_ERROR "Unsupported NPU architecture: ${ETHOSU_ARCH}. Valid: u55, u65, u85")
+   122	    endif()
+   123	
+   124	else()
+   125	    message(FATAL_ERROR 
+   126	        "Invalid or missing ETHOSU_TARGET_NPU_CONFIG: '${ETHOSU_TARGET_NPU_CONFIG}'\n"
+   127	        "Required format: ethos-u<arch>-<macs>\n"
+   128	        "Examples:\n"
+   129	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128\n"
+   130	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256\n"
+   131	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+   132	endif()
+   133	
+   134	project(tflm_ethosu_app)
+   135	
+   136	target_include_directories(app PRIVATE ../../../../include)
+   137	
+   138	add_subdirectory(
+   139	    ../../../../lib/ethosu_utils
+   140	    ${CMAKE_BINARY_DIR}/lib/ethosu_utils
+   141	)
+   142	
+   143	target_sources(app PRIVATE src/main.cpp)
+   144	
+   145	# APSS (Cortex-A32): include the SRAM1 linker snippet so the tensor arena
+   146	# is placed into the non-cacheable SRAM1 memory region defined in the overlay.
+   147	if(CONFIG_APSS)
+   148	    zephyr_linker_sources(SECTIONS boards/apss_sram1_sections.ld)
+   149	endif()
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/prj.conf
+------------------------------------------------------------
+     1	#application default configuration
+     2	# include TFLM based on CMSIS NN optimization and ETHOSU acceleration
+     3	CONFIG_CPP=y
+     4	CONFIG_STD_CPP17=y
+     5	CONFIG_TENSORFLOW_LITE_MICRO=y
+     6	CONFIG_ARM_ETHOS_U=y
+     7	CONFIG_HEAP_MEM_POOL_SIZE=16384
+     8	CONFIG_LOG=y
+     9	CONFIG_LOG_MODE_IMMEDIATE=y
+    10	CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG=y
+    11	
+    12	# Build output configuration (replaces deprecated BUILD_NO_GAP_FILL)
+    13	CONFIG_BUILD_OUTPUT_HEX_GAP_FILL=n
+    14	CONFIG_BUILD_OUTPUT_S19_GAP_FILL=n
+    15	
+    16	CONFIG_REQUIRES_FULL_LIBC=y
+    17	CONFIG_NEWLIB_LIBC=y
+    18	CONFIG_REQUIRES_FULL_LIBCPP=y
+    19	CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=8192
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/README.rst
+------------------------------------------------------------
+     1	.. _tflm_ethosu:
+     2	
+     3	Arm(R) Ethos(TM)-U TensorFlow Lite Micro Application
+     4	#####################################################
+     5	
+     6	Overview
+     7	********
+     8	
+     9	ML inference application using TensorFlow Lite Micro (TFLM) with Arm Ethos-U NPU acceleration.
+    10	Runs keyword spotting CNN model optimized with Vela compiler.
+    11	
+    12	Supported Boards
+    13	****************
+    14	
+    15	+-------+--------+---------+---------+-------------------------+
+    16	| Board | U55    | U85     | APSS    | Notes                   |
+    17	+=======+========+=========+=========+=========================+
+    18	| B1    | Yes    | No      | No      | U55 only                |
+    19	+-------+--------+---------+---------+-------------------------+
+    20	| E1C   | Yes    | No      | No      | U55 only                |
+    21	+-------+--------+---------+---------+-------------------------+
+    22	| E3    | Yes    | No      | No      | U55 only                |
+    23	+-------+--------+---------+---------+-------------------------+
+    24	| E4    | Yes    | Yes     | No      | Dual NPU                |
+    25	+-------+--------+---------+---------+-------------------------+
+    26	| E7    | Yes    | No      | Yes     | U55 only                |
+    27	+-------+--------+---------+---------+-------------------------+
+    28	| E8    | Yes    | Yes     | Yes     | Dual NPU                |
+    29	+-------+--------+---------+---------+-------------------------+
+    30	
+    31	Core Type Restrictions
+    32	**********************
+    33	
+    34	- **HE cores (rtss_he)**: U55 supports 128 MACs only
+    35	- **HP cores (rtss_hp)**: U55 supports 256 MACs only
+    36	- **APSS cores (apss)**: U85 with 256 MACs only (Cortex-A32)
+    37	- **U85**: Always 256 MACs (HE, HP, and APSS cores)
+    38	
+    39	Building and Running
+    40	********************
+    41	
+    42	All build commands use the ``-S`` flag to apply snippets for NPU configuration.
+    43	This sample uses TCM/MRAM/SRAM memory and does not require external OSPI flash.
+    44	
+    45	Building for Alif B1 DK
+    46	------------------------
+    47	
+    48	**HE Core with U55-128:**
+    49	
+    50	.. code-block:: console
+    51	
+    52	   west build -b alif_b1_dk/ab1c1f4m51820hh0/rtss_he \
+    53	       -S ethos-u55-enable \
+    54	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+    55	       -p always -- \
+    56	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+    57	
+    58	Building for Alif E1C DK
+    59	-------------------------
+    60	
+    61	**HE Core with U55-128:**
+    62	
+    63	.. code-block:: console
+    64	
+    65	   west build -b alif_e1c_dk/ae1c1f4051920hh/rtss_he \
+    66	       -S ethos-u55-enable \
+    67	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+    68	       -p always -- \
+    69	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+    70	
+    71	Building for Alif E7 DK
+    72	-----------------------
+    73	
+    74	**HP Core with U55-256:**
+    75	
+    76	.. code-block:: console
+    77	
+    78	   west build -b alif_e7_dk/ae722f80f55d5xx/rtss_hp \
+    79	       -S ethos-u55-enable \
+    80	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+    81	       -p always -- \
+    82	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256
+    83	
+    84	**HE Core with U55-128:**
+    85	
+    86	.. code-block:: console
+    87	
+    88	   west build -b alif_e7_dk/ae722f80f55d5xx/rtss_he \
+    89	       -S ethos-u55-enable \
+    90	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+    91	       -p always -- \
+    92	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+    93	
+    94	Building for Alif E8 DK
+    95	-----------------------
+    96	
+    97	**HP Core with U55-256:**
+    98	
+    99	.. code-block:: console
+   100	
+   101	   west build -b alif_e8_dk/ae822fa0e5597xx0/rtss_hp \
+   102	       -S ethos-u55-enable \
+   103	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+   104	       -p always -- \
+   105	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256
+   106	
+   107	**HP Core with U85-256:**
+   108	
+   109	.. code-block:: console
+   110	
+   111	   west build -b alif_e8_dk/ae822fa0e5597xx0/rtss_hp \
+   112	       -S ethos-u85-enable \
+   113	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+   114	       -p always -- \
+   115	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+   116	
+   117	**HE Core with U55-128:**
+   118	
+   119	.. code-block:: console
+   120	
+   121	   west build -b alif_e8_dk/ae822fa0e5597xx0/rtss_he \
+   122	       -S ethos-u55-enable \
+   123	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+   124	       -p always -- \
+   125	       -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+   126	
+   127	**APSS Core (Cortex-A32) with U85-256:**
+   128	
+   129	.. code-block:: console
+   130	
+   131	   west build -b alif_e8_dk/ae822fa0e5597xx0/apss \
+   132	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+   133	       -p always \
+   134	       -S ethos-u85-apss-enable \
+   135	       -- -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+   136	
+   137	.. note::
+   138	
+   139	   The ``ethos-u85-apss-enable`` snippet defines the Ethos-U85 NPU node with
+   140	   GIC interrupt routing (GIC_SPI 355) and the SRAM1 memory region for the
+   141	   non-cacheable tensor arena. Using a snippet is the Zephyr-idiomatic approach
+   142	   and is consistent with how ``ethos-u55-enable`` and ``ethos-u85-enable`` work
+   143	   for RTSS cores. The tensor arena is placed in SRAM1 to ensure cache coherency
+   144	   with the NPU without explicit cache maintenance.
+   145	
+   146	Building for Alif E8 AK
+   147	-----------------------
+   148	
+   149	**HP Core with U55-256:**
+   150	
+   151	.. code-block:: console
+   152	
+   153	   west build -b alif_e8_ak/ae822fa0e5597xx0/rtss_hp \
+   154	      -S ethos-u55-enable \
+   155	      alif/samples/modules/tflite-micro/tflm_ethosu \
+   156	      -p always -- \
+   157	      -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256
+   158	
+   159	**HP Core with U85-256:**
+   160	
+   161	.. code-block:: console
+   162	
+   163	   west build -b alif_e8_ak/ae822fa0e5597xx0/rtss_hp \
+   164	      -S ethos-u85-enable \
+   165	      alif/samples/modules/tflite-micro/tflm_ethosu \
+   166	      -p always -- \
+   167	      -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+   168	
+   169	**HE Core with U55-128:**
+   170	
+   171	.. code-block:: console
+   172	
+   173	   west build -b alif_e8_ak/ae822fa0e5597xx0/rtss_he \
+   174	      -S ethos-u55-enable \
+   175	      alif/samples/modules/tflite-micro/tflm_ethosu \
+   176	      -p always -- \
+   177	      -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+   178	
+   179	**APSS Core (Cortex-A32) with U85-256:**
+   180	
+   181	.. code-block:: console
+   182	
+   183	   west build -b alif_e8_ak/ae822fa0e5597xx0/apss \
+   184	       ../alif/samples/modules/tflite-micro/tflm_ethosu \
+   185	       -p always \
+   186	       -S ethos-u85-apss-enable \
+   187	       -- -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+   188	
+   189	
+   190	Configuration Options
+   191	*********************
+   192	
+   193	**NPU Configuration:**
+   194	
+   195	- ``ETHOSU_TARGET_NPU_CONFIG``: ethos-u55-128, ethos-u55-256, or ethos-u85-256
+   196	
+   197	**Snippets:**
+   198	
+   199	- ``-S ethos-u55-enable``: Enable U55 NPU on RTSS cores (all boards)
+   200	- ``-S ethos-u85-enable``: Enable U85 NPU on RTSS cores (E4/E8 only)
+   201	- ``-S ethos-u85-apss-enable``: Enable U85 NPU on APSS (Cortex-A32) core (E8 only)
+   202	
+   203	Snippets automatically apply the necessary device tree overlays to enable the NPU.
+   204	
+   205	**Performance Tuning:**
+   206	
+   207	- ``NUM_INFERENCE_TASKS``: Worker threads (default: 1)
+   208	- ``NUM_JOB_TASKS``: Sender tasks (default: 2)
+   209	- ``NUM_JOBS_PER_TASK``: Inferences per task (default: 2)
+   210	
+   211	Flashing
+   212	********
+   213	
+   214	.. code-block:: console
+   215	
+   216	   west flash
+
+SOURCE DIRECTORY: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/src/main.cpp
+
+===== 3. ZEPHYR TFLM ETHOS-U SAMPLE =====
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/CMakeLists.txt (441 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/sample.yaml (306 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/README.rst (1875 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/prj.conf (265 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/linker.ld (373 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.cpp (5418 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.hpp (1135 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/output.h (292 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/input.h (3182 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/model.h (466036 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/main.cpp (8313 bytes)
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/Kconfig (212 bytes)
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/CMakeLists.txt
+------------------------------------------------------------
+     1	# Copyright 2021-2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	#
+     3	# SPDX-License-Identifier: Apache-2.0
+     4	
+     5	cmake_minimum_required(VERSION 3.20.0)
+     6	
+     7	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+     8	
+     9	project(tflm_ethosu_app)
+    10	
+    11	target_include_directories(app PRIVATE src/models/keyword_spotting_cnn_small_int8)
+    12	
+    13	target_sources(app PRIVATE src/main.cpp src/inference_process.cpp)
+    14	
+    15	zephyr_linker_sources(SECTIONS linker.ld)
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/prj.conf
+------------------------------------------------------------
+     1	#application default configuration
+     2	# include TFLM based on CMSIS NN optimization and ETHOSU acceleration
+     3	CONFIG_CPP=y
+     4	CONFIG_STD_CPP17=y
+     5	CONFIG_TENSORFLOW_LITE_MICRO=y
+     6	CONFIG_ARM_ETHOS_U=y
+     7	CONFIG_HEAP_MEM_POOL_SIZE=16384
+     8	CONFIG_LOG=y
+     9	CONFIG_REQUIRES_FLOAT_PRINTF=y
+
+SOURCE DIRECTORY: /home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.cpp
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.hpp
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/output.h
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/input.h
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/models/keyword_spotting_cnn_small_int8/model.h
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/main.cpp
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.cpp:121:	tflite::MicroMutableOpResolver <1> resolver;
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.cpp:122:	resolver.AddEthosU();
+/home/user/sdk-alif/zephyr/samples/modules/tflite-micro/tflm_ethosu/src/inference_process.cpp:127:	TfLiteStatus allocate_status = interpreter.AllocateTensors();
+
+===== 4. ALIF INFERENCE SAMPLE =====
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/CMakeLists.txt (5766 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e1c_dk_ae1c1f4051920hh_rtss_he.overlay (485 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay (481 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e7_dk_ae722f80f55d5xx_rtss_hp.overlay (543 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay (485 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay (481 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.conf (430 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_hp.overlay (480 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e7_dk_ae722f80f55d5xx_rtss_he.overlay (543 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_hp.conf (432 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.conf (432 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.overlay (480 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/boards/alif_e1c_dk_ae1c1f4051920hh_rtss_he.conf (430 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/prj.conf (487 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/readme.rst (1656 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp (6010 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/PlatformMath.hpp (7720 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/MicroNetKwsModel.hpp (2025 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Mfcc.hpp (10498 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/MicroNetKwsMfcc.hpp (1824 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsClassifier.hpp (2883 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Classifier.hpp (3686 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/BaseProcessing.hpp (2434 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/TensorFlowLiteMicro.hpp (2769 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsProcessing.hpp (6471 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Mfcc.cc (10458 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsProcessing.cc (8027 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/PlatformMath.cc (8231 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/AudioUtils.hpp (5565 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/ClassificationResult.hpp (1280 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.cpp (548 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/BufAttributes.hpp (1557 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp (3001 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.h (331 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/main.cpp (797 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.h (882 bytes)
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/Kconfig (2054 bytes)
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/CMakeLists.txt
+------------------------------------------------------------
+     1	cmake_minimum_required(VERSION 3.20.0)
+     2	
+     3	# Locate the alif-mlek west module. It provides the Vela-compiled models and the
+     4	# source-generator CMake helpers used to turn a .tflite into a C array. Ask west
+     5	# for the module path instead of hardcoding the workspace layout.
+     6	execute_process(
+     7	    COMMAND west list --format "{abspath}" alif-mlek
+     8	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+     9	    OUTPUT_VARIABLE MLEK_ROOT
+    10	    OUTPUT_STRIP_TRAILING_WHITESPACE
+    11	    RESULT_VARIABLE MLEK_LIST_RESULT
+    12	    ERROR_QUIET
+    13	)
+    14	if (MLEK_LIST_RESULT OR NOT EXISTS ${MLEK_ROOT})
+    15	    message(FATAL_ERROR
+    16	        "alif-mlek module not found. Enable and fetch it first:\n"
+    17	        "  west config manifest.project-filter -- +alif-mlek\n"
+    18	        "  west update\n")
+    19	endif()
+    20	
+    21	# Make the MLEK source-generator helpers (setup_source_generator,
+    22	# generate_model_code) available without pulling in the full MLEK examples lib.
+    23	set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+    24	list(APPEND CMAKE_MODULE_PATH ${MLEK_SCRIPTS_DIR}/cmake)
+    25	include(source_gen_utils)
+    26	
+    27	# ---------------------------------------------------------------------------
+    28	# Ethos-U NPU selection
+    29	# ---------------------------------------------------------------------------
+    30	# When ETHOSU_TARGET_NPU_CONFIG is provided on the command line it is the single
+    31	# source of truth for the NPU. We must act on it BEFORE find_package(Zephyr) so
+    32	# that the matching Kconfig choice (CONFIG_ARM_ETHOS_U<arch>_<macs>) is fed into
+    33	# the build and the Ethos-U driver targets the requested NPU. This overrides the
+    34	# board default (E8 rtss_hp defaults to Ethos-U55 with 256 MACs).
+    35	#
+    36	# The parsed value is also used to pick the correct Vela-compiled model below.
+    37	# Vela config-ID prefix: U55 -> H, U65 -> Y, U85 -> Z (e.g. ethos-u85-256 -> Z256).
+    38	if (DEFINED ETHOSU_TARGET_NPU_CONFIG)
+    39	    string(TOLOWER "${ETHOSU_TARGET_NPU_CONFIG}" _npu_cfg)
+    40	    if (_npu_cfg MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+    41	        set(_npu_arch "${CMAKE_MATCH_1}")
+    42	        set(_npu_macs "${CMAKE_MATCH_2}")
+    43	        if (_npu_arch STREQUAL "u55")
+    44	            set(_npu_prefix "H")
+    45	        elseif (_npu_arch STREQUAL "u65")
+    46	            set(_npu_prefix "Y")
+    47	        elseif (_npu_arch STREQUAL "u85")
+    48	            set(_npu_prefix "Z")
+    49	        else()
+    50	            message(FATAL_ERROR
+    51	                "Unsupported Ethos-U architecture '${_npu_arch}' in "
+    52	                "ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'")
+    53	        endif()
+    54	        set(ETHOS_U_NPU_CONFIG_ID "${_npu_prefix}${_npu_macs}")
+    55	
+    56	        # Feed the matching Kconfig choice into the Zephyr configuration.
+    57	        string(TOUPPER "${_npu_arch}" _npu_arch_uc)
+    58	        set(CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs} y
+    59	            CACHE INTERNAL "Selected Ethos-U NPU configuration" FORCE)
+    60	        message(STATUS
+    61	            "Ethos-U: ETHOSU_TARGET_NPU_CONFIG=${ETHOSU_TARGET_NPU_CONFIG} -> "
+    62	            "CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs}=y, model ID ${ETHOS_U_NPU_CONFIG_ID}")
+    63	    else()
+    64	        message(FATAL_ERROR
+    65	            "Invalid ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'.\n"
+    66	            "Expected format: ethos-u<arch>-<macs>, e.g. ethos-u55-256 or ethos-u85-256")
+    67	    endif()
+    68	endif()
+    69	
+    70	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    71	project(alif_inference)
+    72	
+    73	# ---------------------------------------------------------------------------
+    74	# Build-time model generation from MLEK resources
+    75	# ---------------------------------------------------------------------------
+    76	set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded CACHE PATH
+    77	    "Path to MLEK resources (models compiled with Vela)")
+    78	setup_source_generator()
+    79	
+    80	# Source generation output directory
+    81	set(SRC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/src)
+    82	file(MAKE_DIRECTORY ${SRC_GEN_DIR})
+    83	
+    84	# Determine NPU config ID based on Zephyr Kconfig.
+    85	# If ETHOSU_TARGET_NPU_CONFIG was supplied on the command line, ETHOS_U_NPU_CONFIG_ID
+    86	# has already been computed above. Otherwise fall back to the board Kconfig defaults.
+    87	if (NOT DEFINED ETHOS_U_NPU_CONFIG_ID)
+    88	    if (CONFIG_ARM_ETHOS_U85_256)
+    89	        set(ETHOS_U_NPU_CONFIG_ID "Z256")
+    90	    elseif (CONFIG_ARM_ETHOS_U55_256)
+    91	        set(ETHOS_U_NPU_CONFIG_ID "H256")
+    92	    else()
+    93	        set(ETHOS_U_NPU_CONFIG_ID "H128")
+    94	    endif()
+    95	endif()
+    96	
+    97	# Model file path
+    98	set(KWS_MODEL_PATH ${RESOURCES_PATH}/kws/kws_micronet_m_vela_${ETHOS_U_NPU_CONFIG_ID}.tflite
+    99	    CACHE FILEPATH "Path to the KWS TFLite model (Vela-compiled)")
+   100	
+   101	if (NOT EXISTS ${KWS_MODEL_PATH})
+   102	    message(FATAL_ERROR
+   103	        "KWS model not found at ${KWS_MODEL_PATH}\n"
+   104	        "Run set_up_default_resources.py first:\n"
+   105	        "  python3 ${MLEK_ROOT}/set_up_default_resources.py\n")
+   106	endif()
+   107	
+   108	# Validate the generated model C array against the selected NPU.
+   109	set(ETHOS_U_NPU_ENABLED ON)
+   110	
+   111	# Generate model C array and parameter constants
+   112	set(EXTRA_MODEL_CODE
+   113	    "/* Model parameters for alif_inference */"
+   114	    "extern const int   g_FrameLength    = 640"
+   115	    "extern const int   g_FrameStride    = 320"
+   116	    "extern const int   g_AudioRate      = 16000"
+   117	    "extern const float g_ScoreThreshold = 0.5"
+   118	)
+   119	
+   120	generate_model_code(
+   121	    MODEL_PATH  ${KWS_MODEL_PATH}
+   122	    DESTINATION ${SRC_GEN_DIR}
+   123	    EXPRESSIONS ${EXTRA_MODEL_CODE}
+   124	    NAMESPACE   "arm" "app" "kws"
+   125	)
+   126	
+   127	# Collect the generated source files
+   128	file(GLOB KWS_GENERATED_SOURCES ${SRC_GEN_DIR}/*.cc)
+   129	
+   130	# ---------------------------------------------------------------------------
+   131	
+   132	target_include_directories(app PRIVATE
+   133	    src
+   134	    ../../alif_common
+   135	    ../../alif_common/audio
+   136	    ../../alif_common/audio/include
+   137	)
+   138	
+   139	target_sources(app PRIVATE
+   140	    src/mfcc/PlatformMath.cc
+   141	    src/mfcc/KwsProcessing.cc
+   142	    src/mfcc/Mfcc.cc
+   143	    src/main.cpp
+   144	    src/KWSModel.cpp
+   145	    src/LiveMicInput.cpp
+   146	    ../../alif_common/audio/AudioBackend.cpp
+   147	    ${KWS_GENERATED_SOURCES}
+   148	)
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/prj.conf
+------------------------------------------------------------
+     1	CONFIG_CPP=y
+     2	CONFIG_STD_CPP17=y
+     3	CONFIG_TENSORFLOW_LITE_MICRO=y
+     4	CONFIG_ARM_ETHOS_U=y
+     5	CONFIG_HEAP_MEM_POOL_SIZE=16384
+     6	CONFIG_LOG=y
+     7	CONFIG_LOG_MODE_IMMEDIATE=y
+     8	CONFIG_BUILD_NO_GAP_FILL=y
+     9	CONFIG_REQUIRES_FULL_LIBC=y
+    10	CONFIG_NEWLIB_LIBC=y
+    11	CONFIG_REQUIRES_FULL_LIBCPP=y
+    12	CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=8192
+    13	CONFIG_I2S=y
+    14	CONFIG_CMSIS_DSP=y
+    15	CONFIG_CMSIS_DSP_TRANSFORM=y
+    16	CONFIG_CMSIS_DSP_FASTMATH=y
+    17	CONFIG_CMSIS_DSP_COMPLEXMATH=y
+    18	CONFIG_MAIN_STACK_SIZE=4096
+    19	CONFIG_CBPRINTF_FP_SUPPORT=y
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/readme.rst
+------------------------------------------------------------
+     1	.. _tflite-micro-alif-inference-sample:
+     2	
+     3	Keyword Spotting using Generic Inference Runner
+     4	###############################################
+     5	
+     6	Overview
+     7	********
+     8	
+     9	This sample demonstrates how to use a generic inference runner to perform Keyword Spotting (KWS) on Alif devices.
+    10	
+    11	Requirements
+    12	************
+    13	
+    14	- Alif Ensemble or Balletto Development Kit / Application Kit
+    15	
+    16	Building and Running
+    17	********************
+    18	
+    19	This sample is located at :zephyr_file:`samples/modules/tflite-micro/alif_inference` in the sdk-alif tree.
+    20	
+    21	To build the sample, you first need to pull in the optional dependencies by running the following commands:
+    22	
+    23	.. code-block:: console
+    24	
+    25	   west config manifest.group-filter -- +optional
+    26	   west update
+    27	
+    28	To build the sample for the **U55** version version on E8-DK:
+    29	
+    30	.. code-block:: console
+    31	
+    32	   west build -b alif_e8_dk/ae822fa0e5597xx0/rtss_he -S ethos-u55-enable samples/modules/tflite-micro/alif_inference
+    33	   west flash
+    34	
+    35	To build the sample for the **U55** version on E8-AK:
+    36	
+    37	.. code-block:: console
+    38	
+    39	   west build -b alif_e8_ak/ae822fa0e5597xx0/rtss_he -S ethos-u55-enable samples/modules/tflite-micro/alif_inference
+    40	   west flash
+    41	
+    42	To build the sample for the **U85** version on E8-DK:
+    43	
+    44	.. code-block:: console
+    45	
+    46	   west build -b alif_e8_dk/ae822fa0e5597xx0/rtss_he samples/modules/tflite-micro/alif_inference -S ethos-u85-enable -- -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+    47	   west flash
+    48	
+    49	To build the sample for the **U85** version on E8-AK:
+    50	
+    51	.. code-block:: console
+    52	
+    53	   west build -b alif_e8_ak/ae822fa0e5597xx0/rtss_he samples/modules/tflite-micro/alif_inference -S ethos-u85-enable -- -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256
+    54	   west flash
+
+SOURCE DIRECTORY: /home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/PlatformMath.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/MicroNetKwsModel.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Mfcc.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/MicroNetKwsMfcc.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsClassifier.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Classifier.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/BaseProcessing.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/TensorFlowLiteMicro.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsProcessing.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Mfcc.cc
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/KwsProcessing.cc
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/PlatformMath.cc
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/AudioUtils.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/ClassificationResult.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.cpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/BufAttributes.hpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.h
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/main.cpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.h
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp:39:        TfLiteTensor* GetInputTensor(size_t index) const;
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp:42:        TfLiteTensor* GetOutputTensor(size_t index) const;
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp:54:        size_t GetNumInputs() const;
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/MicroNetKwsModel.hpp:52:        tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp:37:	m_resolver.AddEthosU();
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp:43:	const auto rc = m_pInterpreter->AllocateTensors();
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp:45:		LOG_ERR("AllocateTensors failed: %i", rc);
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.h:35:	tflite::MicroMutableOpResolver<1> m_resolver;
+
+===== 5. TFLM ETHOS-U CUSTOM KERNEL =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc
+------------------------------------------------------------
+     1	/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	//
+    17	// This is a stub file for non-Ethos platforms
+    18	//
+    19	#include "tensorflow/lite/micro/micro_common.h"
+    20	
+    21	namespace tflite {
+    22	
+    23	TFLMRegistration* Register_ETHOSU() { return nullptr; }
+    24	
+    25	const char* GetString_ETHOSU() { return ""; }
+    26	
+    27	}  // namespace tflite
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h
+------------------------------------------------------------
+     1	/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	#ifndef TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+    16	#define TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+    17	
+    18	#include "tensorflow/lite/c/common.h"
+    19	
+    20	namespace tflite {
+    21	
+    22	TFLMRegistration* Register_ETHOSU();
+    23	
+    24	const char* GetString_ETHOSU();
+    25	
+    26	}  // namespace tflite
+    27	
+    28	#endif  // TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+------------------------------------------------------------
+     1	/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include <ethosu_driver.h>
+    17	
+    18	#include "flatbuffers/flexbuffers.h"
+    19	#include "tensorflow/lite/c/common.h"
+    20	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    21	#include "tensorflow/lite/micro/micro_context.h"
+    22	#include "tensorflow/lite/micro/micro_log.h"
+    23	
+    24	namespace tflite {
+    25	namespace {
+    26	
+    27	constexpr uint8_t CO_TYPE_ETHOSU = 1;
+    28	
+    29	struct OpData {
+    30	  int cms_data_size;
+    31	  int base_addr_idx;
+    32	  int base_addr_size_idx;
+    33	};
+    34	
+    35	void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+    36	  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+    37	  return context->AllocatePersistentBuffer(context, sizeof(OpData));
+    38	}
+    39	
+    40	TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+    41	  TFLITE_DCHECK(context != nullptr);
+    42	  TF_LITE_ENSURE(context, node->inputs->size > 0);
+    43	  TFLITE_DCHECK(node->user_data != nullptr);
+    44	  TF_LITE_ENSURE(context, node->custom_initial_data_size > 0);
+    45	
+    46	  OpData* data = static_cast<OpData*>(node->user_data);
+    47	  int num_base_addr = node->inputs->size + node->outputs->size;
+    48	
+    49	  // Request arrays for the base address pointers and sizes.
+    50	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    51	      context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+    52	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    53	      context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+    54	
+    55	  // Get command stream data size.
+    56	  MicroContext* micro_context = GetMicroContext(context);
+    57	  TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+    58	  data->cms_data_size = tensor->bytes;
+    59	  micro_context->DeallocateTempTfLiteTensor(tensor);
+    60	  return kTfLiteOk;
+    61	}
+    62	
+    63	TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+    64	  TFLITE_DCHECK(node->user_data != nullptr);
+    65	  TFLITE_DCHECK(context != nullptr);
+    66	  TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+    67	
+    68	  // Get base addresses.
+    69	  TfLiteEvalTensor* tensor;
+    70	  int i = 0;
+    71	  int num_tensors = 0;
+    72	  void* cms_data;
+    73	  uint8_t co_type;
+    74	  int result;
+    75	  const OpData* data = static_cast<const OpData*>(node->user_data);
+    76	  uint64_t* base_addrs = static_cast<uint64_t*>(
+    77	      context->GetScratchBuffer(context, data->base_addr_idx));
+    78	  size_t* base_addrs_size = static_cast<size_t*>(
+    79	      context->GetScratchBuffer(context, data->base_addr_size_idx));
+    80	
+    81	  const uint8_t* custom_data =
+    82	      static_cast<uint8_t const*>(node->custom_initial_data);
+    83	  auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+    84	  co_type = root.AsInt8();
+    85	  if (co_type != CO_TYPE_ETHOSU) {
+    86	    MicroPrintf("CO_TYPE != ETHOSU");
+    87	    return kTfLiteError;
+    88	  }
+    89	
+    90	  // Get command stream data address.
+    91	  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+    92	  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+    93	
+    94	  // Get addresses to weights/scratch/input data.
+    95	  for (i = 1; i < node->inputs->size; ++i) {
+    96	    tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+    97	    base_addrs[num_tensors] =
+    98	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+    99	    size_t byte_size = 1;
+   100	    for (int k = 0; k < tensor->dims->size; k++) {
+   101	      byte_size = byte_size * tensor->dims->data[k];
+   102	    }
+   103	    base_addrs_size[num_tensors] = byte_size;
+   104	    num_tensors++;
+   105	  }
+   106	
+   107	  // Get addresses to output data.
+   108	  for (i = 0; i < node->outputs->size; ++i) {
+   109	    tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+   110	    base_addrs[num_tensors] =
+   111	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   112	    size_t byte_size = 1;
+   113	    for (int k = 0; k < tensor->dims->size; k++) {
+   114	      byte_size = byte_size * tensor->dims->data[k];
+   115	    }
+   116	    base_addrs_size[num_tensors] = byte_size;
+   117	    num_tensors++;
+   118	  }
+   119	
+   120	  // When Vela optimizes a tflite file it will assign the tensors like this:
+   121	  //
+   122	  // +-------+------------------------+  +--------+-------------+
+   123	  // | INPUT | Description            |  | OUTPUT | Description |
+   124	  // +-------+------------------------+  +--------+-------------+
+   125	  // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+   126	  // |     1 | TFLM model             |  +--------+-------------+
+   127	  // |     2 | TFLM arena             |
+   128	  // |     3 | Ethos-U fast scratch   |
+   129	  // |  4..n | Inputs                 |
+   130	  // +-------+------------------------+
+   131	  //
+   132	  // This code will assign the NPU base addresses like this:
+   133	  //
+   134	  // +--------------+----------------------+
+   135	  // | Base address | Description          |
+   136	  // +--------------+----------------------+
+   137	  // |            0 | TFLM model           |
+   138	  // |            1 | TFLM arena           |
+   139	  // |            2 | Ethos-U fast scratch |
+   140	  // |         3..n | Input tensors        |
+   141	  // |         n..m | Output tensors       |
+   142	  // +--------------+----------------------+
+   143	  //
+   144	  // The number of base address will be limited to 8.
+   145	  //
+   146	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   147	  // buffers using base address 1. This means that it is not possible to point
+   148	  // the input and output tensors outside of the TFLM arena.
+   149	  num_tensors = std::min(num_tensors, 8);
+   150	
+   151	  struct ethosu_driver* drv = ethosu_reserve_driver();
+   152	  result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+   153	                            base_addrs_size, num_tensors,
+   154	                            GetMicroContext(context)->external_context());
+   155	  ethosu_release_driver(drv);
+   156	
+   157	  if (-1 == result) {
+   158	    return kTfLiteError;
+   159	  } else {
+   160	    return kTfLiteOk;
+   161	  }
+   162	}
+   163	
+   164	}  // namespace
+   165	
+   166	TFLMRegistration* Register_ETHOSU() {
+   167	  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+   168	  return &r;
+   169	}
+   170	
+   171	const char* GetString_ETHOSU() { return "ethos-u"; }
+   172	
+   173	}  // namespace tflite
+
+===== 6. KERNEL SCRATCH ALLOCATION REFERENCES =====
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc:23:TFLMRegistration* Register_ETHOSU() { return nullptr; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc:25:const char* GetString_ETHOSU() { return ""; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:30:  int cms_data_size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:36:  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:37:  return context->AllocatePersistentBuffer(context, sizeof(OpData));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:40:TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:50:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:52:  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:58:  data->cms_data_size = tensor->bytes;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:63:TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:66:  TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:69:  TfLiteEvalTensor* tensor;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:72:  void* cms_data;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:77:      context->GetScratchBuffer(context, data->base_addr_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:79:      context->GetScratchBuffer(context, data->base_addr_size_idx));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:91:  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:92:  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:94:  // Get addresses to weights/scratch/input data.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:96:    tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:109:    tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:128:  // |     3 | Ethos-U fast scratch   |
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:139:  // |            2 | Ethos-U fast scratch |
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:152:  result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:166:TFLMRegistration* Register_ETHOSU() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:167:  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:171:const char* GetString_ETHOSU() { return "ethos-u"; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h:22:TFLMRegistration* Register_ETHOSU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h:24:const char* GetString_ETHOSU();
+
+===== 7. EXISTING USER TFLM ETHOS-U PROJECT =====
+
+SOURCE DIRECTORY: /home/user/sdk-alif/beeinventor/tflm_ethosu
+/home/user/sdk-alif/beeinventor/tflm_ethosu/src/main.cpp
+
+===== 8. EXISTING HEAT-STRESS PROJECT RUNTIME FILES =====
+
+PROJECT: /home/user/sdk-alif/beeinventor/test_heatstroke
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt (14211 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/sleep.overlay (926 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay (618 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay (1827 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay (1795 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_hp.overlay (70 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_ak_ae822fa0e5597xx0_rtss_he.overlay (565 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf (1879 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt (9614 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/PolyUModel1.cc (24197 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt (14211 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt (11711 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt (10683 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/PolyUModel1.cc (26232 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_before_temp_fix_20261110_162428/heatstroke_int64_mul.cc (10334 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc (21301 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc (21327 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt (12307 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt (9981 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/PolyUModel1.cc (25201 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt (10317 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/PolyUModel1.cc (25638 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt (11019 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/PolyUModel1.cc (26769 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt (11355 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/PolyUModel1.cc (27206 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_before_header_fix_20261110_164501/heatstroke_int64_floor_mod.cc (6001 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt (13515 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_common_overlay_before_aa0000_20261119_162426.overlay (1824 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/log/inspect_bilstm_state.cpp (3781 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_overlay_before_ospi_aa0000_20261119_162030.overlay (70 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc (4030 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/power/power_mgr.h (1033 bytes)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:144:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:157:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:162:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:163:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:187:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:194:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:199:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:203:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt:215:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/distributed/c10d/ProcessGroup.hpp:42:// and initialization must start from scratch. For members of the
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/interface.h:125:AOTIRuntimeError AOTInductorModelContainerGetNumInputs(
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/cache_entry.h:16:Our cache resides on the extra scratch space of the code object. The structure
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:22:// Points to the extra scratch space on the code object
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:79:// deleter for the object on extra scratch space. This function is called
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:90:// Clears the existing object sitting on the extra scratch spance and sets it
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:107:// scratch space.
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/ATen/core/ATen_pch.h:19:// 1. Build pytorch from scratch with all build caching disabled
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/nnpack.h:367: * @param[in] workspace_buffer Buffer for scratch memory used during computation. Buffer must be aligned on 64 bytes.
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/nnpack.h:374: *                               If workspace_buffer is NULL, NNPACK will write the size of required scratch memory to
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/_inductor/codegen/aoti_runtime/interface.cpp:223:AOTIRuntimeError AOTInductorModelContainerGetNumInputs(
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/distributed/c10d/ProcessGroup.hpp:42:// and initialization must start from scratch. For members of the
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/inductor/aoti_runtime/interface.h:125:AOTIRuntimeError AOTInductorModelContainerGetNumInputs(
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/dynamo/cache_entry.h:16:Our cache resides on the extra scratch space of the code object. The structure
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:22:// Points to the extra scratch space on the code object
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:79:// deleter for the object on extra scratch space. This function is called
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:90:// Clears the existing object sitting on the extra scratch spance and sets it
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/torch/csrc/dynamo/extra_state.h:107:// scratch space.
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/ATen/core/ATen_pch.h:19:// 1. Build pytorch from scratch with all build caching disabled
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/nnpack.h:367: * @param[in] workspace_buffer Buffer for scratch memory used during computation. Buffer must be aligned on 64 bytes.
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/include/nnpack.h:374: *                               If workspace_buffer is NULL, NNPACK will write the size of required scratch memory to
+/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib64/python3.12/site-packages/torch/_inductor/codegen/aoti_runtime/interface.cpp:223:AOTIRuntimeError AOTInductorModelContainerGetNumInputs(
+/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf:88:CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/PolyUModel1.cc:69: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/experiments/source_backups/int64_cast_sum_20261110/PolyUModel1.cc:629:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:144:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:157:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:162:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:163:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:187:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:194:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:199:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:203:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_142133/CMakeLists.txt:215:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_aligned_model_cmake_prepatch_20261111_151836/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/PolyUModel1.cc:82: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_sub_prepatch_20261110_173015/PolyUModel1.cc:672:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc:161:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc:309:    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc:311:                static_cast<unsigned int>(model.GetNumInputs()),
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc:329:                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc:362:    auto tensor = model.GetInputTensor(index);
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc:161:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc:309:    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc:311:                static_cast<unsigned int>(model.GetNumInputs()),
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc:329:                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc:362:    auto tensor = model.GetInputTensor(index);
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:144:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:149:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:150:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:169:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:176:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:181:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:185:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_selective_lstm_O3_prepatch_20261112_114625/CMakeLists.txt:197:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/PolyUModel1.cc:74: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_mul_prepatch_20261110_155618/PolyUModel1.cc:649:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/PolyUModel1.cc:78: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_floor_mod_prepatch_20261110_164002/PolyUModel1.cc:653:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/PolyUModel1.cc:86: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_add_prepatch_20261111_090552/PolyUModel1.cc:676:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:140:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:141:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:155:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:162:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:167:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:171:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/CMakeLists.txt:183:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/PolyUModel1.cc:90: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_int64_split_v_prepatch_20261111_093439/PolyUModel1.cc:691:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:125:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:129:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:135:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:144:    set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:149:if (NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:150:    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:169:file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:176:message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:181:    MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:185:get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/test_heatstroke/backups/heatstroke_e8_hp_u55_256_prepatch_20261117_141854/CMakeLists.txt:197:target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/PolyUModel1.hpp:47:    tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_add.cc:134:     * or scratch buffers are allocated here.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:162:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:310:    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:312:                static_cast<unsigned int>(model.GetNumInputs()),
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:330:                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:363:    auto tensor = model.GetInputTensor(index);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:162:	const auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:352: * No temporary buffer or scratch allocation is required.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:953:     * index-conversion or scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:295:  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:301:      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc:306:    // safely reuse the same four evaluator scratch buffers.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_cast_sum.cc:242:    // INT64 does not require its quantized scratch buffer.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc:273:  // Match the four scratch buffers requested by TFLM's existing
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc:279:      MicroPrintf("Heatstroke BiLSTM: LSTM scratch allocation failed");
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc:284:    // safely reuse the same four evaluator scratch buffers.
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:26:#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp:35:#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+
+===== 9. MODEL AND TARGET VERIFICATION =====
+4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+MODEL_SIZE_BYTES=9789936
+
+Expected target:
+BOARD=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+SNIPPET=ethos-u55-enable
+ETHOSU_TARGET_NPU_CONFIG=ethos-u55-128
+
+============================================================
+TFLM_SAMPLE_INSPECTION_COMPLETE
+No source files modified.
+No build or flash operation performed.
+============================================================
