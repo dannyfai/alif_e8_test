@@ -1584,4 +1584,129 @@ TypeError: Object of type int32 is not JSON serializable
 SCRIPT_EXIT_CODE=1
 LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_onnx2tflite_all449_20261121_181636.log
 OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636
-]3008;end=ecfa1420-29e1-4932-83a5-9836c7baf9a7;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=ecfa1420-29e1-4932-83a5-9836c7baf9a7;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+MODEL_DIR="$EXP/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+OUTDIR="$EXP/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636"
+SCRIPT="$EXP/validate_tcn_fold2_v6_tflite_all449.py"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+CONVERTER="/home/user/onnx2tflite_env/bin/onnx2tflite"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+LOG="$LOGDIR/heatstroke_tcn_v6_tflite_report_recheck_20261121.log"
+
+"$PYTHON" - <<'PY'
+from pathlib import Path
+
+p = Path("/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py") 
+s = p.read_text()
+
+replacements = [
+(
+'''    if tflite_path.exists():
+        raise FileExistsError(f"Refusing to overwrite: {tflite_path}")''',
+'''    reuse_tflite = tflite_path.exists()
+    if reuse_tflite:
+        print("Reusing existing TFLite file:", tflite_path)'''
+),
+(
+'''    subprocess.run(command, check=True)''',
+'''    if reuse_tflite:
+        print("Skipping ONNX-to-TFLite conversion; reusing existing model.")
+    else:
+        subprocess.run(command, check=True)'''
+),
+(
+'''list(resolved[key]["shape"])''',
+'''[int(v) for v in resolved[key]["shape"]]'''
+),
+(
+'''json.dumps(report, indent=2)''',
+'''json.dumps(report, indent=2, default=lambda o: o.item() if isinstance(o, np.generic) else str(o))''' 
+)
+]
+
+for old, new in replacements:
+    count = s.count(old)
+    if count != 1:
+[7m        raise RuntimeError(f"Expected one occurrence, found {count}: {old[:100]![27m[7mr[27m[7m}") [27m
+[7m    s = s.replace(old, new)[27m
+
+[7mp.write_text(s)[27m
+[7mprint("Patched validator:", p)[27m
+[7mPY[27m
+
+[7m([27m
+[7m  set -o pipefail[27m
+[7m  "$PYTHON" -u "$SCRIPT" \[27m
+[7m    --project "$PROJECT" \[27m
+[7m    --model-dir "$MODEL_DIR" \[27m
+[7m    --out-dir "$OUTDIR" \[27m
+[7m    --converter "$CONVERTER" \[27m
+[7m    2>&1 | tee "$LOG"[27m
+
+[7m  RC=${PIPESTATUS[0]}[27m
+[7m  echo[27m
+[7m  echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m  echo "LOG_FILE=$LOG"[27m
+[7m  echo "REPORT=$OUTDIR/tflite_vs_onnx_all449_report.json"[27m
+[7m  exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A        raise RuntimeError(f"Expected one occurrence, found {count}: {old[:100]!r}")
+    s = s.replace(old, new)
+
+p.write_text(s)
+print("Patched validator:", p)
+PY
+
+(
+  set -o pipefail
+  "$PYTHON" -u "$SCRIPT" \
+    --project "$PROJECT" \
+    --model-dir "$MODEL_DIR" \
+    --out-dir "$OUTDIR" \
+    --converter "$CONVERTER" \
+    2>&1 | tee "$LOG"
+
+  RC=${PIPESTATUS[0]}
+  echo
+  echo "SCRIPT_EXIT_CODE=$RC"
+  echo "LOG_FILE=$LOG"
+  echo "REPORT=$OUTDIR/tflite_vs_onnx_all449_report.json"
+  exit "$RC"
+)
+[?2004l]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Traceback (most recent call last):
+  File "<stdin>", line 34, in <module>
+RuntimeError: Expected one occurrence, found 2: 'json.dumps(report, indent=2)'
+]3008;start=e1ea0bb0-201f-4933-a351-490568486311;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256495.144507  120637 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256495.183145  120637 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256496.052559  120637 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256496.052782  120637 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== TCN FOLD-2 V6 FP32 TFLITE CONVERSION =====
+Timestamp: 2026-11-21T18:21:36.731981+08:00
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+TensorFlow: 2.21.0
+ONNX Runtime: 1.24.4
+Project: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+Output: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+
+<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>
+ERROR: FileExistsError: Refusing to overwrite: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py", line 433, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_fold2_v6_tflite_all449.py", line 123, in main
+    raise FileExistsError(f"Refusing to overwrite: {tflite_path}")
+FileExistsError: Refusing to overwrite: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+
+SCRIPT_EXIT_CODE=1
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflite_report_recheck_20261121.log
+REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/tflite_vs_onnx_all449_report.json
+]3008;end=e1ea0bb0-201f-4933-a351-490568486311;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
