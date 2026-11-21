@@ -1,0 +1,74 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795263241.674284  124795 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795263241.674458  124795 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795263241.702599  124795 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795263242.463064  124795 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795263242.463283  124795 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+========================================================================
+TCN V6 TFLITE NOT_EQUAL DIAGNOSTIC
+========================================================================
+Model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_gemm_only_qdq_v6_20261121_185419/heatstroke_tcn_reg_fold2_gemm_only_qdq.tflite
+File size: 10630000
+TensorFlow: 2.21.0
+
+Subgraphs: 1
+
+========================================================================
+SUBGRAPH 0
+Operators: 266
+Tensors: 421
+========================================================================
+
+===== OPERATOR HISTOGRAM =====
+RESHAPE                     65
+CONV_2D                     27
+MUL                         26
+ADD                         23
+RELU                        21
+DEPTHWISE_CONV_2D           20
+SUB                          8
+QUANTIZE                     7
+SELECT_V2                    7
+FULLY_CONNECTED              7
+DEQUANTIZE                   7
+GATHER                       6
+DIV                          6
+MIRROR_PAD                   5
+TRANSPOSE                    4
+MEAN                         4
+NEG                          4
+LOGICAL_OR                   2
+SUM                          2
+CONCATENATION                2
+SQRT                         2
+GREATER_EQUAL                2
+ABS                          2
+EXP                          2
+LOGICAL_NOT                  1
+CAST                         1
+MAXIMUM                      1
+BROADCAST_ARGS               1
+BROADCAST_TO                 1
+
+===== NOT_EQUAL SUMMARY =====
+NOT_EQUAL_COUNT = 0
+No builtin NOT_EQUAL operator found.
+Related comparison operators:
+GREATER_EQUAL 2
+LOGICAL_NOT 1
+
+===== GRAPH INPUTS =====
+id=0, name=x_values, dtype=FLOAT32, shape=[1, 900, 6]
+id=1, name=missing_mask, dtype=BOOL, shape=[1, 900, 6]
+id=2, name=x_mark, dtype=FLOAT32, shape=[1, 900, 3]
+id=3, name=worker_features_18, dtype=FLOAT32, shape=[1, 18]
+id=4, name=compact_values, dtype=FLOAT32, shape=[1, 1800, 6]
+
+===== GRAPH OUTPUTS =====
+id=268, name=reconstructed_values, dtype=FLOAT32, shape=[1, 900, 6]
+
+========================================================================
+DIAGNOSTIC COMPLETE
+========================================================================
