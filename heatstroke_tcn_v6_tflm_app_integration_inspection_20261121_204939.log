@@ -1,0 +1,2164 @@
+TCN V6 TFLM APPLICATION INTEGRATION INSPECTION
+Sat Nov 21 08:49:39 PM HKT 2026
+SDK=/home/user/sdk-alif
+
+===== 1. EXISTING BEEINVENTOR/TFLM_ETHOSU PROJECT =====
+/home/user/sdk-alif/beeinventor/tflm_ethosu/boards/alif_e8_ak_ae822fa0e5597xx0_apss.conf (459 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/boards/alif_e8_dk_ae822fa0e5597xx0_apss.conf (459 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/boards/apss_sram1_sections.ld (737 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/boards/enable_ethosu55.overlay (1304 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/boards/enable_ethosu85.overlay (1372 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/CMakeLists.txt (6835 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/Kconfig (1038 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/prj.conf (564 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/README.rst (6398 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/sample.yaml (250 bytes)
+/home/user/sdk-alif/beeinventor/tflm_ethosu/src/main.cpp (9265 bytes)
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/tflm_ethosu/boards/enable_ethosu55.overlay
+============================================================
+     1	/* Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 *
+     9	 */
+    10	
+    11	/*
+    12	 * Ethos-U55 NPU Enable Overlay
+    13	 * 
+    14	 * This overlay enables the Ethos-U55 NPU (ethosu0) for all boards.
+    15	 * 
+    16	 * Applicable to ALL Boards:
+    17	 *   - B1 (alif_b1_dk)      - U55 only
+    18	 *   - E1C (alif_e1c_dk)    - U55 only
+    19	 *   - E7 (alif_e7_dk)      - U55 only
+    20	 *   - E8 (alif_e8_dk)      - U55 + U85
+    21	 *
+    22	 * Note: All boards have ethosu0 (U55). E8 additionally has ethosu1 (U85).
+    23	 * 
+    24	 * Usage:
+    25	 *   west build -b <board> <app_path> -- \
+    26	 *     -DEXTRA_DTC_OVERLAY_FILE="boards/enable_ethosu55.overlay"
+    27	 * 
+    28	 * Build-time Safety Check:
+    29	 *   If this overlay is applied to a board without U55 support,
+    30	 *   the build will fail with an error message indicating that ethosu0 node
+    31	 *   does not exist on this board.
+    32	 */
+    33	
+    34	/ {
+    35		/* Compile-time assertion: ethosu0 must exist */
+    36		ethosu_u55_check {
+    37			compatible = "vnd,ethosu-u55-check";
+    38			ethosu-node = <&ethosu0>;
+    39		};
+    40	};
+    41	
+    42	&ethosu0 {
+    43		status = "okay";
+    44	};
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/tflm_ethosu/boards/enable_ethosu85.overlay
+============================================================
+     1	/* Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+     2	 * Use, distribution and modification of this code is permitted under the
+     3	 * terms stated in the Alif Semiconductor Software License Agreement
+     4	 *
+     5	 * You should have received a copy of the Alif Semiconductor Software
+     6	 * License Agreement with this file. If not, please write to:
+     7	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	 *
+     9	 */
+    10	
+    11	/*
+    12	 * Ethos-U85 NPU Enable Overlay
+    13	 * 
+    14	 * This overlay enables the Ethos-U85 NPU (ethosu1) for boards that support it.
+    15	 * 
+    16	 * Applicable Boards (have both U55 and U85):
+    17	 *   - E8 (alif_e8_dk) - has U55 + U85
+    18	 *
+    19	 * NOT applicable to:
+    20	 *   - B1, E1C, E7 (have U55 only, no U85)
+    21	 * 
+    22	 * Note: E8 board has BOTH ethosu0 (U55) and ethosu1 (U85).
+    23	 *       Use this overlay to enable the U85 NPU on these boards.
+    24	 * 
+    25	 * Usage:
+    26	 *   west build -b alif_e8_dk/<variant>/<core> <app_path> -- \
+    27	 *     -DEXTRA_DTC_OVERLAY_FILE="boards/enable_ethosu85.overlay"
+    28	 * 
+    29	 * Build-time Safety Check:
+    30	 *   If this overlay is applied to a board without U85 support (B1, E1C, E3, E7),
+    31	 *   the build will fail with an error message indicating that ethosu1 node
+    32	 *   does not exist on this board.
+    33	 */
+    34	
+    35	/ {
+    36		/* Compile-time assertion: ethosu1 must exist */
+    37		ethosu_u85_check {
+    38			compatible = "vnd,ethosu-u85-check";
+    39			ethosu-node = <&ethosu1>;
+    40		};
+    41	};
+    42	
+    43	&ethosu1 {
+    44		status = "okay";
+    45	};
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/tflm_ethosu/src/main.cpp
+============================================================
+     1	/*
+     2	 * Copyright 2019-2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     3	 *
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 */
+     6	
+     7	/****************************************************************************
+     8	 * Includes
+     9	 ****************************************************************************/
+    10	
+    11	#include "inference_process.hpp"
+    12	
+    13	#include <inttypes.h>
+    14	#include <string>
+    15	#include <stdio.h>
+    16	#include <vector>
+    17	#include <zephyr/kernel.h>
+    18	
+    19	/* Model data - Conditional compilation for U55/U85 */
+    20	#if defined(ETHOSU_ARCH_U85)
+    21	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/input.h"
+    22	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/output.h"
+    23	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/model_u85_256.h"
+    24	#endif
+    25	
+    26	#if defined(ETHOSU_ARCH_U55)
+    27	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/input.h"
+    28	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/output.h"
+    29	#if defined(CONFIG_ARM_ETHOS_U55_256)
+    30	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/model_u55_256.h"
+    31	#else
+    32	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/model_u55_128.h"
+    33	#endif
+    34	#endif
+    35	
+    36	using namespace std;
+    37	using namespace InferenceProcess;
+    38	
+    39	/****************************************************************************
+    40	 * Defines
+    41	 ****************************************************************************/
+    42	
+    43	/* Number of worker threads running the inferences. There should typically be
+    44	 * one worker thread per NPU. */
+    45	#ifndef NUM_INFERENCE_TASKS
+    46	#define NUM_INFERENCE_TASKS 1
+    47	#endif
+    48	
+    49	/* Number of sender tasks, that post inference requests to the worker threads. */
+    50	#ifndef NUM_JOB_TASKS
+    51	#define NUM_JOB_TASKS 2
+    52	#endif
+    53	
+    54	/* Number of inferences per sender task. */
+    55	#ifndef NUM_JOBS_PER_TASK
+    56	#define NUM_JOBS_PER_TASK 2
+    57	#endif
+    58	
+    59	/* Tensor arena size - use the model's tensorArenaSize variable */
+    60	/* Note: tensorArenaSize is defined in the model header file */
+    61	
+    62	/****************************************************************************
+    63	 * InferenceJob
+    64	 ****************************************************************************/
+    65	
+    66	namespace
+    67	{
+    68	struct InferenceProcessParams {
+    69		InferenceProcessParams() : tensorArena(nullptr), arenaSize(0)
+    70		{
+    71		}
+    72	
+    73		InferenceProcessParams(k_queue *_queue, uint8_t *_tensorArena, size_t _arenaSize)
+    74			: queueHandle(_queue), tensorArena(_tensorArena), arenaSize(_arenaSize)
+    75		{
+    76		}
+    77	
+    78		k_queue *queueHandle;
+    79		uint8_t *tensorArena;
+    80		size_t arenaSize;
+    81	};
+    82	
+    83	/* Wrapper around InferenceProcess::InferenceJob. Adds responseQueue and status
+    84	 * for Zephyr multi-tasking purposes.& */
+    85	struct xInferenceJob : public InferenceJob {
+    86		xInferenceJob() : InferenceJob(), responseQueue(nullptr), status(false)
+    87		{
+    88		}
+    89	
+    90		xInferenceJob(const string &_name, const DataPtr &_networkModel,
+    91			      const vector<DataPtr> &_input, const vector<DataPtr> &_output,
+    92			      const vector<DataPtr> &_expectedOutput, k_queue *_queue)
+    93			: InferenceJob(_name, _networkModel, _input, _output, _expectedOutput),
+    94			  responseQueue(_queue), status(false)
+    95		{
+    96		}
+    97	
+    98		k_queue *responseQueue;
+    99		bool status;
+   100	};
+   101	
+   102	/* Number of total completed jobs, needed to exit application correctly if
+   103	 * NUM_JOB_TASKS > 1 */
+   104	volatile int totalCompletedJobs = 0;
+   105	
+   106	/* TensorArena allocation using TENSOR_ARENA_SIZE from model header
+   107	 * Note: TENSOR_ARENA_SIZE macro is defined in model headers (e.g., model_u85_256.h)
+   108	 * For keyword_spotting: U55 uses ~50KB, U85 uses ~50KB
+   109	 *
+   110	 * On APSS (Cortex-A32) the arena is placed into SRAM1 which is mapped
+   111	 * non-cacheable by the MMU, ensuring coherency with the Ethos-U85 NPU.
+   112	 * On RTSS (Cortex-M55) the arena goes into .bss.tflm_arena (DTCM/SRAM0).
+   113	 */
+   114	#if defined(CONFIG_APSS)
+   115	__attribute__((section("SRAM1.tflm_arena"), aligned(16)))
+   116	#else
+   117	__attribute__((section(".bss.tflm_arena"), aligned(16)))
+   118	#endif
+   119	uint8_t inferenceProcessTensorArena[NUM_INFERENCE_TASKS][TENSOR_ARENA_SIZE];
+   120	
+   121	/* Allocate and initialize heap */
+   122	void *allocateHeap(const size_t size)
+   123	{
+   124		k_heap *heap = static_cast<k_heap *>(k_malloc(sizeof(k_heap)));
+   125		uint8_t *buf = static_cast<uint8_t *>(k_malloc(size));
+   126	
+   127		if ((buf == nullptr) || (heap == nullptr)) {
+   128			printk("Heap allocation failed. heap=%p, buf=%p, size=%zu\n", heap, buf, size);
+   129			exit(1);
+   130		}
+   131	
+   132		k_heap_init(heap, buf, size);
+   133	
+   134		return static_cast<void *>(heap);
+   135	}
+   136	
+   137	/* inferenceProcessTask - Run jobs from queue with available driver */
+   138	void inferenceProcessTask(void *_name, void *heap, void *_params)
+   139	{
+   140		string *name = static_cast<string *>(_name);
+   141		InferenceProcessParams *params = static_cast<InferenceProcessParams *>(_params);
+   142	
+   143		/* Assign the pre allocated heap - used in the k_queue_alloc_append */
+   144		k_thread_heap_assign(k_current_get(), static_cast<k_heap *>(heap));
+   145	
+   146		class InferenceProcess inferenceProcess(params->tensorArena, params->arenaSize);
+   147	
+   148		for (;;) {
+   149			/* Receive inference job */
+   150			xInferenceJob *job =
+   151				static_cast<xInferenceJob *>(k_queue_get(params->queueHandle, Z_FOREVER));
+   152	
+   153			printk("%s: Received inference job. job=%p\n", name->c_str(), job);
+   154	
+   155			/* Run inference */
+   156			job->status = inferenceProcess.runJob(*job);
+   157	
+   158			printk("%s: Sending inference response. job=%p\n", name->c_str(), job);
+   159	
+   160			/* Return inference message */
+   161			int ret = k_queue_alloc_append(job->responseQueue, job);
+   162			if (0 != ret) {
+   163				printk("%s: Failed to send message\n", name->c_str());
+   164				exit(1);
+   165			}
+   166		}
+   167	
+   168		k_thread_abort(k_current_get());
+   169	
+   170		CODE_UNREACHABLE;
+   171	}
+   172	
+   173	/* inferenceSenderTask - Creates NUM_INFERENCE_JOBS jobs, queues them, and then
+   174	 * listens for completion status */
+   175	void inferenceSenderTask(void *_name, void *heap, void *_queue)
+   176	{
+   177		string *name = static_cast<string *>(_name);
+   178		k_queue *inferenceQueue = static_cast<k_queue *>(_queue);
+   179		int ret = 0;
+   180	
+   181		/* Assign the pre allocated heap - used in the k_queue_alloc_append */
+   182		k_thread_heap_assign(k_current_get(), static_cast<k_heap *>(heap));
+   183	
+   184		/* Create queue for response messages */
+   185		k_queue senderQueue;
+   186		k_queue_init(&senderQueue);
+   187	
+   188		/* Loop over all jobs and push them to inference queue */
+   189		xInferenceJob jobs[NUM_JOBS_PER_TASK];
+   190		for (int n = 0; n < NUM_JOBS_PER_TASK; n++) {
+   191			auto &job = jobs[n];
+   192			job = xInferenceJob(modelName, DataPtr((void*)networkModelData, sizeof(networkModelData)),
+   193					    { DataPtr((void*)inputData, sizeof(inputData)) }, {},
+   194					    { DataPtr((void*)expectedOutputData, sizeof(expectedOutputData)) },
+   195					    &senderQueue);
+   196	
+   197			printk("%s: Sending inference. job=%p, name=%s\n", name->c_str(), &job,
+   198			       job.name.c_str());
+   199	
+   200			/* Queue job */
+   201			ret = k_queue_alloc_append(inferenceQueue, &job);
+   202			if (0 != ret) {
+   203				printk("%s: Failed to send message\n", name->c_str());
+   204				exit(1);
+   205			}
+   206		}
+   207	
+   208		/* Listen for completion status */
+   209		do {
+   210			xInferenceJob *job =
+   211				static_cast<xInferenceJob *>(k_queue_get(&senderQueue, Z_FOREVER));
+   212	
+   213			printk("%s: Received job response. job=%p, status=%u\n", name->c_str(), job,
+   214			       job->status);
+   215	
+   216			totalCompletedJobs++;
+   217	
+   218			ret += job->status;
+   219			if (job->status != 0) {
+   220				break;
+   221			}
+   222		} while (totalCompletedJobs < NUM_JOBS_PER_TASK * NUM_JOB_TASKS);
+   223	
+   224		exit(ret);
+   225	}
+   226	
+   227	} /* namespace */
+   228	
+   229	/* Zephyr application. NOTE: Additional tasks may require increased heap size. */
+   230	int main()
+   231	{
+   232		struct {
+   233			k_thread thread;
+   234			k_tid_t id;
+   235		} threads[NUM_JOB_TASKS + NUM_INFERENCE_TASKS];
+   236		size_t nthreads = 0;
+   237	
+   238		/* Allocate one global heap for all threads */
+   239		void *heapPtr = allocateHeap(256);
+   240	
+   241		k_queue inferenceQueue;
+   242		k_queue_init(&inferenceQueue);
+   243	
+   244		/* inferenceSender tasks to create and queue the jobs */
+   245		for (int n = 0; n < NUM_JOB_TASKS; n++) {
+   246			const size_t stackSize = 2048;
+   247			k_thread_stack_t *stack = static_cast<k_thread_stack_t *>(k_malloc(stackSize));
+   248			if (stack == nullptr) {
+   249				printk("Failed to allocate stack to 'inferenceSenderTask%i'\n", n);
+   250				exit(1);
+   251			}
+   252	
+   253			auto &thread = threads[nthreads];
+   254			string *name = new string("sender " + to_string(n));
+   255	
+   256			thread.id = k_thread_create(&thread.thread, stack, stackSize, inferenceSenderTask,
+   257						    name, heapPtr, &inferenceQueue, 3, 0, K_FOREVER);
+   258			if (thread.id == 0) {
+   259				printk("Failed to create 'inferenceSenderTask%i'\n", n);
+   260				exit(1);
+   261			}
+   262	
+   263			nthreads++;
+   264		}
+   265	
+   266		/* Create inferenceProcess tasks to process the queued jobs */
+   267		InferenceProcessParams taskParams[NUM_INFERENCE_TASKS];
+   268		for (int n = 0; n < NUM_INFERENCE_TASKS; n++) {
+   269			const size_t stackSize = 8192;
+   270			k_thread_stack_t *stack = static_cast<k_thread_stack_t *>(k_malloc(stackSize));
+   271			if (stack == nullptr) {
+   272				printk("Failed to allocate stack to 'inferenceSenderTask%i'\n", n);
+   273				exit(1);
+   274			}
+   275	
+   276			auto &thread = threads[nthreads];
+   277			auto &taskParam = taskParams[n];
+   278			taskParam = InferenceProcessParams(&inferenceQueue, inferenceProcessTensorArena[n],
+   279							   tensorArenaSize);
+   280			string *name = new string("runner " + to_string(n));
+   281	
+   282			thread.id = k_thread_create(&thread.thread, stack, stackSize, inferenceProcessTask,
+   283						    name, heapPtr, &taskParam, 2, 0, K_FOREVER);
+   284			if (thread.id == 0) {
+   285				printk("Failed to create 'inferenceProcessTask%i'\n", n);
+   286				exit(1);
+   287			}
+   288	
+   289			nthreads++;
+   290		}
+   291	
+   292		/* start Scheduler */
+   293		for (size_t n = 0; n < nthreads; n++) {
+   294			k_thread_start(threads[n].id);
+   295		}
+   296	
+   297		/* put the task in the lowest priority */
+   298		k_thread_priority_set(k_current_get(), 4);
+   299	
+   300		/* Safety belt */
+   301		k_thread_suspend(k_current_get());
+   302	
+   303		printk("Zephyr application failed to initialise \n");
+   304	
+   305		return 1;
+   306	}
+
+===== 2. ALIF SDK TFLM ETHOS-U SAMPLE =====
+
+============================================================
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/CMakeLists.txt
+============================================================
+     1	# Copyright 2021-2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	#
+     3	# SPDX-License-Identifier: Apache-2.0
+     4	
+     5	cmake_minimum_required(VERSION 3.20.0)
+     6	
+     7	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+     8	
+     9	# Detect NPU architecture from ETHOSU_TARGET_NPU_CONFIG
+    10	# This is the SINGLE SOURCE OF TRUTH for NPU configuration
+    11	if(ETHOSU_TARGET_NPU_CONFIG MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+    12	    set(ETHOSU_ARCH "${CMAKE_MATCH_1}")
+    13	    set(ETHOSU_MACS "${CMAKE_MATCH_2}")
+    14	
+    15	    message(STATUS "ETHOSU_TARGET_NPU_CONFIG: ${ETHOSU_TARGET_NPU_CONFIG}")
+    16	    message(STATUS "Detected NPU Architecture: ${ETHOSU_ARCH}, MACs: ${ETHOSU_MACS}")
+    17	
+    18	    # Validate and configure for U55/U65
+    19	    if((ETHOSU_ARCH STREQUAL "u55") OR (ETHOSU_ARCH STREQUAL "u65"))
+    20	        # Validate MAC configuration based on core type (HE vs HP)
+    21	        if(CONFIG_RTSS_HE)
+    22	            # HE core only supports 128 MACs for U55
+    23	            if(NOT (ETHOSU_MACS STREQUAL "128"))
+    24	                message(FATAL_ERROR 
+    25	                    "Core type mismatch: RTSS_HE core with U55 only supports 128 MACs.\n"
+    26	                    "You specified: ${ETHOSU_MACS} MACs\n"
+    27	                    "For HE core, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128\n"
+    28	                    "For 256 MACs, use HP core board variant (rtss_hp)")
+    29	            endif()
+    30	            message(STATUS "Detected RTSS_HE core - U55 restricted to 128 MACs")
+    31	        elseif(CONFIG_RTSS_HP)
+    32	            # HP core only supports 256 MACs for U55
+    33	            if(NOT (ETHOSU_MACS STREQUAL "256"))
+    34	                message(FATAL_ERROR 
+    35	                    "Core type mismatch: RTSS_HP core with U55 only supports 256 MACs.\n"
+    36	                    "You specified: ${ETHOSU_MACS} MACs\n"
+    37	                    "For HP core, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256\n"
+    38	                    "For 128 MACs, use HE core board variant (rtss_he)")
+    39	            endif()
+    40	            message(STATUS "Detected RTSS_HP core - U55 restricted to 256 MACs")
+    41	        elseif(CONFIG_APSS)
+    42	            message(FATAL_ERROR
+    43	                "Ethos-U55 is not directly accessible from APSS (Cortex-A32).\n"
+    44	                "Use Ethos-U85 instead: -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+    45	        else()
+    46	            # Fallback validation for other core types
+    47	            if(NOT (ETHOSU_MACS STREQUAL "64" OR ETHOSU_MACS STREQUAL "128" OR ETHOSU_MACS STREQUAL "256"))
+    48	                message(FATAL_ERROR "Unsupported U55/U65 MAC configuration: ${ETHOSU_MACS}. Valid: 64, 128, 256")
+    49	            endif()
+    50	        endif()
+    51	
+    52	        # Validate overlay file matches NPU type
+    53	        if(DEFINED EXTRA_DTC_OVERLAY_FILE)
+    54	            if(EXTRA_DTC_OVERLAY_FILE MATCHES "ethosu85\\.overlay")
+    55	                message(FATAL_ERROR 
+    56	                    "Overlay mismatch: ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}' (U55) "
+    57	                    "but using U85 overlay '${EXTRA_DTC_OVERLAY_FILE}'.\n"
+    58	                    "For U55, use: -DEXTRA_DTC_OVERLAY_FILE=\"boards/enable_ethosu55.overlay\"")
+    59	            endif()
+    60	        endif()
+    61	
+    62	        # Set architecture flag
+    63	        set(ETHOSU_ARCH_U55 y CACHE BOOL "U55 Flag")
+    64	        add_compile_definitions(ETHOSU_ARCH_U55="${ETHOSU_ARCH_U55}")
+    65	
+    66	        # Automatically set the appropriate CONFIG_ARM_ETHOS_U55_* based on MACS
+    67	        if(ETHOSU_MACS STREQUAL "256")
+    68	            set(CONFIG_ARM_ETHOS_U55_256 y CACHE BOOL "U55 256 MACs" FORCE)
+    69	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_256=y")
+    70	        elseif(ETHOSU_MACS STREQUAL "128")
+    71	            set(CONFIG_ARM_ETHOS_U55_128 y CACHE BOOL "U55 128 MACs" FORCE)
+    72	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_128=y")
+    73	        elseif(ETHOSU_MACS STREQUAL "64")
+    74	            set(CONFIG_ARM_ETHOS_U55_64 y CACHE BOOL "U55 64 MACs" FORCE)
+    75	            message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U55_64=y")
+    76	        endif()
+    77	
+    78	        message(STATUS "Building for Ethos-U55 with ${ETHOSU_MACS} MACs")
+    79	
+    80	    # Validate and configure for U85
+    81	    elseif(ETHOSU_ARCH STREQUAL "u85")
+    82	        # Validate board supports U85 FIRST (before MAC check)
+    83	        # Note: E4, E8 boards have dual NPUs (U55 + U85)
+    84	        if(NOT (CONFIG_SOC_SERIES_E8 OR CONFIG_SOC_SERIES_E4))
+    85	            message(FATAL_ERROR 
+    86	                "Ethos-U85 is only available on E4, E8 boards.\n"
+    87	                "Current board does not support U85.\n"
+    88	                "For this board, use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256")
+    89	        endif()
+    90	
+    91	        # Validate MAC configuration - U85 only supports 256 MACs on Alif boards
+    92	        if(NOT (ETHOSU_MACS STREQUAL "256"))
+    93	            message(FATAL_ERROR 
+    94	                "Unsupported U85 MAC configuration: ${ETHOSU_MACS}\n"
+    95	                "Alif Ensemble boards only support Ethos-U85 with 256 MACs.\n"
+    96	                "Use: -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+    97	        endif()
+    98	
+    99	        # Validate overlay file matches NPU type (catches accidental U55 overlay with U85 config)
+   100	        if(DEFINED EXTRA_DTC_OVERLAY_FILE)
+   101	            if(EXTRA_DTC_OVERLAY_FILE MATCHES "ethosu55\\.overlay")
+   102	                message(FATAL_ERROR 
+   103	                    "Overlay mismatch: ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}' (U85) "
+   104	                    "but using U55 overlay '${EXTRA_DTC_OVERLAY_FILE}'.\n"
+   105	                    "For U85 on RTSS, use: -S ethos-u85-enable\n"
+   106	                    "For U85 on APSS,  use: -S ethos-u85-apss-enable")
+   107	            endif()
+   108	        endif()
+   109	
+   110	        # Set architecture flag
+   111	        set(ETHOSU_ARCH_U85 y CACHE BOOL "U85 Flag")
+   112	        add_compile_definitions(ETHOSU_ARCH_U85="${ETHOSU_ARCH_U85}")
+   113	
+   114	        # Automatically set CONFIG_ARM_ETHOS_U85_256 (only 256 MACs supported)
+   115	        set(CONFIG_ARM_ETHOS_U85_256 y CACHE BOOL "U85 256 MACs" FORCE)
+   116	        message(STATUS "Auto-configured: CONFIG_ARM_ETHOS_U85_256=y")
+   117	
+   118	        message(STATUS "Building for Ethos-U85 with ${ETHOSU_MACS} MACs")
+   119	
+   120	    else()
+   121	        message(FATAL_ERROR "Unsupported NPU architecture: ${ETHOSU_ARCH}. Valid: u55, u65, u85")
+   122	    endif()
+   123	
+   124	else()
+   125	    message(FATAL_ERROR 
+   126	        "Invalid or missing ETHOSU_TARGET_NPU_CONFIG: '${ETHOSU_TARGET_NPU_CONFIG}'\n"
+   127	        "Required format: ethos-u<arch>-<macs>\n"
+   128	        "Examples:\n"
+   129	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-128\n"
+   130	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u55-256\n"
+   131	        "  -DETHOSU_TARGET_NPU_CONFIG=ethos-u85-256")
+   132	endif()
+   133	
+   134	project(tflm_ethosu_app)
+   135	
+   136	target_include_directories(app PRIVATE ../../../../include)
+   137	
+   138	add_subdirectory(
+   139	    ../../../../lib/ethosu_utils
+   140	    ${CMAKE_BINARY_DIR}/lib/ethosu_utils
+   141	)
+   142	
+   143	target_sources(app PRIVATE src/main.cpp)
+   144	
+   145	# APSS (Cortex-A32): include the SRAM1 linker snippet so the tensor arena
+   146	# is placed into the non-cacheable SRAM1 memory region defined in the overlay.
+   147	if(CONFIG_APSS)
+   148	    zephyr_linker_sources(SECTIONS boards/apss_sram1_sections.ld)
+   149	endif()
+
+============================================================
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/prj.conf
+============================================================
+     1	#application default configuration
+     2	# include TFLM based on CMSIS NN optimization and ETHOSU acceleration
+     3	CONFIG_CPP=y
+     4	CONFIG_STD_CPP17=y
+     5	CONFIG_TENSORFLOW_LITE_MICRO=y
+     6	CONFIG_ARM_ETHOS_U=y
+     7	CONFIG_HEAP_MEM_POOL_SIZE=16384
+     8	CONFIG_LOG=y
+     9	CONFIG_LOG_MODE_IMMEDIATE=y
+    10	CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG=y
+    11	
+    12	# Build output configuration (replaces deprecated BUILD_NO_GAP_FILL)
+    13	CONFIG_BUILD_OUTPUT_HEX_GAP_FILL=n
+    14	CONFIG_BUILD_OUTPUT_S19_GAP_FILL=n
+    15	
+    16	CONFIG_REQUIRES_FULL_LIBC=y
+    17	CONFIG_NEWLIB_LIBC=y
+    18	CONFIG_REQUIRES_FULL_LIBCPP=y
+    19	CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=8192
+
+============================================================
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/Kconfig
+============================================================
+     1	# Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	# SPDX-License-Identifier: Apache-2.0
+     3	
+     4	config TFLM_ETHOSU_TAINT_BLOBS
+     5		bool
+     6		default y
+     7		select TAINT_BLOBS
+     8	
+     9	config TENSORFLOW_LITE_MICRO
+    10		bool
+    11		default y
+    12	
+    13	config ETHOS_U_AXI0_ONLY
+    14		bool "Only use AXI0 port on the Ethos"
+    15		default false
+    16	
+    17	config ETHOSU_ARCH_U55
+    18		bool "Ethos NPU U55"
+    19		default n
+    20		help
+    21			Enable support for Ethos-U55 NPU architecture.
+    22			This is set automatically by CMakeLists.txt based on ETHOSU_TARGET_NPU_CONFIG.
+    23	
+    24	config ETHOSU_ARCH_U85
+    25		bool "Ethos NPU U85"
+    26		default n
+    27		help
+    28			Enable support for Ethos-U85 NPU architecture.
+    29			This is set automatically by CMakeLists.txt based on ETHOSU_TARGET_NPU_CONFIG.
+    30	
+    31	config MODEL_IN_EXT_FLASH
+    32		bool "Put ML model to external flash"
+    33		select FLASH
+    34		select ALIF_OSPI_FLASH_XIP
+    35		help
+    36			Initialize OSPI controller to XIP mode. Initialize the onboard flash device. Link ML model data to external flash address space.
+    37			In addition to normal zephyr.bin output, ospi1.bin is generated.
+    38	
+    39	source "Kconfig.zephyr"
+
+============================================================
+FILE: /home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu/src/main.cpp
+============================================================
+     1	/*
+     2	 * Copyright 2019-2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     3	 *
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 */
+     6	
+     7	/****************************************************************************
+     8	 * Includes
+     9	 ****************************************************************************/
+    10	
+    11	#include "inference_process.hpp"
+    12	
+    13	#include <inttypes.h>
+    14	#include <string>
+    15	#include <stdio.h>
+    16	#include <vector>
+    17	#include <zephyr/kernel.h>
+    18	
+    19	/* Model data - Conditional compilation for U55/U85 */
+    20	#if defined(ETHOSU_ARCH_U85)
+    21	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/input.h"
+    22	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/output.h"
+    23	#include "ethosu/models/keyword_spotting_cnn_small_int8/u85/model_u85_256.h"
+    24	#endif
+    25	
+    26	#if defined(ETHOSU_ARCH_U55)
+    27	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/input.h"
+    28	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/output.h"
+    29	#if defined(CONFIG_ARM_ETHOS_U55_256)
+    30	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/model_u55_256.h"
+    31	#else
+    32	#include "ethosu/models/keyword_spotting_cnn_small_int8/u55/model_u55_128.h"
+    33	#endif
+    34	#endif
+    35	
+    36	using namespace std;
+    37	using namespace InferenceProcess;
+    38	
+    39	/****************************************************************************
+    40	 * Defines
+    41	 ****************************************************************************/
+    42	
+    43	/* Number of worker threads running the inferences. There should typically be
+    44	 * one worker thread per NPU. */
+    45	#ifndef NUM_INFERENCE_TASKS
+    46	#define NUM_INFERENCE_TASKS 1
+    47	#endif
+    48	
+    49	/* Number of sender tasks, that post inference requests to the worker threads. */
+    50	#ifndef NUM_JOB_TASKS
+    51	#define NUM_JOB_TASKS 2
+    52	#endif
+    53	
+    54	/* Number of inferences per sender task. */
+    55	#ifndef NUM_JOBS_PER_TASK
+    56	#define NUM_JOBS_PER_TASK 2
+    57	#endif
+    58	
+    59	/* Tensor arena size - use the model's tensorArenaSize variable */
+    60	/* Note: tensorArenaSize is defined in the model header file */
+    61	
+    62	/****************************************************************************
+    63	 * InferenceJob
+    64	 ****************************************************************************/
+    65	
+    66	namespace
+    67	{
+    68	struct InferenceProcessParams {
+    69		InferenceProcessParams() : tensorArena(nullptr), arenaSize(0)
+    70		{
+    71		}
+    72	
+    73		InferenceProcessParams(k_queue *_queue, uint8_t *_tensorArena, size_t _arenaSize)
+    74			: queueHandle(_queue), tensorArena(_tensorArena), arenaSize(_arenaSize)
+    75		{
+    76		}
+    77	
+    78		k_queue *queueHandle;
+    79		uint8_t *tensorArena;
+    80		size_t arenaSize;
+    81	};
+    82	
+    83	/* Wrapper around InferenceProcess::InferenceJob. Adds responseQueue and status
+    84	 * for Zephyr multi-tasking purposes.& */
+    85	struct xInferenceJob : public InferenceJob {
+    86		xInferenceJob() : InferenceJob(), responseQueue(nullptr), status(false)
+    87		{
+    88		}
+    89	
+    90		xInferenceJob(const string &_name, const DataPtr &_networkModel,
+    91			      const vector<DataPtr> &_input, const vector<DataPtr> &_output,
+    92			      const vector<DataPtr> &_expectedOutput, k_queue *_queue)
+    93			: InferenceJob(_name, _networkModel, _input, _output, _expectedOutput),
+    94			  responseQueue(_queue), status(false)
+    95		{
+    96		}
+    97	
+    98		k_queue *responseQueue;
+    99		bool status;
+   100	};
+   101	
+   102	/* Number of total completed jobs, needed to exit application correctly if
+   103	 * NUM_JOB_TASKS > 1 */
+   104	volatile int totalCompletedJobs = 0;
+   105	
+   106	/* TensorArena allocation using TENSOR_ARENA_SIZE from model header
+   107	 * Note: TENSOR_ARENA_SIZE macro is defined in model headers (e.g., model_u85_256.h)
+   108	 * For keyword_spotting: U55 uses ~50KB, U85 uses ~50KB
+   109	 *
+   110	 * On APSS (Cortex-A32) the arena is placed into SRAM1 which is mapped
+   111	 * non-cacheable by the MMU, ensuring coherency with the Ethos-U85 NPU.
+   112	 * On RTSS (Cortex-M55) the arena goes into .bss.tflm_arena (DTCM/SRAM0).
+   113	 */
+   114	#if defined(CONFIG_APSS)
+   115	__attribute__((section("SRAM1.tflm_arena"), aligned(16)))
+   116	#else
+   117	__attribute__((section(".bss.tflm_arena"), aligned(16)))
+   118	#endif
+   119	uint8_t inferenceProcessTensorArena[NUM_INFERENCE_TASKS][TENSOR_ARENA_SIZE];
+   120	
+   121	/* Allocate and initialize heap */
+   122	void *allocateHeap(const size_t size)
+   123	{
+   124		k_heap *heap = static_cast<k_heap *>(k_malloc(sizeof(k_heap)));
+   125		uint8_t *buf = static_cast<uint8_t *>(k_malloc(size));
+   126	
+   127		if ((buf == nullptr) || (heap == nullptr)) {
+   128			printk("Heap allocation failed. heap=%p, buf=%p, size=%zu\n", heap, buf, size);
+   129			exit(1);
+   130		}
+   131	
+   132		k_heap_init(heap, buf, size);
+   133	
+   134		return static_cast<void *>(heap);
+   135	}
+   136	
+   137	/* inferenceProcessTask - Run jobs from queue with available driver */
+   138	void inferenceProcessTask(void *_name, void *heap, void *_params)
+   139	{
+   140		string *name = static_cast<string *>(_name);
+   141		InferenceProcessParams *params = static_cast<InferenceProcessParams *>(_params);
+   142	
+   143		/* Assign the pre allocated heap - used in the k_queue_alloc_append */
+   144		k_thread_heap_assign(k_current_get(), static_cast<k_heap *>(heap));
+   145	
+   146		class InferenceProcess inferenceProcess(params->tensorArena, params->arenaSize);
+   147	
+   148		for (;;) {
+   149			/* Receive inference job */
+   150			xInferenceJob *job =
+   151				static_cast<xInferenceJob *>(k_queue_get(params->queueHandle, Z_FOREVER));
+   152	
+   153			printk("%s: Received inference job. job=%p\n", name->c_str(), job);
+   154	
+   155			/* Run inference */
+   156			job->status = inferenceProcess.runJob(*job);
+   157	
+   158			printk("%s: Sending inference response. job=%p\n", name->c_str(), job);
+   159	
+   160			/* Return inference message */
+   161			int ret = k_queue_alloc_append(job->responseQueue, job);
+   162			if (0 != ret) {
+   163				printk("%s: Failed to send message\n", name->c_str());
+   164				exit(1);
+   165			}
+   166		}
+   167	
+   168		k_thread_abort(k_current_get());
+   169	
+   170		CODE_UNREACHABLE;
+   171	}
+   172	
+   173	/* inferenceSenderTask - Creates NUM_INFERENCE_JOBS jobs, queues them, and then
+   174	 * listens for completion status */
+   175	void inferenceSenderTask(void *_name, void *heap, void *_queue)
+   176	{
+   177		string *name = static_cast<string *>(_name);
+   178		k_queue *inferenceQueue = static_cast<k_queue *>(_queue);
+   179		int ret = 0;
+   180	
+   181		/* Assign the pre allocated heap - used in the k_queue_alloc_append */
+   182		k_thread_heap_assign(k_current_get(), static_cast<k_heap *>(heap));
+   183	
+   184		/* Create queue for response messages */
+   185		k_queue senderQueue;
+   186		k_queue_init(&senderQueue);
+   187	
+   188		/* Loop over all jobs and push them to inference queue */
+   189		xInferenceJob jobs[NUM_JOBS_PER_TASK];
+   190		for (int n = 0; n < NUM_JOBS_PER_TASK; n++) {
+   191			auto &job = jobs[n];
+   192			job = xInferenceJob(modelName, DataPtr((void*)networkModelData, sizeof(networkModelData)),
+   193					    { DataPtr((void*)inputData, sizeof(inputData)) }, {},
+   194					    { DataPtr((void*)expectedOutputData, sizeof(expectedOutputData)) },
+   195					    &senderQueue);
+   196	
+   197			printk("%s: Sending inference. job=%p, name=%s\n", name->c_str(), &job,
+   198			       job.name.c_str());
+   199	
+   200			/* Queue job */
+   201			ret = k_queue_alloc_append(inferenceQueue, &job);
+   202			if (0 != ret) {
+   203				printk("%s: Failed to send message\n", name->c_str());
+   204				exit(1);
+   205			}
+   206		}
+   207	
+   208		/* Listen for completion status */
+   209		do {
+   210			xInferenceJob *job =
+   211				static_cast<xInferenceJob *>(k_queue_get(&senderQueue, Z_FOREVER));
+   212	
+   213			printk("%s: Received job response. job=%p, status=%u\n", name->c_str(), job,
+   214			       job->status);
+   215	
+   216			totalCompletedJobs++;
+   217	
+   218			ret += job->status;
+   219			if (job->status != 0) {
+   220				break;
+   221			}
+   222		} while (totalCompletedJobs < NUM_JOBS_PER_TASK * NUM_JOB_TASKS);
+   223	
+   224		exit(ret);
+   225	}
+   226	
+   227	} /* namespace */
+   228	
+   229	/* Zephyr application. NOTE: Additional tasks may require increased heap size. */
+   230	int main()
+   231	{
+   232		struct {
+   233			k_thread thread;
+   234			k_tid_t id;
+   235		} threads[NUM_JOB_TASKS + NUM_INFERENCE_TASKS];
+   236		size_t nthreads = 0;
+   237	
+   238		/* Allocate one global heap for all threads */
+   239		void *heapPtr = allocateHeap(256);
+   240	
+   241		k_queue inferenceQueue;
+   242		k_queue_init(&inferenceQueue);
+   243	
+   244		/* inferenceSender tasks to create and queue the jobs */
+   245		for (int n = 0; n < NUM_JOB_TASKS; n++) {
+   246			const size_t stackSize = 2048;
+   247			k_thread_stack_t *stack = static_cast<k_thread_stack_t *>(k_malloc(stackSize));
+   248			if (stack == nullptr) {
+   249				printk("Failed to allocate stack to 'inferenceSenderTask%i'\n", n);
+   250				exit(1);
+   251			}
+   252	
+   253			auto &thread = threads[nthreads];
+   254			string *name = new string("sender " + to_string(n));
+   255	
+   256			thread.id = k_thread_create(&thread.thread, stack, stackSize, inferenceSenderTask,
+   257						    name, heapPtr, &inferenceQueue, 3, 0, K_FOREVER);
+   258			if (thread.id == 0) {
+   259				printk("Failed to create 'inferenceSenderTask%i'\n", n);
+   260				exit(1);
+   261			}
+   262	
+   263			nthreads++;
+   264		}
+   265	
+   266		/* Create inferenceProcess tasks to process the queued jobs */
+   267		InferenceProcessParams taskParams[NUM_INFERENCE_TASKS];
+   268		for (int n = 0; n < NUM_INFERENCE_TASKS; n++) {
+   269			const size_t stackSize = 8192;
+   270			k_thread_stack_t *stack = static_cast<k_thread_stack_t *>(k_malloc(stackSize));
+   271			if (stack == nullptr) {
+   272				printk("Failed to allocate stack to 'inferenceSenderTask%i'\n", n);
+   273				exit(1);
+   274			}
+   275	
+   276			auto &thread = threads[nthreads];
+   277			auto &taskParam = taskParams[n];
+   278			taskParam = InferenceProcessParams(&inferenceQueue, inferenceProcessTensorArena[n],
+   279							   tensorArenaSize);
+   280			string *name = new string("runner " + to_string(n));
+   281	
+   282			thread.id = k_thread_create(&thread.thread, stack, stackSize, inferenceProcessTask,
+   283						    name, heapPtr, &taskParam, 2, 0, K_FOREVER);
+   284			if (thread.id == 0) {
+   285				printk("Failed to create 'inferenceProcessTask%i'\n", n);
+   286				exit(1);
+   287			}
+   288	
+   289			nthreads++;
+   290		}
+   291	
+   292		/* start Scheduler */
+   293		for (size_t n = 0; n < nthreads; n++) {
+   294			k_thread_start(threads[n].id);
+   295		}
+   296	
+   297		/* put the task in the lowest priority */
+   298		k_thread_priority_set(k_current_get(), 4);
+   299	
+   300		/* Safety belt */
+   301		k_thread_suspend(k_current_get());
+   302	
+   303		printk("Zephyr application failed to initialise \n");
+   304	
+   305		return 1;
+   306	}
+
+===== 3. CURRENT HEAT-STRESS APPLICATION CONFIGURATION =====
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/CMakeLists.txt
+============================================================
+     1	# Copyright (C) Alif Semiconductor - All Rights Reserved.
+     2	# Use, distribution and modification of this code is permitted under the
+     3	# terms stated in the Alif Semiconductor Software License Agreement
+     4	#
+     5	# You should have received a copy of the Alif Semiconductor Software
+     6	# License Agreement with this file. If not, please write to:
+     7	# contact@alifsemi.com, or visit: https://alifsemi.com/license
+     8	
+     9	cmake_minimum_required(VERSION 3.20.0)
+    10	
+    11	if(NOT ospi-flash IN_LIST SNIPPET)
+    12	  set(SNIPPET ospi-flash ${SNIPPET} CACHE STRING "" FORCE)
+    13	endif()
+    14	
+    15	# Locate the alif-mlek west module. Its Zephyr port lives in a sub-directory,
+    16	# so the module is not auto-discovered and must be registered explicitly. Ask
+    17	# west for the module path instead of hardcoding the workspace layout.
+    18	execute_process(
+    19	    COMMAND west list --format "{abspath}" alif-mlek
+    20	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    21	    OUTPUT_VARIABLE MLEK_ROOT
+    22	    OUTPUT_STRIP_TRAILING_WHITESPACE
+    23	    RESULT_VARIABLE MLEK_LIST_RESULT
+    24	    ERROR_QUIET
+    25	)
+    26	if (MLEK_LIST_RESULT OR NOT EXISTS ${MLEK_ROOT})
+    27	    message(FATAL_ERROR
+    28	        "alif-mlek module not found. Enable and fetch it first:\n"
+    29	        "  west config manifest.project-filter -- +alif-mlek\n"
+    30	        "  west update\n")
+    31	endif()
+    32	
+    33	# Register the MLEK Zephyr port as an extra Zephyr module
+    34	list(APPEND ZEPHYR_EXTRA_MODULES ${MLEK_ROOT}/source/lib/ports/zephyr)
+    35	
+    36	# ---------------------------------------------------------------------------
+    37	# Ethos-U NPU selection
+    38	# ---------------------------------------------------------------------------
+    39	# When ETHOSU_TARGET_NPU_CONFIG is provided on the command line it is the single
+    40	# source of truth for the NPU. We must act on it BEFORE find_package(Zephyr) so
+    41	# that the matching Kconfig choice (CONFIG_ARM_ETHOS_U<arch>_<macs>) is fed into
+    42	# the build and the Ethos-U driver targets the requested NPU. This overrides the
+    43	# board default (E8 rtss_hp defaults to Ethos-U55 with 256 MACs).
+    44	#
+    45	# The parsed value is also used to pick the correct Vela-compiled model below.
+    46	# Vela config-ID prefix: U55 -> H, U65 -> Y, U85 -> Z (e.g. ethos-u85-256 -> Z256).
+    47	if (DEFINED ETHOSU_TARGET_NPU_CONFIG)
+    48	    string(TOLOWER "${ETHOSU_TARGET_NPU_CONFIG}" _npu_cfg)
+    49	    if (_npu_cfg MATCHES "^ethos-(u[0-9]+)-([0-9]+)$")
+    50	        set(_npu_arch "${CMAKE_MATCH_1}")
+    51	        set(_npu_macs "${CMAKE_MATCH_2}")
+    52	        if (_npu_arch STREQUAL "u55")
+    53	            set(_npu_prefix "H")
+    54	        elseif (_npu_arch STREQUAL "u65")
+    55	            set(_npu_prefix "Y")
+    56	        elseif (_npu_arch STREQUAL "u85")
+    57	            set(_npu_prefix "Z")
+    58	        else()
+    59	            message(FATAL_ERROR
+    60	                "Unsupported Ethos-U architecture '${_npu_arch}' in "
+    61	                "ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'")
+    62	        endif()
+    63	        set(ETHOS_U_NPU_CONFIG_ID "${_npu_prefix}${_npu_macs}")
+    64	
+    65	        # Feed the matching Kconfig choice into the Zephyr configuration.
+    66	        string(TOUPPER "${_npu_arch}" _npu_arch_uc)
+    67	        set(CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs} y
+    68	            CACHE INTERNAL "Selected Ethos-U NPU configuration" FORCE)
+    69	        message(STATUS
+    70	            "Ethos-U: ETHOSU_TARGET_NPU_CONFIG=${ETHOSU_TARGET_NPU_CONFIG} -> "
+    71	            "CONFIG_ARM_ETHOS_${_npu_arch_uc}_${_npu_macs}=y, model ID ${ETHOS_U_NPU_CONFIG_ID}")
+    72	    else()
+    73	        message(FATAL_ERROR
+    74	            "Invalid ETHOSU_TARGET_NPU_CONFIG='${ETHOSU_TARGET_NPU_CONFIG}'.\n"
+    75	            "Expected format: ethos-u<arch>-<macs>, e.g. ethos-u55-256 or ethos-u85-256")
+    76	    endif()
+    77	endif()
+    78	
+    79	find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    80	
+    81	project(alif_asr)
+    82	
+    83	# Silence "changed in GCC 7.1" warnigns from C++ headers
+    84	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi")
+    85	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+    86	
+    87	set(PLATFORM_DRIVERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/source/platform/zephyr)
+    88	
+    89	set(ML_FRAMEWORK TensorFlowLiteMicro)
+    90	
+    91	# ---------------------------------------------------------------------------
+    92	# Build-time model and labels generation from MLEK resources
+    93	# ---------------------------------------------------------------------------
+    94	set(MLEK_SCRIPTS_DIR ${MLEK_ROOT}/scripts)
+    95	set(RESOURCES_PATH ${MLEK_ROOT}/resources_downloaded CACHE PATH
+    96	    "Path to MLEK resources (models compiled with Vela)")
+    97	setup_source_generator()
+    98	
+    99	# Source generation output directories
+   100	set(SRC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/src)
+   101	set(INC_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+   102	file(MAKE_DIRECTORY ${SRC_GEN_DIR} ${INC_GEN_DIR})
+   103	
+   104	message(STATUS "Using SRC_GEN_DIR:    ${SRC_GEN_DIR}")
+   105	message(STATUS "Using INC_GEN_DIR:    ${INC_GEN_DIR}")
+   106	
+   107	# Determine NPU config ID based on Zephyr Kconfig.
+   108	# If ETHOSU_TARGET_NPU_CONFIG was supplied on the command line, ETHOS_U_NPU_CONFIG_ID
+   109	# has already been computed above. Otherwise fall back to the board Kconfig defaults.
+   110	if (NOT DEFINED ETHOS_U_NPU_CONFIG_ID)
+   111	    if (CONFIG_ARM_ETHOS_U85_256)
+   112	        set(ETHOS_U_NPU_CONFIG_ID "Z256")
+   113	    elseif (CONFIG_ARM_ETHOS_U55_256)
+   114	        set(ETHOS_U_NPU_CONFIG_ID "H256")
+   115	    else()
+   116	        set(ETHOS_U_NPU_CONFIG_ID "H128")
+   117	    endif()
+   118	endif()
+   119	
+   120	# Opt-in experiment. Default remains the production model and kernel.
+   121	option(HEATSTROKE_SINGLE_STEP_EXPERIMENT
+   122	    "Use repaired Vela model and single-step BiLSTM experiment" OFF)
+   123	
+   124	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   125	    set(POLYU_MODEL_PATH
+   126	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_performance/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_bilstm_rank4_mean_shapes_fixed_exp_vela.tflite"
+   127	        CACHE FILEPATH "Experimental PolyU heat-stress model" FORCE)
+   128	else()
+   129	    set(POLYU_MODEL_PATH
+   130	        "${CMAKE_CURRENT_SOURCE_DIR}/../PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite"
+   131	        CACHE FILEPATH "Production PolyU heat-stress model" FORCE)
+   132	endif()
+   133	
+   134	if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+   135	    set(POLYU_MODEL_PATH
+   136	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp.tflite"
+   137	        CACHE FILEPATH "Fused LayerNorm heat-stress experimental model" FORCE)
+   138	endif()
+   139	
+   140	option(HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT
+   141	    "Use the FlatBuffer with 16-byte-aligned Ethos-U command streams" OFF)
+   142	
+   143	if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+   144	    set(POLYU_MODEL_PATH
+   145	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp_ethosu_aligned16_20261111.tflite"
+   146	        CACHE FILEPATH "16-byte-aligned Ethos-U heat-stress model" FORCE)
+   147	endif()
+   148	
+   149	# E8 HP U55-256 Vela model selection
+   150	option(HEATSTROKE_E8_U55_256_VELA_EXPERIMENT
+   151	    "Use the E8 HP Ethos-U55-256 Vela model" OFF)
+   152	
+   153	if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+   154	    if (NOT CONFIG_ARM_ETHOS_U55_256)
+   155	        message(FATAL_ERROR "The E8 HP U55-256 model requires CONFIG_ARM_ETHOS_U55_256")
+   156	    endif()
+   157	    set(POLYU_MODEL_PATH
+   158	        "${CMAKE_CURRENT_SOURCE_DIR}/model_candidates/vela_e8_hp_u55_256_20261117.tflite"
+   159	        CACHE FILEPATH "E8 HP Ethos-U55-256 Vela model" FORCE)
+   160	endif()
+   161	
+   162	if (NOT EXISTS "${POLYU_MODEL_PATH}")
+   163	    message(FATAL_ERROR "Combined PolyU model not found: ${POLYU_MODEL_PATH}")
+   164	endif()
+   165	
+   166	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   167	    set(POLYU_MODEL_SHA256_EXPECTED
+   168	        "72bf7dba9d0234458108fc413915cdb161050edccf4327dd6cf34597e1cb556a")
+   169	else()
+   170	    set(POLYU_MODEL_SHA256_EXPECTED
+   171	        "b8056848e68ecdb1fc1cd35f65639db6f836b53abf603033f58f90ec7f1003b3")
+   172	endif()
+   173	if (HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+   174	    set(POLYU_MODEL_SHA256_EXPECTED "06455fa9d1b41e2b920485b9bfd4a1a48d68ae0474d1aa7d9558c0a0afd02125")
+   175	endif()
+   176	
+   177	if (HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT)
+   178	    set(POLYU_MODEL_SHA256_EXPECTED
+   179	        "f76150bcfef7b5fb0378eff51196045d8139c7ba805b5af9192afd178702389d")
+   180	endif()
+   181	
+   182	# E8 HP U55-256 model integrity check
+   183	if (HEATSTROKE_E8_U55_256_VELA_EXPERIMENT)
+   184	    set(POLYU_MODEL_SHA256_EXPECTED "4f44b4810c500d25a7ae42d4b721fde30474f4aa0f34efad12f92ef77b8eb90d")
+   185	endif()
+   186	
+   187	file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+   188	if (NOT "${POLYU_MODEL_SHA256_ACTUAL}" STREQUAL "${POLYU_MODEL_SHA256_EXPECTED}")
+   189	    message(FATAL_ERROR
+   190	        "Combined PolyU model SHA256 mismatch. "
+   191	        "Expected ${POLYU_MODEL_SHA256_EXPECTED}, got ${POLYU_MODEL_SHA256_ACTUAL}")
+   192	endif()
+   193	
+   194	message(STATUS "Using combined heat-stress model: ${POLYU_MODEL_PATH}")
+   195	message(STATUS "Combined model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+   196	
+   197	# The generator output filename is the complete model filename plus .cc.
+   198	generate_model_code(
+   199	    MODEL_PATH "${POLYU_MODEL_PATH}"
+   200	    DESTINATION "${SRC_GEN_DIR}"
+   201	    NAMESPACE "arm" "app" "polyu_heatstroke")
+   202	
+   203	get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+   204	set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+   205	set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+   206	
+   207	# Application-local includes for the heat-stress TFLM model.
+   208	target_include_directories(app PRIVATE
+   209	    src/application/main/include
+   210	    src/use_case/alif_asr/include
+   211	    src/power
+   212	    "${INC_GEN_DIR}"
+   213	)
+   214	
+   215	target_compile_definitions(app PRIVATE ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ)
+   216	
+   217	
+   218	if (CONFIG_USE_APP_MENU)
+   219	target_compile_definitions(app PRIVATE USE_APP_MENU)
+   220	endif()
+   221	
+   222	target_sources(app PRIVATE
+   223	    src/application/main/Main.cc
+   224	    src/use_case/alif_asr/src/MainLoop.cc
+   225	    src/use_case/alif_asr/src/reverse_v2.cc
+   226	    src/use_case/alif_asr/src/PolyUModel1.cc
+   227	    src/power/power_mgr.c
+   228	    "${POLYU_MODEL_CPP}"
+   229	)
+   230	
+   231	if (HEATSTROKE_SINGLE_STEP_EXPERIMENT)
+   232	    target_sources(app PRIVATE
+   233	        src/use_case/alif_asr/src/heatstroke_bidirectional_lstm_single_step_experiment.cc)
+   234	    target_compile_definitions(app PRIVATE
+   235	        HEATSTROKE_SINGLE_STEP_EXPERIMENT=1)
+   236	else()
+   237	    target_sources(app PRIVATE
+   238	        src/use_case/alif_asr/src/heatstroke_bidirectional_lstm.cc)
+   239	endif()
+   240	
+   241	
+   242	option(HEATSTROKE_INT64_CAST_SUM_EXPERIMENT
+   243	       "Use application-local INT64-compatible CAST and SUM kernels" OFF)
+   244	
+   245	if (HEATSTROKE_INT64_CAST_SUM_EXPERIMENT)
+   246	    target_sources(app PRIVATE
+   247	        src/use_case/alif_asr/src/heatstroke_int64_cast_sum.cc
+   248	    )
+   249	    target_compile_definitions(app PRIVATE
+   250	        HEATSTROKE_INT64_CAST_SUM_EXPERIMENT=1
+   251	    )
+   252	endif()
+   253	
+   254	option(HEATSTROKE_INT64_MUL_EXPERIMENT
+   255	       "Use application-local INT64-compatible MUL kernel" OFF)
+   256	
+   257	if (HEATSTROKE_INT64_MUL_EXPERIMENT)
+   258	    target_sources(app PRIVATE
+   259	        src/use_case/alif_asr/src/heatstroke_int64_mul.cc
+   260	    )
+   261	    target_compile_definitions(app PRIVATE
+   262	        HEATSTROKE_INT64_MUL_EXPERIMENT=1
+   263	    )
+   264	endif()
+   265	
+   266	option(HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT
+   267	       "Use application-local INT64-compatible FLOOR_MOD kernel" OFF)
+   268	
+   269	if (HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT)
+   270	    target_sources(app PRIVATE
+   271	        src/use_case/alif_asr/src/heatstroke_int64_floor_mod.cc
+   272	    )
+   273	    target_compile_definitions(app PRIVATE
+   274	        HEATSTROKE_INT64_FLOOR_MOD_EXPERIMENT=1
+   275	    )
+   276	endif()
+   277	
+   278	option(HEATSTROKE_INT64_SUB_EXPERIMENT
+   279	       "Use application-local INT64-compatible SUB kernel" OFF)
+   280	
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf
+============================================================
+     1	CONFIG_CPP=y
+     2	CONFIG_STD_CPP17=y
+     3	
+     4	# tflm
+     5	CONFIG_MLEK_EXAMPLES_LIB=y
+     6	CONFIG_TENSORFLOW_LITE_MICRO=y
+     7	CONFIG_ARM_ETHOS_U=y
+     8	
+     9	CONFIG_HEAP_MEM_POOL_SIZE=163840
+    10	CONFIG_LOG=y
+    11	CONFIG_LOG_MODE_IMMEDIATE=y
+    12	CONFIG_REQUIRES_FULL_LIBC=y
+    13	CONFIG_REQUIRES_FULL_LIBCPP=y
+    14	
+    15	# std::exp
+    16	CONFIG_NEWLIB_LIBC=y
+    17	CONFIG_NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE=163840
+    18	
+    19	CONFIG_SYS_HEAP_SMALL_ONLY=y
+    20	
+    21	# arm_math.h
+    22	CONFIG_CMSIS_DSP=y
+    23	CONFIG_CMSIS_DSP_TRANSFORM=y
+    24	CONFIG_CMSIS_DSP_FASTMATH=y
+    25	CONFIG_CMSIS_DSP_STATISTICS=y
+    26	CONFIG_CMSIS_DSP_COMPLEXMATH=y
+    27	
+    28	CONFIG_MAIN_STACK_SIZE=4096
+    29	CONFIG_MAIN_THREAD_PRIORITY=3
+    30	CONFIG_ISR_STACK_SIZE=4096
+    31	CONFIG_PRIVILEGED_STACK_SIZE=2048
+    32	CONFIG_IDLE_STACK_SIZE=2048
+    33	
+    34	CONFIG_CONSOLE_SUBSYS=y
+    35	CONFIG_CONSOLE_GETLINE=y
+    36	
+    37	CONFIG_CBPRINTF_FP_SUPPORT=y
+    38	
+    39	# Audio input and output configurations
+    40	CONFIG_AUDIO=y
+    41	
+    42	# I2S and audio codec for audio output
+    43	CONFIG_I2C=y
+    44	CONFIG_WM8904=y
+    45	CONFIG_AUDIO_CODEC=y
+    46	
+    47	
+    48	CONFIG_COUNTER_RTC_SNPS_DW=y
+    49	CONFIG_COUNTER_SNPS_DW=n
+    50	CONFIG_COUNTER_ALIF_UTIMER=n
+    51	
+    52	
+    53	# Power management configurations
+    54	CONFIG_ALIF_POWER_MGR_SHELL=n
+    55	CONFIG_PM=y
+    56	CONFIG_PM_DEVICE=y
+    57	CONFIG_POWER_DOMAIN=y
+    58	CONFIG_COUNTER=y
+    59	CONFIG_PM_S2RAM=y
+    60	CONFIG_PM_SAU_SAVE_RESTORE=y
+    61	
+    62	#########
+    63	CONFIG_ASSERT=y
+    64	CONFIG_SYS_CLOCK_TICKS_PER_SEC=1000
+    65	CONFIG_STDOUT_CONSOLE=y
+    66	CONFIG_PRINTK=y
+    67	CONFIG_POWEROFF=y
+    68	
+    69	# Enable push-to-talk mode for the ASR sample application
+    70	CONFIG_PUSH_TO_TALK=y
+    71	CONFIG_OUTPUT_TO_LINE_OUT=n
+    72	
+    73	CONFIG_GPIO=y
+    74	CONFIG_LPGPIO_M55_IRQ_ENABLED=y
+    75	
+    76	# ASR model is large, so we need to store it in external flash
+    77	CONFIG_MODEL_IN_EXT_FLASH=y
+    78	CONFIG_ALIF_OSPI_FLASH_XIP=y
+    79	CONFIG_OSPI_FLASH_IS25WX=y
+    80	CONFIG_OSPI=y
+    81	CONFIG_OSPI_FLASH=y
+    82	CONFIG_USE_ALIF_HAL_OSPI=y
+    83	
+    84	# ####### Configuration supported with the updated Secure Enclave software
+    85	CONFIG_SE_SERVICE_INIT_PRIORITY=1
+    86	CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0
+    87	CONFIG_GPIO_INIT_PRIORITY=40
+    88	CONFIG_ACTIVATION_BUF_SECTION=".alif_sram0.activation_buf"
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/Main.cc
+============================================================
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	/****************************************************************************\
+    20	 *               Main application file for ARM NPU on MPS3 board             *
+    21	\****************************************************************************/
+    22	
+    23	#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp" /* our inference logic api */
+    24	#include "power_mgr.h"             /* power management APIs */
+    25	#include <cstdio>
+    26	#include <cstdint>
+    27	#include <new>
+    28	#include <exception>
+    29	
+    30	#include <zephyr/console/console.h>
+    31	#include <zephyr/logging/log.h>
+    32	
+    33	LOG_MODULE_REGISTER(Main);
+    34	
+    35	extern void MainLoop();
+    36	
+    37	#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+    38	__ASM(" .global __ARM_use_no_argv\n");
+    39	#endif
+    40	
+    41	/* Print application information. */
+    42	static void PrintApplicationIntro()
+    43	{
+    44	    #define PRJ_DES_STR     "BeeInventor - PolyU Model1 Test"
+    45	    LOG_INF("%s\n", PRJ_DES_STR);
+    46	    LOG_INF("Version %s Build date: " __DATE__ " @ " __TIME__ "\n", PRJ_VER_STR);
+    47	    //LOG_INF("Compiler: %s\n", PRJ_COMPILER);
+    48	    // LOG_INF("Copyright 2021-2026 Arm Limited and/or "
+    49	    //      "its affiliates <open-source-office@arm.com>\n\n");
+    50	}
+    51	
+    52	static void out_of_heap()
+    53	{
+    54	    LOG_WRN("Out of heap\n");
+    55	    std::terminate();
+    56	}
+    57	
+    58	/* ITGU READ-ONLY DIAGNOSTIC
+    59	 * Reads ITGU registers only. No security configuration is modified.
+    60	 */
+    61	static void PrintItguRegisters()
+    62	{
+    63	    constexpr std::uintptr_t ITGU_BASE = 0xE001E500UL;
+    64	    constexpr std::uintptr_t ITGU_CTRL = ITGU_BASE + 0x00UL;
+    65	    constexpr std::uintptr_t ITGU_CFG  = ITGU_BASE + 0x04UL;
+    66	    constexpr std::uintptr_t ITGU_LUT  = ITGU_BASE + 0x10UL;
+    67	
+    68	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC START");
+    69	    LOG_INF("No ITGU/DTGU/SAU registers will be written.");
+    70	
+    71	    LOG_INF("About to read ITGU_CTRL at 0x%08x",
+    72	            static_cast<unsigned int>(ITGU_CTRL));
+    73	    const auto ctrl = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CTRL);
+    74	    LOG_INF("ITGU_CTRL = 0x%08x", static_cast<unsigned int>(ctrl));
+    75	
+    76	    LOG_INF("About to read ITGU_CFG at 0x%08x",
+    77	            static_cast<unsigned int>(ITGU_CFG));
+    78	    const auto cfg = *reinterpret_cast<volatile const std::uint32_t *>(ITGU_CFG);
+    79	    LOG_INF("ITGU_CFG = 0x%08x", static_cast<unsigned int>(cfg));
+    80	
+    81	    for (unsigned int i = 0; i < 16; ++i) {
+    82	        const std::uintptr_t address = ITGU_LUT + (i * 4U);
+    83	        LOG_INF("About to read ITGU_LUT[%u] at 0x%08x",
+    84	                i, static_cast<unsigned int>(address));
+    85	        const auto value = *reinterpret_cast<volatile const std::uint32_t *>(address);
+    86	        LOG_INF("ITGU_LUT[%u] = 0x%08x",
+    87	                i, static_cast<unsigned int>(value));
+    88	    }
+    89	
+    90	    LOG_INF("ITGU READ-ONLY DIAGNOSTIC COMPLETE");
+    91	}
+    92	int main ()
+    93	{
+    94		printk("HP_BOOT_TRACE: main entered\r\n");
+    95		console_getline_init();
+    96		printk("HP_BOOT_TRACE: console_getline_init returned\r\n");
+    97	
+    98		/* Application information, UART should have been initialised. */
+    99		PrintApplicationIntro();
+   100		printk("HP_BOOT_TRACE: application intro returned\r\n");
+   101		/* Temporarily bypass direct ITGU register reads during startup diagnosis. */
+   102		printk("HP_BOOT_TRACE: ITGU probe bypassed\r\n");
+   103	
+   104		std::set_new_handler(out_of_heap);
+   105		printk("HP_BOOT_TRACE: calling MainLoop\r\n");
+   106		MainLoop();
+   107		printk("HP_BOOT_TRACE: MainLoop returned\r\n");
+   108	
+   109	    /* This is unreachable without errors. */
+   110	    LOG_INF("program terminating...\n");
+   111	
+   112	    return 0;
+   113	}
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp
+============================================================
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef BUF_ATTRIBUTES_HPP
+    20	#define BUF_ATTRIBUTES_HPP
+    21	
+    22	#include <zephyr/devicetree.h>
+    23	
+    24	#define BYTE_ALIGNMENT              16
+    25	#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+    26	#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+    27	
+    28	#if CONFIG_MODEL_IN_EXT_FLASH
+    29	#define MODEL_SECTION               section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+    30	#else
+    31	#define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+    32	#endif
+    33	
+    34	#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+    35	#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+    36	#define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+    37	#define LABELS_ATTRIBUTE
+    38	
+    39	
+    40	#endif /* BUF_ATTRIBUTES_HPP */
+
+===== 4. CURRENT HEAT-STRESS TFLM MODEL INTERFACE =====
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/PolyUModel1.hpp
+============================================================
+     1	#ifndef POLYU_MODEL1_HPP
+     2	#define POLYU_MODEL1_HPP
+     3	
+     4	#include "mlek/fwk/tflm/TflmModel.hpp"
+     5	
+     6	namespace arm::app::asr {
+     7	extern const int g_FrameLength;
+     8	extern const int g_FrameStride;
+     9	extern const float g_ScoreThreshold;
+    10	extern const int g_ctxLen;
+    11	} // namespace arm::app::asr
+    12	
+    13	namespace arm::app::fwk::tflm {
+    14	
+    15	void ResetHeatstrokeOperatorTiming();
+    16	void LogHeatstrokeOperatorTiming();
+    17	
+    18	class PolyUModel1 : public TflmModel {
+    19	
+    20	public:
+    21	    /* Indices for the expected model - based on input and output tensor shapes */
+    22	    static constexpr uint32_t ms_inputRowsIdx  = 1;
+    23	    static constexpr uint32_t ms_inputColsIdx  = 2;
+    24	    static constexpr uint32_t ms_outputRowsIdx = 2;
+    25	    static constexpr uint32_t ms_outputColsIdx = 3;
+    26	
+    27	    /* Model specific constants. */
+    28	    static constexpr uint32_t ms_blankTokenIdx   = 28;
+    29	    static constexpr uint32_t ms_numMfccFeatures = 13;
+    30	
+    31	protected:
+    32	    /** @brief   Gets the reference to op resolver interface class. */
+    33	    const tflite::MicroOpResolver& GetOpResolver() override;
+    34	
+    35	    /** @brief   Adds operations to the op resolver instance. */
+    36	    bool EnlistOperations() override;
+    37	
+    38	private:
+    39	    /* Maximum number of individual operations that can be enlisted. */
+    40	    #if defined(HEATSTROKE_LAYER_NORM_FUSION_EXPERIMENT)
+    41	    static constexpr int ms_maxOpCnt = 33;
+    42	#else
+    43	    static constexpr int ms_maxOpCnt = 32;
+    44	#endif
+    45	
+    46	    /* A mutable op resolver instance. */
+    47	    tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+    48	};
+    49	
+    50	} /* namespace arm::app::fwk::tflm */
+    51	
+    52	#endif /* POLYU_MODEL1_HPP */
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+============================================================
+   130	    LOG_INF("ETHOSU_DIAG: runtime monitor started; interval=1000ms");
+   131	}
+   132	
+   133	void StopHeatstrokeEthosuMonitor()
+   134	{
+   135	    k_timer_stop(&g_heatstrokeEthosuMonitorTimer);
+   136	    LOG_INF("ETHOSU_DIAG: runtime monitor stopped");
+   137	}
+   138	
+   139	} /* namespace */
+   140	
+   141	#define LPGPIO_NODE           DT_NODELABEL(lpgpio)
+   142	#define LPGPIO_WAKEUP_ENABLED DT_NODE_HAS_STATUS_OKAY(LPGPIO_NODE)
+   143	
+   144	#if LPGPIO_WAKEUP_ENABLED
+   145	/* LPGPIO wake up source is used */
+   146	#define LPGPIO_EWIC_CFG EWIC_VBAT_GPIO
+   147	
+   148	#if CONFIG_LPGPIO_WAKEUP_SOURCE == 4
+   149	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO4
+   150	#elif CONFIG_LPGPIO_WAKEUP_SOURCE == 1
+   151	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO1
+   152	#else
+   153	#define LPGPIO_WAKEUP_EVENT WE_LPGPIO0
+   154	#endif
+   155	#else
+   156	#define LPGPIO_EWIC_CFG 0
+   157	#define LPGPIO_WAKEUP_EVENT 0
+   158	#endif
+   159	
+   160	namespace arm {
+   161	namespace app {
+   162	    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+   163	
+   164	    namespace polyu_heatstroke {
+   165	extern const uint8_t* GetModelPointer();
+   166	extern size_t GetModelLen();
+   167	} /* namespace polyu_heatstroke */
+   168	
+   169	} /* namespace app */
+   170	} /* namespace arm */
+   171	
+   172	
+   173	#if LPGPIO_WAKEUP_ENABLED
+   174	static const struct gpio_dt_spec lpgpio_config = GPIO_DT_SPEC_GET_BY_IDX_OR(
+   175		DT_NODELABEL(wakeup_pins), lpgpios, 0, {0});
+   176	#endif
+   177	
+   178	
+   179	volatile uint8_t button_pressed = 0U;
+   180	static struct gpio_callback button_cb_data;
+   181	static bool por_boot;
+   182	static struct k_sem button_wait_sem;
+   183	
+   184	static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+   185	{
+   186		ARG_UNUSED(dev);
+   187		ARG_UNUSED(cb);
+   188		ARG_UNUSED(pins);
+   189	
+   190		if (por_boot) {
+   191			/* Ignore button press event if it's from POR boot, as the button state may be unstable during POR. */
+   192			return;
+   193		}
+   194	
+   195		int val = gpio_pin_get_dt(&lpgpio_config);  // 1 = pressed, 0 = released
+   196	    if (val < 0) {
+   197	        LOG_ERR("Failed to read pin: %d", val);
+   198	        return;
+   199	    }
+   200	
+   201	    button_pressed = (val == 1);
+   202	    LOG_INF("Button %s", button_pressed ? "pressed" : "released");
+   203	
+   204		if (!k_sem_count_get(&button_wait_sem) && button_pressed) {
+   205			k_sem_give(&button_wait_sem);
+   206		}
+   207	}
+   208	
+   209	/**
+   210	 * Configure LPGPIO0 and LPGPIO1 as inputs with interrupts
+   211	 * With B1/E1C need to connect wire between SW5 (P5_7) and P15_0 to use button as Push-to-talk button.
+   212	 * With B1/E1C devkit you need to also remove resistor R64. */
+   213	static int configure_lpgpio(void)
+   214	{
+   215		int ret;
+   216		const struct gpio_dt_spec *spec = &lpgpio_config;
+   217	
+   218		if (!spec || !spec->port) {
+   219			/* Just ignore */
+   220			LOG_ERR("lpgpio invalid");
+   221			return -ENODEV;
+   222		}
+   223	
+   224		/* Configure LPGPIO0 for wakeup */
+   225		if (!gpio_is_ready_dt(spec)) {
+   226			LOG_ERR("LPGPIO0 device is not ready");
+   227			return -ENODEV;
+   228		}
+   229	
+   230		ret = gpio_pin_configure_dt(spec, GPIO_INPUT | spec->dt_flags);
+   231		if (ret != 0) {
+   232			LOG_ERR("Failed to configure LPGPIO as input: %d", ret);
+   233			return ret;
+   234		}
+   235	
+   236		ret = gpio_pin_interrupt_configure_dt(spec,
+   237						      GPIO_INT_EDGE_BOTH);
+   238		if (ret != 0) {
+   239			LOG_ERR("Failed to configure LPGPIO interrupt: %d", ret);
+   240			return ret;
+   241		}
+   242	
+   243		gpio_init_callback(&button_cb_data, button_callback, BIT(spec->pin));
+   244		ret = gpio_add_callback(spec->port, &button_cb_data);
+   245		if (ret != 0) {
+   246			LOG_ERR("Failed to add button callback: %d", ret);
+   247			return ret;
+   248		}
+   249	
+   250		LOG_INF("LPGPIO%d configured", spec->pin);
+   251	
+   252		return 0;
+   253	}
+   254	
+   255	/** @brief   Verify input and output tensor are of certain min dimensions. */
+   256	
+   257	static bool VerifyOneTensor(
+   258	    const char* label,
+   259	    size_t index,
+   260	    const std::shared_ptr<arm::app::fwk::iface::TensorIface>& tensor,
+   261	    const std::vector<size_t>& expectedShape)
+   262	{
+   263	    using arm::app::fwk::iface::TensorType;
+   264	
+   265	    if (!tensor) {
+   266	        LOG_ERR("%s[%u] tensor handle is null",
+   267	                label, static_cast<unsigned int>(index));
+   268	        return false;
+   269	    }
+   270	
+   271	    const std::vector<size_t> actualShape = tensor->Shape();
+   272	    if (actualShape != expectedShape) {
+   273	        LOG_ERR("%s[%u] shape mismatch",
+   274	                label, static_cast<unsigned int>(index));
+   275	        return false;
+   276	    }
+   277	
+   278	    if (tensor->Type() != TensorType::FP32) {
+   279	        LOG_ERR("%s[%u] must be FP32; got %s",
+   280	                label,
+   281	                static_cast<unsigned int>(index),
+   282	                arm::app::fwk::iface::GetTensorDataTypeName(tensor->Type()));
+   283	        return false;
+   284	    }
+   285	
+   286	    size_t expectedElements = 1U;
+   287	    for (const size_t dimension : expectedShape) {
+   288	        expectedElements *= dimension;
+   289	    }
+   290	
+   291	    if (tensor->GetNumElements() != expectedElements ||
+   292	        tensor->Bytes() != expectedElements * sizeof(float) ||
+   293	        tensor->GetData() == nullptr) {
+   294	        LOG_ERR("%s[%u] element count, byte size, or data pointer is invalid",
+   295	                label, static_cast<unsigned int>(index));
+   296	        return false;
+   297	    }
+   298	
+   299	    LOG_INF("%s[%u]: FP32, elements=%u, bytes=%u",
+   300	            label,
+   301	            static_cast<unsigned int>(index),
+   302	            static_cast<unsigned int>(tensor->GetNumElements()),
+   303	            static_cast<unsigned int>(tensor->Bytes()));
+   304	
+   305	    return true;
+   306	}
+   307	
+   308	static bool VerifyTensorInterface(const arm::app::fwk::iface::Model& model)
+   309	{
+   310	    if (model.GetNumInputs() != 4U || model.GetNumOutputs() != 2U) {
+   311	        LOG_ERR("Model I/O count mismatch: inputs=%u outputs=%u; expected 4/2",
+   312	                static_cast<unsigned int>(model.GetNumInputs()),
+   313	                static_cast<unsigned int>(model.GetNumOutputs()));
+   314	        return false;
+   315	    }
+   316	
+   317	    const std::vector<std::vector<size_t>> expectedInputs = {
+   318	        {1U, 900U, 6U},  /* x_values */
+   319	        {1U, 900U, 6U},  /* missing_mask */
+   320	        {1U, 900U, 3U},  /* x_mark */
+   321	        {1U, 30U}        /* worker_features */
+   322	    };
+   323	
+   324	    const char* inputNames[] = {
+   325	        "x_values", "missing_mask", "x_mark", "worker_features"
+   326	    };
+   327	
+   328	    for (size_t i = 0; i < expectedInputs.size(); ++i) {
+   329	        if (!VerifyOneTensor(
+   330	                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+   331	            LOG_ERR("Input contract failed for %s", inputNames[i]);
+   332	            return false;
+   333	        }
+   334	    }
+   335	
+   336	    const std::vector<std::vector<size_t>> expectedOutputs = {
+   337	        {1U, 4U},  /* rpe_logits */
+   338	        {1U, 4U}   /* psi_logits */
+   339	    };
+   340	
+   341	    const char* outputNames[] = {"rpe_logits", "psi_logits"};
+   342	
+   343	    for (size_t i = 0; i < expectedOutputs.size(); ++i) {
+   344	        if (!VerifyOneTensor(
+   345	                "Output", i, model.GetOutputTensor(i), expectedOutputs[i])) {
+   346	            LOG_ERR("Output contract failed for %s", outputNames[i]);
+   347	            return false;
+   348	        }
+   349	    }
+   350	
+   351	    return true;
+   352	}
+   353	
+   354	
+   355	static bool BindSmokeInputTensor(
+   356	    PolyUModel1& model,
+   357	    size_t index,
+   358	    const char* name,
+   359	    const std::uint32_t* sourceBits,
+   360	    size_t sourceBytes,
+   361	    const std::vector<size_t>& expectedShape)
+   362	{
+   363	    auto tensor = model.GetInputTensor(index);
+   364	    if (!VerifyOneTensor(name, index, tensor, expectedShape)) {
+   365	        return false;
+   366	    }
+   367	
+   368	    if (tensor->Bytes() != sourceBytes || sourceBits == nullptr) {
+   369	        LOG_ERR("%s[%u] input payload size mismatch",
+   370	                name, static_cast<unsigned int>(index));
+   371	        return false;
+   372	    }
+   373	
+   374	    std::memcpy(tensor->GetData(), sourceBits, sourceBytes);
+   375	    LOG_INF("%s[%u] bound: %u bytes",
+   376	            name,
+   377	            static_cast<unsigned int>(index),
+   378	            static_cast<unsigned int>(sourceBytes));
+   379	    return true;
+   380	}
+   381	
+   382	static float DecodeSmokeReference(const std::uint32_t bits)
+   383	{
+   384	    float value = 0.0F;
+   385	    std::memcpy(&value, &bits, sizeof(value));
+   386	    return value;
+   387	}
+   388	
+   389	static int SmokeFloatToMicro(const float value)
+   390	{
+   391	    const double scaled = static_cast<double>(value) * 1000000.0;
+   392	    if (scaled > 2147483647.0) {
+   393	        return 2147483647;
+   394	    }
+   395	    if (scaled < -2147483648.0) {
+   396	        return (-2147483647 - 1);
+   397	    }
+   398	    return static_cast<int>(scaled >= 0.0 ? scaled + 0.5 : scaled - 0.5);
+   399	}
+   400	
+   401	static unsigned int SmokeArgMax4(const float* values)
+   402	{
+   403	    unsigned int best = 0U;
+   404	    for (unsigned int i = 1U; i < 4U; ++i) {
+   405	        if (values[i] > values[best]) {
+   406	            best = i;
+   407	        }
+   408	    }
+   409	    return best;
+   410	}
+   411	
+   412	
+   413	static bool RunHeatstrokeSmokeInference(PolyUModel1& model)
+   414	{
+   415	    static_assert(sizeof(float) == sizeof(std::uint32_t),
+   416	                  "Smoke test requires 32-bit FP32");
+   417	
+   418	    LOG_INF("=== THREE-SAMPLE HEATSTROKE MCU INFERENCE ===");
+   419	    LOG_INF("Multi-sample vector count: %u",
+   420	            static_cast<unsigned int>(heatstroke_smoke::kSampleCount));
+   421	
+   422	    const auto& backendData = model.GetBackendData();
+   423	    if (!backendData.m_pInterpreter) {
+   424	        LOG_ERR("TFLM backend interpreter pointer is null");
+   425	        return false;
+   426	    }
+   427	
+   428	    for (std::uint32_t slot = 0U;
+   429	         slot < heatstroke_smoke::kSampleCount; ++slot) {
+   430	        const auto& sample = heatstroke_smoke::kSamples[slot];
+
+============================================================
+FILE: /home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc
+============================================================
+     1	/* This file was ported to work on Alif Semiconductor devices. */
+     2	
+     3	/* Copyright (C) Alif Semiconductor - All Rights Reserved.
+     4	 * Use, distribution and modification of this code is permitted under the
+     5	 * terms stated in the Alif Semiconductor Software License Agreement
+     6	 *
+     7	 * You should have received a copy of the Alif Semiconductor Software
+     8	 * License Agreement with this file. If not, please write to:
+     9	 * contact@alifsemi.com, or visit: https://alifsemi.com/license
+    10	 *
+    11	 */
+    12	
+    13	/*
+    14	 * SPDX-FileCopyrightText: Copyright 2021-2022, 2024-2025 Arm Limited and/or its
+    15	 * affiliates <open-source-office@arm.com>
+    16	 * SPDX-License-Identifier: Apache-2.0
+    17	 *
+    18	 * Licensed under the Apache License, Version 2.0 (the "License");
+    19	 * you may not use this file except in compliance with the License.
+    20	 * You may obtain a copy of the License at
+    21	 *
+    22	 *     http://www.apache.org/licenses/LICENSE-2.0
+    23	 *
+    24	 * Unless required by applicable law or agreed to in writing, software
+    25	 * distributed under the License is distributed on an "AS IS" BASIS,
+    26	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    27	 * See the License for the specific language governing permissions and
+    28	 * limitations under the License.
+    29	 */
+    30	#if defined(MLEK_FWK_TFLM)
+    31	
+    32	#include "UseCaseHandler.hpp"
+    33	
+    34	#include "AudioBackend.hpp"
+    35	
+    36	#include "mlek/use_case/asr/AsrClassifier.hpp"
+    37	#include "mlek/use_case/asr/AsrResult.hpp"
+    38	#include "mlek/common/AudioSlidingWindow.hpp"
+    39	#include "mlek/use_case/asr/OutputDecode.hpp"
+    40	#include "mlek/use_case/asr/Wav2LetterPostprocess.hpp"
+    41	#include "mlek/use_case/asr/Wav2LetterPreprocess.hpp"
+    42	#include "mlek/fwk/tflm/Wav2LetterModel.hpp"
+    43	#include <zephyr/logging/log.h>
+    44	#include <zephyr/kernel.h>
+    45	#include <zephyr/audio/codec.h>
+    46	#include <zephyr/devicetree.h>
+    47	#include <zephyr/device.h>
+    48	#include <zephyr/pm/device.h>
+    49	
+    50	#include <stdint.h>
+    51	#include <unistd.h>
+    52	#include <cstdio>
+    53	#include <malloc.h>
+    54	#include <cstdlib>
+    55	#include <cstring>
+    56	
+    57	LOG_MODULE_REGISTER(UseCaseHandlerTflm);
+    58	
+    59	#define AUDIO_RATE               (16000)
+    60	#define AUDIO_CHUNK_SIZE_SAMPLES (8000) // 0.5s of audio at 16KHz
+    61	#define AUDIO_CHUNKS             (20)   // ~10s max
+    62	#define AUDIO_SAMPLES            (AUDIO_CHUNK_SIZE_SAMPLES * AUDIO_CHUNKS)
+    63	
+    64	#define SAMPLE_SIZE    sizeof(int16_t)
+    65	#define WORD_SIZE      (SAMPLE_SIZE * 8)
+    66	#define AUDIO_CHANNELS CONFIG_AUDIO_CHANNELS
+    67	
+    68	#if (IS_ENABLED(CONFIG_SOC_SERIES_E1C) || IS_ENABLED(CONFIG_SOC_SERIES_B1))
+    69	static int16_t audio_inf[AUDIO_SAMPLES + AUDIO_CHUNK_SIZE_SAMPLES];
+    70	#else
+    71	static int16_t audio_inf[AUDIO_SAMPLES + AUDIO_CHUNK_SIZE_SAMPLES]
+    72		__attribute__((section("SRAM0.audio_inf")));
+    73	#if CONFIG_OUTPUT_TO_LINE_OUT
+    74	static char __aligned(8) my_slab_buffer[AUDIO_CHANNELS * WORD_SIZE * AUDIO_CHUNK_SIZE_SAMPLES]
+    75		__attribute__((section("SRAM0.audio_slab")));
+    76	#endif
+    77	#endif
+    78	
+    79	volatile bool button_pressed = false;
+    80	
+    81	#if CONFIG_OUTPUT_TO_LINE_OUT
+    82	
+    83	#define CODEC_CFG_NODE DT_ALIAS(audio_codec)
+    84	#define I2S_TX_NODE    DT_ALIAS(i2s_output)
+    85	
+    86	static struct k_mem_slab mem_slab;
+    87	
+    88	static bool configure_streams(const struct device *i2s_dev_tx)
+    89	{
+    90		struct i2s_config config;
+    91	
+    92		config.word_size = WORD_SIZE;
+    93		config.channels = AUDIO_CHANNELS;
+    94		config.format = I2S_FMT_DATA_FORMAT_I2S;
+    95		config.options = I2S_OPT_BIT_CLK_MASTER | I2S_OPT_FRAME_CLK_MASTER;
+    96		config.frame_clk_freq = AUDIO_RATE;
+    97		config.mem_slab = &mem_slab;
+    98		config.block_size = AUDIO_CHUNK_SIZE_SAMPLES * AUDIO_CHANNELS * SAMPLE_SIZE;
+    99		config.timeout = 1000;
+   100	
+   101		int ret = i2s_configure(i2s_dev_tx, I2S_DIR_TX, &config);
+   102		if (ret < 0) {
+   103			LOG_ERR("Failed to configure TX stream: %d\n", ret);
+   104			return false;
+   105		}
+   106	
+   107		audio_codec_stop_output(DEVICE_DT_GET(CODEC_CFG_NODE));
+   108	
+   109		struct audio_codec_cfg codec_cfg = {
+   110			.dai_type = AUDIO_DAI_TYPE_I2S,
+   111			.dai_cfg =
+   112				{
+   113					.i2s =
+   114						{
+   115							.word_size = AUDIO_PCM_WIDTH_16_BITS,
+   116							.channels = 2,
+   117							.format = I2S_FMT_DATA_FORMAT_I2S,
+   118							.options = 0,
+   119							.frame_clk_freq = AUDIO_RATE,
+   120							.mem_slab = NULL,
+   121							.block_size = 0,
+   122							.timeout = 0,
+   123						},
+   124				},
+   125		};
+   126		ret = audio_codec_configure(DEVICE_DT_GET(CODEC_CFG_NODE), &codec_cfg);
+   127		if (ret) {
+   128			LOG_ERR("audio_codec_configure failed with error: %d", ret);
+   129			return false;
+   130		}
+   131	
+   132		return true;
+   133	}
+   134	#endif // CONFIG_OUTPUT_TO_LINE_OUT
+   135	
+   136	namespace arm
+   137	{
+   138	namespace app
+   139	{
+   140	
+   141	/**
+   142	 * @brief       Presents ASR inference results.
+   143	 * @param[in]   results   Vector of ASR classification results to be displayed.
+   144	 * @return      true if successful, false otherwise.
+   145	 **/
+   146	static bool PresentInferenceResult(std::vector<asr::AsrResult> &results);
+   147	
+   148	/* ASR inference handler. */
+   149	bool ClassifyAudioHandler(ApplicationContext &ctx)
+   150	{
+   151		auto &model = ctx.Get<fwk::iface::Model &>("model");
+   152		auto mfccFrameLen = ctx.Get<uint32_t>("frameLength");
+   153		auto mfccFrameStride = ctx.Get<uint32_t>("frameStride");
+   154		auto scoreThreshold = ctx.Get<float>("scoreThreshold");
+   155		auto inputCtxLen = ctx.Get<uint32_t>("ctxLen");
+   156	
+   157		if (!model.IsInited()) {
+   158			LOG_ERR("Model is not initialised! Terminating processing.\n");
+   159			return false;
+   160		}
+   161	
+   162		const auto inputTensor = model.GetInputTensor(0);
+   163		const auto outputTensor = model.GetOutputTensor(0);
+   164	
+   165		/* Get input shape. Dimensions of the tensor should have been verified by
+   166		 * the callee. */
+   167		auto inputShape = model.GetInputShape(0);
+   168	
+   169		const uint32_t inputRowsSize = inputShape[fwk::tflm::Wav2LetterModel::ms_inputRowsIdx];
+   170		const uint32_t inputInnerLen = inputRowsSize - (2 * inputCtxLen);
+   171	
+   172		/* Audio data stride corresponds to inputInnerLen feature vectors. */
+   173		const uint32_t audioDataWindowLen = (inputRowsSize - 1) * mfccFrameStride + (mfccFrameLen);
+   174		const uint32_t audioDataWindowStride = inputInnerLen * mfccFrameStride;
+   175	
+   176		/* NOTE: This is only used for time stamp calculation. */
+   177		const float secondsPerSample = (1.0 / audio::Wav2LetterMFCC::ms_defaultSamplingFreq);
+   178	
+   179		/* Set up pre and post-processing objects. */
+   180		AsrPreProcess preProcess =
+   181			AsrPreProcess(inputTensor, fwk::tflm::Wav2LetterModel::ms_numMfccFeatures,
+   182				      inputShape[fwk::tflm::Wav2LetterModel::ms_inputRowsIdx], mfccFrameLen,
+   183				      mfccFrameStride);
+   184	
+   185		std::vector<ClassificationResult> singleInfResult;
+   186		AsrPostProcess postProcess =
+   187			AsrPostProcess(model, ctx.Get<AsrClassifier &>("classifier"),
+   188				       ctx.Get<std::vector<std::string> &>("labels"), singleInfResult,
+   189				       inputCtxLen, fwk::tflm::Wav2LetterModel::ms_blankTokenIdx,
+   190				       fwk::tflm::Wav2LetterModel::ms_outputRowsIdx);
+   191	
+   192	#ifndef CONFIG_PUSH_TO_TALK
+   193		// Application is not in push-to-talk mode. Start capturing audio once the button is pressed
+   194		// for the first time, and keep capturing until we have the max number of samples or button
+   195		// is released.
+   196		button_pressed = false;
+   197	#endif
+   198	
+   199		while (!button_pressed) {
+   200			k_sleep(K_MSEC(500));
+   201			LOG_INF("Waiting for button press to start audio capture... (btn=%d)",
+   202				(int)button_pressed);
+   203		}
+   204	
+   205		LOG_INF("Button pressed. Init audio and start audio capture...\n");
+   206	
+   207		int err = audio_init(AUDIO_RATE);
+   208		if (err) {
+   209			LOG_ERR("hal_audio_init failed with error: %d", err);
+   210			return false;
+   211		}
+   212	
+   213		// Capture audio as long as button is kept pressed or until we have max samples
+   214		int16_t *audio_inf_ptr = &audio_inf[0];
+   215		int audio_idx = 0;
+   216	
+   217		get_audio_data(audio_inf_ptr, AUDIO_CHUNK_SIZE_SAMPLES);
+   218	
+   219		while (1) {
+   220			err = wait_for_audio();
+   221			if (err) {
+   222				LOG_ERR("hal_get_audio_data failed with error: %d", err);
+   223				audio_uninit();
+   224				return false;
+   225			}
+   226	
+   227			// Start next chunk
+   228			if (audio_idx < (AUDIO_CHUNKS - 1)) {
+   229				get_audio_data(audio_inf_ptr + ((audio_idx + 1) * AUDIO_CHUNK_SIZE_SAMPLES),
+   230					       AUDIO_CHUNK_SIZE_SAMPLES);
+   231			}
+   232	
+   233			audio_preprocessing(audio_inf_ptr + (audio_idx * AUDIO_CHUNK_SIZE_SAMPLES),
+   234					    AUDIO_CHUNK_SIZE_SAMPLES);
+   235	
+   236			if (!button_pressed) {
+   237				break;
+   238			}
+   239	
+   240			if (audio_idx >= (AUDIO_CHUNKS - 1)) {
+   241				break;
+   242			}
+   243			audio_idx++;
+   244		}
+   245		LOG_INF("Audio capture finished.\n");
+   246	
+   247		int16_t *audioArr = audio_inf;
+   248		uint32_t audioArrSize = (audio_idx + 1) * AUDIO_CHUNK_SIZE_SAMPLES;
+   249	
+   250	#if CONFIG_OUTPUT_TO_LINE_OUT
+   251		const struct device *const codec_dev = DEVICE_DT_GET(CODEC_CFG_NODE);
+   252		const struct device *const i2s_dev_tx = DEVICE_DT_GET(I2S_TX_NODE);
+   253	
+   254		/* Each block is one stereo chunk: AUDIO_CHUNK_SIZE_SAMPLES * AUDIO_CHANNELS * SAMPLE_SIZE.
+   255		 * With 2ch 16-bit: 8000 * 2 * 2 = 32000 bytes.
+   256		 * num_blocks = sizeof(my_slab_buffer) / i2s_block_bytes
+   257		 *            = (AUDIO_CHANNELS*WORD_SIZE*AUDIO_CHUNK_SIZE_SAMPLES) /
+   258		 * (AUDIO_CHUNK_SIZE_SAMPLES*AUDIO_CHANNELS*SAMPLE_SIZE) = WORD_SIZE / SAMPLE_SIZE = 16/2
+   259		 * = 8.
+   260		 */
+
+===== 5. OPERATOR REGISTRATION AND ETHOS-U REFERENCES =====
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/PolyUModel1.hpp:47:    tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/reverse_v2.h:10:TFLMRegistration Register_REVERSE_V2();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_mul.cc:163:        const TFLMRegistration stock = Register_MUL();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_mul.cc:223:        const TFLMRegistration stock = Register_MUL();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_mul.cc:330:    TFLMRegistration registration = Register_MUL();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_add.cc:154:        const TFLMRegistration stock = Register_ADD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_add.cc:218:        const TFLMRegistration stock = Register_ADD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_add.cc:290:    TFLMRegistration registration = Register_ADD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_floor_mod.cc:24:TFLMRegistration Register_FLOOR_MOD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_floor_mod.cc:95:        const TFLMRegistration stock = Register_FLOOR_MOD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_floor_mod.cc:151:        const TFLMRegistration stock = Register_FLOOR_MOD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_floor_mod.cc:195:    TFLMRegistration registration = Register_FLOOR_MOD();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:330:                "Input", i, model.GetInputTensor(i), expectedInputs[i])) {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc:363:    auto tensor = model.GetInputTensor(index);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_sub.cc:143:        const TFLMRegistration stock = Register_SUB();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_sub.cc:206:        const TFLMRegistration stock = Register_SUB();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_sub.cc:281:    TFLMRegistration registration = Register_SUB();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc:162:	const auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_split_v.cc:158:        const TFLMRegistration stock = Register_SPLIT_V();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_split_v.cc:198:        const TFLMRegistration stock = Register_SPLIT_V();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/heatstroke_int64_split_v.cc:255:    TFLMRegistration registration = Register_SPLIT_V();
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/reverse_v2.cc:277:TFLMRegistration Register_REVERSE_V2() {
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:108:TfLiteStatus HeatstrokeTimedEthosUInvoke(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:120:        g_heatstrokeOriginalEthosUInvoke(context, node);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:138:TfLiteStatus HeatstrokeTimedBiLstmInvoke(
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:173:        g_heatstrokeOriginalBiLstmInvoke(context, node);
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:1085:     * AddEthosU() in this SDK can report success even when the hardware
+/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/PolyUModel1.cc:1088:    if (this->m_opResolver.AddEthosU() != kTfLiteOk) {
+
+===== 6. V6 VELA MODEL VERIFICATION =====
+-rw-rw-r-- 1 user user 9.4M Nov 21 20:17 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+
+===== 7. EXISTING BUILD DIRECTORIES (NO CHANGES) =====
+--- /home/user/sdk-alif/build_asr_e8
+BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u85-256
+Not present: /home/user/sdk-alif/build_tcn_v6_ethosu_u55_128
+
+INSPECTION COMPLETE
+No source files modified.
+No build, flash, or programming operation performed.
