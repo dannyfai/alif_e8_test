@@ -1,0 +1,134 @@
+]3008;start=9d3cf0e6-fa21-4001-9045-400b5baa019e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\]3008;start=9d3cf0e6-fa21-4001-9045-400b5baa019e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\PROJECT: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+HELPER: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/train_tcn_reg_testdev_experiment.py
+
+--- TCN MODEL AND BLOCKS ---
+
+================================================================================
+SeparableTemporalLayer
+================================================================================
+Signature: (channels: 'int', kernel_size: 'int', dilation: 'int')
+Source unavailable: <class 'tcn_export_audit_base.SeparableTemporalLayer'> is a built-in class
+
+================================================================================
+TemporalResidualBlock
+================================================================================
+Signature: (channels: 'int', kernel_size: 'int', dilation: 'int')
+Source unavailable: <class 'tcn_export_audit_base.TemporalResidualBlock'> is a built-in class
+
+================================================================================
+TCNRegModel
+================================================================================
+Signature: (project_run, channels: 'int' = 48, kernel_size: 'int' = 31)
+Source unavailable: <class 'tcn_export_audit_base.TCNRegModel'> is a built-in class
+
+--- PROJECT MODEL INTERFACES ---
+
+================================================================================
+Reg_Model.forward
+================================================================================
+Signature: ()
+    def forward(self, x, x_mark_enc=None, one_hot_x=None, device='cpu'):
+        B, L, N = x.shape
+        missing_mask = (x == -9997) | (x == -9998) | (x == -9999)
+        if self.non_seq_len > 0:
+            non_seq_enc_out = self.non_seq_enc(one_hot_x)
+        else:
+            non_seq_enc_out = None
+        if x_mark_enc is not None and non_seq_enc_out is not None:
+            x_mark_enc = torch.cat((x_mark_enc, non_seq_enc_out.view(B, -1, 1)), dim=2)
+
+        # single variate feature
+        a = []
+        svf_out = []
+        for b in range(B):
+            aa = []
+            for n in range(N):
+                bnx = x[b: b + 1, :, n: n + 1]
+                non_missing_mask = (bnx != -9997) & (bnx != -9998) & (bnx != -9999)
+                bnx = bnx[non_missing_mask]
+                if len(bnx) > 0:
+                    aa.append(nn.functional.adaptive_avg_pool1d(bnx.reshape(1, 1, -1), self.compact_seq_len).reshape(
+                        self.compact_seq_len))
+                else:
+                    aa.append(torch.zeros((self.compact_seq_len,)).to(device))
+            a.append(torch.stack(aa, dim=1))
+        a = torch.stack(a, dim=0)
+        for i, l in enumerate(self.svf):
+            svf_out.append(l(a[:, :, i]))
+        svf_enc = torch.stack(svf_out, dim=2)
+        svf_enc[~missing_mask] = 0.0
+
+        # cross-variate features
+        b = x.clone()
+        b[missing_mask] = np.nan
+        means = torch.tile(torch.nanmean(b, dim=1).unsqueeze(1), (1, self.seq_len, 1))
+        b[missing_mask] = means[missing_mask]
+        b = torch.nan_to_num(b, nan=0.0)
+        cvf_enc = self.cvf(b.permute(0, 2, 1)).permute(0, 2, 1)
+        cvf_enc[~missing_mask] = 0.0
+
+        # rnn features
+        c = x.clone()
+        c[missing_mask] = 0.0
+        emb = torch.cat(((svf_enc + cvf_enc) / 2, c), dim=2)
+        if x_mark_enc is not None:
+            emb = torch.cat((emb, x_mark_enc), dim=2)
+        enc, _ = self.rnn(emb)
+
+        # projector
+        out = []
+        for i, l in enumerate(self.proj):
+            out.append(l(enc).reshape(B, L))
+        out = torch.stack(out, dim=2)
+
+        return out
+
+
+================================================================================
+Cla_Model.forward
+================================================================================
+Signature: ()
+    def forward(self, x, x_mark_enc=None, one_hot_x=None, device='cpu'):
+        B, L, N = x.shape  # batch, seq_len, feature_num
+
+        # conv features
+        conv_feats = self.conv_feats(x.permute(0, 2, 1)).permute(0, 2, 1).reshape(B, -1)
+        conv_feats = self.ffn1(conv_feats)
+
+        # rnn features
+        if self.seq_len > 60:
+            x = torch.adaptive_avg_pool1d(x.permute(0, 2, 1), int(self.seq_len / 60)).permute(0, 2, 1)
+        rnn_feats = self.rnn(x)[0][:, -1, :]
+        rnn_feats = self.ffn2(rnn_feats)
+
+        # combined features
+        if self.non_seq_len > 0 and one_hot_x is not None:
+            comb_feats = torch.cat((conv_feats, rnn_feats, one_hot_x), dim=1)
+        else:
+            comb_feats = torch.cat((conv_feats, rnn_feats), dim=1)
+
+        # classification
+        if self.pred_head2 is None:
+            cla = self.pred_head1(comb_feats)
+            if self.target == 'rpe' or 'psi' not in self.target:
+                return cla, None
+            else:
+                return None, cla
+        else:
+            psi_out = self.pred_head1(comb_feats)
+            psi_cla = self.soft_max(psi_out)
+            rpe_out = self.pred_head2(torch.cat((comb_feats, psi_cla), dim=1))
+            return rpe_out, psi_out
+
+
+--- EXISTING COMBINED EXPORT SCRIPT ---
+combine_models.py not found at project root
+
+--- FOLD 2 CHECKPOINT ---
+Path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/leave_one_worker_out_20261121/fold_02_heldout_2c624232cdd2/best_tcn_reg.pth
+Exists: True
+Bytes: 39617837
+
+AUDIT COMPLETE
+]3008;start=9d3cf0e6-fa21-4001-9045-400b5baa019e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=command;cwd=/home/user/sdk-alif\AUDIT LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_export_api_audit_20261121_153245.txt
+]3008;end=9d3cf0e6-fa21-4001-9045-400b5baa019e;exit=success\]3008;start=2f95f916-3d49-46d8-a1ed-19c8848c7d4d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000114601;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
