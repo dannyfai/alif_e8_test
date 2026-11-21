@@ -166,4 +166,606 @@ JSON REPORT: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
 <INPUT_RANGE_AUDIT> PASS </INPUT_RANGE_AUDIT>
 ]3008;start=48210711-8c31-4863-ae74-d45a58b71398;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\
 ]3008;start=48210711-8c31-4863-ae74-d45a58b71398;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== FIXED INPUT RANGE AUDIT FINISHED =====
-]3008;end=48210711-8c31-4863-ae74-d45a58b71398;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=48210711-8c31-4863-ae74-d45a58b71398;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+MODEL_DIR="$EXP/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+
+SCRIPT="$EXP/patch_tcn_fold2_sanitized_mask_v6.py"
+ONNX_IN="$MODEL_DIR/heatstroke_tcn_reg_fold2_fp32_manual_ln_no_erf.onnx"
+ONNX_OUT="$MODEL_DIR/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx"
+LOG="$LOGDIR/heatstroke_tcn_sanitized_mask_v6_ort449_20261121.log"
+
+cat > "$SCRIPT" <<'PY'
+#!/usr/bin/env python3
+from pathlib import Path
+import argparse
+import importlib.util
+import json
+import sys
+import hashlib
+from collections import Counter
+
+import numpy as np
+import torch
+import onnx
+from onnx import numpy_helper, TensorProto, helper
+import onnxruntime as ort
+
+
+SENTINELS = (-9997.0, -9998.0, -9999.0)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def load_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot import: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def collect_constants(graph):
+    values = {}
+
+    for init in graph.initializer:
+        values[init.name] = np.asarray(numpy_helper.to_array(init))
+
+    for node in graph.node:
+        if node.op_type != "Constant" or not node.output:
+            continue
+        for attr in node.attribute:
+            if attr.name == "value":
+                values[node.output[0]] = np.asarray(
+                    numpy_helper.to_array(attr.t)
+                )
+            elif attr.name == "value_float":
+                values[node.output[0]] = np.asarray(attr.f)
+            elif attr.name == "value_int":
+                values[node.output[0]] = np.asarray(attr.i)
+
+    # Resolve any simple Cast constants, if present.
+    for _ in range(4):
+        changed = False
+        for node in graph.node:
+            if node.op_type != "Cast" or not node.input or not node.output:
+                continue
+            if node.input[0] not in values:
+                continue
+            to_type = None
+            for attr in node.attribute:
+                if attr.name == "to":
+                    to_type = attr.i
+            if to_type is None:
+                continue
+            try:
+                dtype = helper.tensor_dtype_to_np_dtype(to_type)
+                values[node.output[0]] = values[node.input[0]].astype(dtype)
+                changed = True
+            except Exception:
+                pass
+        if not changed:
+            break
+
+    return values
+
+
+def patch_graph(input_path, output_path):
+    model = onnx.load(str(input_path))
+    graph = model.graph
+
+    existing_inputs = {x.name for x in graph.input}
+    if "missing_mask" in existing_inputs:
+        raise RuntimeError("Input already contains missing_mask; refusing to patch twice.") 
+    if "x_values" not in existing_inputs:
+        raise RuntimeError(f"x_values input not found. Inputs: {sorted(existing_inputs)}") 
+
+    constants = collect_constants(graph)
+    matched = {}
+    matched_nodes = set()
+    diagnostic_equal_nodes = []
+
+    for index, node in enumerate(graph.node):
+        if node.op_type != "Equal":
+            continue
+
+        diagnostic_equal_nodes.append({
+            "index": index,
+            "inputs": list(node.input),
+            "outputs": list(node.output),
+        })
+
+        if len(node.input) != 2:
+            continue
+        if "x_values" not in node.input:
+            continue
+
+        const_name = node.input[0] if node.input[1] == "x_values" else node.input[1] 
+        if const_name not in constants:
+            continue
+
+        arr = np.asarray(constants[const_name])
+        if arr.size != 1:
+            continue
+
+        try:
+            value = float(arr.reshape(-1)[0])
+        except Exception:
+            continue
+
+        for sentinel in SENTINELS:
+            if value == sentinel:
+                matched.setdefault(sentinel, []).append(index)
+                matched_nodes.add(index)
+
+    missing = [s for s in SENTINELS if s not in matched]
+    if missing:
+        print("Could not identify all three sentinel Equal operations.")
+        print("Matched:", matched)
+        print("Equal nodes found:")
+        print(json.dumps(diagnostic_equal_nodes, indent=2))
+        raise RuntimeError(
+            f"Safe graph rewrite aborted. Missing sentinel comparisons: {missing}" 
+        )
+
+    print("Sentinel Equal nodes identified:")
+    for sentinel in SENTINELS:
+        print(f"  {sentinel}: graph node indices {matched[sentinel]}")
+
+    # Replace every sentinel-comparison output with the new Boolean input.
+    replacements = {}
+    for index in matched_nodes:
+        node = graph.node[index]
+        for output_name in node.output:
+            replacements[output_name] = "missing_mask"
+
+    kept_nodes = []
+    for index, node in enumerate(graph.node):
+        if index in matched_nodes:
+            continue
+        copied = onnx.NodeProto()
+        copied.CopyFrom(node)
+        for j, name in enumerate(copied.input):
+            if name in replacements:
+                copied.input[j] = replacements[name]
+        kept_nodes.append(copied)
+
+    del graph.node[:]
+    graph.node.extend(kept_nodes)
+
+    # Remove obsolete value-info records for removed comparison outputs.
+    kept_value_info = [
+        item for item in graph.value_info
+        if item.name not in replacements
+    ]
+    del graph.value_info[:]
+    graph.value_info.extend(kept_value_info)
+
+    mask_info = helper.make_tensor_value_info(
+        "missing_mask",
+        TensorProto.BOOL,
+        [1, 900, 6],
+    )
+
+    # Keep a predictable and documented input order.
+    old_inputs = {item.name: item for item in graph.input}
+    ordered_names = [
+        "x_values",
+        "missing_mask",
+        "x_mark",
+        "worker_features_18",
+        "compact_values",
+    ]
+
+    absent = [name for name in ordered_names if name != "missing_mask" and name not in old_inputs] 
+    if absent:
+        raise RuntimeError(f"Unexpected missing graph inputs: {absent}")
+
+    del graph.input[:]
+    for name in ordered_names:
+        graph.input.append(mask_info if name == "missing_mask" else old_inputs[name]) 
+
+    onnx.checker.check_model(model)
+    onnx.save(model, str(output_path))
+
+    # Reload and check the saved artifact, not just the in-memory graph.
+    saved = onnx.load(str(output_path))
+    onnx.checker.check_model(saved)
+
+    ops = Counter(node.op_type for node in saved.graph.node)
+    print("Patched ONNX checker: PASS")
+    print("Removed sentinel Equal nodes:", len(matched_nodes))
+    print("New input: missing_mask BOOL [1,900,6]")
+    print("Graph inputs:")
+    for item in saved.graph.input:
+        dims = [
+            d.dim_value if d.dim_value else (d.dim_param or "?")
+            for d in item.type.tensor_type.shape.dim
+        ]
+        print(
+            f"  {item.name}: elem_type={item.type.tensor_type.elem_type}, "
+            f"shape={dims}"
+        )
+    print("Graph nodes:", len(saved.graph.node))
+    print("Operator counts:", json.dumps(dict(sorted(ops.items()))))
+    print("Output ONNX:", output_path)
+    print("Output bytes:", output_path.stat().st_size)
+    print("Output SHA256:", sha256(output_path))
+
+    return saved
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--onnx-in", required=True)
+    ap.add_argument("--onnx-out", required=True)
+    ap.add_argument("--seed", type=int, default=20261121)
+    ap.add_argument("--group-column", default="worker_id")
+    ap.add_argument("--atol", type=float, default=2e-4)
+    ap.add_argument("--rtol", type=float, default=2e-4)
+    args = ap.parse_args()
+
+    project = Path(args.project).resolve()
+    onnx_in = Path(args.onnx_in).resolve()
+    onnx_out = Path(args.onnx_out).resolve()
+    exp = project / "experiments" / "tcn_reg_20261120"
+
+    exporter_path = exp / "export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py" 
+    helper_path = exp / "train_tcn_reg_testdev_experiment.py"
+    data_dir = project / "data" / "split_byid"
+
+    for path in (onnx_in, exporter_path, helper_path,
+                 data_dir / "test_seq.feather",
+                 data_dir / "test_non_seq.csv"):
+        if not path.is_file():
+            raise FileNotFoundError(f"Required file not found: {path}")
+
+    if onnx_out.exists():
+        raise FileExistsError(
+            f"Refusing to overwrite an existing output: {onnx_out}"
+        )
+
+    print("===== TCN FOLD-2 SANITIZED-INPUT / EXPLICIT-MASK V6 =====")
+    print("Project:", project)
+    print("Original ONNX:", onnx_in)
+    print("Original ONNX SHA256:", sha256(onnx_in))
+    print("V5 exporter:", exporter_path)
+
+    # Use the exact dataset-input and compaction functions from the v5 exporter. 
+    exporter = load_module(exporter_path, "tcn_fold2_v5_exporter_for_v6")
+    helper_module = exporter.import_helper(helper_path)
+
+    project_run = helper_module.import_project(project)
+    dataset = helper_module.ImputationDataset(
+        project_run,
+        data_dir,
+        "test",
+        args.seed,
+        args.group_column,
+    )
+    dataset.set_epoch(0)
+
+    if len(dataset) != 449:
+        raise RuntimeError(
+            f"Expected 449 split_byid/test samples, got {len(dataset)}"
+        )
+
+    onnx_out.parent.mkdir(parents=True, exist_ok=True)
+    patched_model = patch_graph(onnx_in, onnx_out)
+
+    old_session = ort.InferenceSession(
+        str(onnx_in), providers=["CPUExecutionProvider"]
+    )
+    new_session = ort.InferenceSession(
+        str(onnx_out), providers=["CPUExecutionProvider"]
+    )
+
+    print("\nOriginal ORT inputs:")
+    print([(x.name, x.shape, x.type) for x in old_session.get_inputs()])
+    print("New ORT inputs:")
+    print([(x.name, x.shape, x.type) for x in new_session.get_inputs()])
+
+    old_output_name = old_session.get_outputs()[0].name
+    new_output_name = new_session.get_outputs()[0].name
+
+    failures = []
+    max_abs = 0.0
+    sum_abs = 0.0
+    sum_sq = 0.0
+    total_values = 0
+    fully_missing_channels = 0
+    missing_count = 0
+    sensor_value_count = 0
+    output_count = 0
+
+    for index in range(len(dataset)):
+        x, mark, worker, compact = exporter.make_sample_inputs(dataset, index)
+
+        if tuple(x.shape) != (1, 900, 6):
+            raise RuntimeError(f"Sample {index}: bad x shape {tuple(x.shape)}")
+        if tuple(mark.shape) != (1, 900, 3):
+            raise RuntimeError(f"Sample {index}: bad x_mark shape {tuple(mark.shape)}") 
+        if tuple(worker.shape) != (1, 18):
+            raise RuntimeError(f"Sample {index}: bad worker shape {tuple(worker.shape)}") 
+        if tuple(compact.shape) != (1, 1800, 6):
+            raise RuntimeError(f"Sample {index}: bad compact shape {tuple(compact.shape)}") 
+
+        mask = (x == -9997) | (x == -9998) | (x == -9999)
+        sanitized = torch.where(mask, torch.zeros_like(x), x)
+
+        x_np = x.cpu().numpy().astype(np.float32, copy=False)
+        sanitized_np = sanitized.cpu().numpy().astype(np.float32, copy=False)
+        mask_np = mask.cpu().numpy().astype(np.bool_, copy=False)
+        mark_np = mark.cpu().numpy().astype(np.float32, copy=False)
+        worker_np = worker.cpu().numpy().astype(np.float32, copy=False)
+        compact_np = compact.cpu().numpy().astype(np.float32, copy=False)
+
+        if not np.isfinite(sanitized_np).all():
+            raise RuntimeError(f"Sample {index}: sanitized x contains non-finite values") 
+        if np.any(sanitized_np == -9997) or np.any(sanitized_np == -9998) or np.any(sanitized_np == -9999): 
+            raise RuntimeError(f"Sample {index}: sentinel remains in sanitized x") 
+
+        old_feed = {
+            "x_values": x_np,
+            "x_mark": mark_np,
+            "worker_features_18": worker_np,
+            "compact_values": compact_np,
+        }
+        new_feed = {
+            "x_values": sanitized_np,
+            "missing_mask": mask_np,
+            "x_mark": mark_np,
+            "worker_features_18": worker_np,
+            "compact_values": compact_np,
+        }
+
+        reference = old_session.run([old_output_name], old_feed)[0]
+        candidate = new_session.run([new_output_name], new_feed)[0]
+
+        if reference.shape != candidate.shape:
+            raise RuntimeError(
+                f"Sample {index}: output shape mismatch "
+                f"{reference.shape} vs {candidate.shape}"
+            )
+        if not np.isfinite(candidate).all():
+            raise RuntimeError(f"Sample {index}: candidate output is non-finite") 
+
+        delta = np.abs(reference - candidate)
+        sample_max = float(delta.max())
+        max_abs = max(max_abs, sample_max)
+        sum_abs += float(delta.sum())
+        sum_sq += float(np.square(reference - candidate).sum())
+        total_values += delta.size
+
+        missing_count += int(mask_np.sum())
+        sensor_value_count += int(mask_np.size)
+        fully_missing_channels += int((mask_np.sum(axis=1) == 900).sum())
+        output_count += 1
+
+        ok = bool(np.allclose(
+            reference, candidate, atol=args.atol, rtol=args.rtol
+        ))
+        if not ok:
+            failures.append({
+                "sample": index,
+                "max_abs": sample_max,
+                "mean_abs": float(delta.mean()),
+                "reference_min": float(reference.min()),
+                "reference_max": float(reference.max()),
+                "candidate_min": float(candidate.min()),
+                "candidate_max": float(candidate.max()),
+            })
+
+        if index % 50 == 0 or index == len(dataset) - 1:
+            print(
+                f"Progress {index + 1}/{len(dataset)}; "
+                f"sample_max_abs={sample_max:.8g}; "
+                f"failed_samples={len(failures)}"
+            )
+
+    report = {
+        "scope": "FP32 ONNX graph rewrite; regression/imputation stage only",
+        "dataset": "split_byid/test; 449 samples; 3 subject groups",
+        "original_onnx": str(onnx_in),
+        "original_onnx_sha256": sha256(onnx_in),
+        "patched_onnx": str(onnx_out),
+        "patched_onnx_sha256": sha256(onnx_out),
+        "new_input": {
+            "name": "missing_mask",
+            "dtype": "bool",
+            "shape": [1, 900, 6],
+        },
+        "sanitized_x_values": {
+            "missing_positions_replaced_with": 0.0,
+            "shape": [1, 900, 6],
+        },
+        "samples_checked": output_count,
+        "all_samples_pass": len(failures) == 0,
+        "atol": args.atol,
+        "rtol": args.rtol,
+        "global_max_abs_error": max_abs,
+        "global_mean_abs_error": sum_abs / max(total_values, 1),
+        "global_rmse": float(np.sqrt(sum_sq / max(total_values, 1))),
+        "missing_sensor_entries": missing_count,
+        "total_sensor_entries": sensor_value_count,
+        "fully_missing_sensor_channels": fully_missing_channels,
+        "failed_samples": failures[:30],
+    }
+
+    report_path = onnx_out.parent / "sanitized_mask_v6_ort449_report.json"
+    report_path.write_text(json.dumps(report, indent=2))
+
+    print("\n===== V6 NUMERICAL EQUIVALENCE SUMMARY =====")
+    print(json.dumps(report, indent=2))
+    print("JSON report:", report_path)
+
+    if failures:
+        raise RuntimeError(
+            f"V6 equivalence FAILED: {len(failures)} of {output_count} samples differ. " 
+            "Do not convert or quantize this model."
+        )
+
+    print("\n<SANITIZED_MASK_V6_ORT449> PASS </SANITIZED_MASK_V6_ORT449>")
+    print("No training, checkpoint changes, TFLite conversion, firmware build, or flash write.") 
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(f"\n<SANITIZED_MASK_V6_ORT449> FAIL </SANITIZED_MASK_V6_ORT449>", [7mf[27m[7mile=sys.stderr) [27m
+[7m        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)[27m
+[7m        raise[27m
+[7mPY[27m
+
+[7mecho "Created script: $SCRIPT"[27m
+[7mecho "Original ONNX: $ONNX_IN"[27m
+[7mecho "New ONNX:      $ONNX_OUT"[27m
+[7mecho "Log:           $LOG"[27m
+
+[7m([27m
+[7m  set -o pipefail[27m
+[7m  "$PYTHON" -u "$SCRIPT" \[27m
+[7m    --project "$PROJECT" \[27m
+[7m    --onnx-in "$ONNX_IN" \[27m
+[7m    --onnx-out "$ONNX_OUT" \[27m
+[7m    2>&1 | tee "$LOG"[27m
+
+[7m  RC=${PIPESTATUS[0]}[27m
+[7m  echo[27m
+[7m  echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m  echo "LOG_FILE=$LOG"[27m
+[7m  exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Afile=sys.stderr)
+        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+        raise
+PY
+
+echo "Created script: $SCRIPT"
+echo "Original ONNX: $ONNX_IN"
+echo "New ONNX:      $ONNX_OUT"
+echo "Log:           $LOG"
+
+(
+  set -o pipefail
+  "$PYTHON" -u "$SCRIPT" \
+    --project "$PROJECT" \
+    --onnx-in "$ONNX_IN" \
+    --onnx-out "$ONNX_OUT" \
+    2>&1 | tee "$LOG"
+
+  RC=${PIPESTATUS[0]}
+  echo
+  echo "SCRIPT_EXIT_CODE=$RC"
+  echo "LOG_FILE=$LOG"
+  exit "$RC"
+)
+[?2004l]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Created script: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/patch_tcn_fold2_sanitized_mask_v6.py
+]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Original ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_manual_ln_no_erf.onnx
+]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\New ONNX:      /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\Log:           /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_sanitized_mask_v6_ort449_20261121.log
+]3008;start=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\===== TCN FOLD-2 SANITIZED-INPUT / EXPLICIT-MASK V6 =====
+Project: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+Original ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_manual_ln_no_erf.onnx
+Original ONNX SHA256: adf0cd0f6f5503ebab043d14deb68a42753deef21dcd10de9f7e9a3d2bb8af7d
+V5 exporter: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+Sentinel Equal nodes identified:
+  -9997.0: graph node indices [2]
+  -9998.0: graph node indices [4]
+  -9999.0: graph node indices [7]
+Patched ONNX checker: PASS
+Removed sentinel Equal nodes: 3
+New input: missing_mask BOOL [1,900,6]
+Graph inputs:
+  x_values: elem_type=1, shape=[1, 900, 6]
+  missing_mask: elem_type=9, shape=[1, 900, 6]
+  x_mark: elem_type=1, shape=[1, 900, 3]
+  worker_features_18: elem_type=1, shape=[1, 18]
+  compact_values: elem_type=1, shape=[1, 1800, 6]
+Graph nodes: 343
+Operator counts: {"Abs": 2, "Add": 23, "Cast": 6, "Clip": 1, "Concat": 7, "Constant": 97, "ConstantOfShape": 7, "Conv": 47, "Div": 4, "Equal": 1, "Exp": 2, "Expand": 1, "Gather": 6, "Gemm": 7, "GreaterOrEqual": 2, "Mul": 29, "Neg": 4, "Not": 1, "Or": 2, "Pad": 5, "Reciprocal": 2, "ReduceMean": 4, "ReduceSum": 2, "Relu": 31, "Reshape": 11, "Shape": 1, "Slice": 5, "Sqrt": 2, "Sub": 8, "Transpose": 9, "Unsqueeze": 6, "Where": 8}
+Output ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+Output bytes: 39660214
+Output SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+[0;93m2026-11-21 18:14:02.405162156 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:14:02.405250717 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:14:02.405259954 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+
+Original ORT inputs:
+[('x_values', [1, 900, 6], 'tensor(float)'), ('x_mark', [1, 900, 3], 'tensor(float)'), ('worker_features_18', [1, 18], 'tensor(float)'), ('compact_values', [1, 1800, 6], 'tensor(float)')]
+New ORT inputs:
+[('x_values', [1, 900, 6], 'tensor(float)'), ('missing_mask', [1, 900, 6], 'tensor(bool)'), ('x_mark', [1, 900, 3], 'tensor(float)'), ('worker_features_18', [1, 18], 'tensor(float)'), ('compact_values', [1, 1800, 6], 'tensor(float)')]
+Progress 1/449; sample_max_abs=0; failed_samples=0
+Progress 51/449; sample_max_abs=0; failed_samples=0
+Progress 101/449; sample_max_abs=0; failed_samples=0
+Progress 151/449; sample_max_abs=0; failed_samples=0
+Progress 201/449; sample_max_abs=0; failed_samples=0
+Progress 251/449; sample_max_abs=0; failed_samples=0
+Progress 301/449; sample_max_abs=0; failed_samples=0
+Progress 351/449; sample_max_abs=0; failed_samples=0
+Progress 401/449; sample_max_abs=0; failed_samples=0
+Progress 449/449; sample_max_abs=0; failed_samples=0
+
+===== V6 NUMERICAL EQUIVALENCE SUMMARY =====
+{
+  "scope": "FP32 ONNX graph rewrite; regression/imputation stage only",
+  "dataset": "split_byid/test; 449 samples; 3 subject groups",
+  "original_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_manual_ln_no_erf.onnx",
+  "original_onnx_sha256": "adf0cd0f6f5503ebab043d14deb68a42753deef21dcd10de9f7e9a3d2bb8af7d",
+  "patched_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+  "patched_onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "new_input": {
+    "name": "missing_mask",
+    "dtype": "bool",
+    "shape": [
+      1,
+      900,
+      6
+    ]
+  },
+  "sanitized_x_values": {
+    "missing_positions_replaced_with": 0.0,
+    "shape": [
+      1,
+      900,
+      6
+    ]
+  },
+  "samples_checked": 449,
+  "all_samples_pass": true,
+  "atol": 0.0002,
+  "rtol": 0.0002,
+  "global_max_abs_error": 0.0,
+  "global_mean_abs_error": 0.0,
+  "global_rmse": 0.0,
+  "missing_sensor_entries": 1179526,
+  "total_sensor_entries": 2424600,
+  "fully_missing_sensor_channels": 708,
+  "failed_samples": []
+}
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/sanitized_mask_v6_ort449_report.json
+
+<SANITIZED_MASK_V6_ORT449> PASS </SANITIZED_MASK_V6_ORT449>
+No training, checkpoint changes, TFLite conversion, firmware build, or flash write.
+
+SCRIPT_EXIT_CODE=0
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_sanitized_mask_v6_ort449_20261121.log
+]3008;end=5ca12445-9c15-45a0-8f8f-274d1a7a2e12;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
