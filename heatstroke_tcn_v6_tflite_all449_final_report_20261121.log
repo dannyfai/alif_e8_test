@@ -1,0 +1,137 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256654.711298  120814 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256654.743552  120814 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256655.509486  120814 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256655.509695  120814 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== V6 TFLITE ALL-449 FINAL NUMERICAL REPORT =====
+TensorFlow: 2.21.0
+ONNX Runtime: 1.24.4
+ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+TFLite: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+TFLite SHA256: 8c11e597db67e17795e2975664c97c7c6a1a525663de15415ae96d051dbedf6c
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+[0;93m2026-11-21 18:24:17.283282867 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:24:17.283302904 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:24:17.283305987 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+TFLite allocate_tensors: PASS
+TFLite operators: 261
+Flex/custom operators: []
+Progress 1/449 max_abs=1.1920929e-06 failed=0
+Progress 51/449 max_abs=3.09944153e-06 failed=0
+Progress 101/449 max_abs=1.43051147e-06 failed=0
+Progress 151/449 max_abs=6.43730164e-06 failed=0
+Progress 201/449 max_abs=4.29153442e-06 failed=0
+Progress 251/449 max_abs=2.50339508e-06 failed=0
+Progress 301/449 max_abs=2.2649765e-06 failed=0
+Progress 351/449 max_abs=3.09944153e-06 failed=0
+Progress 401/449 max_abs=7.27176666e-06 failed=0
+Progress 449/449 max_abs=7.09295273e-06 failed=0
+
+===== FINAL NUMERICAL SUMMARY =====
+{
+  "model": "Fold-2 TCN regression/imputation V6 FP32",
+  "dataset": "split_byid/test",
+  "samples": 449,
+  "comparison": "TFLite versus V6 ONNX Runtime",
+  "onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "tflite_sha256": "8c11e597db67e17795e2975664c97c7c6a1a525663de15415ae96d051dbedf6c",
+  "atol": 0.0002,
+  "rtol": 0.0002,
+  "all_samples_pass": true,
+  "failed_samples": [],
+  "global_max_abs_error": 3.5881996154785156e-05,
+  "global_mean_abs_error": 2.481369548440072e-07,
+  "global_rmse": 5.671834925264034e-07,
+  "worst_sample_index": 319,
+  "median_sample_max_abs_error": 3.0994415283203125e-06,
+  "p99_sample_max_abs_error": 1.1951923370361327e-05,
+  "operator_count": 261,
+  "operator_histogram": {
+    "ABS": 2,
+    "ADD": 23,
+    "BROADCAST_ARGS": 1,
+    "BROADCAST_TO": 1,
+    "CAST": 1,
+    "CONCATENATION": 2,
+    "CONV_2D": 27,
+    "DELEGATE": 9,
+    "DEPTHWISE_CONV_2D": 20,
+    "DIV": 6,
+    "EXP": 2,
+    "FULLY_CONNECTED": 7,
+    "GATHER": 6,
+    "GREATER_EQUAL": 2,
+    "LOGICAL_NOT": 1,
+    "LOGICAL_OR": 2,
+    "MAXIMUM": 1,
+    "MEAN": 4,
+    "MIRROR_PAD": 5,
+    "MUL": 26,
+    "NEG": 4,
+    "RELU": 21,
+    "RESHAPE": 65,
+    "SELECT_V2": 7,
+    "SQRT": 2,
+    "SUB": 8,
+    "SUM": 2,
+    "TRANSPOSE": 4
+  },
+  "custom_flex_operators": [],
+  "input_specs": {
+    "x_values": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "missing_mask": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "<class 'numpy.bool'>"
+    },
+    "x_mark": {
+      "shape": [
+        1,
+        900,
+        3
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "worker_features_18": {
+      "shape": [
+        1,
+        18
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "compact_values": {
+      "shape": [
+        1,
+        1800,
+        6
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    }
+  }
+}
+Report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/tflite_vs_onnx_all449_report_recovered.json
+
+<TCN_V6_FP32_TFLITE_ALL449> PASS </TCN_V6_FP32_TFLITE_ALL449>
+Existing TFLite model reused; no conversion or firmware actions.

@@ -1709,4 +1709,541 @@ FileExistsError: Refusing to overwrite: /home/user/sdk-alif/beeinventor/PolyU/He
 SCRIPT_EXIT_CODE=1
 LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflite_report_recheck_20261121.log
 REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/tflite_vs_onnx_all449_report.json
-]3008;end=e1ea0bb0-201f-4933-a351-490568486311;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=e1ea0bb0-201f-4933-a351-490568486311;exit=failure;status=1\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ set +e
+
+PROJECT="/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+EXP="$PROJECT/experiments/tcn_reg_20261120"
+MODEL_DIR="$EXP/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+OUTDIR="$EXP/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636"
+PYTHON="/home/user/onnx2tflite_env/bin/python"
+LOGDIR="/home/user/sdk-alif/beeinventor/test_heatstroke/log"
+
+mkdir -p "$LOGDIR"
+
+SCRIPT="$EXP/recheck_tcn_v6_tflite_all449.py"
+LOG="$LOGDIR/heatstroke_tcn_v6_tflite_all449_final_report_20261121.log"
+
+cat > "$SCRIPT" <<'PY'
+#!/usr/bin/env python3
+from pathlib import Path
+import importlib.util
+import hashlib
+import json
+import sys
+from collections import Counter
+
+import numpy as np
+import torch
+import tensorflow as tf
+import onnxruntime as ort
+
+
+PROJECT = Path(
+    "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514"
+)
+EXP = PROJECT / "experiments" / "tcn_reg_20261120"
+MODEL_DIR = EXP / "onnx_fp32_fold2_manual_ln_no_erf_20261121_175710"
+OUTDIR = (
+    EXP /
+    "tflite_fp32_fold2_sanitized_mask_v6_20261121_181636"
+)
+
+ONNX_PATH = (
+    MODEL_DIR /
+    "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx"
+)
+TFLITE_PATH = (
+    OUTDIR /
+    "heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite"
+)
+
+EXPECTED_ONNX_SHA = (
+    "1679ccd65d37834014c22f9306241e72"
+    "d57a6ee1e0996584747e8b30f8c0588a"
+)
+EXPECTED_TFLITE_SHA = (
+    "8c11e597db67e17795e2975664c97c7c"
+    "6a1a525663de15415ae96d051dbedf6c"
+)
+
+INPUT_KEYS = [
+    "x_values",
+    "missing_mask",
+    "x_mark",
+    "worker_features_18",
+    "compact_values",
+]
+
+SENTINELS = (-9997.0, -9998.0, -9999.0)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def import_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot import {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def resolve_detail(details, key):
+    found = [d for d in details if key.lower() in d["name"].lower()]
+    if len(found) != 1:
+        raise RuntimeError(
+            f"Could not uniquely resolve {key}: "
+            f"{[d['name'] for d in found]}"
+        )
+    return found[0]
+
+
+def json_default(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, Path):
+        return str(value)
+    raise TypeError(f"Cannot serialize {type(value).__name__}")
+
+
+def main():
+    print("===== V6 TFLITE ALL-449 FINAL NUMERICAL REPORT =====")
+    print("TensorFlow:", tf.__version__)
+    print("ONNX Runtime:", ort.__version__)
+    print("ONNX:", ONNX_PATH)
+    print("TFLite:", TFLITE_PATH)
+
+    exporter_path = (
+        EXP / "export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py"
+    )
+    helper_path = EXP / "train_tcn_reg_testdev_experiment.py"
+    data_dir = PROJECT / "data" / "split_byid"
+
+    for p in (
+        ONNX_PATH,
+        TFLITE_PATH,
+        exporter_path,
+        helper_path,
+        data_dir / "test_seq.feather",
+        data_dir / "test_non_seq.csv",
+    ):
+        if not p.is_file():
+            raise FileNotFoundError(p)
+
+    onnx_sha = sha256(ONNX_PATH)
+    tflite_sha = sha256(TFLITE_PATH)
+
+    print("ONNX SHA256:", onnx_sha)
+    print("TFLite SHA256:", tflite_sha)
+
+    if onnx_sha != EXPECTED_ONNX_SHA:
+        raise RuntimeError("Unexpected ONNX hash; refusing validation.")
+    if tflite_sha != EXPECTED_TFLITE_SHA:
+        raise RuntimeError("Unexpected TFLite hash; refusing validation.")
+
+    # Dataset preparation uses the exact preprocessing routines
+    # from the previously validated V5 exporter.
+    exporter = import_module(
+        exporter_path,
+        "tcn_v6_report_exporter",
+    )
+    helper = exporter.import_helper(helper_path)
+    project_run = helper.import_project(PROJECT)
+
+    dataset = helper.ImputationDataset(
+        project_run,
+        data_dir,
+        "test",
+        20261121,
+        "worker_id",
+    )
+    dataset.set_epoch(0)
+
+    if len(dataset) != 449:
+        raise RuntimeError(f"Expected 449 samples, got {len(dataset)}")
+
+    # Reference ONNX Runtime.
+    ort_session = ort.InferenceSession(
+        str(ONNX_PATH),
+        providers=["CPUExecutionProvider"],
+    )
+    ort_output_name = ort_session.get_outputs()[0].name
+
+    # Reuse existing TFLite model; no conversion.
+    interpreter = tf.lite.Interpreter(
+        model_path=str(TFLITE_PATH)
+    )
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    if len(output_details) != 1:
+        raise RuntimeError("Expected exactly one TFLite output.")
+
+    resolved = {
+        key: resolve_detail(input_details, key)
+        for key in INPUT_KEYS
+    }
+
+    expected_shapes = {
+        "x_values": (1, 900, 6),
+        "missing_mask": (1, 900, 6),
+        "x_mark": (1, 900, 3),
+        "worker_features_18": (1, 18),
+        "compact_values": (1, 1800, 6),
+    }
+
+    for key, detail in resolved.items():
+        shape = tuple(int(v) for v in detail["shape"])
+        if shape != expected_shapes[key]:
+            raise RuntimeError(f"{key}: unexpected shape {shape}")
+
+        expected_dtype = np.bool_ if key == "missing_mask" else np.float32
+        if np.dtype(detail["dtype"]) != np.dtype(expected_dtype):
+            raise RuntimeError(
+                f"{key}: expected {expected_dtype}, got {detail['dtype']}"
+            )
+
+    ops = interpreter._get_ops_details()
+    op_counts = Counter(
+        str(op.get("op_name", "UNKNOWN")) for op in ops
+    )
+    custom_flex = [
+        op for op in op_counts
+        if op.upper() == "CUSTOM" or op.upper().startswith("FLEX")
+    ]
+    if custom_flex:
+        raise RuntimeError(f"Flex/custom operators found: {custom_flex}")
+
+    print("TFLite allocate_tensors: PASS")
+    print("TFLite operators:", len(ops))
+    print("Flex/custom operators:", custom_flex)
+
+    output_detail = output_details[0]
+    failures = []
+    total_values = 0
+    abs_sum = 0.0
+    square_sum = 0.0
+    global_max = 0.0
+    worst_sample = -1
+    sample_max_errors = []
+
+    atol = 2e-4
+    rtol = 2e-4
+
+    for index in range(len(dataset)):
+        x, mark, worker, compact = exporter.make_sample_inputs(
+            dataset, index
+        )
+
+        mask = (
+            (x == SENTINELS[0]) |
+            (x == SENTINELS[1]) |
+            (x == SENTINELS[2])
+        )
+        sanitized = torch.where(mask, torch.zeros_like(x), x)
+
+        feed = {
+            "x_values": sanitized.cpu().numpy().astype(np.float32),
+            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+            "x_mark": mark.cpu().numpy().astype(np.float32),
+            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+            "compact_values": compact.cpu().numpy().astype(np.float32),
+        }
+
+        reference = ort_session.run(
+            [ort_output_name], feed
+        )[0]
+
+        for key in INPUT_KEYS:
+            detail = resolved[key]
+            interpreter.set_tensor(
+                detail["index"],
+                feed[key].astype(detail["dtype"], copy=False),
+            )
+
+        interpreter.invoke()
+        candidate = interpreter.get_tensor(output_detail["index"])
+
+        if reference.shape != candidate.shape:
+            raise RuntimeError(
+                f"Output shape mismatch at sample {index}: "
+                f"{reference.shape} vs {candidate.shape}"
+            )
+        if not np.isfinite(candidate).all():
+            raise RuntimeError(f"Non-finite TFLite output at sample {index}")
+
+        delta = np.abs(reference - candidate)
+        sample_max = float(np.max(delta))
+        sample_max_errors.append(sample_max)
+
+        if sample_max > global_max:
+            global_max = sample_max
+            worst_sample = index
+
+        abs_sum += float(np.sum(delta, dtype=np.float64))
+        square_sum += float(
+            np.sum(np.square(reference - candidate), dtype=np.float64)
+        )
+        total_values += int(delta.size)
+
+        if not np.allclose(reference, candidate, atol=atol, rtol=rtol):
+            failures.append({
+                "sample": int(index),
+                "max_abs_error": sample_max,
+                "mean_abs_error": float(delta.mean()),
+            })
+
+        if index % 50 == 0 or index == len(dataset) - 1:
+            print(
+                f"Progress {index + 1}/{len(dataset)} "
+                f"max_abs={sample_max:.9g} "
+                f"failed={len(failures)}"
+            )
+
+    report = {
+        "model": "Fold-2 TCN regression/imputation V6 FP32",
+        "dataset": "split_byid/test",
+        "samples": int(len(dataset)),
+        "comparison": "TFLite versus V6 ONNX Runtime",
+        "onnx_sha256": onnx_sha,
+        "tflite_sha256": tflite_sha,
+        "atol": atol,
+        "rtol": rtol,
+        "all_samples_pass": len(failures) == 0,
+        "failed_samples": failures,
+        "global_max_abs_error": float(global_max),
+        "global_mean_abs_error": float(abs_sum / max(total_values, 1)),
+        "global_rmse": float(
+            np.sqrt(square_sum / max(total_values, 1))
+        ),
+        "worst_sample_index": int(worst_sample),
+        "median_sample_max_abs_error": float(np.median(sample_max_errors)),
+        "p99_sample_max_abs_error": float(
+            np.percentile(sample_max_errors, 99)
+        ),
+        "operator_count": int(len(ops)),
+        "operator_histogram": dict(sorted(op_counts.items())),
+        "custom_flex_operators": custom_flex,
+        "input_specs": {
+            key: {
+                "shape": [int(v) for v in resolved[key]["shape"]],
+                "dtype": str(resolved[key]["dtype"]),
+            }
+            for key in INPUT_KEYS
+        },
+    }
+
+    report_path = OUTDIR / "tflite_vs_onnx_all449_report_recovered.json"
+    report_path.write_text(
+        json.dumps(report, indent=2, default=json_default)
+    )
+
+    print("\n===== FINAL NUMERICAL SUMMARY =====")
+    print(json.dumps(report, indent=2, default=json_default))
+    print("Report:", report_path)
+
+    if failures:
+        raise RuntimeError(
+            f"Numerical validation failed: {len(failures)} samples."
+        )
+
+    print("\n<TCN_V6_FP32_TFLITE_ALL449> PASS </TCN_V6_FP32_TFLITE_ALL449>")
+    print("Existing TFLite model reused; no conversion or firmware actions.")
+[7m    return 0[27m
+
+
+[7mif __name__ == "__main__":[27m
+[7m    try:[27m
+[7m        raise SystemExit(main())[27m
+[7m    except Exception as exc:[27m
+[7m        print([27m
+[7m            "\n<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>",[27m
+[7m            file=sys.stderr,[27m
+[7m        )[27m
+[7m        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)[27m
+[7m        raise[27m
+[7mPY[27m
+
+[7m([27m
+[7m  set -o pipefail[27m
+[7m  "$PYTHON" -u "$SCRIPT" 2>&1 | tee "$LOG"[27m
+[7m  RC=${PIPESTATUS[0]}[27m
+[7m  echo[27m
+[7m  echo "SCRIPT_EXIT_CODE=$RC"[27m
+[7m  echo "LOG_FILE=$LOG"[27m
+[7m  exit "$RC"[27m
+[7m)[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(
+            "\n<TCN_V6_FP32_TFLITE_ALL449> FAIL </TCN_V6_FP32_TFLITE_ALL449>",
+            file=sys.stderr,
+        )
+        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+        raise
+PY
+
+(
+  set -o pipefail
+  "$PYTHON" -u "$SCRIPT" 2>&1 | tee "$LOG"
+  RC=${PIPESTATUS[0]}
+  echo
+  echo "SCRIPT_EXIT_CODE=$RC"
+  echo "LOG_FILE=$LOG"
+  exit "$RC"
+)
+[?2004l]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\]3008;start=2d68c382-134e-46ec-b79d-4c53a7607e10;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256654.711298  120814 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256654.743552  120814 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795256655.509486  120814 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795256655.509695  120814 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+===== V6 TFLITE ALL-449 FINAL NUMERICAL REPORT =====
+TensorFlow: 2.21.0
+ONNX Runtime: 1.24.4
+ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+TFLite: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.tflite
+ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+TFLite SHA256: 8c11e597db67e17795e2975664c97c7c6a1a525663de15415ae96d051dbedf6c
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+[0;93m2026-11-21 18:24:17.283282867 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:24:17.283302904 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-21 18:24:17.283305987 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+TFLite allocate_tensors: PASS
+TFLite operators: 261
+Flex/custom operators: []
+Progress 1/449 max_abs=1.1920929e-06 failed=0
+Progress 51/449 max_abs=3.09944153e-06 failed=0
+Progress 101/449 max_abs=1.43051147e-06 failed=0
+Progress 151/449 max_abs=6.43730164e-06 failed=0
+Progress 201/449 max_abs=4.29153442e-06 failed=0
+Progress 251/449 max_abs=2.50339508e-06 failed=0
+Progress 301/449 max_abs=2.2649765e-06 failed=0
+Progress 351/449 max_abs=3.09944153e-06 failed=0
+Progress 401/449 max_abs=7.27176666e-06 failed=0
+Progress 449/449 max_abs=7.09295273e-06 failed=0
+
+===== FINAL NUMERICAL SUMMARY =====
+{
+  "model": "Fold-2 TCN regression/imputation V6 FP32",
+  "dataset": "split_byid/test",
+  "samples": 449,
+  "comparison": "TFLite versus V6 ONNX Runtime",
+  "onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "tflite_sha256": "8c11e597db67e17795e2975664c97c7c6a1a525663de15415ae96d051dbedf6c",
+  "atol": 0.0002,
+  "rtol": 0.0002,
+  "all_samples_pass": true,
+  "failed_samples": [],
+  "global_max_abs_error": 3.5881996154785156e-05,
+  "global_mean_abs_error": 2.481369548440072e-07,
+  "global_rmse": 5.671834925264034e-07,
+  "worst_sample_index": 319,
+  "median_sample_max_abs_error": 3.0994415283203125e-06,
+  "p99_sample_max_abs_error": 1.1951923370361327e-05,
+  "operator_count": 261,
+  "operator_histogram": {
+    "ABS": 2,
+    "ADD": 23,
+    "BROADCAST_ARGS": 1,
+    "BROADCAST_TO": 1,
+    "CAST": 1,
+    "CONCATENATION": 2,
+    "CONV_2D": 27,
+    "DELEGATE": 9,
+    "DEPTHWISE_CONV_2D": 20,
+    "DIV": 6,
+    "EXP": 2,
+    "FULLY_CONNECTED": 7,
+    "GATHER": 6,
+    "GREATER_EQUAL": 2,
+    "LOGICAL_NOT": 1,
+    "LOGICAL_OR": 2,
+    "MAXIMUM": 1,
+    "MEAN": 4,
+    "MIRROR_PAD": 5,
+    "MUL": 26,
+    "NEG": 4,
+    "RELU": 21,
+    "RESHAPE": 65,
+    "SELECT_V2": 7,
+    "SQRT": 2,
+    "SUB": 8,
+    "SUM": 2,
+    "TRANSPOSE": 4
+  },
+  "custom_flex_operators": [],
+  "input_specs": {
+    "x_values": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "missing_mask": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "<class 'numpy.bool'>"
+    },
+    "x_mark": {
+      "shape": [
+        1,
+        900,
+        3
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "worker_features_18": {
+      "shape": [
+        1,
+        18
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    },
+    "compact_values": {
+      "shape": [
+        1,
+        1800,
+        6
+      ],
+      "dtype": "<class 'numpy.float32'>"
+    }
+  }
+}
+Report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_fp32_fold2_sanitized_mask_v6_20261121_181636/tflite_vs_onnx_all449_report_recovered.json
+
+<TCN_V6_FP32_TFLITE_ALL449> PASS </TCN_V6_FP32_TFLITE_ALL449>
+Existing TFLite model reused; no conversion or firmware actions.
+
+SCRIPT_EXIT_CODE=0
+LOG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflite_all449_final_report_20261121.log
+]3008;end=2d68c382-134e-46ec-b79d-4c53a7607e10;exit=success\]3008;start=36007a02-3e0f-456f-9dbf-3f8ca0373154;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000119700;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
