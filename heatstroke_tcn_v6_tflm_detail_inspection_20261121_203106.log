@@ -1,0 +1,1508 @@
+============================================================
+ALIF TFLM DETAILED INSPECTION
+Date: Sat Nov 21 08:31:06 PM HKT 2026
+============================================================
+
+===== 1. MLEK SOURCE STATUS =====
+ M source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+ M source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp
+?? source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc.bak_topk_resolver
+?? source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp.bak_topk_resolver
+24.05-981-gd7d06cd6
+
+===== 2. INFERENCE RUNNER FILES =====
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/include/UseCaseHandler.hpp
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/MainLoop.cc
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/inference_runner/CMakeLists.txt
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake
+------------------------------------------------------------
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or
+     3	#  its affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	# Specify the ML frameworks the use case supports
+    20	set(${use_case}_ML_FRAMEWORK "TensorFlowLiteMicro")
+    21	if (NOT ${use_case}_ML_FRAMEWORK STREQUAL ${ML_FRAMEWORK})
+    22	    set(${use_case}_supports_${ML_FRAMEWORK} OFF)
+    23	    return()
+    24	endif ()
+    25	
+    26	set(${use_case}_supports_${ML_FRAMEWORK} ON)
+    27	
+    28	# Append the API to use for this use case
+    29	list(APPEND ${use_case}_API_LIST "inference_runner")
+    30	
+    31	USER_OPTION(${use_case}_MODEL_IN_EXT_FLASH "Run model from external flash"
+    32	    OFF
+    33	    BOOL)
+    34	USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+    35	    0x00200000
+    36	    STRING)
+    37	
+    38	if (ETHOS_U_NPU_ENABLED)
+    39	    set(DEFAULT_MODEL_PATH      ${DEFAULT_MODEL_DIR}/dnn_s_quantized_vela_${ETHOS_U_NPU_CONFIG_ID}.tflite)
+    40	else()
+    41	    set(DEFAULT_MODEL_PATH      ${DEFAULT_MODEL_DIR}/dnn_s_quantized.tflite)
+    42	endif()
+    43	
+    44	if (NOT TARGET_PLATFORM STREQUAL native)
+    45	    USER_OPTION(
+    46	        ${use_case}_DYNAMIC_MEM_LOAD_ENABLED
+    47	        "Allow dynamically loading model and ifm at runtime (valid for FVP only)"
+    48	        OFF
+    49	        BOOL)
+    50	endif()
+    51	
+    52	# For non-native targets, for use with the FVPs only.
+    53	if (${${use_case}_DYNAMIC_MEM_LOAD_ENABLED})
+    54	
+    55	    message(STATUS "NOTE: Dynamic memory load enabled. This ${use_case} application will run on FVP only.")
+    56	
+    57	    if (NOT DEFINED DYNAMIC_MODEL_BASE AND DEFINED DYNAMIC_MODEL_SIZE)
+    58	        message(FATAL_ERROR "${TARGET_PLATFORM} does not support dynamic load for model files.")
+    59	    else()
+    60	        set(${use_case}_COMPILE_DEFS
+    61	            "DYNAMIC_MODEL_BASE=${DYNAMIC_MODEL_BASE};DYNAMIC_MODEL_SIZE=${DYNAMIC_MODEL_SIZE}")
+    62	    endif()
+    63	
+    64	    if (DEFINED DYNAMIC_IFM_BASE AND DEFINED DYNAMIC_IFM_SIZE)
+    65	        string(APPEND ${use_case}_COMPILE_DEFS
+    66	            ";DYNAMIC_IFM_BASE=${DYNAMIC_IFM_BASE};DYNAMIC_IFM_SIZE=${DYNAMIC_IFM_SIZE}")
+    67	    else()
+    68	        message(WARNING "${TARGET_PLATFORM} does not support dynamic load for input tensors.")
+    69	    endif()
+    70	
+    71	    if (DEFINED DYNAMIC_OFM_BASE AND DEFINED DYNAMIC_OFM_SIZE)
+    72	        string(APPEND ${use_case}_COMPILE_DEFS
+    73	            ";DYNAMIC_OFM_BASE=${DYNAMIC_OFM_BASE};DYNAMIC_OFM_SIZE=${DYNAMIC_OFM_SIZE}")
+    74	    else()
+    75	        message(WARNING "${TARGET_PLATFORM} does not support dumping of output tensors.")
+    76	    endif()
+    77	
+    78	else()
+    79	    USER_OPTION(${use_case}_MODEL_PATH "NN models file to be used in the evaluation application. Model files must be in tflite format."
+    80	        ${DEFAULT_MODEL_PATH}
+    81	        FILEPATH)
+    82	
+    83	    # Generate model file
+    84	    generate_model_code(
+    85	        MODEL_PATH ${${use_case}_MODEL_PATH}
+    86	        DESTINATION ${SRC_GEN_DIR}
+    87	        NAMESPACE   "arm" "app" "inference_runner")
+    88	endif()
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/inference_runner/CMakeLists.txt
+------------------------------------------------------------
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2022-2023, 2025 Arm Limited and/or
+     3	#  its affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	#########################################################
+    19	#              INFERENCE RUNNER API library             #
+    20	#########################################################
+    21	cmake_minimum_required(VERSION 3.21.0)
+    22	
+    23	set(INFERENCE_RUNNER_API_TARGET inference_runner_api)
+    24	project(${INFERENCE_RUNNER_API_TARGET}
+    25	        DESCRIPTION     "Inference runner use case API library"
+    26	        LANGUAGES       C CXX)
+    27	
+    28	# Create an aliased library, inference runner doesn't need any API other than this.
+    29	add_library(${INFERENCE_RUNNER_API_TARGET} ALIAS common_api)
+    30	
+    31	add_library(mlek::${INFERENCE_RUNNER_API_TARGET} ALIAS common_api)
+    32	
+    33	message(STATUS "*******************************************************")
+    34	message(STATUS "Library:                " ${INFERENCE_RUNNER_API_TARGET})
+    35	message(STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+    36	message(STATUS "*******************************************************")
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/include/UseCaseHandler.hpp
+------------------------------------------------------------
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2025 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	#ifndef INF_RUNNER_EVT_HANDLER_HPP
+    18	#define INF_RUNNER_EVT_HANDLER_HPP
+    19	
+    20	#include "AppContext.hpp"
+    21	
+    22	namespace arm {
+    23	namespace app {
+    24	
+    25	    /**
+    26	     * @brief       Handles the inference event.
+    27	     * @param[in]   ctx   Pointer to the application context.
+    28	     * @return      true or false based on execution success.
+    29	     **/
+    30	    bool RunInferenceHandler(ApplicationContext& ctx);
+    31	
+    32	} /* namespace app */
+    33	} /* namespace arm */
+    34	
+    35	#endif /* INF_RUNNER_EVT_HANDLER_HPP */
+
+===== 3. INFERENCE RUNNER MODEL / INPUT HANDLING =====
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:34:USER_OPTION(${use_case}_ACTIVATION_BUF_SZ "Activation buffer size for the chosen model"
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:38:if (ETHOS_U_NPU_ENABLED)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:39:    set(DEFAULT_MODEL_PATH      ${DEFAULT_MODEL_DIR}/dnn_s_quantized_vela_${ETHOS_U_NPU_CONFIG_ID}.tflite)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:41:    set(DEFAULT_MODEL_PATH      ${DEFAULT_MODEL_DIR}/dnn_s_quantized.tflite)
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:68:        message(WARNING "${TARGET_PLATFORM} does not support dynamic load for input tensors.")
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:79:    USER_OPTION(${use_case}_MODEL_PATH "NN models file to be used in the evaluation application. Model files must be in tflite format."
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:80:        ${DEFAULT_MODEL_PATH}
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/usecase.cmake:85:        MODEL_PATH ${${use_case}_MODEL_PATH}
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/MainLoop.cc:27:    static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:37:    /* Populate each input tensor with random data. */
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:40:        auto inputTensor = model.GetInputTensor(inputIndex);
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:42:        debug("Populating input tensor %zu@%p\n", inputIndex, inputTensor->GetData());
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:67:    info("%d input tensor/s populated with %d bytes with data read from 0x%08x\n",
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:81:        auto outputTensor = model.GetOutputTensor(outputIdx);
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:104:        arm::app::DumpTensor(model.GetInputTensor(inputIndex));
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:112:        arm::app::DumpTensor(model.GetOutputTensor(outputIndex));
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:131:    DumpInputs(model, "Initial input tensors values");
+/home/user/sdk-alif/modules/alif-mlek/source/app/use_case/inference_runner/src/UseCaseHandler.cc:138:    DumpInputs(model, "input tensors populated");
+
+===== 4. EXISTING U55-128 INFERENCE RUNNER EXAMPLE =====
+
+
+===== 5. ALIF PLATFORM U55 CONFIGURATION =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/build_configuration.cmake
+------------------------------------------------------------
+    75	    endif()
+    76	
+    77	    USER_OPTION(ALIF_ISP_ENABLED "If enabled, use the ISP, otherwise use software image pipeline. Enabled by default on devices with ISP support."
+    78	        ${IS_EAGLE_DEVICE}
+    79	        BOOL)
+    80	
+    81	    if ((TARGET_BOARD STREQUAL "AppKit-e7") OR (TARGET_BOARD STREQUAL "DevKit-e7")) # Add other Devkit and AppKits which are Ensemble devices
+    82	        set(ALIF_DEVICE_SKU "AE722F80F55D5" CACHE STRING "" FORCE)
+    83	    endif()
+    84	
+    85	    if ((TARGET_BOARD STREQUAL "DevKit-e1c") OR (TARGET_BOARD STREQUAL "StartKit-e1c")) # Add other Devkit and AppKits which are Balletto devices
+    86	        set(IS_BALLETTO_DEVICE ON)
+    87	        set(ALIF_DEVICE_SKU "AE1C1F4051920" CACHE STRING "" FORCE)
+    88	        add_compile_definitions("BALLETTO_DEVICE") # Flag used by ServicesLIB and our ml-devkit files.
+    89	        USER_OPTION(ALIF_CAMERA_ENABLED "If enabled, does use the real camera, otherwise uses static images instead. Disabled by default on E1C."
+    90	            OFF
+    91	            BOOL)
+    92	    else()
+    93	        set(IS_BALLETTO_DEVICE OFF)
+    94	        USER_OPTION(ALIF_CAMERA_ENABLED "If enabled, does use the real camera, otherwise uses static images instead. Enabled by default."
+    95	            ON
+    96	            BOOL)
+    97	    endif()
+    98	
+    99	    USER_OPTION(ETHOS_U_NPU_ID "Arm Ethos-U NPU IP (U55 or U85)"
+   100	        "U55"
+   101	        STRING)
+   102	    set_property(CACHE ETHOS_U_NPU_ID PROPERTY STRINGS "U55" "U85")
+   103	
+   104	    if (ETHOS_U_NPU_ID STREQUAL U85)
+   105	        set(RTSS_NPU_CONFIG_ID "Z256")
+   106	    elseif (TARGET_SUBSYSTEM STREQUAL RTSS-HP)
+   107	        set(RTSS_NPU_CONFIG_ID "H256")
+   108	    else()
+   109	        set(RTSS_NPU_CONFIG_ID "H128")
+   110	    endif()
+   111	
+   112	    # Sanity check for ETHOS_U_NPU_ID
+   113	    if ((ETHOS_U_NPU_ID STREQUAL U85) AND (NOT IS_EAGLE_DEVICE))
+   114	        message(FATAL_ERROR "U85 NPU is not available on ${TARGET_BOARD}")
+   115	    endif()
+   116	
+   117	    USER_OPTION(ETHOS_U_NPU_CONFIG_ID "Specifies the configuration ID for the NPU."
+   118	        "${RTSS_NPU_CONFIG_ID}"
+   119	        STRING)
+   120	
+   121	    USER_OPTION(ETHOS_U_NPU_MEMORY_MODE "Specifies the memory mode used in the Vela command."
+   122	        "Shared_Sram"
+   123	        STRING)
+   124	
+   125	    # Include NPU, CMSIS and LVGL configuration options
+   126	    include(npu_opts)
+   127	    include(cmsis_opts)
+   128	    include(lvgl_opts)
+   129	
+   130	    message(STATUS "Board            : Alif Semiconductor ${TARGET_BOARD}")
+   131	    message(STATUS "Platform         : Alif ${TARGET_SUBSYSTEM}")
+   132	    message(STATUS "Alif Device SKU  : ${ALIF_DEVICE_SKU}")
+   133	
+   134	    set(ALIF_CMSIS_PATH ${MLEK_DEPENDENCY_ROOT_DIR}/cmsis-alif PARENT_SCOPE)
+   135	
+   136	    set(CMAKE_SYSTEM_PROCESSOR cortex-m55 CACHE STRING "Cortex-M CPU to use")
+   137	
+   138	    if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+   139	        set(CMAKE_TOOLCHAIN_FILE ${MLEK_CMAKE_TOOLCHAIN_DIR}/bare-metal-gcc.cmake
+   140	                CACHE FILEPATH "Toolchain file")
+   141	    endif()
+   142	
+   143	    set(LINKER_SCRIPT_NAME "${TARGET_SUBSYSTEM}" CACHE STRING "Linker script name")
+   144	    set(PLATFORM_DRIVERS_DIR "${MLEK_HAL_PLATFORM_DIR}/alif" PARENT_SCOPE)
+   145	
+   146	    if (TARGET_SUBSYSTEM STREQUAL RTSS-HP)
+   147	        set(ALIF_CORE "RTSS_HP")
+   148	    else()
+   149	        set(ALIF_CORE "RTSS_HE")
+   150	    endif()
+   151	    set(ALIF_CORE "${ALIF_CORE}" PARENT_SCOPE)
+   152	    set(ALIF_DEVICE_SKU "${ALIF_DEVICE_SKU}" PARENT_SCOPE)
+   153	    set(IS_BALLETTO_DEVICE ${IS_BALLETTO_DEVICE} PARENT_SCOPE)
+   154	
+   155	    add_compile_definitions(
+   156	        ${ALIF_CORE}
+   157	        )
+   158	
+   159	    if (ETHOS_U_NPU_ID STREQUAL "U55")
+   160	        set(ETHOS_U_BASE_ADDR    "0x400E1000"   CACHE STRING "Ethos-U NPU base address")
+   161	        set(ETHOS_U_IRQN         "55"           CACHE STRING "Ethos-U55 Interrupt")
+   162	    else()
+   163	        set(ETHOS_U_BASE_ADDR    "0x49042000"   CACHE STRING "Ethos-U NPU base address")
+   164	        set(ETHOS_U_IRQN         "366"          CACHE STRING "Ethos-U85 Interrupt")
+   165	    endif()
+   166	    set(ETHOS_U_SEC_ENABLED  "1"            CACHE STRING "Ethos-U NPU Security enable")
+   167	    set(ETHOS_U_PRIV_ENABLED "1"            CACHE STRING "Ethos-U NPU Privilege enable")
+   168	
+   169	endfunction()
+   170	
+   171	function(platform_custom_post_build)
+   172	    set(oneValueArgs TARGET_NAME MODEL_IN_EXT_FLASH)
+   173	    cmake_parse_arguments(PARSED "" "${oneValueArgs}" "" ${ARGN} )
+   174	
+   175	    set_target_properties(${PARSED_TARGET_NAME} PROPERTIES SUFFIX ".axf")
+   176	
+   177	    string(TOLOWER "${ALIF_CORE}" ALIF_CORE_STRING)
+   178	
+   179	    #####################################################
+   180	    ## Support for linker file to include header start ##
+
+===== 6. ETHOS-U MEMORY CONFIGURATION =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h
+------------------------------------------------------------
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     3	 * SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	
+    18	#ifndef ETHOS_U_NPU_MEM_CONFIG_H
+    19	#define ETHOS_U_NPU_MEM_CONFIG_H
+    20	
+    21	#define ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY           0
+    22	#define ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM         1
+    23	#define ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM      2
+    24	
+    25	#define ETHOS_U_MEM_BYTE_ALIGNMENT                  16
+    26	
+    27	#ifndef ETHOS_U_NPU_MEMORY_MODE
+    28	    #define ETHOS_U_NPU_MEMORY_MODE                 ETHOS_U_MEMORY_MODE_SHARED_SRAM
+    29	#endif /* ETHOS_U_NPU_MEMORY_MODE */
+    30	
+    31	#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    32	    #ifndef ETHOS_U_NPU_CACHE_SIZE
+    33	        #define ETHOS_U_CACHE_BUF_SZ                (393216U)  /* See vela doc for reference */
+    34	    #else
+    35	        #define ETHOS_U_CACHE_BUF_SZ                ETHOS_U_NPU_CACHE_SIZE
+    36	    #endif /* ETHOS_U_NPU_CACHE_SIZE */
+    37	#else
+    38	    #define ETHOS_U_CACHE_BUF_SZ    (0U)
+    39	#endif /* CACHE_BUF_SZ */
+    40	
+    41	/**
+    42	 * Activation buffer aka tensor arena section name
+    43	 * We have to place the tensor arena in different region based on the memory config.
+    44	 **/
+    45	#if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM)
+    46	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    47	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    48	#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY)
+    49	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    50	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    51	#elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+    52	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+    53	    #define CACHE_BUF_SECTION           section(".bss.NoInit.ethos_u_cache")
+    54	    #define ACTIVATION_BUF_SECTION_NAME ("DDR/DRAM")
+    55	    #define CACHE_BUF_ATTRIBUTE         __attribute__((aligned(ETHOS_U_MEM_BYTE_ALIGNMENT), CACHE_BUF_SECTION))
+    56	#endif
+    57	
+    58	#endif /* ETHOS_U_NPU_MEM_CONFIG_H */
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/app/main/include/BufAttributes.hpp
+------------------------------------------------------------
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2021, 2024-2025 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 *
+     6	 * Licensed under the Apache License, Version 2.0 (the "License");
+     7	 * you may not use this file except in compliance with the License.
+     8	 * You may obtain a copy of the License at
+     9	 *
+    10	 *     http://www.apache.org/licenses/LICENSE-2.0
+    11	 *
+    12	 * Unless required by applicable law or agreed to in writing, software
+    13	 * distributed under the License is distributed on an "AS IS" BASIS,
+    14	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	 * See the License for the specific language governing permissions and
+    16	 * limitations under the License.
+    17	 */
+    18	
+    19	#ifndef BUF_ATTRIBUTES_HPP
+    20	#define BUF_ATTRIBUTES_HPP
+    21	
+    22	#if defined(__cplusplus)
+    23	extern "C" {
+    24	#endif /* defined(__cplusplus) */
+    25	
+    26	#if defined(ARM_NPU)
+    27	    /* When Arm NPU is defined, we use the config set by NPU mem parameters */
+    28	    #include "ethosu_mem_config.h"
+    29	    #define BYTE_ALIGNMENT              ETHOS_U_MEM_BYTE_ALIGNMENT
+    30	#else /* defined(ARM_NPU) */
+    31	    /* otherwise, we use the default ones here. */
+    32	    #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+    33	    #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+    34	    #define BYTE_ALIGNMENT              16
+    35	#endif /* defined(ARM_NPU) */
+    36	
+    37	#ifdef __has_attribute
+    38	#define HAVE_ATTRIBUTE(x) __has_attribute(x)
+    39	#else   /* __has_attribute */
+    40	#define HAVE_ATTRIBUTE(x) 0
+    41	#endif  /* __has_attribute */
+    42	
+    43	#if HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__))
+    44	
+    45	/* We want all buffers/sections to be aligned to 16 byte.  */
+    46	#define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+    47	
+    48	#if defined(MODEL_IN_EXT_FLASH)
+    49	#define MODEL_SECTION               section("nn_model_ext_flash")
+    50	#else
+    51	#define MODEL_SECTION               section("nn_model")
+    52	#endif
+    53	
+    54	/* Label section name */
+    55	#define LABEL_SECTION               section("labels")
+    56	
+    57	#ifndef ACTIVATION_BUF_SZ
+    58	    #warning  "ACTIVATION_BUF_SZ needs to be defined. Using default value"
+    59	    #define ACTIVATION_BUF_SZ       0x00200000
+    60	#endif  /* ACTIVATION_BUF_SZ */
+    61	
+    62	/* IFM section name. */
+    63	#define IFM_BUF_SECTION             section("ifm")
+    64	
+    65	/* Form the attributes, alignment is mandatory. */
+    66	#define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+    67	#define MODEL_SECTION_ATTRIBUTE      MAKE_ATTRIBUTE(MODEL_SECTION)
+    68	#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+    69	#define IFM_BUF_ATTRIBUTE           MAKE_ATTRIBUTE(IFM_BUF_SECTION)
+    70	#define LABELS_ATTRIBUTE            MAKE_ATTRIBUTE(LABEL_SECTION)
+    71	
+    72	#else /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+    73	
+    74	#define MODEL_SECTION_ATTRIBUTE
+    75	#define ACTIVATION_BUF_ATTRIBUTE
+    76	#define IFM_BUF_ATTRIBUTE
+    77	#define LABELS_ATTRIBUTE
+    78	
+    79	#endif /* HAVE_ATTRIBUTE(aligned) || (defined(__GNUC__) && !defined(__clang__)) */
+    80	
+    81	#if defined(__cplusplus)
+    82	}
+    83	#endif /* defined(__cplusplus) */
+    84	
+    85	#endif /* BUF_ATTRIBUTES_HPP */
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c
+------------------------------------------------------------
+     1	/*
+     2	 * SPDX-FileCopyrightText: Copyright 2022-2026 Arm Limited and/or its affiliates
+     3	 * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+     4	 *
+     5	 * Licensed under the Apache License, Version 2.0 (the "License");
+     6	 * you may not use this file except in compliance with the License.
+     7	 * You may obtain a copy of the License at
+     8	 *
+     9	 *     http://www.apache.org/licenses/LICENSE-2.0
+    10	 *
+    11	 * Unless required by applicable law or agreed to in writing, software
+    12	 * distributed under the License is distributed on an "AS IS" BASIS,
+    13	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    14	 * See the License for the specific language governing permissions and
+    15	 * limitations under the License.
+    16	 */
+    17	
+    18	#include "ethosu_npu_init.h"
+    19	
+    20	#include "RTE_Components.h"         /* For CPU related defintiions */
+    21	#include "hal_log.h"             /* Logging functions */
+    22	
+    23	#include "ethosu_mem_config.h"      /* Arm Ethos-U memory config */
+    24	#include "ethosu_driver.h"          /* Arm Ethos-U driver header */
+    25	
+    26	/* Mandatory definition checks. */
+    27	#if !defined(ETHOS_U_BASE_ADDR)
+    28	#error "NPU base address is undefined."
+    29	#endif /* defnied(ETHOS_U_BASE_ADDR) */
+    30	
+    31	#if !defined(ETHOS_U_IRQN)
+    32	#error "Arm NPU interrupt number is undefined."
+    33	#endif /* !defined(ETHOS_U_IRQN) */
+    34	
+    35	#if !defined(ETHOS_U_SEC_ENABLED)
+    36	#error "Arm NPU security mode is undefined."
+    37	#endif /* !defined(ETHOS_U_SEC_ENABLED) */
+    38	
+    39	#if !defined(ETHOS_U_PRIV_ENABLED)
+    40	#error "Arm NPU privilege mode is undefined."
+    41	#endif /* !defined(ETHOS_U_PRIV_ENABLED) */
+    42	
+    43	#if defined(ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0)
+    44	static uint8_t cache_arena[ETHOS_U_CACHE_BUF_SZ] CACHE_BUF_ATTRIBUTE;
+    45	#else  /* defined (ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0) */
+    46	static uint8_t *cache_arena = NULL;
+    47	#endif /* defined (ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0) */
+    48	
+    49	struct ethosu_driver ethosu_drv; /* Default Ethos-U device driver */
+    50	
+    51	static uint8_t *get_cache_arena()
+    52	{
+    53	    return cache_arena;
+    54	}
+    55	
+    56	static size_t get_cache_arena_size()
+    57	{
+    58	#if defined(ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0)
+    59	    return sizeof(cache_arena);
+    60	#else  /* defined (ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0) */
+    61	    return 0;
+    62	#endif /* defined (ETHOS_U_CACHE_BUF_SZ) && (ETHOS_U_CACHE_BUF_SZ > 0) */
+    63	}
+    64	
+    65	/**
+    66	 * @brief  Initialises the NPU IRQ
+    67	 **/
+    68	static void arm_ethosu_npu_irq_init(void)
+    69	{
+    70	    const IRQn_Type ethosu_irqnum = (IRQn_Type)ETHOS_U_IRQN;
+    71	
+    72	    /* Register the EthosU IRQ handler in our vector table.
+    73	     * Note, this handler comes from the EthosU driver */
+    74	    NVIC_SetVector(ethosu_irqnum, (uint32_t)arm_ethosu_npu_irq_handler);
+    75	
+    76	    /* Enable the IRQ */
+    77	    NVIC_EnableIRQ(ethosu_irqnum);
+    78	
+    79	    debug("EthosU IRQ#: %u, Handler: 0x%p\n",
+    80	          ethosu_irqnum, arm_ethosu_npu_irq_handler);
+    81	}
+    82	
+    83	/**
+    84	 * @brief   Defines the Ethos-U interrupt handler: just a wrapper around the default
+    85	 *          implementation.
+    86	 **/
+    87	void arm_ethosu_npu_irq_handler(void)
+    88	{
+    89	    /* Call the default interrupt handler from the NPU driver */
+    90	    ethosu_irq_handler(&ethosu_drv);
+    91	}
+    92	
+    93	int arm_ethosu_npu_init(void)
+    94	{
+    95	    int err = 0;
+    96	
+    97	    /* Initialise the IRQ */
+    98	    arm_ethosu_npu_irq_init();
+    99	
+   100	    /* Initialise Ethos-U device */
+   101	    void* const ethosu_base_address = (void *)(ETHOS_U_BASE_ADDR);
+   102	    info("Initialising Ethos-U device@0x%" PRIx32 "\n", (uint32_t)(ETHOS_U_BASE_ADDR));
+   103	
+   104	    if (get_cache_arena_size() > 0) {
+   105	        info("Using Dedicated_Sram memory mode; fast cache size: %zu\n",
+   106	             get_cache_arena_size());
+   107	    } else {
+   108	        info("Using Sram_Only/Shared_Sram memory mode\n");
+   109	    }
+   110	
+   111	    if (0 != (err = ethosu_init(&ethosu_drv,         /* Ethos-U driver device pointer */
+   112	                                ethosu_base_address, /* Ethos-U NPU's base address. */
+   113	                                get_cache_arena(),   /* Pointer to fast mem area - NULL for U55. */
+   114	                                get_cache_arena_size(), /* Fast mem region size. */
+   115	                                ETHOS_U_SEC_ENABLED,    /* Security enable. */
+   116	                                ETHOS_U_PRIV_ENABLED))) /* Privilege enable. */ {
+   117	        printf_err("Failed to initialise Ethos-U device\n");
+   118	        return err;
+   119	    }
+   120	
+   121	    info("Ethos-U device initialised\n");
+   122	
+   123	    /* Get Ethos-U version */
+   124	    struct ethosu_driver_version driver_version;
+   125	    struct ethosu_hw_info hw_info;
+   126	
+   127	    ethosu_get_driver_version(&driver_version);
+   128	    ethosu_get_hw_info(&ethosu_drv, &hw_info);
+   129	
+   130	    info("Ethos-U version info:\n");
+   131	    info("\tArch:       v%" PRIu32 ".%" PRIu32 ".%" PRIu32 "\n",
+   132	         hw_info.version.arch_major_rev,
+   133	         hw_info.version.arch_minor_rev,
+   134	         hw_info.version.arch_patch_rev);
+   135	    info("\tDriver:     v%" PRIu8 ".%" PRIu8 ".%" PRIu8 "\n",
+   136	         driver_version.major,
+   137	         driver_version.minor,
+   138	         driver_version.patch);
+   139	    info("\tMACs/cc:    %" PRIu32 "\n", (uint32_t)(1 << hw_info.cfg.macs_per_cc));
+   140	    info("\tCmd stream: v%" PRIu32 "\n", hw_info.cfg.cmd_stream_version);
+   141	
+   142	    return 0;
+   143	}
+
+===== 7. TFLM CMAKE INTEGRATION =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/tensorflow_lite_micro.cmake
+------------------------------------------------------------
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+    20	    set(TENSORFLOW_LITE_MICRO_CORE_OPTIMIZATION_LEVEL "-O0")
+    21	    set(TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL "-O0")
+    22	elseif (CMAKE_BUILD_TYPE STREQUAL Release)
+    23	    # -Ofast is not an option as we set the floating-point conformance mode
+    24	    # to 'full' in the TensorFlow Lite Micro Makefile. Although this is done
+    25	    # only for Arm Compiler, we stick with the '-O3' optimisation level for
+    26	    # all compilers.
+    27	    set(TENSORFLOW_LITE_MICRO_CORE_OPTIMIZATION_LEVEL "-O3")
+    28	    set(TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL "-O3")
+    29	endif()
+    30	
+    31	assert_defined(TENSORFLOW_LITE_MICRO_BUILD_TYPE)
+    32	assert_defined(TENSORFLOW_SRC_PATH)
+    33	
+    34	function(build_tflite_micro_cmake)
+    35	    include(FetchContent)
+    36	    set(CORE_SOFTWARE_REPO_URL "https://gitlab.arm.com/artificial-intelligence/ethos-u/ethos-u-core-software")
+    37	    set(CORE_SOFTWARE_GIT_REF  "26.02")
+    38	    set(TFLM_CMAKE_URL "${CORE_SOFTWARE_REPO_URL}/-/raw/${CORE_SOFTWARE_GIT_REF}/tflite_micro.cmake?ref_type=tags&inline=false")
+    39	    set(TFLM_CMAKE_MD5 "52985fb8910dbaf034a17f9c6140b9d2")
+    40	
+    41	    FetchContent_Declare(TensorFlow_Lite_Micro_CMake_Wrapper
+    42	        URL                 ${TFLM_CMAKE_URL}
+    43	        URL_HASH            MD5=${TFLM_CMAKE_MD5}
+    44	        DOWNLOAD_DIR        ${CMAKE_BINARY_DIR}
+    45	        DOWNLOAD_NAME       "tflite_micro.cmake"
+    46	        DOWNLOAD_NO_EXTRACT ON)
+    47	
+    48	    FetchContent_MakeAvailable(TensorFlow_Lite_Micro_CMake_Wrapper)
+    49	
+    50	    set(CMSIS_NN_PATH                   ${CMSIS_NN_SRC_PATH})
+    51	    set(CMSIS_PATH                      ${CMSIS_SRC_PATH})
+    52	    set(TENSORFLOW_PATH                 ${TENSORFLOW_SRC_PATH})
+    53	    set(TFLM_OPTIMIZATION_LEVEL         ${TENSORFLOW_LITE_MICRO_CORE_OPTIMIZATION_LEVEL}
+    54	                                        CACHE STRING "Optimization level")
+    55	    set(TFLM_BUILD_TYPE                 ${TENSORFLOW_LITE_MICRO_BUILD_TYPE}
+    56	                                        CACHE STRING "Build type")
+    57	    if(TARGET_PLATFORM STREQUAL native)
+    58	        set(TFLM_BUILD_CORTEX_M_GENERIC FALSE
+    59	                                        CACHE BOOL "Build for Arm Cortex-M")
+    60	        set(DEFAULT_ACCELERATOR         "CPU")
+    61	    else()
+    62	        set(CMSIS_OPTIMIZATION_LEVEL    ${TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL})
+    63	        assert_defined(CMSIS_NN_SRC_PATH)
+    64	        if (NOT TARGET cmsis_device)
+    65	            message(STATUS "cmsis_device target not available. Adding it now.")
+    66	            add_subdirectory(
+    67	                ${CMAKE_CURRENT_LIST_DIR}/../../source/hal/source/components/cmsis_device
+    68	                ${CMAKE_CURRENT_BINARY_DIR}/tflm_cmsis_device)
+    69	        endif()
+    70	        if (ETHOS_U_NPU_ENABLED)
+    71	            set(DEFAULT_ACCELERATOR     "NPU")
+    72	        else()
+    73	            set(DEFAULT_ACCELERATOR     "CMSIS-NN")
+    74	        endif()
+    75	    endif()
+    76	    set(CORE_SOFTWARE_ACCELERATOR       ${DEFAULT_ACCELERATOR}
+    77	                                        CACHE STRING "Default accelerator backend")
+    78	
+    79	    include(${CMAKE_BINARY_DIR}/tflite_micro.cmake)
+    80	
+    81	    # For CMSIS-NN, define ARM_MATH_AUTOVECTORIZE if optimization level is 0.
+    82	    # From CMSIS-NN Readme:
+    83	    # > With only optimization level -O0, ARM_MATH_AUTOVECTORIZE needs to be defined
+    84	    # > for processors with Helium Technology.
+    85	    if (CMSIS_OPTIMIZATION_LEVEL STREQUAL "-O0")
+    86	        if (CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m55" OR
+    87	            CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m85" OR
+    88	            CMAKE_SYSTEM_PROCESSOR MATCHES "armv8\..-m\.main")
+    89	            target_compile_definitions(cmsis-nn PRIVATE ARM_MATH_AUTOVECTORIZE)
+    90	        endif()
+    91	    endif()
+    92	
+    93	    if (CMAKE_CXX_COMPILER_ID STREQUAL "ARMClang")
+    94	        # Additional option to enable "full" floating point standard conformance
+    95	        # (needed for NaNs and infinity).
+    96	        target_compile_options(tflu PRIVATE "-ffp-mode=full")
+    97	    endif()
+    98	
+    99	    # If CPU_HEADER_FILE is defined, add this to compile definitions.
+   100	    if (DEFINED CPU_HEADER_FILE)
+   101	        target_compile_definitions(tflu PRIVATE
+   102	            "-DCMSIS_DEVICE_ARM_CORTEX_M_XX_HEADER_FILE=\"${CPU_HEADER_FILE}\"")
+   103	    endif()
+   104	
+   105	    # Create an alias to use in other parts of the project.
+   106	    add_library(google::tensorflow-lite-micro ALIAS tflu)
+   107	endfunction()
+   108	
+   109	function(build_tflite_micro_makefile)
+   110	    if (DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+   111	        set(PARALLEL_JOBS $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+   112	    else()
+   113	        include(ProcessorCount)
+   114	        ProcessorCount(PARALLEL_JOBS)
+   115	    endif()
+   116	
+   117	    assert_defined(TENSORFLOW_LITE_MICRO_CLEAN_DOWNLOADS)
+   118	    assert_defined(TENSORFLOW_LITE_MICRO_CLEAN_BUILD)
+   119	
+   120	    if (CMAKE_CXX_COMPILER_ID STREQUAL "ARMClang")
+   121	        set(TENSORFLOW_LITE_MICRO_TOOLCHAIN "armclang")
+   122	    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   123	        set(TENSORFLOW_LITE_MICRO_TOOLCHAIN "gcc")
+   124	    else ()
+   125	        message(FATAL_ERROR "No compiler ID is set")
+   126	    endif()
+   127	
+   128	    get_filename_component(TENSORFLOW_LITE_MICRO_TARGET_TOOLCHAIN_ROOT ${CMAKE_C_COMPILER} DIRECTORY)
+   129	    set(TENSORFLOW_LITE_MICRO_TARGET_TOOLCHAIN_ROOT "${TENSORFLOW_LITE_MICRO_TARGET_TOOLCHAIN_ROOT}/")
+   130	
+   131	    set(TENSORFLOW_LITE_MICRO_PATH "${TENSORFLOW_SRC_PATH}/tensorflow/lite/micro")
+   132	    set(TENSORFLOW_LITE_MICRO_GENDIR ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/)
+   133	    set(TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME "libtensorflow-microlite.a")
+   134	
+   135	    # Add virtual environment's Python directory path to the system path.
+   136	    # NOTE: This path is passed to the TensorFlow Lite Micro's make env
+   137	    # as it depends on some basic Python packages (like Pillow) installed
+   138	    # and the system-wide Python installation might not have them.
+   139	    set(ENV_PATH "${PYTHON_VENV}/bin:$ENV{PATH}")
+   140	
+   141	    if (TARGET_PLATFORM STREQUAL native)
+   142	        set(TENSORFLOW_LITE_MICRO_TARGET "linux")
+   143	        set(TENSORFLOW_LITE_MICRO_TARGET_ARCH x86_64)
+   144	    else()
+   145	        assert_defined(CMSIS_NN_SRC_PATH)
+   146	        set(TENSORFLOW_LITE_MICRO_TARGET "cortex_m_generic")
+   147	
+   148	        if ("${CMAKE_SYSTEM_ARCH}" STREQUAL "armv8.1-m.main")
+   149	            set(TENSORFLOW_LITE_MICRO_TARGET_ARCH "cortex-m55")
+   150	        else()
+   151	            set(TENSORFLOW_LITE_MICRO_TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+   152	        endif()
+   153	
+   154	        if(ETHOS_U_NPU_ENABLED)
+   155	            # Arm Ethos-U55 NPU is the co-processor for ML workload:
+   156	            set(TENSORFLOW_LITE_MICRO_CO_PROCESSOR      "ethos_u")
+   157	            if(${ETHOS_U_NPU_ID} STREQUAL "U65")
+   158	                set(TENSORFLOW_LITE_MICRO_CO_PROCESSOR_ARCH "u65")
+   159	            else()
+   160	                set(TENSORFLOW_LITE_MICRO_CO_PROCESSOR_ARCH "u55")
+   161	            endif ()
+   162	        endif()
+   163	
+   164	        set(TENSORFLOW_LITE_MICRO_OPTIMIZED_KERNEL  "cmsis_nn")
+   165	    endif()
+   166	
+   167	    if (TENSORFLOW_LITE_MICRO_CLEAN_DOWNLOADS)
+   168	        message(STATUS "Refreshing TensorFlow Lite Micro's third party downloads...")
+   169	        set(ENV{PATH} "${ENV_PATH}")
+   170	        execute_process(
+   171	            COMMAND
+   172	            make -f ${TENSORFLOW_LITE_MICRO_PATH}/tools/make/Makefile clean_downloads third_party_downloads
+   173	            RESULT_VARIABLE return_code
+   174	            WORKING_DIRECTORY ${TENSORFLOW_SRC_PATH})
+   175	        if (NOT return_code EQUAL "0")
+   176	            message(FATAL_ERROR "Failed to clean TensorFlow Lite Micro's third party downloads.")
+   177	        else()
+   178	            message(STATUS "Refresh completed.")
+   179	        endif ()
+   180	    endif()
+   181	
+   182	    if (TENSORFLOW_LITE_MICRO_CLEAN_BUILD)
+   183	        list(APPEND MAKE_TARGETS_LIST "clean")
+   184	    endif()
+   185	
+   186	    # Primary target
+   187	    list(APPEND MAKE_TARGETS_LIST "microlite")
+   188	    message(STATUS "TensorFlow Lite Micro build to be called for these targets: ${MAKE_TARGETS_LIST}")
+   189	
+   190	    # Commands and targets
+   191	    add_custom_target(tensorflow_build ALL
+   192	
+   193	        # Command to build the TensorFlow Lite Micro library
+   194	        COMMAND ${CMAKE_COMMAND} -E env PATH="${ENV_PATH}"
+   195	            make -j${PARALLEL_JOBS} -f ${TENSORFLOW_LITE_MICRO_PATH}/tools/make/Makefile ${MAKE_TARGETS_LIST}
+   196	            TARGET_TOOLCHAIN_ROOT=${TENSORFLOW_LITE_MICRO_TARGET_TOOLCHAIN_ROOT}
+   197	            TOOLCHAIN=${TENSORFLOW_LITE_MICRO_TOOLCHAIN}
+   198	            GENDIR=${TENSORFLOW_LITE_MICRO_GENDIR}
+   199	            TARGET=${TENSORFLOW_LITE_MICRO_TARGET}
+   200	            TARGET_ARCH=${TENSORFLOW_LITE_MICRO_TARGET_ARCH}
+   201	            BUILD_TYPE=${TENSORFLOW_LITE_MICRO_BUILD_TYPE}
+   202	            CMSIS_PATH=${CMSIS_SRC_PATH}
+   203	            CMSIS_NN_PATH=${CMSIS_NN_SRC_PATH}
+   204	            # Conditional arguments
+   205	            $<$<BOOL:${ETHOS_U_NPU_ENABLED}>:ETHOSU_ARCH=${TENSORFLOW_LITE_MICRO_CO_PROCESSOR_ARCH}>
+   206	            $<$<BOOL:${ETHOS_U_NPU_ENABLED}>:ETHOSU_DRIVER_PATH=${ETHOS_U_NPU_DRIVER_SRC_PATH}>
+   207	            $<$<BOOL:${ETHOS_U_NPU_ENABLED}>:ETHOSU_DRIVER_LIBS=$<TARGET_FILE:ethosu_core_driver>>
+   208	
+   209	            $<$<BOOL:${TENSORFLOW_LITE_MICRO_CORE_OPTIMIZATION_LEVEL}>:CORE_OPTIMIZATION_LEVEL=${TENSORFLOW_LITE_MICRO_CORE_OPTIMIZATION_LEVEL}>
+   210	            $<$<BOOL:${TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL}>:KERNEL_OPTIMIZATION_LEVEL=${TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL}>
+   211	            $<$<BOOL:${TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL}>:THIRD_PARTY_KERNEL_OPTIMIZATION_LEVEL=${TENSORFLOW_LITE_MICRO_KERNEL_OPTIMIZATION_LEVEL}>
+   212	            $<$<BOOL:${TENSORFLOW_LITE_MICRO_OPTIMIZED_KERNEL}>:OPTIMIZED_KERNEL_DIR=${TENSORFLOW_LITE_MICRO_OPTIMIZED_KERNEL}>
+   213	            $<$<BOOL:${TENSORFLOW_LITE_MICRO_CO_PROCESSOR}>:CO_PROCESSOR=${TENSORFLOW_LITE_MICRO_CO_PROCESSOR}>
+   214	
+   215	        # Command to copy over the generated library to the local build tree.
+   216	        COMMAND ${CMAKE_COMMAND} -E copy  ${TENSORFLOW_LITE_MICRO_GENDIR}/lib/${TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME}
+   217	                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME}
+   218	
+   219	        COMMENT "Building TensorFlow Lite Micro library..."
+   220	
+   221	        BYPRODUCTS ${TENSORFLOW_SRC_PATH}/tensorflow/tensorflow/lite/micro/tools/make/downloads
+   222	                    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME}
+   223	                    ${TENSORFLOW_LITE_MICRO_GENDIR}/lib/${TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME}
+   224	
+   225	        WORKING_DIRECTORY ${TENSORFLOW_SRC_PATH})
+   226	
+   227	    # Create library
+   228	    set(TENSORFLOW_LITE_MICRO_TARGET tensorflow-lite-micro)
+   229	    add_library(${TENSORFLOW_LITE_MICRO_TARGET} STATIC IMPORTED)
+   230	
+   231	    if(ETHOS_U_NPU_ENABLED)
+   232	        target_link_libraries(tensorflow-lite-micro INTERFACE ethos_u_npu)
+   233	    endif()
+   234	
+   235	    add_dependencies(tensorflow-lite-micro tensorflow_build)
+   236	
+   237	    set_property(TARGET tensorflow-lite-micro PROPERTY IMPORTED_LOCATION
+   238	                 "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TENSORFLOW_LITE_MICRO_PLATFORM_LIB_NAME}")
+   239	
+   240	    target_include_directories(tensorflow-lite-micro
+   241	        INTERFACE
+   242	        ${TENSORFLOW_SRC_PATH}
+   243	        ${TENSORFLOW_SRC_PATH}/tensorflow/lite/micro/tools/make/downloads/flatbuffers/include
+   244	        ${TENSORFLOW_SRC_PATH}/tensorflow/lite/micro/tools/make/downloads/gemmlowp)
+   245	
+   246	    target_compile_definitions(tensorflow-lite-micro
+   247	        INTERFACE
+   248	        TF_LITE_STATIC_MEMORY)
+   249	
+   250	    # Create an alias to use in other parts of the project.
+   251	    add_library(google::tensorflow-lite-micro ALIAS tensorflow-lite-micro)
+   252	
+   253	endfunction()
+   254	
+   255	build_tflite_micro_cmake()
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/CMakeLists.txt
+------------------------------------------------------------
+     1	#----------------------------------------------------------------------------
+     2	#  SPDX-FileCopyrightText: Copyright 2022, 2024-2025 Arm Limited and/or its
+     3	#  affiliates <open-source-office@arm.com>
+     4	#  SPDX-License-Identifier: Apache-2.0
+     5	#
+     6	#  Licensed under the Apache License, Version 2.0 (the "License");
+     7	#  you may not use this file except in compliance with the License.
+     8	#  You may obtain a copy of the License at
+     9	#
+    10	#      http://www.apache.org/licenses/LICENSE-2.0
+    11	#
+    12	#  Unless required by applicable law or agreed to in writing, software
+    13	#  distributed under the License is distributed on an "AS IS" BASIS,
+    14	#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    15	#  See the License for the specific language governing permissions and
+    16	#  limitations under the License.
+    17	#----------------------------------------------------------------------------
+    18	
+    19	#########################################################
+    20	#         Arm Ethos-U NPU initialization library        #
+    21	#########################################################
+    22	
+    23	cmake_minimum_required(VERSION 3.21.0)
+    24	set(ETHOS_U_NPU_COMPONENT ethos_u_npu)
+    25	project(${ETHOS_U_NPU_COMPONENT}
+    26	    DESCRIPTION     "Ethos-U NPU initialization library"
+    27	    LANGUAGES       C CXX ASM)
+    28	
+    29	if (NOT DEFINED ETHOS_U_NPU_DRIVER_SRC_PATH)
+    30	    message(FATAL_ERROR "ETHOS_U_NPU_DRIVER_SRC_PATH should"
+    31	            " be defined when ETHOS_U_NPU_ENABLED=${ETHOS_U_NPU_ENABLED}")
+    32	endif()
+    33	
+    34	# For the driver, we need to provide the CMSIS_PATH variable
+    35	set(CMSIS_PATH ${CMSIS_SRC_PATH} CACHE PATH "Path to CMSIS directory")
+    36	
+    37	# Definitions that should be overridden by the platform wrapping this project.
+    38	# Otherwise, these defaults will be used.
+    39	set(ETHOS_U_BASE_ADDR    "0x58102000"    CACHE STRING "Ethos-U NPU base address")
+    40	set(ETHOS_U_IRQN         "56"            CACHE STRING "Ethos-U NPU Interrupt")
+    41	set(ETHOS_U_SEC_ENABLED  "1"             CACHE STRING "Ethos-U NPU Security enable")
+    42	set(ETHOS_U_PRIV_ENABLED "1"             CACHE STRING "Ethos-U NPU Privilege enable")
+    43	
+    44	# Driver needs to know what MAC configuration to build for.
+    45	if (NOT DEFINED ETHOS_U_NPU_CONFIG_ID)
+    46	    set(ETHOS_U_NPU_CONFIG_ID "H128")
+    47	endif()
+    48	
+    49	## Memory mode target definition
+    50	if (NOT DEFINED ETHOS_U_NPU_ID)
+    51	    set(ETHOS_U_NPU_ID U55)
+    52	endif()
+    53	
+    54	if(ETHOS_U_NPU_CONFIG_ID MATCHES "^[A-Z]([0-9]+$)")
+    55	    set(ETHOSU_MACS ${CMAKE_MATCH_1})
+    56	else()
+    57	    message(FATAL_ERROR "Couldn't work out Ethos-U number of MACS from ${ETHOS_U_NPU_CONFIG_ID}")
+    58	endif()
+    59	set(ETHOSU_TARGET_NPU_CONFIG
+    60	        "ethos-${ETHOS_U_NPU_ID}-${ETHOSU_MACS}" CACHE STRING "Target Ethos-U configuration for driver.")
+    61	
+    62	if (NOT DEFINED ETHOS_U_NPU_MEMORY_MODE)
+    63	    set(ETHOS_U_NPU_MEMORY_MODE Shared_Sram)
+    64	endif()
+    65	
+    66	if (ETHOS_U_NPU_MEMORY_MODE STREQUAL Sram_Only)
+    67	    set(ETHOS_U_NPU_MEMORY_MODE_FLAG "-DETHOS_U_NPU_MEMORY_MODE=ETHOS_U_NPU_MEM_MODE_SRAM_ONLY")
+    68	elseif (ETHOS_U_NPU_MEMORY_MODE STREQUAL Shared_Sram)
+    69	    # Shared Sram can be used for Ethos-U55 and Ethos-U65
+    70	    set(ETHOS_U_NPU_MEMORY_MODE_FLAG "-DETHOS_U_NPU_MEMORY_MODE=ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM")
+    71	elseif (ETHOS_U_NPU_MEMORY_MODE STREQUAL Dedicated_Sram)
+    72	    # Dedicated Sram is used only for Ethos-U65 and Ethos-U85
+    73	    if (ETHOS_U_NPU_ID STREQUAL U65 OR ETHOS_U_NPU_ID STREQUAL U85)
+    74	        list(APPEND ETHOS_U_NPU_MEMORY_MODE_FLAG
+    75	            "-DETHOS_U_NPU_MEMORY_MODE=ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM"
+    76	            "-DETHOS_U_NPU_CACHE_SIZE=${ETHOS_U_NPU_CACHE_SIZE}")
+    77	    else ()
+    78	        message(FATAL_ERROR
+    79	            "Non compatible Ethos-U NPU memory mode and processor "
+    80	            "${ETHOS_U_NPU_MEMORY_MODE} - ${ETHOS_U_NPU_ID}. "
+    81	            "`dedicated_sram` can be used only for Ethos-U65 or Ethos-U85.")
+    82	    endif ()
+    83	else ()
+    84	    message(FATAL_ERROR "Non compatible Ethos-U NPU memory mode ${ETHOS_U_NPU_MEMORY_MODE}")
+    85	endif ()
+    86	
+    87	# Include the build for Ethos-U driver
+    88	add_subdirectory(${ETHOS_U_NPU_DRIVER_SRC_PATH} ${CMAKE_BINARY_DIR}/ethos-u-driver)
+    89	
+    90	## Logging utilities:
+    91	if (NOT TARGET hal_log)
+    92	    if (NOT DEFINED LOG_PROJECT_DIR)
+    93	        message(FATAL_ERROR "LOG_PROJECT_DIR needs to be defined.")
+    94	    endif()
+    95	    add_subdirectory(${LOG_PROJECT_DIR} ${CMAKE_BINARY_DIR}/log)
+    96	endif()
+    97	
+    98	# For Ethos-U driver, we need to override the default region configs
+    99	# Region numbers are decided by Vela and they do not need to conform to set rules.
+   100	# Traditionally they have been used as:
+   101	#
+   102	# Region 0: Weights and biases (and const tensors)
+   103	# Region 1: IFM/OFM/Calculation buffers (tensor arena)
+   104	# Region 2: Ethos-U'd dedicated cache region (fast cache memory)
+   105	#
+   106	# NOTE: The above scheme is completely dependent on Vela and could potentially
+   107	#       change.
+   108	#
+   109	# Common definitions:
+   110	# For Ethos-U55/U65/U85, region configs are set as:
+   111	#   0 or 1 = AXI0 set
+   112	#   2 or 3 = AXI1 set
+   113	target_compile_definitions(ethosu_core_driver PUBLIC
+   114	    NPU_REGIONCFG_2=1   # AXI0=M0
+   115	    NPU_REGIONCFG_3=1   # AXI0=M0
+   116	    NPU_REGIONCFG_4=1   # AXI0=M0
+   117	    NPU_REGIONCFG_5=1   # AXI0=M0
+   118	    NPU_REGIONCFG_6=1   # AXI0=M0
+   119	    NPU_REGIONCFG_7=1)  # AXI0=M0
+   120	
+   121	# Definitions relevant for all NPUs but depend on memory mode
+   122	if (ETHOS_U_NPU_MEMORY_MODE STREQUAL Dedicated_Sram)
+   123	    target_compile_definitions(ethosu_core_driver PUBLIC
+   124	        NPU_QCONFIG=3       # AXI1=M1
+   125	        NPU_REGIONCFG_0=3   # AXI1=M1
+   126	        NPU_REGIONCFG_1=3)  # AXI1=M1
+   127	elseif (ETHOS_U_NPU_MEMORY_MODE STREQUAL Shared_Sram)
+   128	    target_compile_definitions(ethosu_core_driver PUBLIC
+   129	        NPU_QCONFIG=3       # AXI1=M1
+   130	        NPU_REGIONCFG_0=3   # AXI1=M1
+   131	        NPU_REGIONCFG_1=0)  # AXI0=M0
+   132	else()
+   133	    target_compile_definitions(ethosu_core_driver PUBLIC
+   134	        NPU_QCONFIG=0       # AXI0=M0
+   135	        NPU_REGIONCFG_0=0   # AXI0=M0
+   136	        NPU_REGIONCFG_1=0)  # AXI0=M0
+   137	endif()
+   138	
+   139	# Ethos-U55 and Ethos-U65 supports up to 128 bytes,
+   140	# and Ethos-U85 supports up to 256 bytes.
+   141	# Although, this is system implementation dependent the platforms we build for should support the
+   142	# maximum burst length for all NPU configurations.
+   143	if (ETHOS_U_NPU_ID STREQUAL U55 OR ETHOS_U_NPU_ID STREQUAL U65)
+   144	    target_compile_definitions(ethosu_core_driver PRIVATE
+   145	        AXI_LIMIT0_MAX_BEATS_BYTES=1
+   146	        AXI_LIMIT1_MAX_BEATS_BYTES=1
+   147	        AXI_LIMIT2_MAX_BEATS_BYTES=1
+   148	        AXI_LIMIT3_MAX_BEATS_BYTES=1) # 0 = 64 byte burst & 1 = 128 byte burst
+   149	    # Use "normal" (modifiable) transactions, improving interconnect transit
+   150	    target_compile_definitions(ethosu_core_driver PRIVATE
+   151	        AXI_LIMIT0_MEM_TYPE=2
+   152	        AXI_LIMIT1_MEM_TYPE=2
+   153	        AXI_LIMIT2_MEM_TYPE=2
+   154	        AXI_LIMIT3_MEM_TYPE=2) # 2 = Normal Non-cacheable Non-bufferable
+   155	elseif (ETHOS_U_NPU_ID STREQUAL U85)
+   156	    target_compile_definitions(ethosu_core_driver PRIVATE
+   157	        AXI_LIMIT_SRAM_MAX_BEATS=2
+   158	        AXI_LIMIT_EXT_MAX_BEATS=2) # 0 = 64 byte burst, 1 = 128 byte burst, 2 = 256 byte burst
+   159	    # Use "normal" (modifiable) transactions, improving interconnect transit
+   160	    target_compile_definitions(ethosu_core_driver PRIVATE
+   161	        NPU_MEM_ATTR_0=0x20  # Normal Non-cacheable Non-bufferable, SRAM ports
+   162	        NPU_MEM_ATTR_1=0x20  # Normal Non-cacheable Non-bufferable, SRAM ports
+   163	        NPU_MEM_ATTR_2=0x24  # Normal Non-cacheable Non-bufferable, EXT ports
+   164	        NPU_MEM_ATTR_3=0x24) # Normal Non-cacheable Non-bufferable, EXT ports
+   165	endif()
+   166	
+   167	# Use "normal" (modifiable) transactions, improving interconnect transit
+   168	target_compile_definitions(ethosu_core_driver PRIVATE
+   169	        AXI_LIMIT0_MEM_TYPE=2
+   170	        AXI_LIMIT1_MEM_TYPE=2
+   171	        AXI_LIMIT2_MEM_TYPE=2
+   172	        AXI_LIMIT3_MEM_TYPE=2) # 2 = Normal Non-cacheable Non-bufferable
+   173	
+   174	# Create static library
+   175	add_library(${ETHOS_U_NPU_COMPONENT} STATIC)
+   176	
+   177	## Include directories - public
+   178	target_include_directories(${ETHOS_U_NPU_COMPONENT}
+   179	    PUBLIC
+   180	    include
+   181	    ${SOURCE_GEN_DIR})
+   182	
+   183	## Component sources
+   184	target_sources(${ETHOS_U_NPU_COMPONENT}
+   185	    PRIVATE
+   186	    ethosu_npu_init.c
+   187	    ethosu_profiler.c)
+   188	
+   189	target_sources(${ETHOS_U_NPU_COMPONENT}
+   190	    PUBLIC
+   191	    ethosu_cpu_cache.c)
+   192	
+   193	## Add dependencies:
+   194	target_link_libraries(${ETHOS_U_NPU_COMPONENT} PUBLIC
+   195	    ethosu_core_driver
+   196	    hal_log)
+   197	
+   198	## If the rte_components target has been defined, include it as a dependency here. This component
+   199	## gives access to certain CPU related functions and definitions that should come from the CMSIS
+   200	## or custom system setup and boot implementation files.
+   201	## If the component is not defined as a target, a dependency for this target should be added by
+   202	## the project importing this one.
+   203	if (TARGET rte_components)
+   204	    target_link_libraries(${ETHOS_U_NPU_COMPONENT} PUBLIC
+   205	        rte_components)
+   206	else()
+   207	    message(WARNING
+   208	        "rte_components target not defined."
+   209	        "${ETHOS_U_NPU_COMPONENT} will need to be provided access to"
+   210	        "RTE_Compnents.h header to include CPU specific definitions.")
+   211	endif()
+   212	
+   213	target_compile_definitions(${ETHOS_U_NPU_COMPONENT}
+   214	    PUBLIC
+   215	    ARM_NPU
+   216	    ${ETHOS_U_NPU_MEMORY_MODE_FLAG}
+   217	    ETHOS_U_BASE_ADDR=${ETHOS_U_BASE_ADDR}
+   218	    ETHOS_U_IRQN=${ETHOS_U_IRQN}
+   219	    ETHOS_U_SEC_ENABLED=${ETHOS_U_SEC_ENABLED}
+   220	    ETHOS_U_PRIV_ENABLED=${ETHOS_U_PRIV_ENABLED})
+   221	
+   222	# Display status
+   223	message(STATUS "CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
+   224	message(STATUS "*******************************************************")
+   225	message(STATUS "Library                 : " ${ETHOS_U_NPU_COMPONENT})
+   226	message(STATUS "*******************************************************")
+
+===== 8. TFLM ETHOS-U KERNEL =====
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc
+------------------------------------------------------------
+     1	/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	//
+    17	// This is a stub file for non-Ethos platforms
+    18	//
+    19	#include "tensorflow/lite/micro/micro_common.h"
+    20	
+    21	namespace tflite {
+    22	
+    23	TFLMRegistration* Register_ETHOSU() { return nullptr; }
+    24	
+    25	const char* GetString_ETHOSU() { return ""; }
+    26	
+    27	}  // namespace tflite
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+------------------------------------------------------------
+     1	/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include <ethosu_driver.h>
+    17	
+    18	#include "flatbuffers/flexbuffers.h"
+    19	#include "tensorflow/lite/c/common.h"
+    20	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    21	#include "tensorflow/lite/micro/micro_context.h"
+    22	#include "tensorflow/lite/micro/micro_log.h"
+    23	
+    24	namespace tflite {
+    25	namespace {
+    26	
+    27	constexpr uint8_t CO_TYPE_ETHOSU = 1;
+    28	
+    29	struct OpData {
+    30	  int cms_data_size;
+    31	  int base_addr_idx;
+    32	  int base_addr_size_idx;
+    33	};
+    34	
+    35	void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+    36	  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+    37	  return context->AllocatePersistentBuffer(context, sizeof(OpData));
+    38	}
+    39	
+    40	TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+    41	  TFLITE_DCHECK(context != nullptr);
+    42	  TF_LITE_ENSURE(context, node->inputs->size > 0);
+    43	  TFLITE_DCHECK(node->user_data != nullptr);
+    44	  TF_LITE_ENSURE(context, node->custom_initial_data_size > 0);
+    45	
+    46	  OpData* data = static_cast<OpData*>(node->user_data);
+    47	  int num_base_addr = node->inputs->size + node->outputs->size;
+    48	
+    49	  // Request arrays for the base address pointers and sizes.
+    50	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    51	      context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+    52	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    53	      context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+    54	
+    55	  // Get command stream data size.
+    56	  MicroContext* micro_context = GetMicroContext(context);
+    57	  TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+    58	  data->cms_data_size = tensor->bytes;
+    59	  micro_context->DeallocateTempTfLiteTensor(tensor);
+    60	  return kTfLiteOk;
+    61	}
+    62	
+    63	TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+    64	  TFLITE_DCHECK(node->user_data != nullptr);
+    65	  TFLITE_DCHECK(context != nullptr);
+    66	  TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+    67	
+    68	  // Get base addresses.
+    69	  TfLiteEvalTensor* tensor;
+    70	  int i = 0;
+    71	  int num_tensors = 0;
+    72	  void* cms_data;
+    73	  uint8_t co_type;
+    74	  int result;
+    75	  const OpData* data = static_cast<const OpData*>(node->user_data);
+    76	  uint64_t* base_addrs = static_cast<uint64_t*>(
+    77	      context->GetScratchBuffer(context, data->base_addr_idx));
+    78	  size_t* base_addrs_size = static_cast<size_t*>(
+    79	      context->GetScratchBuffer(context, data->base_addr_size_idx));
+    80	
+    81	  const uint8_t* custom_data =
+    82	      static_cast<uint8_t const*>(node->custom_initial_data);
+    83	  auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+    84	  co_type = root.AsInt8();
+    85	  if (co_type != CO_TYPE_ETHOSU) {
+    86	    MicroPrintf("CO_TYPE != ETHOSU");
+    87	    return kTfLiteError;
+    88	  }
+    89	
+    90	  // Get command stream data address.
+    91	  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+    92	  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+    93	
+    94	  // Get addresses to weights/scratch/input data.
+    95	  for (i = 1; i < node->inputs->size; ++i) {
+    96	    tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+    97	    base_addrs[num_tensors] =
+    98	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+    99	    size_t byte_size = 1;
+   100	    for (int k = 0; k < tensor->dims->size; k++) {
+   101	      byte_size = byte_size * tensor->dims->data[k];
+   102	    }
+   103	    base_addrs_size[num_tensors] = byte_size;
+   104	    num_tensors++;
+   105	  }
+   106	
+   107	  // Get addresses to output data.
+   108	  for (i = 0; i < node->outputs->size; ++i) {
+   109	    tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+   110	    base_addrs[num_tensors] =
+   111	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   112	    size_t byte_size = 1;
+   113	    for (int k = 0; k < tensor->dims->size; k++) {
+   114	      byte_size = byte_size * tensor->dims->data[k];
+   115	    }
+   116	    base_addrs_size[num_tensors] = byte_size;
+   117	    num_tensors++;
+   118	  }
+   119	
+   120	  // When Vela optimizes a tflite file it will assign the tensors like this:
+   121	  //
+   122	  // +-------+------------------------+  +--------+-------------+
+   123	  // | INPUT | Description            |  | OUTPUT | Description |
+   124	  // +-------+------------------------+  +--------+-------------+
+   125	  // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+   126	  // |     1 | TFLM model             |  +--------+-------------+
+   127	  // |     2 | TFLM arena             |
+   128	  // |     3 | Ethos-U fast scratch   |
+   129	  // |  4..n | Inputs                 |
+   130	  // +-------+------------------------+
+   131	  //
+   132	  // This code will assign the NPU base addresses like this:
+   133	  //
+   134	  // +--------------+----------------------+
+   135	  // | Base address | Description          |
+   136	  // +--------------+----------------------+
+   137	  // |            0 | TFLM model           |
+   138	  // |            1 | TFLM arena           |
+   139	  // |            2 | Ethos-U fast scratch |
+   140	  // |         3..n | Input tensors        |
+   141	  // |         n..m | Output tensors       |
+   142	  // +--------------+----------------------+
+   143	  //
+   144	  // The number of base address will be limited to 8.
+   145	  //
+   146	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   147	  // buffers using base address 1. This means that it is not possible to point
+   148	  // the input and output tensors outside of the TFLM arena.
+   149	  num_tensors = std::min(num_tensors, 8);
+   150	
+   151	  struct ethosu_driver* drv = ethosu_reserve_driver();
+   152	  result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+   153	                            base_addrs_size, num_tensors,
+   154	                            GetMicroContext(context)->external_context());
+   155	  ethosu_release_driver(drv);
+   156	
+   157	  if (-1 == result) {
+   158	    return kTfLiteError;
+   159	  } else {
+   160	    return kTfLiteOk;
+   161	  }
+   162	}
+   163	
+   164	}  // namespace
+   165	
+   166	TFLMRegistration* Register_ETHOSU() {
+   167	  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+   168	  return &r;
+   169	}
+   170	
+   171	const char* GetString_ETHOSU() { return "ethos-u"; }
+   172	
+   173	}  // namespace tflite
+
+------------------------------------------------------------
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h
+------------------------------------------------------------
+     1	/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	#ifndef TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+    16	#define TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+    17	
+    18	#include "tensorflow/lite/c/common.h"
+    19	
+    20	namespace tflite {
+    21	
+    22	TFLMRegistration* Register_ETHOSU();
+    23	
+    24	const char* GetString_ETHOSU();
+    25	
+    26	}  // namespace tflite
+    27	
+    28	#endif  // TENSORFLOW_LITE_MICRO_KERNELS_ETHOSU_H_
+
+===== 9. MODIFIED RESOLVER DIFF =====
+diff --git a/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc b/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+index 9d90508d..b2b5ccf5 100644
+--- a/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
++++ b/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+@@ -44,6 +44,7 @@ tflite::MicroMutableOpResolver<kNumberOperators> CreateAllOpsResolver()
+     mutableAllOpResolver.AddConv2D();
+     mutableAllOpResolver.AddCos();
+     mutableAllOpResolver.AddCumSum();
++    mutableAllOpResolver.AddTopKV2();
+     mutableAllOpResolver.AddDepthToSpace();
+     mutableAllOpResolver.AddDepthwiseConv2D();
+     mutableAllOpResolver.AddDequantize();
+diff --git a/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp b/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp
+index 2c3e95fe..5027bd51 100644
+--- a/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp
++++ b/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp
+@@ -23,7 +23,7 @@
+ namespace arm::app::fwk::tflm {
+ 
+ /* Maximum number of individual operations that can be enlisted. */
+-constexpr int kNumberOperators = 98;
++constexpr int kNumberOperators = 99;
+ 
+ /**  An Op resolver containing all ops is no longer supplied with TFLite Micro
+  *   so we create our own instead for the generic inference runner.
+
+===== 10. RESOLVER BACKUP DIFFERENCES =====
+
+DIFF: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc versus /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc.bak_topk_resolver
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc.bak_topk_resolver	2026-09-24 10:48:01.469966458 +0800
++++ /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc	2026-11-05 14:11:41.975453449 +0800
+@@ -44,6 +44,7 @@
+     mutableAllOpResolver.AddConv2D();
+     mutableAllOpResolver.AddCos();
+     mutableAllOpResolver.AddCumSum();
++    mutableAllOpResolver.AddTopKV2();
+     mutableAllOpResolver.AddDepthToSpace();
+     mutableAllOpResolver.AddDepthwiseConv2D();
+     mutableAllOpResolver.AddDequantize();
+
+DIFF: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp versus /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp.bak_topk_resolver
+--- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp.bak_topk_resolver	2026-09-24 10:48:01.469966458 +0800
++++ /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.hpp	2026-11-05 14:11:41.975295919 +0800
+@@ -23,7 +23,7 @@
+ namespace arm::app::fwk::tflm {
+ 
+ /* Maximum number of individual operations that can be enlisted. */
+-constexpr int kNumberOperators = 98;
++constexpr int kNumberOperators = 99;
+ 
+ /**  An Op resolver containing all ops is no longer supplied with TFLite Micro
+  *   so we create our own instead for the generic inference runner.
+
+===== 11. EXISTING TFLM BUILD DIRECTORY =====
+BUILD DIRECTORY: /home/user/sdk-alif/build_tflm_ethosu
+BOARD:STRING=alif_b1_dk/ab1c1f4m51820ph0/rtss_he
+BOARD_DIR:PATH=/home/user/sdk-alif/zephyr/boards/alif/alif_b1_dk
+BOARD_EXTENSIONS:BOOL=ON
+CACHED_BOARD:STRING=alif_b1_dk/ab1c1f4m51820ph0/rtss_he
+CONFIG_ARM_ETHOS_U55_128:BOOL=y
+ETHOSU_ARCH_U55:BOOL=y
+ETHOSU_INFERENCE_TIMEOUT:STRING=
+ETHOSU_LOG_ENABLE:BOOL=ON
+ETHOSU_LOG_SEVERITY:STRING=debug
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-128
+BOARD_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/boards/alif/alif_b1_dk
+CMAKE_GENERATOR_PLATFORM:INTERNAL=
+CMAKE_HOME_DIRECTORY:INTERNAL=/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_ethosu
+CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
+//STRINGS property for variable: ETHOSU_LOG_SEVERITY
+ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+
+Build metadata:
+/home/user/sdk-alif/build_tflm_ethosu/build.ninja (2236743 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.map (1834333 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_final.map (1834333 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.elf (6249344 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_pre0.elf (6250980 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_pre0.map (1835068 bytes)
+/home/user/sdk-alif/build_tflm_ethosu/compile_commands.json (956693 bytes)
+
+===== 12. EXISTING HEAT-STRESS BUILD CONFIGURATION =====
+
+BUILD: /home/user/sdk-alif/build_heatstroke_work_demand_combo_20261120_170620
+BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+BOARD_DIR:PATH=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+BOARD_EXTENSIONS:BOOL=ON
+CACHED_BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+ETHOSU_INFERENCE_TIMEOUT:STRING=
+ETHOSU_LOG_ENABLE:BOOL=ON
+ETHOSU_LOG_SEVERITY:STRING=warning
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-256
+HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT:BOOL=OFF
+//Compile only TFLM lstm_eval.cc with -O3
+POLYU_MODEL_PATH:FILEPATH=/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/../PolyU/Heat_Stress_Model_1_v20260514/export/vela_h128_performance_broadcast_shape_fold/qdq_both_variance_eps_preprocess_fp32_v2_concat_fp32_broadcast_shape_fold_vela.tflite
+BOARD_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+CLI_CONFIG_ACTIVATION_BUF_SZ:INTERNAL=0x1A0000
+CLI_CONFIG_ARM_ETHOS_U55_256:INTERNAL=y
+CMAKE_GENERATOR_PLATFORM:INTERNAL=
+CMAKE_HOME_DIRECTORY:INTERNAL=/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620
+CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
+//STRINGS property for variable: ETHOSU_LOG_SEVERITY
+ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+
+BUILD: /home/user/sdk-alif/build_heatstroke_e8_hp_u55_256_vela_20261117
+BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+BOARD_DIR:PATH=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+BOARD_EXTENSIONS:BOOL=ON
+CACHED_BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_hp
+ETHOSU_INFERENCE_TIMEOUT:STRING=
+ETHOSU_LOG_ENABLE:BOOL=ON
+ETHOSU_LOG_SEVERITY:STRING=warning
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-256
+HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT:BOOL=OFF
+//Compile only TFLM lstm_eval.cc with -O3
+POLYU_MODEL_PATH:FILEPATH=/home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_e8_hp_u55_256_20261117.tflite
+BOARD_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+CLI_CONFIG_ARM_ETHOS_U55_256:INTERNAL=y
+CMAKE_GENERATOR_PLATFORM:INTERNAL=
+CMAKE_HOME_DIRECTORY:INTERNAL=/home/user/sdk-alif/beeinventor/test_heatstroke
+CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
+//STRINGS property for variable: ETHOSU_LOG_SEVERITY
+ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+
+BUILD: /home/user/sdk-alif/build_heatstroke_ethosu_aligned16_arena130000_kernelheap64k_20261111_try1
+BOARD:STRING=alif_b1_dk/ab1c1f4m51820ph0/rtss_he
+BOARD_DIR:PATH=/home/user/sdk-alif/zephyr/boards/alif/alif_b1_dk
+BOARD_EXTENSIONS:BOOL=ON
+CACHED_BOARD:STRING=alif_b1_dk/ab1c1f4m51820ph0/rtss_he
+ETHOSU_INFERENCE_TIMEOUT:STRING=
+ETHOSU_LOG_ENABLE:BOOL=ON
+ETHOSU_LOG_SEVERITY:STRING=warning
+ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-128
+HEATSTROKE_ETHOSU_ALIGNED_MODEL_EXPERIMENT:BOOL=ON
+//Compile only TFLM lstm_eval.cc with -O3
+POLYU_MODEL_PATH:FILEPATH=/home/user/sdk-alif/beeinventor/test_heatstroke/model_candidates/vela_rank4_mean_shapes_fixed_layernorm_sub_div_fused_exp_ethosu_aligned16_20261111.tflite
+BOARD_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/boards/alif/alif_b1_dk
+CLI_CONFIG_ARM_ETHOS_U55_128:INTERNAL=y
+CMAKE_GENERATOR_PLATFORM:INTERNAL=
+CMAKE_HOME_DIRECTORY:INTERNAL=/home/user/sdk-alif/beeinventor/test_heatstroke
+CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
+//STRINGS property for variable: ETHOSU_LOG_SEVERITY
+ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+
+============================================================
+INSPECTION COMPLETE
+No source files were modified.
+No firmware was built or programmed.
+============================================================
