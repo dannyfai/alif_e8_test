@@ -1,0 +1,508 @@
+===== TCN V6 EVALUATION REPAIR V2 =====
+2026-11-22T21:16:24+08:00
+EVALUATION_PATCH=PASS
+STALE_VARIABLE_REPLACED=YES
+ORIGINAL_SCRIPT_UNCHANGED=YES
+FIXED_SCRIPT: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_v6_tcn_only_independent_calib_evalfix_v2_20261122_211624.py
+
+===== RUN INDEPENDENT QDQ EVALUATION =====
+===== TCN FOLD-2 V6 STATIC INT8 QDQ EXPERIMENT =====
+Timestamp: 2026-11-22T21:16:25.424423+08:00
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+NumPy: 2.5.4
+ONNX: 1.20.1
+ONNX Runtime: 1.24.4
+FP32 ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx
+QDQ output: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+FP32 ONNX SHA256: 1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a
+
+Original graph node count: 343
+Original Conv count: 47
+Original Gemm count: 7
+Original operator histogram:
+{
+  "Abs": 2,
+  "Add": 23,
+  "Cast": 6,
+  "Clip": 1,
+  "Concat": 7,
+  "Constant": 97,
+  "ConstantOfShape": 7,
+  "Conv": 47,
+  "Div": 4,
+  "Equal": 1,
+  "Exp": 2,
+  "Expand": 1,
+  "Gather": 6,
+  "Gemm": 7,
+  "GreaterOrEqual": 2,
+  "Mul": 29,
+  "Neg": 4,
+  "Not": 1,
+  "Or": 2,
+  "Pad": 5,
+  "Reciprocal": 2,
+  "ReduceMean": 4,
+  "ReduceSum": 2,
+  "Relu": 31,
+  "Reshape": 11,
+  "Shape": 1,
+  "Slice": 5,
+  "Sqrt": 2,
+  "Sub": 8,
+  "Transpose": 9,
+  "Unsqueeze": 6,
+  "Where": 8
+}
+Subject-level split column: worker_id
+[test] loaded samples=394, skipped_incomplete=0
+[test] distinct subject groups=25
+
+===== BUILDING INDEPENDENT CALIBRATION INPUTS =====
+INDEPENDENT CALIBRATION source: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/int8_calibration
+INDEPENDENT CALIBRATION worker count: 25
+INDEPENDENT CALIBRATION worker IDs: ['1', '10', '12', '14', '15', '16', '18', '19', '23', '24', '25', '26', '28', '29', '30', '32', '33', '35', '4', '40', '42', '44', '45', '47', '7']
+INDEPENDENT CALIBRATION: prepared 1/394 samples
+INDEPENDENT CALIBRATION: prepared 101/394 samples
+INDEPENDENT CALIBRATION: prepared 201/394 samples
+INDEPENDENT CALIBRATION: prepared 301/394 samples
+INDEPENDENT CALIBRATION: prepared 394/394 samples
+INDEPENDENT CALIBRATION samples: 394
+INDEPENDENT CALIBRATION missing sensor entries: 1295404
+INDEPENDENT CALIBRATION total sensor entries: 2127600
+INDEPENDENT CALIBRATION missing sensor percentage: 60.885692799398385
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+
+===== BUILDING HELD-OUT EVALUATION INPUTS =====
+HELD-OUT EVALUATION source: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/split_byid
+HELD-OUT EVALUATION worker count: 3
+HELD-OUT EVALUATION worker IDs: ['5', '8', '9']
+HELD-OUT EVALUATION: prepared 1/449 samples
+HELD-OUT EVALUATION: prepared 101/449 samples
+HELD-OUT EVALUATION: prepared 201/449 samples
+HELD-OUT EVALUATION: prepared 301/449 samples
+HELD-OUT EVALUATION: prepared 401/449 samples
+HELD-OUT EVALUATION: prepared 449/449 samples
+HELD-OUT EVALUATION samples: 449
+HELD-OUT EVALUATION missing sensor entries: 1180787
+HELD-OUT EVALUATION total sensor entries: 2424600
+HELD-OUT EVALUATION missing sensor percentage: 48.70028045863235
+
+===== SUBJECT INDEPENDENCE CHECK =====
+Calibration workers: 25
+Evaluation workers: 3
+Overlapping workers: []
+SUBJECT_INDEPENDENCE_STATUS=PASS
+
+===== STATIC QDQ QUANTIZATION CONFIGURATION =====
+{
+  "quant_format": "QDQ",
+  "op_types_to_quantize": [
+    "Conv"
+  ],
+  "activation_type": "QInt8",
+  "weight_type": "QInt8",
+  "per_channel": true,
+  "calibrate_method": "MinMax",
+  "ActivationSymmetric": true,
+  "WeightSymmetric": true,
+  "calibration_sample_count": 394,
+  "calibration_dataset": "data/int8_calibration",
+  "evaluation_dataset": "data/split_byid/test",
+  "calibration_worker_count": 25,
+  "evaluation_worker_count": 3,
+  "excluded_operator_policy": "All other operators left in their original representation",
+  "missing_mask": "Boolean input; not treated as an INT8 activation"
+}
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+[0;93m2026-11-22 21:16:29.241949887 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:29.241970783 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:29.241972948 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+QDQ ONNX file: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+QDQ file bytes: 39634633
+QDQ SHA256: 54c37d3a653741e8661147f67d832f8bacc7cc4092b83899f3c393c0daa58d0b
+
+QDQ ONNX checker: PASS
+QDQ operator summary:
+{
+  "operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 128,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 64,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  },
+  "quantize_linear_nodes": 64,
+  "dequantize_linear_nodes": 128,
+  "qdq_scale_tensor_count": 192,
+  "qdq_scale_value_count": 2124,
+  "qdq_scale_min": 0.00026602193247526884,
+  "qdq_scale_max": 1.597121000289917,
+  "direct_graph_input_quantizers": {
+    "x_values": [],
+    "missing_mask": [],
+    "x_mark": [],
+    "worker_features_18": [],
+    "compact_values": []
+  }
+}
+Initializer summary:
+{
+  "initializer_count_by_dtype": {
+    "float32": 156,
+    "int8": 148,
+    "int32": 44
+  },
+  "initializer_bytes_by_dtype": {
+    "float32": 39391064,
+    "int8": 42406,
+    "int32": 5424
+  },
+  "int8_initializer_count": 148,
+  "int8_initializer_bytes": 42406,
+  "int8_initializer_examples": [
+    "/Transpose_2_output_0_zero_point",
+    "/tcn_in/Conv_output_0_zero_point",
+    "onnx::Conv_603_zero_point",
+    "onnx::Conv_603_quantized",
+    "/Relu_output_0_zero_point",
+    "/tcn_blocks.0/layer1/depthwise/Conv_output_0_zero_point",
+    "model.tcn_blocks.0.layer1.depthwise.weight_zero_point",
+    "model.tcn_blocks.0.layer1.depthwise.weight_quantized",
+    "/tcn_blocks.0/layer1/pointwise/Conv_output_0_zero_point",
+    "onnx::Conv_606_zero_point",
+    "onnx::Conv_606_quantized",
+    "/tcn_blocks.0/layer1/Relu_output_0_zero_point",
+    "/tcn_blocks.0/layer2/depthwise/Conv_output_0_zero_point",
+    "model.tcn_blocks.0.layer2.depthwise.weight_zero_point",
+    "model.tcn_blocks.0.layer2.depthwise.weight_quantized",
+    "/tcn_blocks.0/layer2/pointwise/Conv_output_0_zero_point",
+    "onnx::Conv_609_zero_point",
+    "onnx::Conv_609_quantized",
+    "/tcn_blocks.0/Relu_output_0_zero_point",
+    "/tcn_blocks.1/layer1/depthwise/Conv_output_0_zero_point"
+  ]
+}
+
+===== ONNX RUNTIME QDQ VALIDATION: ALL 449 HELD-OUT SAMPLES =====
+[0;93m2026-11-22 21:16:32.374640342 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:32.374671501 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:32.374674477 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:32.428909513 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:32.428931173 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-22 21:16:32.428962181 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+FP32 input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+QDQ input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+FP32 output: reconstructed_values
+QDQ output: reconstructed_values
+Progress 1/449; sample_max_abs=0.870598197; nonfinite_samples=0
+Progress 51/449; sample_max_abs=1.00093269; nonfinite_samples=0
+Progress 101/449; sample_max_abs=1.64312291; nonfinite_samples=0
+Progress 151/449; sample_max_abs=1.0265919; nonfinite_samples=0
+Progress 201/449; sample_max_abs=0.981733084; nonfinite_samples=0
+Progress 251/449; sample_max_abs=0.898425281; nonfinite_samples=0
+Progress 301/449; sample_max_abs=0.913323581; nonfinite_samples=0
+Progress 351/449; sample_max_abs=0.919033051; nonfinite_samples=0
+Progress 401/449; sample_max_abs=0.970934629; nonfinite_samples=0
+Progress 449/449; sample_max_abs=1.20071161; nonfinite_samples=0
+
+===== STATIC QDQ SUMMARY =====
+{
+  "model": "Fold-2 TCN regression/imputation V6",
+  "quantization": {
+    "quant_format": "QDQ",
+    "op_types_to_quantize": [
+      "Conv"
+    ],
+    "activation_type": "QInt8",
+    "weight_type": "QInt8",
+    "per_channel": true,
+    "calibrate_method": "MinMax",
+    "ActivationSymmetric": true,
+    "WeightSymmetric": true,
+    "calibration_sample_count": 394,
+    "calibration_dataset": "data/int8_calibration",
+    "evaluation_dataset": "data/split_byid/test",
+    "calibration_worker_count": 25,
+    "evaluation_worker_count": 3,
+    "excluded_operator_policy": "All other operators left in their original representation",
+    "missing_mask": "Boolean input; not treated as an INT8 activation"
+  },
+  "calibration_dataset": "data/int8_calibration",
+  "evaluation_dataset": "data/split_byid/test",
+  "calibration_samples": 394,
+  "evaluation_samples": 449,
+  "calibration_worker_ids": [
+    "1",
+    "10",
+    "12",
+    "14",
+    "15",
+    "16",
+    "18",
+    "19",
+    "23",
+    "24",
+    "25",
+    "26",
+    "28",
+    "29",
+    "30",
+    "32",
+    "33",
+    "35",
+    "4",
+    "40",
+    "42",
+    "44",
+    "45",
+    "47",
+    "7"
+  ],
+  "evaluation_worker_ids": [
+    "5",
+    "8",
+    "9"
+  ],
+  "worker_overlap": [],
+  "subject_independence_pass": true,
+  "note": "QDQ calibration used independent int8_calibration data from 25 workers. Numerical validation used all held-out split_byid/test samples from 3 disjoint workers.",
+  "fp32_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+  "fp32_onnx_sha256": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+  "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx",
+  "qdq_onnx_sha256": "54c37d3a653741e8661147f67d832f8bacc7cc4092b83899f3c393c0daa58d0b",
+  "qdq_bytes": 39634633,
+  "all_outputs_finite": true,
+  "nonfinite_samples": [],
+  "global_max_abs_error": 1.643122911453247,
+  "global_mean_abs_error": 0.20316721872116897,
+  "global_rmse": 0.2551484138093066,
+  "worst_sample_index": 100,
+  "median_sample_max_abs_error": 0.9944024085998535,
+  "p99_sample_max_abs_error": 1.3331468200683585,
+  "per_channel_error": {
+    "0": {
+      "max_abs_error": 1.3932403326034546,
+      "mean_abs_error": 0.19526884554544466,
+      "rmse": 0.2442283240480534
+    },
+    "1": {
+      "max_abs_error": 1.2135498523712158,
+      "mean_abs_error": 0.19168972485692998,
+      "rmse": 0.24177976062329518
+    },
+    "2": {
+      "max_abs_error": 1.3373844623565674,
+      "mean_abs_error": 0.21482395513258382,
+      "rmse": 0.26942997661841184
+    },
+    "3": {
+      "max_abs_error": 1.1218104362487793,
+      "mean_abs_error": 0.1699930365658712,
+      "rmse": 0.21395733462479546
+    },
+    "4": {
+      "max_abs_error": 1.158276915550232,
+      "mean_abs_error": 0.23163838332760928,
+      "rmse": 0.2831044259938558
+    },
+    "5": {
+      "max_abs_error": 1.643122911453247,
+      "mean_abs_error": 0.21558936689857489,
+      "rmse": 0.2719944524147451
+    }
+  },
+  "qdq_graph": {
+    "operator_counts": {
+      "Abs": 2,
+      "Add": 23,
+      "Cast": 6,
+      "Clip": 1,
+      "Concat": 7,
+      "Constant": 97,
+      "ConstantOfShape": 7,
+      "Conv": 47,
+      "DequantizeLinear": 128,
+      "Div": 4,
+      "Equal": 1,
+      "Exp": 2,
+      "Expand": 1,
+      "Gather": 6,
+      "Gemm": 7,
+      "GreaterOrEqual": 2,
+      "Mul": 29,
+      "Neg": 4,
+      "Not": 1,
+      "Or": 2,
+      "Pad": 5,
+      "QuantizeLinear": 64,
+      "Reciprocal": 2,
+      "ReduceMean": 4,
+      "ReduceSum": 2,
+      "Relu": 31,
+      "Reshape": 11,
+      "Shape": 1,
+      "Slice": 5,
+      "Sqrt": 2,
+      "Sub": 8,
+      "Transpose": 9,
+      "Unsqueeze": 6,
+      "Where": 8
+    },
+    "quantize_linear_nodes": 64,
+    "dequantize_linear_nodes": 128,
+    "qdq_scale_tensor_count": 192,
+    "qdq_scale_value_count": 2124,
+    "qdq_scale_min": 0.00026602193247526884,
+    "qdq_scale_max": 1.597121000289917,
+    "direct_graph_input_quantizers": {
+      "x_values": [],
+      "missing_mask": [],
+      "x_mark": [],
+      "worker_features_18": [],
+      "compact_values": []
+    }
+  },
+  "initializer_summary": {
+    "initializer_count_by_dtype": {
+      "float32": 156,
+      "int8": 148,
+      "int32": 44
+    },
+    "initializer_bytes_by_dtype": {
+      "float32": 39391064,
+      "int8": 42406,
+      "int32": 5424
+    },
+    "int8_initializer_count": 148,
+    "int8_initializer_bytes": 42406,
+    "int8_initializer_examples": [
+      "/Transpose_2_output_0_zero_point",
+      "/tcn_in/Conv_output_0_zero_point",
+      "onnx::Conv_603_zero_point",
+      "onnx::Conv_603_quantized",
+      "/Relu_output_0_zero_point",
+      "/tcn_blocks.0/layer1/depthwise/Conv_output_0_zero_point",
+      "model.tcn_blocks.0.layer1.depthwise.weight_zero_point",
+      "model.tcn_blocks.0.layer1.depthwise.weight_quantized",
+      "/tcn_blocks.0/layer1/pointwise/Conv_output_0_zero_point",
+      "onnx::Conv_606_zero_point",
+      "onnx::Conv_606_quantized",
+      "/tcn_blocks.0/layer1/Relu_output_0_zero_point",
+      "/tcn_blocks.0/layer2/depthwise/Conv_output_0_zero_point",
+      "model.tcn_blocks.0.layer2.depthwise.weight_zero_point",
+      "model.tcn_blocks.0.layer2.depthwise.weight_quantized",
+      "/tcn_blocks.0/layer2/pointwise/Conv_output_0_zero_point",
+      "onnx::Conv_609_zero_point",
+      "onnx::Conv_609_quantized",
+      "/tcn_blocks.0/Relu_output_0_zero_point",
+      "/tcn_blocks.1/layer1/depthwise/Conv_output_0_zero_point"
+    ]
+  },
+  "qdq_operator_counts": {
+    "Abs": 2,
+    "Add": 23,
+    "Cast": 6,
+    "Clip": 1,
+    "Concat": 7,
+    "Constant": 97,
+    "ConstantOfShape": 7,
+    "Conv": 47,
+    "DequantizeLinear": 128,
+    "Div": 4,
+    "Equal": 1,
+    "Exp": 2,
+    "Expand": 1,
+    "Gather": 6,
+    "Gemm": 7,
+    "GreaterOrEqual": 2,
+    "Mul": 29,
+    "Neg": 4,
+    "Not": 1,
+    "Or": 2,
+    "Pad": 5,
+    "QuantizeLinear": 64,
+    "Reciprocal": 2,
+    "ReduceMean": 4,
+    "ReduceSum": 2,
+    "Relu": 31,
+    "Reshape": 11,
+    "Shape": 1,
+    "Slice": 5,
+    "Sqrt": 2,
+    "Sub": 8,
+    "Transpose": 9,
+    "Unsqueeze": 6,
+    "Where": 8
+  }
+}
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/qdq_ort_all449_report.json
+
+<TCN_V6_STATIC_INT8_QDQ> PASS </TCN_V6_STATIC_INT8_QDQ>
+QDQ model created and all 449 held-out ORT outputs are finite.
+No TFLite conversion, Vela, firmware, or flash actions performed.
+QDQ_EVALUATION_EXECUTION=PASS
+
+===== HELD-OUT ACCURACY SUMMARY =====
+subject_independence_pass: True
+calibration_samples: 394
+evaluation_samples: 449
+calibration_worker_ids: ['1', '10', '12', '14', '15', '16', '18', '19', '23', '24', '25', '26', '28', '29', '30', '32', '33', '35', '4', '40', '42', '44', '45', '47', '7']
+evaluation_worker_ids: ['5', '8', '9']
+worker_overlap: []
+all_outputs_finite: True
+global_rmse: 0.2551484138093066
+global_mean_abs_error: 0.20316721872116897
+global_max_abs_error: 1.643122911453247
+worst_sample_index: 100
+median_sample_max_abs_error: 0.9944024085998535
+p99_sample_max_abs_error: 1.3331468200683585
+
+Per-channel errors:
+Channel 0: RMSE=0.24422832, MAE=0.19526885, MAX=1.39324033
+Channel 1: RMSE=0.24177976, MAE=0.19168972, MAX=1.21354985
+Channel 2: RMSE=0.26942998, MAE=0.21482396, MAX=1.33738446
+Channel 3: RMSE=0.21395733, MAE=0.16999304, MAX=1.12181044
+Channel 4: RMSE=0.28310443, MAE=0.23163838, MAX=1.15827692
+Channel 5: RMSE=0.27199445, MAE=0.21558937, MAX=1.64312291
+
+QDQ SHA256: 54c37d3a653741e8661147f67d832f8bacc7cc4092b83899f3c393c0daa58d0b
+QDQ bytes: 39634633
+
+INDEPENDENT_CALIBRATION_EVALUATION=COMPLETE
+QDQ_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/qdq_ort_all449_report.json
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_independent_calibration_evalfix_v2_20261122_211624.log
