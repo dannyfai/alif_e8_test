@@ -1,0 +1,484 @@
+===== TIMESTAMP =====
+2026-11-22T18:12:56+08:00
+
+===== MAIN.CC =====
+     1	#include <zephyr/kernel.h>
+     2	#include <zephyr/sys/printk.h>
+     3	
+     4	extern void MainLoop();
+     5	
+     6	int main()
+     7	{
+     8	    printk("\nHEATSTROKE TCN V6 E8 RTSS-HE / ETHOS-U55-128\n");
+     9	    printk("TCN_V6_BOOT: main entered\n");
+    10	
+    11	    MainLoop();
+    12	
+    13	    printk("TCN_V6_BOOT: MainLoop returned\n");
+    14	
+    15	    while (true) {
+    16	        k_sleep(K_SECONDS(30));
+    17	    }
+    18	
+    19	    return 0;
+    20	}
+
+===== MAINLOOP.CC =====
+     1	#include "BufAttributes.hpp"
+     2	#include "TcnV6Model.hpp"
+     3	
+     4	#include <zephyr/kernel.h>
+     5	#include <zephyr/sys/printk.h>
+     6	
+     7	#include <cmath>
+     8	#include <cstddef>
+     9	#include <cstdint>
+    10	#include <cstring>
+    11	
+    12	#include "tensorflow/lite/c/common.h"
+    13	
+    14	namespace arm::app::polyu_heatstroke {
+    15	extern const uint8_t* GetModelPointer();
+    16	extern size_t GetModelLen();
+    17	}
+    18	
+    19	namespace {
+    20	
+    21	static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+    22	
+    23	constexpr size_t kInputCount = 5;
+    24	constexpr size_t kOutputElements = 900U * 6U;
+    25	
+    26	const int kExpectedRanks[kInputCount] = {3, 3, 3, 2, 3};
+    27	
+    28	const int kExpectedDimensions[kInputCount][3] = {
+    29	    {1,  900,    6},
+    30	    {1,  900,    6},
+    31	    {1,  900,    3},
+    32	    {1,   18,    0},
+    33	    {1, 1800,    6}
+    34	};
+    35	
+    36	const TfLiteType kExpectedTypes[kInputCount] = {
+    37	    kTfLiteFloat32,
+    38	    kTfLiteBool,
+    39	    kTfLiteFloat32,
+    40	    kTfLiteFloat32,
+    41	    kTfLiteFloat32
+    42	};
+    43	
+    44	bool ValidateAndZeroInputs(tflite::MicroInterpreter* interpreter)
+    45	{
+    46	    if (interpreter == nullptr) {
+    47	        printk("TCN_V6_ERROR: null interpreter\n");
+    48	        return false;
+    49	    }
+    50	
+    51	    for (size_t i = 0; i < kInputCount; ++i) {
+    52	        TfLiteTensor* tensor = interpreter->input(i);
+    53	
+    54	        if (tensor == nullptr || tensor->dims == nullptr) {
+    55	            printk("TCN_V6_ERROR: input %u missing metadata\n",
+    56	                   static_cast<unsigned int>(i));
+    57	            return false;
+    58	        }
+    59	
+    60	        if (tensor->type != kExpectedTypes[i]) {
+    61	            printk("TCN_V6_ERROR: input %u type=%d expected=%d\n",
+    62	                   static_cast<unsigned int>(i),
+    63	                   static_cast<int>(tensor->type),
+    64	                   static_cast<int>(kExpectedTypes[i]));
+    65	            return false;
+    66	        }
+    67	
+    68	        if (tensor->dims->size != kExpectedRanks[i]) {
+    69	            printk("TCN_V6_ERROR: input %u rank=%d expected=%d\n",
+    70	                   static_cast<unsigned int>(i),
+    71	                   tensor->dims->size,
+    72	                   kExpectedRanks[i]);
+    73	            return false;
+    74	        }
+    75	
+    76	        for (int d = 0; d < kExpectedRanks[i]; ++d) {
+    77	            if (tensor->dims->data[d] != kExpectedDimensions[i][d]) {
+    78	                printk("TCN_V6_ERROR: input %u dim%u=%d expected=%d\n",
+    79	                       static_cast<unsigned int>(i),
+    80	                       static_cast<unsigned int>(d),
+    81	                       tensor->dims->data[d],
+    82	                       kExpectedDimensions[i][d]);
+    83	                return false;
+    84	            }
+    85	        }
+    86	
+    87	        if (tensor->data.raw == nullptr || tensor->bytes == 0U) {
+    88	            printk("TCN_V6_ERROR: input %u has no data buffer\n",
+    89	                   static_cast<unsigned int>(i));
+    90	            return false;
+    91	        }
+    92	
+    93	        // This also safely zeroes the BOOL missing_mask tensor.
+    94	        std::memset(tensor->data.raw, 0, tensor->bytes);
+    95	
+    96	        printk("TCN_V6_INPUT_%u: type=%d bytes=%u rank=%d shape=",
+    97	               static_cast<unsigned int>(i),
+    98	               static_cast<int>(tensor->type),
+    99	               static_cast<unsigned int>(tensor->bytes),
+   100	               tensor->dims->size);
+   101	
+   102	        for (int d = 0; d < tensor->dims->size; ++d) {
+   103	            printk("%s%d", (d == 0) ? "" : "x", tensor->dims->data[d]);
+   104	        }
+   105	        printk(" zero_filled=1\n");
+   106	    }
+   107	
+   108	    return true;
+   109	}
+   110	
+   111	bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+   112	{
+   113	    if (interpreter == nullptr) {
+   114	        return false;
+   115	    }
+   116	
+   117	    TfLiteTensor* output = interpreter->output(0);
+   118	
+   119	    if (output == nullptr || output->dims == nullptr ||
+   120	        output->type != kTfLiteFloat32 ||
+   121	        output->dims->size != 3 ||
+   122	        output->dims->data[0] != 1 ||
+   123	        output->dims->data[1] != 900 ||
+   124	        output->dims->data[2] != 6 ||
+   125	        output->bytes != kOutputElements * sizeof(float) ||
+   126	        output->data.raw == nullptr) {
+   127	        printk("TCN_V6_ERROR: output metadata mismatch\n");
+   128	        return false;
+   129	    }
+   130	
+   131	    printk("TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u\n",
+   132	           static_cast<unsigned int>(output->bytes));
+   133	    return true;
+   134	}
+   135	
+   136	void ReportOutput(tflite::MicroInterpreter* interpreter)
+   137	{
+   138	    TfLiteTensor* output = interpreter->output(0);
+   139	    const float* values = reinterpret_cast<const float*>(output->data.raw);
+   140	
+   141	    float minimum = values[0];
+   142	    float maximum = values[0];
+   143	    double sum = 0.0;
+   144	    size_t nonfinite = 0;
+   145	
+   146	    for (size_t i = 0; i < kOutputElements; ++i) {
+   147	        const float value = values[i];
+   148	
+   149	        if (!std::isfinite(value)) {
+   150	            ++nonfinite;
+   151	            continue;
+   152	        }
+   153	
+   154	        if (value < minimum) {
+   155	            minimum = value;
+   156	        }
+   157	        if (value > maximum) {
+   158	            maximum = value;
+   159	        }
+   160	        sum += static_cast<double>(value);
+   161	    }
+   162	
+   163	    printk("TCN_V6_OUTPUT_STATS: elements=%u nonfinite=%u "
+   164	           "min=%f max=%f mean=%f\n",
+   165	           static_cast<unsigned int>(kOutputElements),
+   166	           static_cast<unsigned int>(nonfinite),
+   167	           static_cast<double>(minimum),
+   168	           static_cast<double>(maximum),
+   169	           sum / static_cast<double>(kOutputElements));
+   170	}
+   171	
+   172	} // namespace
+   173	
+   174	void MainLoop()
+   175	{
+   176	    using arm::app::fwk::iface::MemoryRegion;
+   177	    using heatstroke_tcn_v6::TcnV6Model;
+   178	
+   179	    printk("TCN_V6: activation_buf=%p capacity=%u bytes\n",
+   180	           activationBuf,
+   181	           static_cast<unsigned int>(sizeof(activationBuf)));
+   182	
+   183	    const uint8_t* model_pointer =
+   184	        arm::app::polyu_heatstroke::GetModelPointer();
+   185	    const size_t model_length =
+   186	        arm::app::polyu_heatstroke::GetModelLen();
+   187	
+   188	    if (model_pointer == nullptr || model_length == 0U) {
+   189	        printk("TCN_V6_ERROR: generated model pointer/length invalid\n");
+   190	        return;
+   191	    }
+   192	
+   193	    printk("TCN_V6_MODEL: pointer=%p bytes=%u\n",
+   194	           model_pointer,
+   195	           static_cast<unsigned int>(model_length));
+   196	
+   197	    MemoryRegion compute_buffer(activationBuf, sizeof(activationBuf));
+   198	    MemoryRegion model_buffer(
+   199	        const_cast<uint8_t*>(model_pointer), model_length);
+   200	
+   201	    static TcnV6Model model;
+   202	
+   203	    if (!model.PrepareResolver()) {
+   204	        printk("TCN_V6_ERROR: resolver preparation failed\n");
+   205	        return;
+   206	    }
+   207	
+   208	    printk("TCN_V6: initializing TFLM model\n");
+   209	
+   210	    if (!model.Init(compute_buffer, model_buffer)) {
+   211	        printk("TCN_V6_ERROR: TFLM model initialization/AllocateTensors failed\n");
+   212	        return;
+   213	    }
+   214	
+   215	    if (model.GetNumInputs() != kInputCount ||
+   216	        model.GetNumOutputs() != 1U) {
+   217	        printk("TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u\n",
+   218	               static_cast<unsigned int>(model.GetNumInputs()),
+   219	               static_cast<unsigned int>(model.GetNumOutputs()));
+   220	        return;
+   221	    }
+   222	
+   223	    auto* interpreter = model.GetBackendData().m_pInterpreter.get();
+   224	
+   225	    if (!ValidateAndZeroInputs(interpreter) ||
+   226	        !ValidateOutput(interpreter)) {
+   227	        printk("TCN_V6_ERROR: tensor interface validation failed\n");
+   228	        return;
+   229	    }
+   230	
+   231	    printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+   232	           model.ContainsEthosUOperator() ? 1U : 0U);
+   233	
+   234	    printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+   235	           static_cast<unsigned int>(interpreter->arena_used_bytes()),
+   236	           static_cast<unsigned int>(sizeof(activationBuf)));
+   237	
+   238	    printk("TCN_V6: invoking zero-input smoke inference\n");
+   239	
+   240	    const uint64_t start_cycles = k_cycle_get_64();
+   241	    const bool inference_ok = model.RunInference();
+   242	    const uint64_t elapsed_cycles = k_cycle_get_64() - start_cycles;
+   243	    const uint64_t elapsed_us = k_cyc_to_us_floor64(elapsed_cycles);
+   244	
+   245	    printk("TCN_V6_INFERENCE: success=%u cycles=%llu elapsed_us=%llu\n",
+   246	           inference_ok ? 1U : 0U,
+   247	           static_cast<unsigned long long>(elapsed_cycles),
+   248	           static_cast<unsigned long long>(elapsed_us));
+   249	
+   250	    if (!inference_ok) {
+   251	        printk("TCN_V6_ERROR: Invoke failed\n");
+   252	        return;
+   253	    }
+   254	
+   255	    if (!ValidateOutput(interpreter)) {
+   256	        return;
+   257	    }
+   258	
+   259	    ReportOutput(interpreter);
+   260	
+   261	    printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+   262	           static_cast<unsigned int>(interpreter->arena_used_bytes()),
+   263	           static_cast<unsigned int>(sizeof(activationBuf)));
+   264	
+   265	    printk("TCN_V6_SMOKE_TEST: PASS (zero inputs; not an accuracy test)\n");
+   266	}
+
+===== TCNV6MODEL.CC =====
+     1	#include "TcnV6Model.hpp"
+     2	
+     3	#include <zephyr/sys/printk.h>
+     4	
+     5	#include "tensorflow/lite/micro/kernels/ethosu.h"
+     6	
+     7	namespace heatstroke_tcn_v6 {
+     8	
+     9	const tflite::MicroOpResolver& TcnV6Model::GetOpResolver()
+    10	{
+    11	    return m_resolver;
+    12	}
+    13	
+    14	bool TcnV6Model::PrepareResolver()
+    15	{
+    16	    return EnlistOperations();
+    17	}
+    18	
+    19	bool TcnV6Model::EnlistOperations()
+    20	{
+    21	    // TflmModel::Init() calls this again. Cache the result so that the
+    22	    // resolver is not populated twice.
+    23	    if (m_resolverAttempted) {
+    24	        return m_resolverOk;
+    25	    }
+    26	
+    27	    m_resolverAttempted = true;
+    28	    bool ok = true;
+    29	
+    30	#define TCN6_ADD_OP(label, expression)                                  \
+    31	    do {                                                                \
+    32	        const TfLiteStatus status = (expression);                       \
+    33	        if (status != kTfLiteOk) {                                      \
+    34	            printk("TCN_V6_RESOLVER: Add%s failed: %d\n",               \
+    35	                   label, static_cast<int>(status));                    \
+    36	            ok = false;                                                 \
+    37	        }                                                               \
+    38	    } while (0)
+    39	
+    40	    // Exactly the 28 distinct built-in operators from the V6 audit.
+    41	    TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+    42	    TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+    43	    TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+    44	    TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+    45	    TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+    46	    TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+    47	    TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+    48	    TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+    49	    TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+    50	    TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+    51	    TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+    52	    TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+    53	    TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+    54	    TCN6_ADD_OP("LogicalNot",      m_resolver.AddLogicalNot());
+    55	    TCN6_ADD_OP("LogicalOr",       m_resolver.AddLogicalOr());
+    56	    TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+    57	    TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+    58	    TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+    59	    TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+    60	    TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+    61	    TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+    62	    TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+    63	    TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+    64	    TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+    65	    TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+    66	    TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+    67	    TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+    68	    TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+    69	
+    70	#undef TCN6_ADD_OP
+    71	
+    72	    // AddEthosU() in this SDK can return kTfLiteOk even when the
+    73	    // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+    74	    TFLMRegistration* native_ethos_registration =
+    75	        tflite::Register_ETHOSU();
+    76	
+    77	    if (native_ethos_registration == nullptr ||
+    78	        native_ethos_registration->invoke == nullptr) {
+    79	        printk("TCN_V6_RESOLVER: native Ethos-U registration/invoke missing\n");
+    80	        ok = false;
+    81	    } else {
+    82	        const TfLiteStatus status = m_resolver.AddEthosU();
+    83	        if (status != kTfLiteOk) {
+    84	            printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+    85	                   static_cast<int>(status));
+    86	            ok = false;
+    87	        }
+    88	    }
+    89	
+    90	    // Verify that every built-in registration exists and has an invoke.
+    91	    const tflite::BuiltinOperator expected_ops[] = {
+    92	        tflite::BuiltinOperator_ABS,
+    93	        tflite::BuiltinOperator_ADD,
+    94	        tflite::BuiltinOperator_BROADCAST_ARGS,
+    95	        tflite::BuiltinOperator_BROADCAST_TO,
+    96	        tflite::BuiltinOperator_CAST,
+    97	        tflite::BuiltinOperator_CONCATENATION,
+    98	        tflite::BuiltinOperator_CONV_2D,
+    99	        tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
+   100	        tflite::BuiltinOperator_DEQUANTIZE,
+   101	        tflite::BuiltinOperator_DIV,
+   102	        tflite::BuiltinOperator_EXP,
+   103	        tflite::BuiltinOperator_GATHER,
+   104	        tflite::BuiltinOperator_GREATER_EQUAL,
+   105	        tflite::BuiltinOperator_LOGICAL_NOT,
+   106	        tflite::BuiltinOperator_LOGICAL_OR,
+   107	        tflite::BuiltinOperator_MAXIMUM,
+   108	        tflite::BuiltinOperator_MEAN,
+   109	        tflite::BuiltinOperator_MIRROR_PAD,
+   110	        tflite::BuiltinOperator_MUL,
+   111	        tflite::BuiltinOperator_NEG,
+   112	        tflite::BuiltinOperator_QUANTIZE,
+   113	        tflite::BuiltinOperator_RELU,
+   114	        tflite::BuiltinOperator_RESHAPE,
+   115	        tflite::BuiltinOperator_SELECT_V2,
+   116	        tflite::BuiltinOperator_SQRT,
+   117	        tflite::BuiltinOperator_SUB,
+   118	        tflite::BuiltinOperator_SUM,
+   119	        tflite::BuiltinOperator_TRANSPOSE
+   120	    };
+   121	
+   122	    for (const auto op : expected_ops) {
+   123	        const TFLMRegistration* registration = m_resolver.FindOp(op);
+   124	        if (registration == nullptr || registration->invoke == nullptr) {
+   125	            printk("TCN_V6_RESOLVER: missing builtin registration %d\n",
+   126	                   static_cast<int>(op));
+   127	            ok = false;
+   128	        }
+   129	    }
+   130	
+   131	    const char* ethos_name = tflite::GetString_ETHOSU();
+   132	    const TFLMRegistration* ethos =
+   133	        (ethos_name != nullptr) ? m_resolver.FindOp(ethos_name) : nullptr;
+   134	
+   135	    if (ethos == nullptr || ethos->invoke == nullptr) {
+   136	        printk("TCN_V6_RESOLVER: custom ethos-u registration not found\n");
+   137	        ok = false;
+   138	    }
+   139	
+   140	    m_resolverOk = ok;
+   141	
+   142	    printk("TCN_V6_RESOLVER: builtin_expected=28 custom=ethos-u status=%s\n",
+   143	           m_resolverOk ? "PASS" : "FAIL");
+   144	
+   145	    return m_resolverOk;
+   146	}
+   147	
+   148	} // namespace heatstroke_tcn_v6
+
+===== CMAKE SOURCE REGISTRATION =====
+87:    "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+95:target_sources(app PRIVATE
+96:    src/Main.cc
+97:    src/MainLoop.cc
+98:    src/TcnV6Model.cc
+
+===== COMPILED ELF STRINGS =====
+HEATSTROKE TCN V6 E8 RTSS-HE / ETHOS-U55-128
+TCN_V6_BOOT: main entered
+TCN_V6_BOOT: MainLoop returned
+TCN_V6_ERROR: output metadata mismatch
+TCN_V6_ERROR: generated model pointer/length invalid
+TCN_V6_MODEL: pointer=%p bytes=%u
+TCN_V6_ERROR: resolver preparation failed
+TCN_V6: initializing TFLM model
+TCN_V6_ERROR: TFLM model initialization/AllocateTensors failed
+TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u
+TCN_V6_ERROR: null interpreter
+TCN_V6_ERROR: input %u missing metadata
+TCN_V6_ERROR: input %u type=%d expected=%d
+TCN_V6_ERROR: input %u rank=%d expected=%d
+TCN_V6_ERROR: input %u dim%u=%d expected=%d
+TCN_V6_ERROR: input %u has no data buffer
+TCN_V6_ERROR: tensor interface validation failed
+TCN_V6_ERROR: Invoke failed
+
+===== ELF SYMBOLS =====
+80001e61 T main
+80001961 T MainLoop()
+20000bb8 b guard variable for MainLoop()::model
+800025e5 T arm::app::polyu_heatstroke::GetModelLen()
+800025dd T arm::app::polyu_heatstroke::GetModelPointer()
+20000bbc b MainLoop()::model
+
+===== PROGRAMMING FILE HASHES =====
+1f0455ac708c9f472d8284d43aa595be6681f71516ddaf04681d8036ff423162  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.bin
+7813a2b72c633828dc1f41160d3e9c2b21ccab6e0e19cd0c9a907d8327158414  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/ospi1.bin
+
+===== EXPECTED MODEL HASH =====
+7813a2b72c633828dc1f41160d3e9c2b21ccab6e0e19cd0c9a907d8327158414
