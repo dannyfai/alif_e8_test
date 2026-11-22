@@ -1,0 +1,173 @@
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\TCN V6 BROADCAST_TO DIAGNOSTIC V2
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Date: Sun Nov 22 02:58:24 PM HKT 2026
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_to_shape_diagnostic_v2_20261122_145824.log
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795330705.156923  137858 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795330705.157113  137858 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795330705.185795  137858 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795330705.955720  137858 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795330705.955905  137858 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+============================================================================
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+FILE_SIZE: 9789936
+SCHEMA_VERSION: 3
+SUBGRAPHS: 1
+OPERATORS: 266
+TENSORS: 417
+BROADCAST_TO_COUNT: 1
+
+------------------------------------------------------------------------
+BROADCAST_TO NODE
+NODE_INDEX_DECIMAL: 15
+NODE_INDEX_HEX: 0xf
+OPCODE: BROADCAST_TO
+BUILTIN_CODE: 130
+OPERATOR_VERSION: 2
+INPUT_IDS: [18, 318]
+OUTPUT_IDS: [19]
+
+ROLE: DATA INPUT
+    tensor[18] name='/Div_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER: node=14 DIV version=1 inputs=[35, 2] outputs=[18]
+    PRODUCER INPUT:
+    tensor[35] name='/ReduceSum_1_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER INPUT:
+    tensor[2] name='/Clip_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+
+ROLE: TARGET OUTPUT SHAPE
+    tensor[318] name='broadcasted_shape' type=INT64 shape=[3] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER: node=7 BROADCAST_ARGS version=1 inputs=[414, 48] outputs=[318]
+    PRODUCER INPUT:
+    tensor[414] name='x_shape' type=INT64 shape=[3] buffer=143 constant_bytes=24
+      CONSTANT VALUES: [1, 1, 6]
+    PRODUCER INPUT:
+    tensor[48] name='/Where_2_output_0' type=INT64 shape=[3] buffer=13 constant_bytes=24
+      CONSTANT VALUES: [1, 900, 1]
+
+OUTPUT TENSORS:
+    tensor[19] name='/Expand_output_0' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+
+STATIC BROADCAST COMPATIBILITY
+CHECK=RUNTIME_SHAPE_REQUIRED
+The target shape is not embedded as a constant.
+
+NEIGHBOURING GRAPH OPERATORS
+  node=012 SELECT_V2 v1 inputs=[32, 415, 7] outputs=[47]
+  node=013 SUM v1 inputs=[47, 312] outputs=[35]
+  node=014 DIV v1 inputs=[35, 2] outputs=[18]
+  node=015 BROADCAST_TO v2 inputs=[18, 318] outputs=[19]
+  node=016 SELECT_V2 v1 inputs=[33, 19, 415] outputs=[49]
+  node=017 MIRROR_PAD v1 inputs=[49, 401] outputs=[55]
+  node=018 RESHAPE v1 inputs=[55] outputs=[56]
+
+GRAPH INPUTS:
+    tensor[415] name='x_values' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[320] name='missing_mask' type=BOOL shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT VALUES: [0]
+    tensor[413] name='x_mark' type=FLOAT32 shape=[1, 900, 3] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[411] name='worker_features_18' type=FLOAT32 shape=[1, 18] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[319] name='compact_values' type=FLOAT32 shape=[1, 1800, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+GRAPH OUTPUTS:
+    tensor[410] name='reconstructed_values' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+MODEL_INSPECTION_COMPLETE
+
+============================================================================
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflite_gemm_only_qdq_v6_20261121_185419/heatstroke_tcn_reg_fold2_gemm_only_qdq.tflite
+FILE_SIZE: 10630000
+SCHEMA_VERSION: 3
+SUBGRAPHS: 1
+OPERATORS: 266
+TENSORS: 421
+BROADCAST_TO_COUNT: 1
+
+------------------------------------------------------------------------
+BROADCAST_TO NODE
+NODE_INDEX_DECIMAL: 45
+NODE_INDEX_HEX: 0x2d
+OPCODE: BROADCAST_TO
+BUILTIN_CODE: 130
+OPERATOR_VERSION: 2
+INPUT_IDS: [122, 272]
+OUTPUT_IDS: [129]
+
+ROLE: DATA INPUT
+    tensor[122] name='/Div_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER: node=37 DIV version=1 inputs=[111, 114] outputs=[122]
+    PRODUCER INPUT:
+    tensor[111] name='/ReduceSum_1_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER INPUT:
+    tensor[114] name='/Clip_output_0' type=FLOAT32 shape=[1, 1, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+
+ROLE: TARGET OUTPUT SHAPE
+    tensor[272] name='broadcasted_shape' type=INT64 shape=[3] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    PRODUCER: node=44 BROADCAST_ARGS version=1 inputs=[271, 110] outputs=[272]
+    PRODUCER INPUT:
+    tensor[271] name='x_shape' type=INT64 shape=[3] buffer=84 constant_bytes=24
+      CONSTANT VALUES: [1, 1, 6]
+    PRODUCER INPUT:
+    tensor[110] name='/Where_2_output_0' type=INT64 shape=[3] buffer=80 constant_bytes=24
+      CONSTANT VALUES: [1, 900, 1]
+
+OUTPUT TENSORS:
+    tensor[129] name='/Expand_output_0' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+
+STATIC BROADCAST COMPATIBILITY
+CHECK=RUNTIME_SHAPE_REQUIRED
+The target shape is not embedded as a constant.
+
+NEIGHBOURING GRAPH OPERATORS
+  node=042 RESHAPE v1 inputs=[120] outputs=[127]
+  node=043 RESHAPE v1 inputs=[121] outputs=[128]
+  node=044 BROADCAST_ARGS v1 inputs=[271, 110] outputs=[272]
+  node=045 BROADCAST_TO v2 inputs=[122, 272] outputs=[129]
+  node=046 CONCATENATION v1 inputs=[123, 124, 125, 126, 127, 128] outputs=[130]
+  node=047 SELECT_V2 v1 inputs=[92, 129, 0] outputs=[131]
+  node=048 SELECT_V2 v1 inputs=[92, 130, 79] outputs=[132]
+
+GRAPH INPUTS:
+    tensor[0] name='x_values' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[1] name='missing_mask' type=BOOL shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT VALUES: [0]
+    tensor[2] name='x_mark' type=FLOAT32 shape=[1, 900, 3] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[3] name='worker_features_18' type=FLOAT32 shape=[1, 18] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+    tensor[4] name='compact_values' type=FLOAT32 shape=[1, 1800, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+GRAPH OUTPUTS:
+    tensor[268] name='reconstructed_values' type=FLOAT32 shape=[1, 900, 6] buffer=0 constant_bytes=1
+      CONSTANT DATA HEX: 00
+MODEL_INSPECTION_COMPLETE
+
+ALL_MODEL_DIAGNOSTICS_FINISHED
+Python diagnostic return code: 0
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\DIAGNOSTIC_V2_STATUS=0
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_to_shape_diagnostic_v2_20261122_145824.log
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\No model, firmware, or SDK source modified.
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\No rebuild or flash performed.
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Terminal will remain open.
+]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;end=7d006499-6900-45ee-bcdd-0178b58a97df;exit=success\]3008;start=67a64b93-c1f8-4f72-a46e-90e2acb3576d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
