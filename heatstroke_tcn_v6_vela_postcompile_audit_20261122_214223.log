@@ -1,0 +1,360 @@
+===== VELA POST-COMPILATION AUDIT =====
+2026-11-22T21:42:23+08:00
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_only_independent_calib_u55_128_size_20261122_213501/heatstroke_tcn_reg_fold2_v6_int8_qdq_vela.tflite
+MODEL_SHA256=7fb696e8f3fcb3d5e07f07c6ff7230fb9dc2cda43d098efd25df5067d1f84c24
+
+===== EXISTING OPERATOR AUDIT =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795354944.186527  155653 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795354944.186693  155653 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795354944.214244  155653 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795354944.969195  155653 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795354944.969386  155653 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_only_independent_calib_u55_128_size_20261122_213501/heatstroke_tcn_reg_fold2_v6_int8_qdq_vela.tflite
+MODEL_BYTES: 39598288
+SUBGRAPHS: 1
+OPERATORS: 269
+OPERATOR_COUNTS:
+  ABS: 2
+  ADD: 23
+  BROADCAST_ARGS: 1
+  BROADCAST_TO: 1
+  CAST: 1
+  CONCATENATION: 2
+  CONV_2D: 5
+  CUSTOM:ethos-u: 12
+  DEPTHWISE_CONV_2D: 10
+  DEQUANTIZE: 31
+  DIV: 6
+  EXP: 2
+  FULLY_CONNECTED: 7
+  GATHER: 6
+  GREATER_EQUAL: 2
+  LOGICAL_NOT: 1
+  LOGICAL_OR: 2
+  MAXIMUM: 1
+  MEAN: 4
+  MIRROR_PAD: 5
+  MUL: 26
+  NEG: 4
+  QUANTIZE: 21
+  RELU: 10
+  RESHAPE: 51
+  SELECT_V2: 7
+  SQRT: 2
+  SUB: 8
+  SUM: 2
+  TRANSPOSE: 14
+ETHOS_U_CUSTOM_NODES: 12
+CONV_2D_REMAINING: 5
+DEPTHWISE_CONV_2D_REMAINING: 10
+COMMAND_STREAM_TENSORS: 12
+  _split_10_command_stream
+  _split_11_command_stream
+  _split_12_command_stream
+  _split_1_command_stream
+  _split_2_command_stream
+  _split_3_command_stream
+  _split_4_command_stream
+  _split_5_command_stream
+  _split_6_command_stream
+  _split_7_command_stream
+  _split_8_command_stream
+  _split_9_command_stream
+
+===== DETAILED VELA FLATBUFFER AUDIT =====
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795354946.361365  155683 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795354946.361534  155683 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795354946.388450  155683 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795354947.147105  155683 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795354947.147297  155683 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_only_independent_calib_u55_128_size_20261122_213501/heatstroke_tcn_reg_fold2_v6_int8_qdq_vela.tflite
+MODEL_BYTES: 39598288
+MODEL_SHA256: 7fb696e8f3fcb3d5e07f07c6ff7230fb9dc2cda43d098efd25df5067d1f84c24
+TFLITE_IDENTIFIER: b'TFL3'
+SUBGRAPHS: 1
+
+===== SUBGRAPH 0 =====
+OPERATORS: 269
+TENSORS: 395
+
+REMAINING_CPU_CONV index=47 type=CONV_2D
+  INPUT tensor=51 name='/cvf/cvf.0/Pad_output_0_4D_' dtype=FLOAT32 shape=[1, 902, 1, 6] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=301 name='model.cvf.0.weight' dtype=FLOAT32 shape=[16, 3, 1, 6] buffer=1152B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=300 name='model.cvf.0.bias' dtype=FLOAT32 shape=[16] buffer=64B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=49 name='/cvf/cvf.0/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 16] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+REMAINING_CPU_CONV index=51 type=CONV_2D
+  INPUT tensor=56 name='/cvf/cvf.1/Pad_output_0_4D_' dtype=FLOAT32 shape=[1, 904, 1, 16] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=303 name='model.cvf.1.weight' dtype=FLOAT32 shape=[32, 5, 1, 16] buffer=10240B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=302 name='model.cvf.1.bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=53 name='/cvf/cvf.1/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+REMAINING_CPU_CONV index=93 type=CONV_2D
+  INPUT tensor=110 name='/cvf/cvf.4/Pad_output_0_4D_' dtype=FLOAT32 shape=[1, 906, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=307 name='model.cvf.4.weight' dtype=FLOAT32 shape=[64, 7, 1, 32] buffer=57344B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=306 name='model.cvf.4.bias' dtype=FLOAT32 shape=[64] buffer=256B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=108 name='/cvf/cvf.4/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 64] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+REMAINING_CPU_CONV index=97 type=CONV_2D
+  INPUT tensor=115 name='/cvf/cvf.5/Pad_output_0_4D_' dtype=FLOAT32 shape=[1, 908, 1, 64] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=309 name='model.cvf.5.weight' dtype=FLOAT32 shape=[128, 9, 1, 64] buffer=294912B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=308 name='model.cvf.5.bias' dtype=FLOAT32 shape=[128] buffer=512B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=112 name='/cvf/cvf.5/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 128] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+REMAINING_CPU_CONV index=139 type=CONV_2D
+  INPUT tensor=169 name='/cvf/cvf.8/Pad_output_0_4D_' dtype=FLOAT32 shape=[1, 910, 1, 128] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=313 name='model.cvf.8.weight' dtype=FLOAT32 shape=[6, 11, 1, 128] buffer=33792B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=312 name='model.cvf.8.bias' dtype=FLOAT32 shape=[6] buffer=24B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=167 name='/cvf/cvf.8/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 6] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=166
+  INPUT tensor=279 name='_split_1_command_stream' dtype=UINT8 shape=[540] buffer=540B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=35 name='/Transpose_2_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 16] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=33 name='/Relu_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=169 type=DEPTHWISE_CONV_2D
+  INPUT tensor=32 name='/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=330 name='model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=182 name='/tcn_blocks.0/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=172
+  INPUT tensor=283 name='_split_2_command_stream' dtype=UINT8 shape=[656] buffer=656B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=183 name='/tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=186 name='/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=179 type=DEPTHWISE_CONV_2D
+  INPUT tensor=179 name='/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=334 name='model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=192 name='/tcn_blocks.1/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=182
+  INPUT tensor=284 name='_split_3_command_stream' dtype=UINT8 shape=[664] buffer=664B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=193 name='/tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=196 name='/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=189 type=DEPTHWISE_CONV_2D
+  INPUT tensor=189 name='/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=338 name='model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=202 name='/tcn_blocks.2/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=192
+  INPUT tensor=285 name='_split_4_command_stream' dtype=UINT8 shape=[656] buffer=656B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=203 name='/tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=206 name='/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=199 type=DEPTHWISE_CONV_2D
+  INPUT tensor=199 name='/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=342 name='model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=212 name='/tcn_blocks.3/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=202
+  INPUT tensor=286 name='_split_5_command_stream' dtype=UINT8 shape=[664] buffer=664B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=213 name='/tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=216 name='/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=209 type=DEPTHWISE_CONV_2D
+  INPUT tensor=209 name='/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=346 name='model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=222 name='/tcn_blocks.4/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=212
+  INPUT tensor=287 name='_split_6_command_stream' dtype=UINT8 shape=[656] buffer=656B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=223 name='/tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=226 name='/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=219 type=DEPTHWISE_CONV_2D
+  INPUT tensor=219 name='/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=350 name='model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=232 name='/tcn_blocks.5/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=222
+  INPUT tensor=288 name='_split_7_command_stream' dtype=UINT8 shape=[664] buffer=664B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=233 name='/tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=236 name='/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=229 type=DEPTHWISE_CONV_2D
+  INPUT tensor=229 name='/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=354 name='model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=242 name='/tcn_blocks.6/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=232
+  INPUT tensor=289 name='_split_8_command_stream' dtype=UINT8 shape=[656] buffer=656B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=243 name='/tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=246 name='/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=239 type=DEPTHWISE_CONV_2D
+  INPUT tensor=239 name='/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=358 name='model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=252 name='/tcn_blocks.7/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=242
+  INPUT tensor=290 name='_split_9_command_stream' dtype=UINT8 shape=[664] buffer=664B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=253 name='/tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=256 name='/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=249 type=DEPTHWISE_CONV_2D
+  INPUT tensor=249 name='/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=362 name='model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=262 name='/tcn_blocks.8/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=252
+  INPUT tensor=276 name='_split_10_command_stream' dtype=UINT8 shape=[656] buffer=656B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=263 name='/tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=266 name='/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+REMAINING_CPU_CONV index=259 type=DEPTHWISE_CONV_2D
+  INPUT tensor=259 name='/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  WEIGHT tensor=366 name='model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output_4D__transposed_' dtype=FLOAT32 shape=[1, 31, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  BIAS tensor=394 name='zero_bias' dtype=FLOAT32 shape=[32] buffer=128B qscales=0 qzero_points=0 quantized_dimension=None
+  OUTPUT tensor=270 name='/tcn_blocks.9/layer1/depthwise/Conv_output_0_4D_' dtype=FLOAT32 shape=[1, 900, 1, 32] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+
+ETHOS_U_NODE index=262
+  INPUT tensor=277 name='_split_11_command_stream' dtype=UINT8 shape=[664] buffer=664B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=271 name='/tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=274 name='/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+ETHOS_U_NODE index=267
+  INPUT tensor=278 name='_split_12_command_stream' dtype=UINT8 shape=[328] buffer=328B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=280 name='_split_1_flash' dtype=UINT8 shape=[52272] buffer=52272B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=281 name='_split_1_scratch' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=282 name='_split_1_scratch_fast' dtype=UINT8 shape=[2428288] buffer=0B qscales=0 qzero_points=0 quantized_dimension=None
+  INPUT tensor=268 name='/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' dtype=INT8 shape=[1, 900, 32] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+  OUTPUT tensor=275 name='/tcn_out/Conv_output_0_QuantizeLinear_Output' dtype=INT8 shape=[1, 900, 6] buffer=0B qscales=1 qzero_points=1 quantized_dimension=0
+
+OPERATOR_HISTOGRAM:
+  ABS: 2
+  ADD: 23
+  BROADCAST_ARGS: 1
+  BROADCAST_TO: 1
+  CAST: 1
+  CONCATENATION: 2
+  CONV_2D: 5
+  CUSTOM:ethos-u: 12
+  DEPTHWISE_CONV_2D: 10
+  DEQUANTIZE: 31
+  DIV: 6
+  EXP: 2
+  FULLY_CONNECTED: 7
+  GATHER: 6
+  GREATER_EQUAL: 2
+  LOGICAL_NOT: 1
+  LOGICAL_OR: 2
+  MAXIMUM: 1
+  MEAN: 4
+  MIRROR_PAD: 5
+  MUL: 26
+  NEG: 4
+  QUANTIZE: 21
+  RELU: 10
+  RESHAPE: 51
+  SELECT_V2: 7
+  SQRT: 2
+  SUB: 8
+  SUM: 2
+  TRANSPOSE: 14
+COMMAND_STREAM: _split_10_command_stream bytes=656 buffer=40
+COMMAND_STREAM: _split_11_command_stream bytes=664 buffer=41
+COMMAND_STREAM: _split_12_command_stream bytes=328 buffer=42
+COMMAND_STREAM: _split_1_command_stream bytes=540 buffer=43
+COMMAND_STREAM: _split_2_command_stream bytes=656 buffer=45
+COMMAND_STREAM: _split_3_command_stream bytes=664 buffer=46
+COMMAND_STREAM: _split_4_command_stream bytes=656 buffer=47
+COMMAND_STREAM: _split_5_command_stream bytes=664 buffer=48
+COMMAND_STREAM: _split_6_command_stream bytes=656 buffer=49
+COMMAND_STREAM: _split_7_command_stream bytes=664 buffer=50
+COMMAND_STREAM: _split_8_command_stream bytes=656 buffer=51
+COMMAND_STREAM: _split_9_command_stream bytes=664 buffer=52
+
+===== FINAL VELA MODEL SUMMARY =====
+ABS: 2
+ADD: 23
+BROADCAST_ARGS: 1
+BROADCAST_TO: 1
+CAST: 1
+CONCATENATION: 2
+CONV_2D: 5
+CUSTOM:ethos-u: 12
+DEPTHWISE_CONV_2D: 10
+DEQUANTIZE: 31
+DIV: 6
+EXP: 2
+FULLY_CONNECTED: 7
+GATHER: 6
+GREATER_EQUAL: 2
+LOGICAL_NOT: 1
+LOGICAL_OR: 2
+MAXIMUM: 1
+MEAN: 4
+MIRROR_PAD: 5
+MUL: 26
+NEG: 4
+QUANTIZE: 21
+RELU: 10
+RESHAPE: 51
+SELECT_V2: 7
+SQRT: 2
+SUB: 8
+SUM: 2
+TRANSPOSE: 14
+ETHOS_U_CUSTOM_NODE_COUNT: 12
+COMMAND_STREAM_TENSOR_COUNT: 12
+COMMAND_STREAM_TOTAL_BYTES: 7468
+CONV_2D_REMAINING: 5
+DEPTHWISE_CONV_2D_REMAINING: 10
+FLATBUFFER_AUDIT=PASS
+
+===== AUDIT COMPLETE =====
+VELA_MODEL_SHA256=7fb696e8f3fcb3d5e07f07c6ff7230fb9dc2cda43d098efd25df5067d1f84c24
+VELA_POSTCOMPILE_AUDIT=PASS
+AUDIT_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_vela_postcompile_audit_20261122_214223.log
+
+AUDIT_EXIT_CODE=0
+Press Enter to close.
