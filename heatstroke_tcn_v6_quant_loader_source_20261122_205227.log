@@ -1,0 +1,545 @@
+===== TCN QUANTIZATION SCRIPT: LINES 1-300 =====
+     1	from pathlib import Path
+     2	from collections import Counter
+     3	from datetime import datetime
+     4	import argparse
+     5	import hashlib
+     6	import importlib.util
+     7	import json
+     8	import sys
+     9	import numpy as np
+    10	import onnx
+    11	from onnx import numpy_helper
+    12	import onnxruntime as ort
+    13	from onnxruntime.quantization import CalibrationDataReader, CalibrationMethod, QuantFormat, QuantType, quantize_static
+    14	PROJECT = Path('/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514')
+    15	EXP = PROJECT / 'experiments' / 'tcn_reg_20261120'
+    16	MODEL_DIR = EXP / 'onnx_fp32_fold2_manual_ln_no_erf_20261121_175710'
+    17	FP32_ONNX = MODEL_DIR / 'heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx'
+    18	EXPECTED_FP32_SHA256 = '1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a'
+    19	EXPORTER_PATH = EXP / 'export_tcn_reg_fold2_fp32_onnx_v5_manual_erf_gelu.py'
+    20	HELPER_PATH = EXP / 'train_tcn_reg_testdev_experiment.py'
+    21	DATA_DIR = PROJECT / 'data' / 'split_byid'
+    22	SENTINELS = (-9997.0, -9998.0, -9999.0)
+    23	INPUT_NAMES = ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+    24	
+    25	def sha256(path):
+    26	    h = hashlib.sha256()
+    27	    with path.open('rb') as f:
+    28	        for chunk in iter(lambda: f.read(1024 * 1024), b''):
+    29	            h.update(chunk)
+    30	    return h.hexdigest()
+    31	
+    32	def import_module(path, name):
+    33	    spec = importlib.util.spec_from_file_location(name, str(path))
+    34	    if spec is None or spec.loader is None:
+    35	        raise RuntimeError(f'Cannot import module: {path}')
+    36	    module = importlib.util.module_from_spec(spec)
+    37	    spec.loader.exec_module(module)
+    38	    return module
+    39	
+    40	def json_default(value):
+    41	    if isinstance(value, np.generic):
+    42	        return value.item()
+    43	    if isinstance(value, np.ndarray):
+    44	        return value.tolist()
+    45	    if isinstance(value, Path):
+    46	        return str(value)
+    47	    raise TypeError(f'Cannot serialize {type(value).__name__}')
+    48	
+    49	class DatasetCalibrationReader(CalibrationDataReader):
+    50	    """Feeds deterministic five-input samples to ONNX Runtime calibration."""
+    51	
+    52	    def __init__(self, samples):
+    53	        super().__init__()
+    54	        self.samples = samples
+    55	        self.index = 0
+    56	
+    57	    def get_next(self):
+    58	        if self.index >= len(self.samples):
+    59	            return None
+    60	        sample = self.samples[self.index]
+    61	        self.index += 1
+    62	        return sample
+    63	
+    64	    def rewind(self):
+    65	        self.index = 0
+    66	
+    67	def collect_dataset_samples(exporter, helper, seed=20261121):
+    68	    project_run = helper.import_project(PROJECT)
+    69	    dataset = helper.ImputationDataset(project_run, DATA_DIR, 'test', seed, 'worker_id')
+    70	    dataset.set_epoch(0)
+    71	    if len(dataset) != 449:
+    72	        raise RuntimeError(f'Expected 449 samples, found {len(dataset)}')
+    73	    samples = []
+    74	    missing_entries = 0
+    75	    total_entries = 0
+    76	    print('\n===== BUILDING CALIBRATION INPUTS =====')
+    77	    for index in range(len(dataset)):
+    78	        x, mark, worker, compact = exporter.make_sample_inputs(dataset, index)
+    79	        mask = (x == SENTINELS[0]) | (x == SENTINELS[1]) | (x == SENTINELS[2])
+    80	        sanitized = np.where(mask.numpy(), 0.0, x.numpy()).astype(np.float32)
+    81	        feed = {'x_values': sanitized, 'missing_mask': mask.cpu().numpy().astype(np.bool_), 'x_mark': mark.cpu().numpy().astype(np.float32), 'worker_features_18': worker.cpu().numpy().astype(np.float32), 'compact_values': compact.cpu().numpy().astype(np.float32)}
+    82	        expected_shapes = {'x_values': (1, 900, 6), 'missing_mask': (1, 900, 6), 'x_mark': (1, 900, 3), 'worker_features_18': (1, 18), 'compact_values': (1, 1800, 6)}
+    83	        for name, shape in expected_shapes.items():
+    84	            if feed[name].shape != shape:
+    85	                raise RuntimeError(f'Sample {index}, {name}: expected {shape}, got {feed[name].shape}')
+    86	        for name in INPUT_NAMES:
+    87	            if name != 'missing_mask' and (not np.isfinite(feed[name]).all()):
+    88	                raise RuntimeError(f'Sample {index}: non-finite values in {name}')
+    89	        if np.any(feed['x_values'] == -9997):
+    90	            raise RuntimeError('Sentinel -9997 remains after sanitization')
+    91	        if np.any(feed['x_values'] == -9998):
+    92	            raise RuntimeError('Sentinel -9998 remains after sanitization')
+    93	        if np.any(feed['x_values'] == -9999):
+    94	            raise RuntimeError('Sentinel -9999 remains after sanitization')
+    95	        missing_entries += int(feed['missing_mask'].sum())
+    96	        total_entries += int(feed['missing_mask'].size)
+    97	        samples.append(feed)
+    98	        if index % 100 == 0 or index == len(dataset) - 1:
+    99	            print(f'Prepared {index + 1}/{len(dataset)} samples')
+   100	    print('Calibration samples:', len(samples))
+   101	    print('Missing sensor entries:', missing_entries)
+   102	    print('Total sensor entries:', total_entries)
+   103	    print('Missing sensor percentage:', 100.0 * missing_entries / max(total_entries, 1))
+   104	    return samples
+   105	
+   106	def summarize_initializers(model):
+   107	    counts = Counter()
+   108	    total_bytes = Counter()
+   109	    int8_names = []
+   110	    for initializer in model.graph.initializer:
+   111	        array = numpy_helper.to_array(initializer)
+   112	        dtype = str(array.dtype)
+   113	        counts[dtype] += 1
+   114	        total_bytes[dtype] += int(array.nbytes)
+   115	        if array.dtype == np.int8:
+   116	            int8_names.append(initializer.name)
+   117	    return {'initializer_count_by_dtype': dict(counts), 'initializer_bytes_by_dtype': dict(total_bytes), 'int8_initializer_count': len(int8_names), 'int8_initializer_bytes': int(total_bytes.get('int8', 0)), 'int8_initializer_examples': int8_names[:20]}
+   118	
+   119	def summarize_qdq(model):
+   120	    ops = Counter((node.op_type for node in model.graph.node))
+   121	    initializers = {item.name: numpy_helper.to_array(item) for item in model.graph.initializer}
+   122	    scale_sizes = []
+   123	    scale_min = []
+   124	    scale_max = []
+   125	    direct_input_quantizers = {name: [] for name in INPUT_NAMES}
+   126	    for node in model.graph.node:
+   127	        if node.op_type not in ('QuantizeLinear', 'DequantizeLinear'):
+   128	            continue
+   129	        if len(node.input) >= 2:
+   130	            scale = initializers.get(node.input[1])
+   131	            if scale is not None:
+   132	                scale = np.asarray(scale, dtype=np.float64)
+   133	                if scale.size:
+   134	                    scale_sizes.append(int(scale.size))
+   135	                    scale_min.append(float(np.min(scale)))
+   136	                    scale_max.append(float(np.max(scale)))
+   137	        if node.op_type == 'QuantizeLinear' and node.input:
+   138	            for name in INPUT_NAMES:
+   139	                if node.input[0] == name:
+   140	                    direct_input_quantizers[name].append({'node_name': node.name, 'output': list(node.output), 'scale_initializer': node.input[1] if len(node.input) > 1 else None, 'zero_point_initializer': node.input[2] if len(node.input) > 2 else None})
+   141	    return {'operator_counts': dict(sorted(ops.items())), 'quantize_linear_nodes': int(ops.get('QuantizeLinear', 0)), 'dequantize_linear_nodes': int(ops.get('DequantizeLinear', 0)), 'qdq_scale_tensor_count': len(scale_sizes), 'qdq_scale_value_count': int(sum(scale_sizes)), 'qdq_scale_min': min(scale_min) if scale_min else None, 'qdq_scale_max': max(scale_max) if scale_max else None, 'direct_graph_input_quantizers': direct_input_quantizers}
+   142	
+   143	def main():
+   144	    ap = argparse.ArgumentParser()
+   145	    ap.add_argument('--out-dir', required=True)
+   146	    ap.add_argument('--seed', type=int, default=20261121)
+   147	    args = ap.parse_args()
+   148	    out_dir = Path(args.out_dir).resolve()
+   149	    out_dir.mkdir(parents=True, exist_ok=True)
+   150	    qdq_path = out_dir / 'heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx'
+   151	    print('===== TCN FOLD-2 V6 STATIC INT8 QDQ EXPERIMENT =====')
+   152	    print('Timestamp:', datetime.now().astimezone().isoformat())
+   153	    print('Python:', sys.version.replace('\n', ' '))
+   154	    print('NumPy:', np.__version__)
+   155	    print('ONNX:', onnx.__version__)
+   156	    print('ONNX Runtime:', ort.__version__)
+   157	    print('FP32 ONNX:', FP32_ONNX)
+   158	    print('QDQ output:', qdq_path)
+   159	    for path in (FP32_ONNX, EXPORTER_PATH, HELPER_PATH, DATA_DIR / 'test_seq.feather', DATA_DIR / 'test_non_seq.csv'):
+   160	        if not path.is_file():
+   161	            raise FileNotFoundError(path)
+   162	    fp32_sha = sha256(FP32_ONNX)
+   163	    print('FP32 ONNX SHA256:', fp32_sha)
+   164	    if fp32_sha != EXPECTED_FP32_SHA256:
+   165	        raise RuntimeError('FP32 ONNX SHA256 mismatch; refusing to quantize.')
+   166	    original = onnx.load(str(FP32_ONNX))
+   167	    onnx.checker.check_model(original)
+   168	    original_inputs = [item.name for item in original.graph.input]
+   169	    if original_inputs != INPUT_NAMES:
+   170	        raise RuntimeError(f'Unexpected FP32 input interface: {original_inputs}')
+   171	    original_ops = Counter((node.op_type for node in original.graph.node))
+   172	    print('\nOriginal graph node count:', len(original.graph.node))
+   173	    print('Original Conv count:', original_ops.get('Conv', 0))
+   174	    print('Original Gemm count:', original_ops.get('Gemm', 0))
+   175	    print('Original operator histogram:')
+   176	    print(json.dumps(dict(sorted(original_ops.items())), indent=2))
+   177	    if original_ops.get('Conv', 0) == 0:
+   178	        raise RuntimeError('No Conv operators found.')
+   179	    if original_ops.get('Gemm', 0) == 0:
+   180	        raise RuntimeError('No Gemm operators found.')
+   181	    exporter = import_module(EXPORTER_PATH, 'tcn_v6_static_qdq_exporter')
+   182	    helper = exporter.import_helper(HELPER_PATH)
+   183	    samples = collect_dataset_samples(exporter, helper, seed=args.seed)
+   184	    reader = DatasetCalibrationReader(samples)
+   185	    print('\n===== STATIC QDQ QUANTIZATION CONFIGURATION =====')
+   186	    config = {'quant_format': 'QDQ', 'op_types_to_quantize': ['Conv'], 'activation_type': 'QInt8', 'weight_type': 'QInt8', 'per_channel': True, 'calibrate_method': 'MinMax', 'ActivationSymmetric': True, 'WeightSymmetric': True, 'calibration_sample_count': len(samples), 'excluded_operator_policy': 'All other operators left in their original representation', 'missing_mask': 'Boolean input; not treated as an INT8 activation'}
+   187	    print(json.dumps(config, indent=2))
+   188	    quantize_static(model_input=str(FP32_ONNX), model_output=str(qdq_path), calibration_data_reader=reader, quant_format=QuantFormat.QDQ, op_types_to_quantize=['Conv'], per_channel=True, activation_type=QuantType.QInt8, weight_type=QuantType.QInt8, calibrate_method=CalibrationMethod.MinMax, extra_options={'ActivationSymmetric': True, 'WeightSymmetric': True}, nodes_to_quantize=['/tcn_in/Conv', '/tcn_blocks.0/layer1/depthwise/Conv', '/tcn_blocks.0/layer1/pointwise/Conv', '/tcn_blocks.0/layer2/depthwise/Conv', '/tcn_blocks.0/layer2/pointwise/Conv', '/tcn_blocks.1/layer1/depthwise/Conv', '/tcn_blocks.1/layer1/pointwise/Conv', '/tcn_blocks.1/layer2/depthwise/Conv', '/tcn_blocks.1/layer2/pointwise/Conv', '/tcn_blocks.2/layer1/depthwise/Conv', '/tcn_blocks.2/layer1/pointwise/Conv', '/tcn_blocks.2/layer2/depthwise/Conv', '/tcn_blocks.2/layer2/pointwise/Conv', '/tcn_blocks.3/layer1/depthwise/Conv', '/tcn_blocks.3/layer1/pointwise/Conv', '/tcn_blocks.3/layer2/depthwise/Conv', '/tcn_blocks.3/layer2/pointwise/Conv', '/tcn_blocks.4/layer1/depthwise/Conv', '/tcn_blocks.4/layer1/pointwise/Conv', '/tcn_blocks.4/layer2/depthwise/Conv', '/tcn_blocks.4/layer2/pointwise/Conv', '/tcn_blocks.5/layer1/depthwise/Conv', '/tcn_blocks.5/layer1/pointwise/Conv', '/tcn_blocks.5/layer2/depthwise/Conv', '/tcn_blocks.5/layer2/pointwise/Conv', '/tcn_blocks.6/layer1/depthwise/Conv', '/tcn_blocks.6/layer1/pointwise/Conv', '/tcn_blocks.6/layer2/depthwise/Conv', '/tcn_blocks.6/layer2/pointwise/Conv', '/tcn_blocks.7/layer1/depthwise/Conv', '/tcn_blocks.7/layer1/pointwise/Conv', '/tcn_blocks.7/layer2/depthwise/Conv', '/tcn_blocks.7/layer2/pointwise/Conv', '/tcn_blocks.8/layer1/depthwise/Conv', '/tcn_blocks.8/layer1/pointwise/Conv', '/tcn_blocks.8/layer2/depthwise/Conv', '/tcn_blocks.8/layer2/pointwise/Conv', '/tcn_blocks.9/layer1/depthwise/Conv', '/tcn_blocks.9/layer1/pointwise/Conv', '/tcn_blocks.9/layer2/depthwise/Conv', '/tcn_blocks.9/layer2/pointwise/Conv', '/tcn_out/Conv'])
+   189	    if not qdq_path.is_file() or qdq_path.stat().st_size == 0:
+   190	        raise RuntimeError('QDQ quantizer did not create an output model.')
+   191	    qdq_sha = sha256(qdq_path)
+   192	    print('\nQDQ ONNX file:', qdq_path)
+   193	    print('QDQ file bytes:', qdq_path.stat().st_size)
+   194	    print('QDQ SHA256:', qdq_sha)
+   195	    qdq_model = onnx.load(str(qdq_path))
+   196	    onnx.checker.check_model(qdq_model)
+   197	    qdq_ops = summarize_qdq(qdq_model)
+   198	    initializer_summary = summarize_initializers(qdq_model)
+   199	    print('\nQDQ ONNX checker: PASS')
+   200	    print('QDQ operator summary:')
+   201	    print(json.dumps(qdq_ops, indent=2))
+   202	    print('Initializer summary:')
+   203	    print(json.dumps(initializer_summary, indent=2))
+   204	    if qdq_ops['quantize_linear_nodes'] == 0:
+   205	        raise RuntimeError('No QuantizeLinear nodes found.')
+   206	    if qdq_ops['dequantize_linear_nodes'] == 0:
+   207	        raise RuntimeError('No DequantizeLinear nodes found.')
+   208	    if initializer_summary['int8_initializer_count'] == 0:
+   209	        raise RuntimeError('No INT8 initializers were generated.')
+   210	    print('\n===== ONNX RUNTIME QDQ VALIDATION: ALL 449 SAMPLES =====')
+   211	    fp32_session = ort.InferenceSession(str(FP32_ONNX), providers=['CPUExecutionProvider'])
+   212	    qdq_session = ort.InferenceSession(str(qdq_path), providers=['CPUExecutionProvider'])
+   213	    fp32_output_name = fp32_session.get_outputs()[0].name
+   214	    qdq_output_name = qdq_session.get_outputs()[0].name
+   215	    fp32_input_names = [item.name for item in fp32_session.get_inputs()]
+   216	    qdq_input_names = [item.name for item in qdq_session.get_inputs()]
+   217	    print('FP32 input names:', fp32_input_names)
+   218	    print('QDQ input names:', qdq_input_names)
+   219	    print('FP32 output:', fp32_session.get_outputs()[0].name)
+   220	    print('QDQ output:', qdq_session.get_outputs()[0].name)
+   221	    if fp32_input_names != INPUT_NAMES:
+   222	        raise RuntimeError(f'FP32 ORT input mismatch: {fp32_input_names}')
+   223	    if qdq_input_names != INPUT_NAMES:
+   224	        raise RuntimeError(f'QDQ ORT input mismatch: {qdq_input_names}')
+   225	    global_max = 0.0
+   226	    total_abs = 0.0
+   227	    total_sq = 0.0
+   228	    total_values = 0
+   229	    worst_sample = -1
+   230	    sample_max_errors = []
+   231	    nonfinite_samples = []
+   232	    per_channel = {str(channel): {'max_abs': 0.0, 'sum_abs': 0.0, 'sum_sq': 0.0, 'count': 0} for channel in range(6)}
+   233	    for index, feed in enumerate(samples):
+   234	        reference = fp32_session.run([fp32_output_name], feed)[0]
+   235	        candidate = qdq_session.run([qdq_output_name], feed)[0]
+   236	        if reference.shape != candidate.shape:
+   237	            raise RuntimeError(f'Sample {index}: output shape mismatch {reference.shape} vs {candidate.shape}')
+   238	        if not np.isfinite(candidate).all():
+   239	            nonfinite_samples.append(int(index))
+   240	            continue
+   241	        delta = np.abs(reference - candidate)
+   242	        sample_max = float(delta.max())
+   243	        sample_max_errors.append(sample_max)
+   244	        if sample_max > global_max:
+   245	            global_max = sample_max
+   246	            worst_sample = index
+   247	        total_abs += float(np.sum(delta, dtype=np.float64))
+   248	        total_sq += float(np.sum(np.square(reference - candidate), dtype=np.float64))
+   249	        total_values += int(delta.size)
+   250	        for channel in range(6):
+   251	            channel_delta = delta[:, :, channel]
+   252	            entry = per_channel[str(channel)]
+   253	            entry['max_abs'] = max(entry['max_abs'], float(channel_delta.max()))
+   254	            entry['sum_abs'] += float(np.sum(channel_delta, dtype=np.float64))
+   255	            entry['sum_sq'] += float(np.sum(np.square(channel_delta), dtype=np.float64))
+   256	            entry['count'] += int(channel_delta.size)
+   257	        if index % 50 == 0 or index == len(samples) - 1:
+   258	            print(f'Progress {index + 1}/{len(samples)}; sample_max_abs={sample_max:.9g}; nonfinite_samples={len(nonfinite_samples)}')
+   259	    per_channel_result = {}
+   260	    for channel, entry in per_channel.items():
+   261	        count = max(entry['count'], 1)
+   262	        per_channel_result[channel] = {'max_abs_error': float(entry['max_abs']), 'mean_abs_error': float(entry['sum_abs'] / count), 'rmse': float(np.sqrt(entry['sum_sq'] / count))}
+   263	    metrics = {'model': 'Fold-2 TCN regression/imputation V6', 'quantization': config, 'dataset': 'split_byid/test', 'samples': len(samples), 'note': 'Exploratory quantization check. The same 449 samples were used for calibration and comparison; this is not an independent generalization evaluation.', 'fp32_onnx': str(FP32_ONNX), 'fp32_onnx_sha256': fp32_sha, 'qdq_onnx': str(qdq_path), 'qdq_onnx_sha256': qdq_sha, 'qdq_bytes': int(qdq_path.stat().st_size), 'all_outputs_finite': len(nonfinite_samples) == 0, 'nonfinite_samples': nonfinite_samples, 'global_max_abs_error': float(global_max), 'global_mean_abs_error': float(total_abs / max(total_values, 1)), 'global_rmse': float(np.sqrt(total_sq / max(total_values, 1))), 'worst_sample_index': int(worst_sample), 'median_sample_max_abs_error': float(np.median(sample_max_errors)) if sample_max_errors else None, 'p99_sample_max_abs_error': float(np.percentile(sample_max_errors, 99)) if sample_max_errors else None, 'per_channel_error': per_channel_result, 'qdq_graph': qdq_ops, 'initializer_summary': initializer_summary, 'qdq_operator_counts': dict(sorted(Counter((n.op_type for n in qdq_model.graph.node)).items()))}
+   264	    report_path = out_dir / 'qdq_ort_all449_report.json'
+   265	    report_path.write_text(json.dumps(metrics, indent=2, default=json_default))
+   266	    print('\n===== STATIC QDQ SUMMARY =====')
+   267	    print(json.dumps(metrics, indent=2, default=json_default))
+   268	    print('JSON report:', report_path)
+   269	    if nonfinite_samples:
+   270	        raise RuntimeError(f'QDQ produced non-finite outputs on {len(nonfinite_samples)} samples.')
+   271	    print('\n<TCN_V6_STATIC_INT8_QDQ> PASS </TCN_V6_STATIC_INT8_QDQ>')
+   272	    print('QDQ model created and all 449 ORT outputs are finite.')
+   273	    print('No TFLite conversion, Vela, firmware, or flash actions performed.')
+   274	    return 0
+   275	if __name__ == '__main__':
+   276	    try:
+   277	        raise SystemExit(main())
+   278	    except Exception as exc:
+   279	        print('\n<TCN_V6_STATIC_INT8_QDQ> FAIL </TCN_V6_STATIC_INT8_QDQ>', file=sys.stderr)
+   280	        print(f'ERROR: {type(exc).__name__}: {exc}', file=sys.stderr)
+   281	        raise
+
+===== DATASET HELPER: CLASS LOCATION =====
+62:def import_project(project: Path):
+293:class ImputationDataset(Dataset):
+411:    def __len__(self) -> int:
+446:    def __getitem__(self, index: int):
+
+===== DATASET HELPER: RELEVANT SOURCE =====
+   263	        "Could not identify a worker/subject ID column in the metadata CSV. "
+   264	        "For a leakage-resistant split, the script will NOT fall back to "
+   265	        "sample_index. Available metadata columns: " + ", ".join(map(str, columns)) +
+   266	        ". Inspect this list and rerun with --group-column <actual_subject_id_column>."
+   267	    )
+   268	
+   269	
+   270	def make_group_split(group_ids: List[str], val_fraction: float, seed: int):
+   271	    """Split unique worker IDs, never individual samples, into train/validation."""
+   272	    unique_groups = sorted(set(group_ids))
+   273	    if len(unique_groups) < 2:
+   274	        raise RuntimeError(
+   275	            f"Need at least two distinct subject groups for a grouped split; "
+   276	            f"found {len(unique_groups)}. Cannot make a leakage-resistant split."
+   277	        )
+   278	    if not (0.05 <= val_fraction <= 0.5):
+   279	        raise ValueError("--val-fraction must be between 0.05 and 0.50")
+   280	    rng = random.Random(seed)
+   281	    shuffled = unique_groups.copy()
+   282	    rng.shuffle(shuffled)
+   283	    n_val = max(1, int(round(len(shuffled) * val_fraction)))
+   284	    n_val = min(n_val, len(shuffled) - 1)
+   285	    val_groups = set(shuffled[:n_val])
+   286	    train_indices = [i for i, g in enumerate(group_ids) if g not in val_groups]
+   287	    val_indices = [i for i, g in enumerate(group_ids) if g in val_groups]
+   288	    if not train_indices or not val_indices:
+   289	        raise RuntimeError("Grouped split produced an empty training or validation partition")
+   290	    return train_indices, val_indices, sorted(set(group_ids[i] for i in train_indices)), sorted(val_groups)
+   291	
+   292	
+   293	class ImputationDataset(Dataset):
+   294	    """Build the same 900-second windows as run.py and inject known-value masks.
+   295	
+   296	    Training targets are only artificially hidden values that were observed in
+   297	    the original data. Naturally missing values (-9999) are never used as labels.
+   298	    """
+   299	    def __init__(self, project_run, split_dir: Path, flag: str, seed: int,
+   300	                 requested_group_column: str = "auto"):
+   301	        self.run = project_run
+   302	        self.split_dir = split_dir
+   303	        self.flag = flag
+   304	        self.seed = seed
+   305	        self.epoch = 0
+   306	        seq_path = split_dir / f"{flag}_seq.feather"
+   307	        nonseq_path = split_dir / f"{flag}_non_seq.csv"
+   308	        if not seq_path.is_file() or not nonseq_path.is_file():
+   309	            raise FileNotFoundError(
+   310	                f"Missing {flag} split files: expected {seq_path.name} and {nonseq_path.name} in {split_dir}"
+   311	            )
+   312	        self.df_seq = pd.read_feather(seq_path)
+   313	        self.df_non = pd.read_csv(nonseq_path)
+   314	        self.df_seq["time"] = pd.to_datetime(self.df_seq["time"])
+   315	        self.df_non["time"] = pd.to_datetime(self.df_non["time"])
+   316	        self.group_column = resolve_group_column(self.df_non.columns, requested_group_column)
+   317	        print(f"Subject-level split column: {self.group_column}")
+   318	        for col in SEQ_COLS:
+   319	            if col not in self.df_seq:
+   320	                raise KeyError(f"Missing sequence column {col} in {seq_path}")
+   321	        for col in NON_SEQ_COLS + ["sample_index", "time", "missing_col", "rpe", "psi", self.group_column]:
+   322	            if col not in self.df_non:
+   323	                raise KeyError(f"Missing metadata column {col} in {nonseq_path}")
+   324	
+   325	        self.seq_groups = {
+   326	            key: group.sort_values("time").reset_index(drop=True)
+   327	            for key, group in self.df_seq.groupby("sample_index", sort=False)
+   328	        }
+   329	        self.meta_groups = {
+   330	            key: group.sort_values("time").reset_index(drop=True)
+   331	            for key, group in self.df_non.groupby("sample_index", sort=False)
+   332	        }
+   333	        self.samples: List[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = []
+   334	        self.sample_ids: List[str] = []
+   335	        self.group_ids: List[str] = []
+   336	        skipped = 0
+   337	        for sample_id, meta in self.meta_groups.items():
+   338	            if sample_id not in self.seq_groups or len(meta) == 0:
+   339	                skipped += 1
+   340	                continue
+   341	            target_time = pd.to_datetime(meta["time"].iloc[0])
+   342	            start_time = target_time - pd.Timedelta(seconds=SEQ_LEN)
+   343	            end_time = target_time - pd.Timedelta(seconds=1)
+   344	            seq = self.seq_groups[sample_id]
+   345	            window = seq[(seq["time"] >= start_time) & (seq["time"] <= end_time)].copy()
+   346	            window = window.sort_values("time").reset_index(drop=True)
+   347	            if len(window) != SEQ_LEN:
+   348	                skipped += 1
+   349	                continue
+   350	
+   351	            missing_cols = meta["missing_col"].iloc[0]
+   352	            if pd.notna(missing_cols) and str(missing_cols).strip():
+   353	                for col in str(missing_cols).split(";"):
+   354	                    if col in window.columns:
+   355	                        window.loc[:, col] = np.nan
+   356	
+   357	            clean = window[SEQ_COLS].to_numpy(dtype=np.float32, copy=True)
+   358	            marks = project_run.time_features(pd.to_datetime(window["time"].values)).T.astype(np.float32)
+   359	            worker = self._worker_vector(meta.iloc[-1], project_run)
+   360	            labels = self._labels(meta.iloc[-1], project_run)
+   361	            group_values = meta[self.group_column].dropna().astype(str).str.strip().unique()
+   362	            if len(group_values) != 1 or not group_values[0]:
+   363	                raise ValueError(
+   364	                    f"sample_index={sample_id!r} has invalid/inconsistent subject IDs "
+   365	                    f"in {self.group_column!r}: {group_values.tolist()}"
+   366	                )
+   367	            self.samples.append((clean, marks, worker, labels))
+   368	            self.sample_ids.append(str(sample_id))
+   369	            self.group_ids.append(str(group_values[0]))
+   370	
+   371	        print(f"[{flag}] loaded samples={len(self.samples)}, skipped_incomplete={skipped}")
+   372	        print(f"[{flag}] distinct subject groups={len(set(self.group_ids))}")
+   373	        if not self.samples:
+   374	            raise RuntimeError(
+   375	                f"No complete {flag} samples with exactly {SEQ_LEN} sequence rows. "
+   376	                "Check sample_index/time alignment in the available split_byid test files."
+   377	            )
+   378	
+   379	    @staticmethod
+   380	    def _worker_vector(row: pd.Series, project_run) -> np.ndarray:
+   381	        values: List[float] = []
+   382	        for col in NON_SEQ_COLS:
+   383	            value = row[col]
+   384	            if col in ONE_HOT_COLS:
+   385	                key = "prev_rpe_rpt" if col.startswith("prev_rpe_") else col
+   386	                if pd.isna(value):
+   387	                    raise ValueError(f"NaN one-hot worker feature {col}")
+   388	                map_key = float(value)
+   389	                try:
+   390	                    values.extend(project_run.ONE_HOT_MAP[key][map_key])
+   391	                except KeyError as exc:
+   392	                    raise ValueError(f"Unexpected {col}={value!r} for one-hot map {key}") from exc
+   393	            else:
+   394	                values.append(float(value))
+   395	        arr = np.asarray(values, dtype=np.float32)
+   396	        if arr.shape != (30,) or not np.isfinite(arr).all():
+   397	            raise ValueError(f"Invalid worker feature vector: shape={arr.shape}")
+   398	        return arr
+   399	
+   400	    @staticmethod
+   401	    def _labels(row: pd.Series, project_run) -> np.ndarray:
+   402	        rpe = row["rpe"]
+   403	        psi = row["psi"]
+   404	        rpe = -1 if pd.isna(rpe) else project_run.RPE_MAP.get(int(rpe), -1)
+   405	        psi = -1 if pd.isna(psi) else project_run.PSI_MAP.get(int(psi), -1)
+   406	        return np.asarray([rpe, psi], dtype=np.int64)
+   407	
+   408	    def set_epoch(self, epoch: int) -> None:
+   409	        self.epoch = int(epoch)
+   410	
+   411	    def __len__(self) -> int:
+   412	        return len(self.samples)
+   413	
+   414	    def _corrupt(self, clean: np.ndarray, index: int) -> Tuple[np.ndarray, np.ndarray]:
+   415	        rng = np.random.default_rng(self.seed + self.epoch * 100003 + index * 97)
+   416	        corrupted = clean.copy()
+   417	        original_missing = ~np.isfinite(clean)
+   418	        artificial = np.zeros_like(original_missing, dtype=bool)
+   419	        # Match run.py: 10% chance of last-300s block masking; otherwise each
+   420	        # channel gets 30% random masking or one 270s contiguous patch.
+   421	        if rng.random() < 0.1:
+   422	            mask = np.zeros(SEQ_LEN, dtype=bool)
+   423	            mask[SEQ_LEN - 300:] = True
+   424	            for c in range(clean.shape[1]):
+   425	                if np.isnan(clean[:, c]).mean() == 0.0:
+   426	                    artificial[:, c] = mask & ~original_missing[:, c]
+   427	                    corrupted[artificial[:, c], c] = -9998.0
+   428	        else:
+   429	            for c in range(clean.shape[1]):
+   430	                if rng.random() < 0.5:
+   431	                    m = rng.choice(np.asarray([True, False]), size=SEQ_LEN, p=[0.3, 0.7])
+   432	                    code = -9998.0
+   433	                else:
+   434	                    m = np.zeros(SEQ_LEN, dtype=bool)
+   435	                    start = int(rng.integers(10, SEQ_LEN - 270))
+   436	                    m[start:start + 270] = True
+   437	                    code = -9997.0
+   438	                artificial[:, c] = m & ~original_missing[:, c]
+   439	                corrupted[artificial[:, c], c] = code
+   440	        corrupted[original_missing] = -9999.0
+   441	        # Any unmasked naturally missing values use the original sentinel.
+   442	        corrupted[~np.isfinite(corrupted)] = -9999.0
+   443	        target = np.nan_to_num(clean, nan=0.0, posinf=0.0, neginf=0.0)
+   444	        return corrupted.astype(np.float32), artificial.astype(bool), target.astype(np.float32)
+   445	
+   446	    def __getitem__(self, index: int):
+   447	        clean, marks, worker, labels = self.samples[index]
+   448	        corrupted, artificial, target = self._corrupt(clean, index)
+   449	        return (
+   450	            torch.from_numpy(corrupted),
+   451	            torch.from_numpy(target),
+   452	            torch.from_numpy(artificial),
+   453	            torch.from_numpy(marks),
+   454	            torch.from_numpy(worker),
+   455	            torch.from_numpy(labels),
+   456	        )
+   457	
+   458	
+   459	def masked_reconstruction_loss(pred: torch.Tensor, target: torch.Tensor,
+   460	                               mask: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+   461	    # The output is consumed in physical units. Normalize only the loss so the
+   462	    # accelerometer channels do not dominate the CBT/WBGT channels.
+   463	    normalized_error = (pred - target) / scale.view(1, 1, -1)
+   464	    per_element = F.smooth_l1_loss(normalized_error, torch.zeros_like(normalized_error), reduction="none")
+   465	    mask_f = mask.to(per_element.dtype)
+   466	    denom = mask_f.sum().clamp_min(1.0)
+   467	    return (per_element * mask_f).sum() / denom
+   468	
+   469	
+   470	@torch.no_grad()
+   471	def evaluate_reconstruction(model, loader, device, scale) -> float:
+   472	    model.eval()
+   473	    losses = []
+   474	    for corrupted, target, artificial, marks, worker, _labels in loader:
+   475	        corrupted = corrupted.to(device)
+   476	        target = target.to(device)
+   477	        artificial = artificial.to(device)
+   478	        marks = marks.to(device)
+   479	        worker = worker.to(device)
+   480	        pred = model(corrupted, x_mark_enc=marks, one_hot_x=worker[:, :18], device=device)
+   481	        loss = masked_reconstruction_loss(pred, target, artificial, scale)
+   482	        losses.append(float(loss.item()))
+   483	    return float(np.mean(losses))
+   484	
+   485	
+   486	@torch.no_grad()
+   487	def evaluate_end_to_end(project_run, tcn_reg, ref_reg, cla_model,
+   488	                        val_loader, device) -> Dict[str, object]:
+   489	    """Compare fixed original classifier fed by original-vs-TCN imputation."""
+   490	    tcn_reg.eval(); ref_reg.eval(); cla_model.eval()
+   491	    y_true_rpe, y_true_psi = [], []
+   492	    y_ref_rpe, y_ref_psi = [], []
+   493	    y_tcn_rpe, y_tcn_psi = [], []
+   494	    for corrupted, _target, _artificial, marks, worker, labels in val_loader:
+   495	        x = corrupted.to(device)
+   496	        marks = marks.to(device)
+   497	        worker = worker.to(device)
+   498	        labels = labels.numpy()
+   499	        missing = (x == -9997) | (x == -9998) | (x == -9999)
+   500	        ref_pred = ref_reg(x, x_mark_enc=marks, one_hot_x=worker[:, :18], device=device)
+   501	        tcn_pred = tcn_reg(x, x_mark_enc=marks, one_hot_x=worker[:, :18], device=device)
+   502	        ref_restored = torch.where(missing, ref_pred, x)
+   503	        tcn_restored = torch.where(missing, tcn_pred, x)
+   504	        ref_rpe, ref_psi = cla_model(ref_restored, x_mark_enc=marks, one_hot_x=worker[:, :30], device=device)
+   505	        tcn_rpe, tcn_psi = cla_model(tcn_restored, x_mark_enc=marks, one_hot_x=worker[:, :30], device=device)
+   506	        y_true_rpe.extend(labels[:, 0].tolist())
+   507	        y_true_psi.extend(labels[:, 1].tolist())
+   508	        y_ref_rpe.extend(ref_rpe.argmax(dim=1).cpu().tolist())
+   509	        y_ref_psi.extend(ref_psi.argmax(dim=1).cpu().tolist())
+   510	        y_tcn_rpe.extend(tcn_rpe.argmax(dim=1).cpu().tolist())
+   511	        y_tcn_psi.extend(tcn_psi.argmax(dim=1).cpu().tolist())
+   512	
+   513	    def metrics(y, pred):
+
+===== SOURCE FILE HASHES =====
+18287a4c3570edb67dbf04e7afb7fd7feb3ee7d2735682292f84c6548e3b8390  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/quantize_tcn_v6_tcn_only_20261121_184747.py
+2c82c7b4e9a464724b19ba01552a046cb79da134afe44667cda23015f1361b0e  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/train_tcn_reg_testdev_experiment.py
