@@ -1,0 +1,453 @@
+================================================================================
+TCN DEPTHWISE QDQ RECOGNITION - SHAPE-INFERRED
+================================================================================
+PYTHON: /home/user/onnx2tflite_env/bin/python
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+CONVERTER: 0.11.0
+
+RUNNING NXP MODEL SHAPE INFERENCE...
+SHAPE_INFERENCE=PASS
+INFERRED_TENSOR_DATA_COUNT: 138
+
+RUNNING QDQ RECOGNIZER...
+Found multiple value infos for tensor "reconstructed_values". Returning first one.
+Some ops in model will be converted to tensor-based quantization representation. Number of ops: 140.
+QDQ_RECOGNITION=PASS
+QUANTIZED_FLOAT_OPS: 48
+NON_QUANTIZED_FLOAT_OPS: 295
+QDQ_CLUSTER_QUANTIZATION_OPS: 140
+STANDALONE_QUANTIZATION_OPS: 52
+
+--------------------------------------------------------------------------------
+BLOCK 0: /tcn_blocks.0/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.0/layer1/depthwise/Conv unique=/tcn_blocks.0/layer1/depthwise/Conv_331
+INPUTS: ['/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/Relu_output_0_DequantizeLinear unique=/Relu_output_0_DequantizeLinear_330
+    DQ inputs: ['/Relu_output_0_QuantizeLinear_Output', '/Relu_output_0_scale', '/Relu_output_0_zero_point']
+    DQ outputs: ['/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/Relu_output_0_DequantizeLinear unique=/Relu_output_0_DequantizeLinear_330
+      CONSUMER: Conv name=/tcn_blocks.0/layer1/depthwise/Conv unique=/tcn_blocks.0/layer1/depthwise/Conv_331
+      CONSUMER: Add name=/tcn_blocks.0/Add unique=/tcn_blocks.0/Add_347
+  INPUT[1]: model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_98
+    DQ inputs: ['model.tcn_blocks.0.layer1.depthwise.weight_quantized', 'model.tcn_blocks.0.layer1.depthwise.weight_scale', 'model.tcn_blocks.0.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_98
+      CONSUMER: Conv name=/tcn_blocks.0/layer1/depthwise/Conv unique=/tcn_blocks.0/layer1/depthwise/Conv_331
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.0/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.0/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.0/layer1/depthwise/Conv_output_0_QuantizeLinear_332
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/Relu_output_0_DequantizeLinear_330', 'model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_98', '/tcn_blocks.0/layer1/depthwise/Conv_output_0_QuantizeLinear_332']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 1: /tcn_blocks.1/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.1/layer1/depthwise/Conv unique=/tcn_blocks.1/layer1/depthwise/Conv_351
+INPUTS: ['/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.1/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.0/Relu_output_0_DequantizeLinear unique=/tcn_blocks.0/Relu_output_0_DequantizeLinear_350
+    DQ inputs: ['/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.0/Relu_output_0_scale', '/tcn_blocks.0/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.0/Relu_output_0_DequantizeLinear unique=/tcn_blocks.0/Relu_output_0_DequantizeLinear_350
+      CONSUMER: Conv name=/tcn_blocks.1/layer1/depthwise/Conv unique=/tcn_blocks.1/layer1/depthwise/Conv_351
+      CONSUMER: Add name=/tcn_blocks.1/Add unique=/tcn_blocks.1/Add_367
+  INPUT[1]: model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_100
+    DQ inputs: ['model.tcn_blocks.1.layer1.depthwise.weight_quantized', 'model.tcn_blocks.1.layer1.depthwise.weight_scale', 'model.tcn_blocks.1.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_100
+      CONSUMER: Conv name=/tcn_blocks.1/layer1/depthwise/Conv unique=/tcn_blocks.1/layer1/depthwise/Conv_351
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.1/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.1/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.1/layer1/depthwise/Conv_output_0_QuantizeLinear_352
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.0/Relu_output_0_DequantizeLinear_350', 'model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_100', '/tcn_blocks.1/layer1/depthwise/Conv_output_0_QuantizeLinear_352']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 2: /tcn_blocks.2/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.2/layer1/depthwise/Conv unique=/tcn_blocks.2/layer1/depthwise/Conv_371
+INPUTS: ['/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.2/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.1/Relu_output_0_DequantizeLinear unique=/tcn_blocks.1/Relu_output_0_DequantizeLinear_370
+    DQ inputs: ['/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.1/Relu_output_0_scale', '/tcn_blocks.1/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.1/Relu_output_0_DequantizeLinear unique=/tcn_blocks.1/Relu_output_0_DequantizeLinear_370
+      CONSUMER: Conv name=/tcn_blocks.2/layer1/depthwise/Conv unique=/tcn_blocks.2/layer1/depthwise/Conv_371
+      CONSUMER: Add name=/tcn_blocks.2/Add unique=/tcn_blocks.2/Add_387
+  INPUT[1]: model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_102
+    DQ inputs: ['model.tcn_blocks.2.layer1.depthwise.weight_quantized', 'model.tcn_blocks.2.layer1.depthwise.weight_scale', 'model.tcn_blocks.2.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_102
+      CONSUMER: Conv name=/tcn_blocks.2/layer1/depthwise/Conv unique=/tcn_blocks.2/layer1/depthwise/Conv_371
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.2/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.2/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.2/layer1/depthwise/Conv_output_0_QuantizeLinear_372
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.1/Relu_output_0_DequantizeLinear_370', 'model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_102', '/tcn_blocks.2/layer1/depthwise/Conv_output_0_QuantizeLinear_372']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 3: /tcn_blocks.3/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.3/layer1/depthwise/Conv unique=/tcn_blocks.3/layer1/depthwise/Conv_391
+INPUTS: ['/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.3/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.2/Relu_output_0_DequantizeLinear unique=/tcn_blocks.2/Relu_output_0_DequantizeLinear_390
+    DQ inputs: ['/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.2/Relu_output_0_scale', '/tcn_blocks.2/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.2/Relu_output_0_DequantizeLinear unique=/tcn_blocks.2/Relu_output_0_DequantizeLinear_390
+      CONSUMER: Conv name=/tcn_blocks.3/layer1/depthwise/Conv unique=/tcn_blocks.3/layer1/depthwise/Conv_391
+      CONSUMER: Add name=/tcn_blocks.3/Add unique=/tcn_blocks.3/Add_407
+  INPUT[1]: model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_104
+    DQ inputs: ['model.tcn_blocks.3.layer1.depthwise.weight_quantized', 'model.tcn_blocks.3.layer1.depthwise.weight_scale', 'model.tcn_blocks.3.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_104
+      CONSUMER: Conv name=/tcn_blocks.3/layer1/depthwise/Conv unique=/tcn_blocks.3/layer1/depthwise/Conv_391
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.3/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.3/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.3/layer1/depthwise/Conv_output_0_QuantizeLinear_392
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.2/Relu_output_0_DequantizeLinear_390', 'model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_104', '/tcn_blocks.3/layer1/depthwise/Conv_output_0_QuantizeLinear_392']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 4: /tcn_blocks.4/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.4/layer1/depthwise/Conv unique=/tcn_blocks.4/layer1/depthwise/Conv_411
+INPUTS: ['/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.4/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.3/Relu_output_0_DequantizeLinear unique=/tcn_blocks.3/Relu_output_0_DequantizeLinear_410
+    DQ inputs: ['/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.3/Relu_output_0_scale', '/tcn_blocks.3/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.3/Relu_output_0_DequantizeLinear unique=/tcn_blocks.3/Relu_output_0_DequantizeLinear_410
+      CONSUMER: Conv name=/tcn_blocks.4/layer1/depthwise/Conv unique=/tcn_blocks.4/layer1/depthwise/Conv_411
+      CONSUMER: Add name=/tcn_blocks.4/Add unique=/tcn_blocks.4/Add_427
+  INPUT[1]: model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_106
+    DQ inputs: ['model.tcn_blocks.4.layer1.depthwise.weight_quantized', 'model.tcn_blocks.4.layer1.depthwise.weight_scale', 'model.tcn_blocks.4.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_106
+      CONSUMER: Conv name=/tcn_blocks.4/layer1/depthwise/Conv unique=/tcn_blocks.4/layer1/depthwise/Conv_411
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.4/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.4/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.4/layer1/depthwise/Conv_output_0_QuantizeLinear_412
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.3/Relu_output_0_DequantizeLinear_410', 'model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_106', '/tcn_blocks.4/layer1/depthwise/Conv_output_0_QuantizeLinear_412']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 5: /tcn_blocks.5/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.5/layer1/depthwise/Conv unique=/tcn_blocks.5/layer1/depthwise/Conv_431
+INPUTS: ['/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.5/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.4/Relu_output_0_DequantizeLinear unique=/tcn_blocks.4/Relu_output_0_DequantizeLinear_430
+    DQ inputs: ['/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.4/Relu_output_0_scale', '/tcn_blocks.4/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.4/Relu_output_0_DequantizeLinear unique=/tcn_blocks.4/Relu_output_0_DequantizeLinear_430
+      CONSUMER: Conv name=/tcn_blocks.5/layer1/depthwise/Conv unique=/tcn_blocks.5/layer1/depthwise/Conv_431
+      CONSUMER: Add name=/tcn_blocks.5/Add unique=/tcn_blocks.5/Add_447
+  INPUT[1]: model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_108
+    DQ inputs: ['model.tcn_blocks.5.layer1.depthwise.weight_quantized', 'model.tcn_blocks.5.layer1.depthwise.weight_scale', 'model.tcn_blocks.5.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_108
+      CONSUMER: Conv name=/tcn_blocks.5/layer1/depthwise/Conv unique=/tcn_blocks.5/layer1/depthwise/Conv_431
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.5/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.5/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.5/layer1/depthwise/Conv_output_0_QuantizeLinear_432
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.4/Relu_output_0_DequantizeLinear_430', 'model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_108', '/tcn_blocks.5/layer1/depthwise/Conv_output_0_QuantizeLinear_432']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 6: /tcn_blocks.6/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.6/layer1/depthwise/Conv unique=/tcn_blocks.6/layer1/depthwise/Conv_451
+INPUTS: ['/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.6/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.5/Relu_output_0_DequantizeLinear unique=/tcn_blocks.5/Relu_output_0_DequantizeLinear_450
+    DQ inputs: ['/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.5/Relu_output_0_scale', '/tcn_blocks.5/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.5/Relu_output_0_DequantizeLinear unique=/tcn_blocks.5/Relu_output_0_DequantizeLinear_450
+      CONSUMER: Conv name=/tcn_blocks.6/layer1/depthwise/Conv unique=/tcn_blocks.6/layer1/depthwise/Conv_451
+      CONSUMER: Add name=/tcn_blocks.6/Add unique=/tcn_blocks.6/Add_467
+  INPUT[1]: model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_110
+    DQ inputs: ['model.tcn_blocks.6.layer1.depthwise.weight_quantized', 'model.tcn_blocks.6.layer1.depthwise.weight_scale', 'model.tcn_blocks.6.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_110
+      CONSUMER: Conv name=/tcn_blocks.6/layer1/depthwise/Conv unique=/tcn_blocks.6/layer1/depthwise/Conv_451
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.6/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.6/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.6/layer1/depthwise/Conv_output_0_QuantizeLinear_452
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.5/Relu_output_0_DequantizeLinear_450', 'model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_110', '/tcn_blocks.6/layer1/depthwise/Conv_output_0_QuantizeLinear_452']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 7: /tcn_blocks.7/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.7/layer1/depthwise/Conv unique=/tcn_blocks.7/layer1/depthwise/Conv_471
+INPUTS: ['/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.7/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.6/Relu_output_0_DequantizeLinear unique=/tcn_blocks.6/Relu_output_0_DequantizeLinear_470
+    DQ inputs: ['/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.6/Relu_output_0_scale', '/tcn_blocks.6/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.6/Relu_output_0_DequantizeLinear unique=/tcn_blocks.6/Relu_output_0_DequantizeLinear_470
+      CONSUMER: Conv name=/tcn_blocks.7/layer1/depthwise/Conv unique=/tcn_blocks.7/layer1/depthwise/Conv_471
+      CONSUMER: Add name=/tcn_blocks.7/Add unique=/tcn_blocks.7/Add_487
+  INPUT[1]: model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_112
+    DQ inputs: ['model.tcn_blocks.7.layer1.depthwise.weight_quantized', 'model.tcn_blocks.7.layer1.depthwise.weight_scale', 'model.tcn_blocks.7.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_112
+      CONSUMER: Conv name=/tcn_blocks.7/layer1/depthwise/Conv unique=/tcn_blocks.7/layer1/depthwise/Conv_471
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.7/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.7/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.7/layer1/depthwise/Conv_output_0_QuantizeLinear_472
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.6/Relu_output_0_DequantizeLinear_470', 'model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_112', '/tcn_blocks.7/layer1/depthwise/Conv_output_0_QuantizeLinear_472']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 8: /tcn_blocks.8/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.8/layer1/depthwise/Conv unique=/tcn_blocks.8/layer1/depthwise/Conv_491
+INPUTS: ['/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.8/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.7/Relu_output_0_DequantizeLinear unique=/tcn_blocks.7/Relu_output_0_DequantizeLinear_490
+    DQ inputs: ['/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.7/Relu_output_0_scale', '/tcn_blocks.7/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.7/Relu_output_0_DequantizeLinear unique=/tcn_blocks.7/Relu_output_0_DequantizeLinear_490
+      CONSUMER: Conv name=/tcn_blocks.8/layer1/depthwise/Conv unique=/tcn_blocks.8/layer1/depthwise/Conv_491
+      CONSUMER: Add name=/tcn_blocks.8/Add unique=/tcn_blocks.8/Add_507
+  INPUT[1]: model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_114
+    DQ inputs: ['model.tcn_blocks.8.layer1.depthwise.weight_quantized', 'model.tcn_blocks.8.layer1.depthwise.weight_scale', 'model.tcn_blocks.8.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_114
+      CONSUMER: Conv name=/tcn_blocks.8/layer1/depthwise/Conv unique=/tcn_blocks.8/layer1/depthwise/Conv_491
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.8/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.8/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.8/layer1/depthwise/Conv_output_0_QuantizeLinear_492
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.7/Relu_output_0_DequantizeLinear_490', 'model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_114', '/tcn_blocks.8/layer1/depthwise/Conv_output_0_QuantizeLinear_492']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+--------------------------------------------------------------------------------
+BLOCK 9: /tcn_blocks.9/layer1/depthwise/Conv
+--------------------------------------------------------------------------------
+NODE: Conv name=/tcn_blocks.9/layer1/depthwise/Conv unique=/tcn_blocks.9/layer1/depthwise/Conv_511
+INPUTS: ['/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output']
+OUTPUTS: ['/tcn_blocks.9/layer1/depthwise/Conv_output_0']
+
+INPUT QUANTIZATION CONDITIONS
+  INPUT[0]: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': False, 'shared_dequantized_bias': False}
+    PASS: False
+      PRODUCER: DequantizeLinear name=/tcn_blocks.8/Relu_output_0_DequantizeLinear unique=/tcn_blocks.8/Relu_output_0_DequantizeLinear_510
+    DQ inputs: ['/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output', '/tcn_blocks.8/Relu_output_0_scale', '/tcn_blocks.8/Relu_output_0_zero_point']
+    DQ outputs: ['/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=/tcn_blocks.8/Relu_output_0_DequantizeLinear unique=/tcn_blocks.8/Relu_output_0_DequantizeLinear_510
+      CONSUMER: Conv name=/tcn_blocks.9/layer1/depthwise/Conv unique=/tcn_blocks.9/layer1/depthwise/Conv_511
+      CONSUMER: Add name=/tcn_blocks.9/Add unique=/tcn_blocks.9/Add_527
+  INPUT[1]: model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output
+    checks: {'not_float': False, 'single_consumer_DQ': True, 'shared_dequantized_bias': False}
+    PASS: True
+      PRODUCER: DequantizeLinear name=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_116
+    DQ inputs: ['model.tcn_blocks.9.layer1.depthwise.weight_quantized', 'model.tcn_blocks.9.layer1.depthwise.weight_scale', 'model.tcn_blocks.9.layer1.depthwise.weight_zero_point']
+    DQ outputs: ['model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output']
+      CONSUMER: DequantizeLinear name=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear unique=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_116
+      CONSUMER: Conv name=/tcn_blocks.9/layer1/depthwise/Conv unique=/tcn_blocks.9/layer1/depthwise/Conv_511
+
+OUTPUT QUANTIZATION CONDITIONS
+  OUTPUT[0]: /tcn_blocks.9/layer1/depthwise/Conv_output_0
+    checks: {'not_float': False, 'leads_to_quantize': True, 'is_model_output': False}
+    PASS: True
+      CONSUMER: QuantizeLinear name=/tcn_blocks.9/layer1/depthwise/Conv_output_0_QuantizeLinear unique=/tcn_blocks.9/layer1/depthwise/Conv_output_0_QuantizeLinear_512
+
+RECOGNIZER CONDITION SUMMARY
+  all_inputs_quantized: False
+  all_outputs_quantized: True
+  at_least_one_io_float: True
+  inputs_not_model_outputs: True
+  surrounding_q_types_compatible: True
+  FINAL_QDQ_PASS: False
+  IN_RECOGNIZED_QUANTIZED_LIST: False
+  CONV_CLUSTER_QDQ_NODES: ['/tcn_blocks.8/Relu_output_0_DequantizeLinear_510', 'model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_116', '/tcn_blocks.9/layer1/depthwise/Conv_output_0_QuantizeLinear_512']
+  RECOGNIZED_CLUSTER_QDQ_NODES: []
+
+================================================================================
+DIAGNOSTIC_COMPLETE=PASS
+================================================================================
