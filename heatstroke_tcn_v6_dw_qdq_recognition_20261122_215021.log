@@ -1,0 +1,25 @@
+================================================================================
+TCN DEPTHWISE QDQ RECOGNITION DIAGNOSTIC
+================================================================================
+PYTHON: /home/user/onnx2tflite_env/bin/python
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+eiq-onnx2tflite: 0.11.0
+[Code.INVALID_ONNX_MODEL] - Tensor with name: "/Transpose_2_output_0_QuantizeLinear_Output" not found! Did you run model shape inference?
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnose_tcn_dw_qdq_recognition_20261122_215021.py", line 29, in <module>
+    recognized = recognizer.recognize_ops()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/onnx2tflite_env/lib/python3.12/site-packages/onnx2quant/qdq_quantization.py", line 379, in recognize_ops
+    if self.model_inspector.has_int8_and_uint8_q_ops():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/onnx2tflite_env/lib/python3.12/site-packages/onnx2tflite/src/model_inspector.py", line 272, in has_int8_and_uint8_q_ops
+    if self.get_tensor_type(node.outputs[0]) == TensorProto.UINT8:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/onnx2tflite_env/lib/python3.12/site-packages/onnx2tflite/src/model_inspector.py", line 179, in get_tensor_type
+    tensor = self.find_tensor(tensor_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/onnx2tflite_env/lib/python3.12/site-packages/onnx2tflite/src/model_inspector.py", line 229, in find_tensor
+    logger.e(
+  File "/home/user/onnx2tflite_env/lib/python3.12/site-packages/onnx2tflite/src/logger.py", line 298, in e
+    raise error from exception
+onnx2tflite.src.logger.Error: [Code.INVALID_ONNX_MODEL] - Tensor with name: "/Transpose_2_output_0_QuantizeLinear_Output" not found! Did you run model shape inference?
