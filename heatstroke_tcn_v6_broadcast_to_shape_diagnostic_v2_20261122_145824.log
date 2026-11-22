@@ -170,4 +170,553 @@ Python diagnostic return code: 0
 ]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\No rebuild or flash performed.
 ]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Terminal will remain open.
 ]3008;start=7d006499-6900-45ee-bcdd-0178b58a97df;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
-]3008;end=7d006499-6900-45ee-bcdd-0178b58a97df;exit=success\]3008;start=67a64b93-c1f8-4f72-a46e-90e2acb3576d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+]3008;end=7d006499-6900-45ee-bcdd-0178b58a97df;exit=success\]3008;start=67a64b93-c1f8-4f72-a46e-90e2acb3576d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
+set +e
+set -u
+
+ROOT="/home/user/sdk-alif"
+LOGDIR="$ROOT/beeinventor/test_heatstroke/log"
+
+PYTHON="$HOME/onnx2tflite_env/bin/python"
+
+SOURCE="$ROOT/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite" 
+
+EXPECTED_SHA="4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870"
+
+TAG="$(date +%Y%m%d_%H%M%S)"
+OUTPUT="${SOURCE%.tflite}_broadcast_shape_constfix_${TAG}.tflite"
+LOG="$LOGDIR/heatstroke_tcn_v6_broadcast_shape_constfix_${TAG}.log"
+
+mkdir -p "$LOGDIR"
+exec > >(tee -a "$LOG") 2>&1
+
+echo "============================================================"
+echo "TCN V6 BROADCAST_TO CONSTANT-SHAPE PATCH"
+echo "Date: $(date)"
+echo "SOURCE=$SOURCE"
+echo "OUTPUT=$OUTPUT"
+echo "LOG=$LOG"
+echo "============================================================"
+
+PATCH_RC=90
+
+if [ ! -f "$SOURCE" ]; then
+    echo "ERROR: Source Vela model not found."
+elif [ ! -x "$PYTHON" ]; then
+    echo "ERROR: Python environment not found."
+else
+    "$PYTHON" - "$SOURCE" "$OUTPUT" "$EXPECTED_SHA" <<'PY'
+import os
+import sys
+import hashlib
+import struct
+import traceback
+
+import numpy as np
+import flatbuffers
+from tensorflow.lite.python import schema_py_generated as fb
+
+source, output, expected_sha = sys.argv[1:4]
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+def enum_names(cls):
+    result = {}
+    for name in dir(cls):
+        if name.isupper():
+            value = getattr(cls, name, None)
+            if isinstance(value, int):
+                result[value] = name
+    return result
+
+OP_NAMES = enum_names(fb.BuiltinOperator)
+TYPE_NAMES = enum_names(fb.TensorType)
+
+def tensor_shape(t):
+    try:
+        return [int(t.Shape(i)) for i in range(t.ShapeLength())]
+    except Exception:
+        return []
+
+def tensor_data(model, tensor):
+    b = model.Buffers(tensor.Buffer())
+    data = b.DataAsNumpy()
+    if data is None:
+        return b""
+    return np.asarray(data, dtype=np.uint8).tobytes()
+
+def read_int_vector(model, tid):
+    t = model.Subgraphs(0).Tensors(tid)
+    type_name = TYPE_NAMES.get(int(t.Type()), "UNKNOWN")
+    raw = tensor_data(model, t)
+
+    if type_name == "INT64" and len(raw) % 8 == 0:
+        return np.frombuffer(raw, dtype="<i8").astype(np.int64).tolist()
+
+    if type_name == "INT32" and len(raw) % 4 == 0:
+        return np.frombuffer(raw, dtype="<i4").astype(np.int64).tolist()
+
+    raise RuntimeError(
+        f"Tensor {tid} is not a readable INT32/INT64 constant: "
+        f"type={type_name}, bytes={len(raw)}"
+    )
+
+def broadcast_shapes(a, b):
+    n = max(len(a), len(b))
+    aa = [1] * (n - len(a)) + list(a)
+    bb = [1] * (n - len(b)) + list(b)
+    result = []
+
+    for x, y in zip(aa, bb):
+        if x == y:
+            result.append(x)
+        elif x == 1:
+            result.append(y)
+        elif y == 1:
+            result.append(x)
+        else:
+            raise RuntimeError(
+                f"Shapes are incompatible: {a} and {b}"
+            )
+    return result
+
+def read_operators(model):
+    sg = model.Subgraphs(0)
+    result = []
+
+    for i in range(sg.OperatorsLength()):
+        op = sg.Operators(i)
+        code = model.OperatorCodes(op.OpcodeIndex())
+        code_value = int(code.BuiltinCode())
+
+        placeholder = getattr(
+            fb.BuiltinOperator,
+            "PLACEHOLDER_FOR_GREATER_OP_CODES",
+            -1
+        )
+        if code_value == placeholder:
+            code_value = int(code.DeprecatedBuiltinCode())
+
+        result.append({
+            "index": i,
+            "op": op,
+            "name": OP_NAMES.get(code_value, f"BUILTIN_{code_value}"),
+            "version": int(code.Version()),
+            "inputs": [
+                int(op.Inputs(j)) for j in range(op.InputsLength())
+            ],
+            "outputs": [
+                int(op.Outputs(j)) for j in range(op.OutputsLength())
+            ],
+        })
+
+    return result
+
+def custom_ethosu_signature(model):
+    sg = model.Subgraphs(0)
+    result = []
+
+    for i in range(sg.OperatorsLength()):
+        op = sg.Operators(i)
+        code = model.OperatorCodes(op.OpcodeIndex())
+        code_value = int(code.BuiltinCode())
+
+        if code_value == int(fb.BuiltinOperator.CUSTOM):
+            custom_name = code.CustomCode()
+            if custom_name == b"ethos-u":
+                options = op.CustomOptionsAsNumpy()
+                options_bytes = (
+                    np.asarray(options, dtype=np.uint8).tobytes()
+                    if options is not None else b""
+                )
+                result.append((
+                    tuple(int(op.Inputs(j))
+                          for j in range(op.InputsLength())),
+                    tuple(int(op.Outputs(j))
+                          for j in range(op.OutputsLength())),
+                    options_bytes
+                ))
+
+    return result
+
+def main():
+    if os.path.exists(output):
+        raise RuntimeError(
+            f"Refusing to overwrite an existing file: {output}"
+        )
+
+    source_sha = sha256_file(source)
+    print("SOURCE_SHA256:", source_sha)
+
+    if source_sha != expected_sha:
+        raise RuntimeError("Source model SHA256 does not match expected model.") 
+
+    raw = open(source, "rb").read()
+    model = fb.Model.GetRootAsModel(raw, 0)
+    sg = model.Subgraphs(0)
+
+    print("MODEL_VERSION:", model.Version())
+    print("OPERATORS:", sg.OperatorsLength())
+    print("TENSORS:", sg.TensorsLength())
+    print("BUFFERS:", model.BuffersLength())
+
+    if sg.OperatorsLength() != 266:
+        raise RuntimeError("Unexpected operator count.")
+
+    ops = read_operators(model)
+
+    broadcast_args = [
+        x for x in ops if x["name"] == "BROADCAST_ARGS"
+    ]
+    broadcast_to = [
+        x for x in ops if x["name"] == "BROADCAST_TO"
+    ]
+
+    if len(broadcast_args) != 1 or len(broadcast_to) != 1:
+        raise RuntimeError(
+            "Expected exactly one BROADCAST_ARGS and one BROADCAST_TO."
+        )
+
+    args_op = broadcast_args[0]
+    to_op = broadcast_to[0]
+
+    print()
+    print("BROADCAST_ARGS_NODE:", args_op["index"])
+    print("BROADCAST_ARGS_INPUTS:", args_op["inputs"])
+    print("BROADCAST_ARGS_OUTPUTS:", args_op["outputs"])
+    print("BROADCAST_TO_NODE:", to_op["index"])
+    print("BROADCAST_TO_INPUTS:", to_op["inputs"])
+    print("BROADCAST_TO_OUTPUTS:", to_op["outputs"])
+
+    if len(args_op["inputs"]) != 2 or len(args_op["outputs"]) != 1:
+        raise RuntimeError("Unexpected BROADCAST_ARGS signature.")
+
+    if len(to_op["inputs"]) != 2 or len(to_op["outputs"]) != 1:
+        raise RuntimeError("Unexpected BROADCAST_TO signature.")
+
+    old_shape_tid = to_op["inputs"][1]
+    if old_shape_tid != args_op["outputs"][0]:
+        raise RuntimeError(
+            "BROADCAST_TO shape input is not the BROADCAST_ARGS output."
+        )
+
+    # Validate the two shape operands are embedded constants.
+    shape_a_tid, shape_b_tid = args_op["inputs"]
+
+    sg_raw = model.Subgraphs(0)
+    ta = sg_raw.Tensors(shape_a_tid)
+    tb = sg_raw.Tensors(shape_b_tid)
+
+    if int(ta.Buffer()) == 0 or int(tb.Buffer()) == 0:
+        raise RuntimeError(
+            "BROADCAST_ARGS inputs are not both embedded constants."
+        )
+
+    shape_a = read_int_vector(model, shape_a_tid)
+    shape_b = read_int_vector(model, shape_b_tid)
+    target_shape = broadcast_shapes(shape_a, shape_b)
+
+    print()
+    print("BROADCAST_ARGS_INPUT_A:", shape_a)
+    print("BROADCAST_ARGS_INPUT_B:", shape_b)
+    print("COMPUTED_CONSTANT_TARGET:", target_shape)
+
+    if target_shape != [1, 900, 6]:
+        raise RuntimeError(
+            f"Unexpected computed target shape: {target_shape}"
+        )
+
+    input_tid = to_op["inputs"][0]
+    input_shape = tensor_shape(sg_raw.Tensors(input_tid))
+    output_tid = to_op["outputs"][0]
+    output_shape = tensor_shape(sg_raw.Tensors(output_tid))
+
+    print("BROADCAST_TO_DATA_SHAPE:", input_shape)
+    print("BROADCAST_TO_OUTPUT_DECLARED_SHAPE:", output_shape)
+
+    if input_shape != [1, 1, 6]:
+        raise RuntimeError("Unexpected BROADCAST_TO data input shape.")
+
+    if output_shape != target_shape:
+        raise RuntimeError(
+            "Computed target does not match declared output shape."
+        )
+
+    # Capture model invariants before rebuilding the FlatBuffer.
+    original_ops = sg.OperatorsLength()
+    original_custom = custom_ethosu_signature(model)
+    original_inputs = [
+        int(sg.Inputs(i)) for i in range(sg.InputsLength())
+    ]
+    original_outputs = [
+        int(sg.Outputs(i)) for i in range(sg.OutputsLength())
+    ]
+    original_tensor_count = sg.TensorsLength()
+    original_buffer_count = model.BuffersLength()
+
+    print()
+    print("ETHOS_U_CUSTOM_NODE_COUNT:", len(original_custom))
+
+    if len(original_custom) != 7:
+        raise RuntimeError("Unexpected Ethos-U custom-node count.")
+
+    # Unpack the FlatBuffer using the generated object API.
+    if not hasattr(fb, "ModelT") or not hasattr(fb.ModelT, "InitFromObj"):
+        raise RuntimeError(
+            "This schema_py_generated module does not expose ModelT object API." 
+        )
+
+    model_obj = fb.ModelT.InitFromObj(model)
+    sg_obj = model_obj.subgraphs[0]
+
+    new_tensor_id = len(sg_obj.tensors)
+    new_buffer_id = len(model_obj.buffers)
+
+    # Append a new constant INT64 vector [1, 900, 6].
+    shape_bytes = struct.pack("<qqq", 1, 900, 6)
+
+    new_buffer = fb.BufferT()
+    new_buffer.data = list(shape_bytes)
+    model_obj.buffers.append(new_buffer)
+
+    new_tensor = fb.TensorT()
+    new_tensor.shape = [3]
+    new_tensor.type = fb.TensorType.INT64
+    new_tensor.buffer = new_buffer_id
+    new_tensor.name = b"broadcast_to_shape_const_1_900_6"
+    new_tensor.isVariable = False
+    new_tensor.hasRank = True
+    sg_obj.tensors.append(new_tensor)
+
+    # Rewire only the BROADCAST_TO shape input.
+    op_obj = sg_obj.operators[to_op["index"]]
+    op_inputs = list(op_obj.inputs)
+
+    if op_inputs[1] != old_shape_tid:
+        raise RuntimeError("Object API operator index/input mismatch.")
+
+    op_inputs[1] = new_tensor_id
+    op_obj.inputs = op_inputs
+
+    print("NEW_TENSOR_ID:", new_tensor_id)
+    print("NEW_BUFFER_ID:", new_buffer_id)
+    print("NEW_TENSOR_SHAPE:", [3])
+    print("NEW_TENSOR_TYPE: INT64")
+    print("NEW_TENSOR_VALUES:", [1, 900, 6])
+    print("REWIRED_BROADCAST_TO_INPUTS:", op_inputs)
+
+    # Rebuild the complete FlatBuffer.
+    builder = flatbuffers.Builder(1024)
+    root = model_obj.Pack(builder)
+    builder.Finish(root, file_identifier=b"TFL3")
+    patched_bytes = bytes(builder.Output())
+
+    with open(output, "wb") as f:
+        f.write(patched_bytes)
+
+    print()
+    print("PATCHED_MODEL_BYTES:", len(patched_bytes))
+    print("PATCHED_MODEL_SHA256:", sha256_file(output))
+
+    # Validate the rebuilt model by parsing it again.
+    patched_model_raw = open(output, "rb").read()
+    patched_model = fb.Model.GetRootAsModel(patched_model_raw, 0)
+    patched_sg = patched_model.Subgraphs(0)
+    patched_ops = read_operators(patched_model)
+
+    patched_to = [
+        x for x in patched_ops if x["name"] == "BROADCAST_TO"
+    ]
+
+    if len(patched_to) != 1:
+        raise RuntimeError("Patched model does not have one BROADCAST_TO.")
+
+    patched_to = patched_to[0]
+    patched_shape_tid = patched_to["inputs"][1]
+
+    pt = patched_sg.Tensors(patched_shape_tid)
+    pb = patched_model.Buffers(pt.Buffer())
+    pbytes = pb.DataAsNumpy()
+    pbytes = (
+        np.asarray(pbytes, dtype=np.uint8).tobytes()
+        if pbytes is not None else b""
+    )
+    pvalues = np.frombuffer(pbytes, dtype="<i8").tolist()
+
+    print()
+    print("REOPENED_PATCHED_MODEL_TENSOR_COUNT:", patched_sg.TensorsLength())
+    print("REOPENED_PATCHED_MODEL_BUFFER_COUNT:", patched_model.BuffersLength()) 
+    print("REOPENED_BROADCAST_TO_NODE:", patched_to["index"])
+    print("REOPENED_BROADCAST_TO_INPUTS:", patched_to["inputs"])
+    print("REOPENED_SHAPE_TENSOR_TYPE:",
+          TYPE_NAMES.get(int(pt.Type()), str(pt.Type())))
+    print("REOPENED_SHAPE_TENSOR_SHAPE:", tensor_shape(pt))
+    print("REOPENED_SHAPE_TENSOR_BUFFER_BYTES:", len(pbytes))
+    print("REOPENED_SHAPE_TENSOR_VALUES:", pvalues)
+
+    if pvalues != [1, 900, 6]:
+        raise RuntimeError("Patched shape tensor values failed verification.")
+
+    if int(pt.Buffer()) == 0 or len(pbytes) != 24:
+        raise RuntimeError("Patched shape tensor is not a valid constant.")
+
+    if patched_ops[args_op["index"]]["name"] != "BROADCAST_ARGS":
+        raise RuntimeError("Original BROADCAST_ARGS node was not preserved.")
+
+    if patched_sg.OperatorsLength() != original_ops:
+        raise RuntimeError("Operator count changed unexpectedly.")
+
+    if patched_sg.InputsLength() != len(original_inputs):
+        raise RuntimeError("Model graph input count changed.")
+
+    if patched_sg.OutputsLength() != len(original_outputs):
+        raise RuntimeError("Model graph output count changed.")
+
+    patched_custom = custom_ethosu_signature(patched_model)
+    if patched_custom != original_custom:
+        raise RuntimeError(
+            "Ethos-U custom node inputs/outputs/options changed."
+        )
+
+    if len(patched_custom) != 7:
+        raise RuntimeError("Ethos-U custom node count changed.")
+
+    print()
+    print("OPERATOR_COUNT_UNCHANGED=PASS")
+    print("ETHOS_U_NODE_COUNT_UNCHANGED=PASS")
+    print("ETHOS_U_CUSTOM_OPTIONS_UNCHANGED=PASS")
+    print("GRAPH_INPUT_OUTPUT_COUNTS_UNCHANGED=PASS")
+    print("CONSTANT_SHAPE_REWIRE=PASS")
+    print("FLATBUFFER_REOPEN_VALIDATION=PASS")
+    print("PATCH_STATUS=PASS")
+
+    print()
+    print("OUTPUT_FILE:", output)
+    print("OUTPUT_BYTES:", os.path.getsize(output))
+    print("OUTPUT_SHA256:", sha256_file(output))
+
+[7mtry:[27m
+[7m    main()[27m
+[7m    sys.exit(0)[27m
+[7mexcept Exception as e:[27m
+[7m    print()[27m
+[7m    print("PATCH_STATUS=FAIL")[27m
+[7m    print(type(e).__name__ + ":", str(e))[27m
+[7m    traceback.print_exc()[27m
+[7m    sys.exit(1)[27m
+[7mPY[27m
+[7m    PATCH_RC=$?[27m
+[7mfi[27m
+
+[7mecho[27m
+[7mecho "============================================================"[27m
+[7mecho "PATCH_RETURN_CODE=$PATCH_RC"[27m
+[7mecho "OUTPUT=$OUTPUT"[27m
+[7mecho "LOG=$LOG"[27m
+[7mecho "Original model was not modified."[27m
+[7mecho "No firmware was rebuilt or programmed."[27m
+[7mecho "Terminal will remain open."[27m
+[7mecho "============================================================"[27m
+[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[Atry:
+    main()
+    sys.exit(0)
+except Exception as e:
+    print()
+    print("PATCH_STATUS=FAIL")
+    print(type(e).__name__ + ":", str(e))
+    traceback.print_exc()
+    sys.exit(1)
+PY
+    PATCH_RC=$?
+fi
+
+echo
+echo "============================================================"
+echo "PATCH_RETURN_CODE=$PATCH_RC"
+echo "OUTPUT=$OUTPUT"
+echo "LOG=$LOG"
+echo "Original model was not modified."
+echo "No firmware was rebuilt or programmed."
+echo "Terminal will remain open."
+echo "============================================================"
+[A
+[?2004l]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\TCN V6 BROADCAST_TO CONSTANT-SHAPE PATCH
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Date: Sun Nov 22 03:05:21 PM HKT 2026
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\SOURCE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela.tflite
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\OUTPUT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_20261122_150521.tflite
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_shape_constfix_20261122_150521.log
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795331121.531753  138375 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795331121.532027  138375 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795331121.563720  138375 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795331122.270493  138375 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795331122.270770  138375 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+SOURCE_SHA256: 4731f162c51ed9c48e630aff6acb2136484e70656aae8fc8f439050c0adad870
+MODEL_VERSION: 3
+OPERATORS: 266
+TENSORS: 417
+BUFFERS: 147
+
+BROADCAST_ARGS_NODE: 7
+BROADCAST_ARGS_INPUTS: [414, 48]
+BROADCAST_ARGS_OUTPUTS: [318]
+BROADCAST_TO_NODE: 15
+BROADCAST_TO_INPUTS: [18, 318]
+BROADCAST_TO_OUTPUTS: [19]
+
+BROADCAST_ARGS_INPUT_A: [1, 1, 6]
+BROADCAST_ARGS_INPUT_B: [1, 900, 1]
+COMPUTED_CONSTANT_TARGET: [1, 900, 6]
+BROADCAST_TO_DATA_SHAPE: [1, 1, 6]
+BROADCAST_TO_OUTPUT_DECLARED_SHAPE: [1, 900, 6]
+
+ETHOS_U_CUSTOM_NODE_COUNT: 7
+NEW_TENSOR_ID: 417
+NEW_BUFFER_ID: 147
+NEW_TENSOR_SHAPE: [3]
+NEW_TENSOR_TYPE: INT64
+NEW_TENSOR_VALUES: [1, 900, 6]
+REWIRED_BROADCAST_TO_INPUTS: [np.int32(18), 417]
+
+PATCHED_MODEL_BYTES: 9789440
+PATCHED_MODEL_SHA256: 53f1db48ee533ab8c3f75cbb8380ac7f0735ec708a33111b8cc044063babd694
+
+REOPENED_PATCHED_MODEL_TENSOR_COUNT: 418
+REOPENED_PATCHED_MODEL_BUFFER_COUNT: 148
+REOPENED_BROADCAST_TO_NODE: 15
+REOPENED_BROADCAST_TO_INPUTS: [18, 417]
+REOPENED_SHAPE_TENSOR_TYPE: INT64
+REOPENED_SHAPE_TENSOR_SHAPE: [3]
+REOPENED_SHAPE_TENSOR_BUFFER_BYTES: 24
+REOPENED_SHAPE_TENSOR_VALUES: [1, 900, 6]
+
+OPERATOR_COUNT_UNCHANGED=PASS
+ETHOS_U_NODE_COUNT_UNCHANGED=PASS
+ETHOS_U_CUSTOM_OPTIONS_UNCHANGED=PASS
+GRAPH_INPUT_OUTPUT_COUNTS_UNCHANGED=PASS
+CONSTANT_SHAPE_REWIRE=PASS
+FLATBUFFER_REOPEN_VALIDATION=PASS
+PATCH_STATUS=PASS
+
+OUTPUT_FILE: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_20261122_150521.tflite
+OUTPUT_BYTES: 9789440
+OUTPUT_SHA256: 53f1db48ee533ab8c3f75cbb8380ac7f0735ec708a33111b8cc044063babd694
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\PATCH_RETURN_CODE=0
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\OUTPUT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_20261122_150521.tflite
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_shape_constfix_20261122_150521.log
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Original model was not modified.
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\No firmware was rebuilt or programmed.
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\Terminal will remain open.
+]3008;start=7d0d2835-a49b-43da-8737-7e8df5ed413e;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;end=7d0d2835-a49b-43da-8737-7e8df5ed413e;exit=success\]3008;start=67a64b93-c1f8-4f72-a46e-90e2acb3576d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000137494;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ 
