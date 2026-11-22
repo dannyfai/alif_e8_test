@@ -1,0 +1,441 @@
+==============================================================================
+TCN DEPTHWISE QDQ / WEIGHT-LAYOUT INSPECTION
+==============================================================================
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_only_independent_calib_evalfix_v2_20261122_211624/heatstroke_tcn_reg_fold2_v6_int8_qdq.onnx
+MODEL_BYTES: 39634633
+MODEL_SHA256: 54c37d3a653741e8661147f67d832f8bacc7cc4092b83899f3c393c0daa58d0b
+
+IR_VERSION: 8
+OPSET_IMPORTS: [('ai.onnx', 18)]
+GRAPH_NODES: 535
+INITIALIZERS: 348
+
+==============================================================================
+INSPECT TEN TCN LAYER1 DEPTHWISE WEIGHTS
+==============================================================================
+
+------------------------------------------------------------------------------
+BLOCK 0: model.tcn_blocks.0.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.0.layer1.depthwise.weight_quantized', 'model.tcn_blocks.0.layer1.depthwise.weight_scale', 'model.tcn_blocks.0.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.0/layer1/depthwise/Conv
+    inputs : ['/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.0/layer1/depthwise/Conv
+  INPUTS: ['/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.0.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.0.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00127866876, max=0.00194246229
+  ZERO_POINT_TENSOR: model.tcn_blocks.0.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.0.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 1: model.tcn_blocks.1.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.1.layer1.depthwise.weight_quantized', 'model.tcn_blocks.1.layer1.depthwise.weight_scale', 'model.tcn_blocks.1.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.1/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.1/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.1/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.1/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.1.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.1.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00121996144, max=0.0018548395
+  ZERO_POINT_TENSOR: model.tcn_blocks.1.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.1.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 2: model.tcn_blocks.2.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.2.layer1.depthwise.weight_quantized', 'model.tcn_blocks.2.layer1.depthwise.weight_scale', 'model.tcn_blocks.2.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.2/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.2/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.2/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.2/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.2.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.2.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00127590017, max=0.00189678045
+  ZERO_POINT_TENSOR: model.tcn_blocks.2.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.2.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 3: model.tcn_blocks.3.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.3.layer1.depthwise.weight_quantized', 'model.tcn_blocks.3.layer1.depthwise.weight_scale', 'model.tcn_blocks.3.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.3/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.3/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.3/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.3/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.3.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.3.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00121661404, max=0.00170855131
+  ZERO_POINT_TENSOR: model.tcn_blocks.3.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.3.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 4: model.tcn_blocks.4.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.4.layer1.depthwise.weight_quantized', 'model.tcn_blocks.4.layer1.depthwise.weight_scale', 'model.tcn_blocks.4.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.4/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.4/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.4/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.4/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.4.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.4.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00125483645, max=0.0016336519
+  ZERO_POINT_TENSOR: model.tcn_blocks.4.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.4.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 5: model.tcn_blocks.5.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.5.layer1.depthwise.weight_quantized', 'model.tcn_blocks.5.layer1.depthwise.weight_scale', 'model.tcn_blocks.5.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.5/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.5/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.5/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.5/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.5.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.5.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00126539567, max=0.00162653672
+  ZERO_POINT_TENSOR: model.tcn_blocks.5.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.5.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 6: model.tcn_blocks.6.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.6.layer1.depthwise.weight_quantized', 'model.tcn_blocks.6.layer1.depthwise.weight_scale', 'model.tcn_blocks.6.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.6/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.6/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.6/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.6/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.6.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.6.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00128611585, max=0.00176254264
+  ZERO_POINT_TENSOR: model.tcn_blocks.6.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.6.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 7: model.tcn_blocks.7.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.7.layer1.depthwise.weight_quantized', 'model.tcn_blocks.7.layer1.depthwise.weight_scale', 'model.tcn_blocks.7.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.7/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.7/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.7/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.7/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.7.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.7.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00131868839, max=0.00189637591
+  ZERO_POINT_TENSOR: model.tcn_blocks.7.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.7.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 8: model.tcn_blocks.8.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.8.layer1.depthwise.weight_quantized', 'model.tcn_blocks.8.layer1.depthwise.weight_scale', 'model.tcn_blocks.8.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.8/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.8/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.8/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.8/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.8.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.8.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.00130482961, max=0.0018427032
+  ZERO_POINT_TENSOR: model.tcn_blocks.8.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.8.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+------------------------------------------------------------------------------
+BLOCK 9: model.tcn_blocks.9.layer1.depthwise
+------------------------------------------------------------------------------
+RELATED_NODES: 2
+  op=DequantizeLinear     name=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear
+    inputs : ['model.tcn_blocks.9.layer1.depthwise.weight_quantized', 'model.tcn_blocks.9.layer1.depthwise.weight_scale', 'model.tcn_blocks.9.layer1.depthwise.weight_zero_point']
+    outputs: ['model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output']
+  op=Conv                 name=/tcn_blocks.9/layer1/depthwise/Conv
+    inputs : ['/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output']
+    outputs: ['/tcn_blocks.9/layer1/depthwise/Conv_output_0']
+
+DEPTHWISE_CONV_CANDIDATES: 1
+
+CONV_CANDIDATE 0
+  OP: Conv
+  NAME: /tcn_blocks.9/layer1/depthwise/Conv
+  INPUTS: ['/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output', 'model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output']
+  OUTPUTS: ['/tcn_blocks.9/layer1/depthwise/Conv_output_0']
+
+  WEIGHT INPUT TRACE:
+TENSOR: model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output
+  PRODUCER: op=DequantizeLinear, name=model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear
+  QDQ_AXIS: 0
+  DATA_TENSOR: model.tcn_blocks.9.layer1.depthwise.weight_quantized
+    DATA: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+  SCALE_TENSOR: model.tcn_blocks.9.layer1.depthwise.weight_scale
+    SCALE: dtype=float32, shape=[32], size=32
+      min=0.0012685759, max=0.00181870034
+  ZERO_POINT_TENSOR: model.tcn_blocks.9.layer1.depthwise.weight_zero_point
+    ZERO_POINT: dtype=int8, shape=[32], size=32
+      min=0, max=0
+  TENSOR: model.tcn_blocks.9.layer1.depthwise.weight_quantized
+    INITIALIZER: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+==============================================================================
+ALL INITIALIZERS MATCHING THE TEN DEPTHWISE PARAMETER NAMES
+==============================================================================
+    model.tcn_blocks.0.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.0.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00127866876, max=0.00194246229
+    model.tcn_blocks.0.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.1.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.1.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00121996144, max=0.0018548395
+    model.tcn_blocks.1.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.2.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.2.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00127590017, max=0.00189678045
+    model.tcn_blocks.2.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.3.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.3.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00121661404, max=0.00170855131
+    model.tcn_blocks.3.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.4.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.4.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00125483645, max=0.0016336519
+    model.tcn_blocks.4.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.5.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.5.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00126539567, max=0.00162653672
+    model.tcn_blocks.5.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.6.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.6.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00128611585, max=0.00176254264
+    model.tcn_blocks.6.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.7.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.7.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00131868839, max=0.00189637591
+    model.tcn_blocks.7.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.8.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.8.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.00130482961, max=0.0018427032
+    model.tcn_blocks.8.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+    model.tcn_blocks.9.layer1.depthwise.weight_zero_point: dtype=int8, shape=[32], size=32
+      min=0, max=0
+    model.tcn_blocks.9.layer1.depthwise.weight_scale: dtype=float32, shape=[32], size=32
+      min=0.0012685759, max=0.00181870034
+    model.tcn_blocks.9.layer1.depthwise.weight_quantized: dtype=int8, shape=[32, 1, 31], size=992
+      min=-127, max=127
+
+INSPECTION_COMPLETE
