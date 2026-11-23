@@ -1,0 +1,635 @@
+============================================================
+TCN V6 FULL-OFFLOAD ACTIVATION BUFFER AUDIT
+============================================================
+Date: Mon Nov 23 02:59:50 PM HKT 2026
+Build: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827
+
+[1] Input files and toolchain
+FOUND: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.elf
+FOUND: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.map
+FOUND: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.bin
+FOUND: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/ospi1.bin
+FOUND: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/.config
+FOUND: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+
+[2] SHA256 checksums
+e352255c487510154bd223caa572907b066a99010ea970e4df1b787d52fc6770  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.elf
+7d418ceb160f1afaa579232eef4903eb9795fcd9b1b712e094916fc302889f60  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.bin
+f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/ospi1.bin
+f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+
+OSPI1 and source model comparison:
+PASS: OSPI1 payload exactly matches source Vela model.
+
+[3] Effective Kconfig values
+12:CONFIG_MAIN_STACK_SIZE=8192
+14:CONFIG_ISR_STACK_SIZE=2048
+510:CONFIG_SYSTEM_HEAP_SRAM0=y
+777:CONFIG_HEAP_MEM_POOL_SIZE=65536
+1757:CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+1758:CONFIG_ACTIVATION_BUF_SZ=0x280000
+1759:CONFIG_MODEL_IN_EXT_FLASH=y
+
+Expected activation buffer size:
+0x280000 = 2,621,440 bytes = 2,560 KiB
+
+[4] ELF symbols: activation / arena / buffers
+800163d2 00000002 T tflite::FlatBufferVectorToTfLiteTypeArray(flatbuffers::Vector<float, unsigned int> const*)
+800163d0 00000002 T tflite::FlatBufferVectorToTfLiteTypeArray(flatbuffers::Vector<int, unsigned int> const*)
+8001bf28 00000002 W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+8001bf28 00000002 W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+20000fe8 00000004 b buffered_cnt
+20000fdc 00000004 b curr_log_buffer
+2000161c 00000004 b (anonymous namespace)::micro_error_reporter_buffer
+8001c3c8 00000004 T arm::app::fwk::tflm::TflmTensor::Layout()
+8001f3f4 00000004 R tflite::kConvBiasTensor
+8001f3ec 00000004 R tflite::kAddInputTensor1
+8001f3e8 00000004 R tflite::kAddInputTensor2
+8001f3e4 00000004 R tflite::kAddOutputTensor
+8001f3fc 00000004 R tflite::kConvInputTensor
+8001f418 00000004 R tflite::kMulInput1Tensor
+8001f414 00000004 R tflite::kMulInput2Tensor
+8001f410 00000004 R tflite::kMulOutputTensor
+8001f424 00000004 R tflite::kSubInputTensor1
+8001f420 00000004 R tflite::kSubInputTensor2
+8001f41c 00000004 R tflite::kSubOutputTensor
+8001f3f0 00000004 R tflite::kConvOutputTensor
+8001f3f8 00000004 R tflite::kConvWeightsTensor
+80016e8c 00000004 W tflite::MicroMemoryPlanner::AddBuffer(int, int, int, int)
+80016f40 00000004 T tflite::GreedyMemoryPlanner::GetBufferCount()
+8001f3e0 00000004 R tflite::kActivationsInputTensor
+8001655e 00000004 T tflite::MicroInterpreterContext::SetScratchBufferHandles(tflite::ScratchBufferHandle*)
+8001f3dc 00000004 R tflite::kActivationsOutputTensor
+8001f404 00000004 R tflite::kDepthwiseConvBiasTensor
+8001f40c 00000004 R tflite::kDepthwiseConvInputTensor
+8001f400 00000004 R tflite::kDepthwiseConvOutputTensor
+8001f408 00000004 R tflite::kDepthwiseConvWeightsTensor
+8001c036 00000004 T arm::app::fwk::tflm::TflmModel::GetBackendData() const
+8001bf24 00000004 T arm::app::fwk::tflm::TflmModel::GetModelBuffer() const
+8001bf20 00000004 T arm::app::fwk::tflm::TflmModel::GetComputeBuffer() const
+8001bf1c 00000004 T arm::app::fwk::tflm::TflmModel::GetType() const
+8001befc 00000004 T arm::app::fwk::tflm::TflmModel::IsInited() const
+80016ebc 00000004 W tflite::GreedyMemoryPlanner::preserves_all_tensors() const
+80016e96 00000004 W tflite::LinearMemoryPlanner::preserves_all_tensors() const
+80016d6e 00000004 T tflite::SingleArenaBufferAllocator::GetOverlayMemoryAddress() const
+80016e24 00000004 T non-virtual thunk to tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+8001c3c2 00000006 T arm::app::fwk::tflm::TflmTensor::Bytes()
+8001c3bc 00000006 T arm::app::fwk::tflm::TflmTensor::GetData()
+8001bf40 00000006 W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::_M_destroy()
+800168b8 00000008 T tflite::MicroAllocator::AllocateTempBuffer(unsigned int, unsigned int)
+800168c0 00000008 T tflite::MicroAllocator::DeallocateTempBuffer(unsigned char*)
+80016a8e 00000008 T tflite::MicroAllocator::GetScratchBufferRequests()
+80016ea4 00000008 T tflite::LinearMemoryPlanner::GetBufferCount()
+800163ec 00000008 W tflite::MicroContextGetTensor(TfLiteContext const*, int)
+800164e4 00000008 T tflite::MicroInterpreterContext::GetScratchBuffer(int)
+80016510 00000008 T tflite::MicroInterpreterContext::AllocateTempBuffer(unsigned int, unsigned int)
+80016518 00000008 T tflite::MicroInterpreterContext::DeallocateTempBuffer(unsigned char*)
+800164dc 00000008 T tflite::MicroInterpreterContext::AllocatePersistentBuffer(unsigned int)
+80016508 00000008 T tflite::MicroInterpreterContext::DeallocateTempTfLiteTensor(TfLiteTensor*)
+800163f4 00000008 W tflite::MicroContextGetEvalTensor(TfLiteContext const*, int)
+800163e4 00000008 W tflite::MicroContextGetScratchBuffer(TfLiteContext*, int)
+800163d4 00000008 W tflite::MicroContextAllocatePersistentBuffer(TfLiteContext*, unsigned int)
+800163dc 00000008 W tflite::MicroContextRequestScratchBufferInArena(TfLiteContext*, unsigned int, int*)
+80016d86 00000008 T tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+8001bf2a 00000008 W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::_M_dispose()
+80016e02 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::AllocatePersistentBuffer(unsigned int, unsigned int)
+80016da4 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+80016d8e 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+80016874 0000000a T tflite::MicroAllocator::AllocatePersistentBuffer(unsigned int)
+80011854 0000000c T arm::app::fwk::tflm::TflmTensor::TflmTensor(TfLiteTensor*)
+80011854 0000000c T arm::app::fwk::tflm::TflmTensor::TflmTensor(TfLiteTensor*)
+800168d8 0000000c T tflite::MicroAllocator::AllocatePersistentTfLiteTensorInternal()
+8001c412 0000000e W arm::app::fwk::tflm::TflmTensor::~TflmTensor()
+80016d60 0000000e T tflite::SingleArenaBufferAllocator::DeallocateTemp(unsigned char*)
+80016e28 0000000e T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned int)
+80016e28 0000000e T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned int)
+80016d96 0000000e T tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+8001bf32 0000000e W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+80015ece 00000010 W flatbuffers::Table::GetOptionalFieldOffset(unsigned short) const
+80015c5c 00000010 W flexbuffers::Reference::Indirect() const
+80016946 00000010 W tflite::Tensor::type() const
+80015f70 00000012 W flatbuffers::Vector<int, unsigned int> const* flatbuffers::Table::GetPointer<flatbuffers::Vector<int, unsigned int> const*, unsigned int>(unsigned short)
+80017332 00000012 T tflite::HaveSameShapes(TfLiteTensor const*, TfLiteTensor const*)
+8001654c 00000012 T tflite::MicroInterpreterContext::RequestScratchBufferInArena(unsigned int, int*)
+80016d4e 00000012 T tflite::SingleArenaBufferAllocator::DeallocateResizableBuffer(unsigned char*)
+8001930c 00000012 T tflite::micro::HaveSameShapes(TfLiteEvalTensor const*, TfLiteEvalTensor const*)
+800173aa 00000012 W signed char flatbuffers::Table::GetField<signed char>(unsigned short, signed char) const
+80017398 00000012 W unsigned char flatbuffers::Table::GetField<unsigned char>(unsigned short, unsigned char) const
+80015f5e 00000012 W int flatbuffers::Table::GetField<int>(unsigned short, int) const
+8001c024 00000012 W std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0>::__shared_ptr(std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0> const&)
+8001c024 00000012 W std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0>::__shared_ptr(std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0> const&)
+80017eae 00000012 t tflite::(anonymous namespace)::ValidateOutputTensor(TfLiteContext*, TfLiteTensor*, TfLiteTensor*, TfLiteTensor*)::{lambda(int)#1}::operator()(int) const [clone .isra.0]
+80013e9c 00000014 W arm::app::fwk::tflm::TflmModel::~TflmModel()
+80016520 00000014 T tflite::MicroInterpreterContext::GetEvalTensor(int)
+80016d72 00000014 T tflite::SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const
+80015f1a 00000014 W tflite::SubGraph::tensors() const
+80015c6c 00000018 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+80015c6c 00000018 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+800117d8 00000018 T arm::app::fwk::tflm::TflmTensor::Type()
+80016e36 00000018 T tflite::ConvertTensorType(tflite::TensorType, TfLiteType*)
+80015ede 00000018 W tflite::Tensor::is_variable() const
+80016e0a 0000001a T tflite::SingleArenaBufferAllocator::GetAvailableMemory(unsigned int) const
+80015c40 0000001c W unsigned long long flexbuffers::ReadSizedScalar<unsigned long long, unsigned char, unsigned short, unsigned int, unsigned long long>(unsigned char const*, unsigned char)
+8001bf46 0000001c T arm::app::fwk::tflm::TflmModel::RunInference()
+80016902 0000001c T tflite::MicroAllocator::AllocateScratchBufferHandles(tflite::ScratchBufferHandle**, unsigned int)
+80016f24 0000001c T tflite::GreedyMemoryPlanner::AddBuffer(int, int, int, int)
+800164ec 0000001c T tflite::MicroInterpreterContext::AllocateTempTfLiteTensor(int)
+8001bf00 0000001c T arm::app::fwk::tflm::TflmModel::IsDataSigned() const
+800112c8 0000001c W std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>::_M_get_deleter(std::type_info const&)
+8001f4d0 0000001c V vtable for std::_Sp_counted_ptr_inplace<arm::app::fwk::tflm::TflmTensor, std::allocator<void>, (__gnu_cxx::_Lock_policy)0>
+80017216 0000001e T tflite::GetTensorShape(TfLiteTensor const*)
+80016a70 0000001e T tflite::MicroAllocator::InitScratchBufferData()
+80015c20 00000020 W long long flexbuffers::ReadSizedScalar<long long, signed char, short, int, long long>(unsigned char const*, unsigned char)
+80006820 00000020 t tflite::(anonymous namespace)::OpNameFromRegistration(TFLMRegistration const*)
+80007150 00000020 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned char*)
+80007150 00000020 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned char*)
+8001931e 00000022 T tflite::micro::GetTensorShape(TfLiteEvalTensor const*)
+8001c066 00000022 t std::enable_if<std::__sp_compatible_with<arm::app::fwk::tflm::TflmTensor*, arm::app::fwk::iface::TensorIface*>::value, std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0>&>::type std::__shared_ptr<arm::app::fwk::iface::TensorIface, (__gnu_cxx::_Lock_policy)0>::operator=<arm::app::fwk::tflm::TflmTensor>(std::__shared_ptr<arm::app::fwk::tflm::TflmTensor, (__gnu_cxx::_Lock_policy)0>&&) [clone .isra.0]
+800070d8 00000024 T tflite::SingleArenaBufferAllocator::IsAllTempDeallocated()
+800070fc 00000024 T tflite::SingleArenaBufferAllocator::ResetTempAllocations()
+8001143c 00000024 W std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::at(unsigned int) const
+80016ddc 00000026 T tflite::SingleArenaBufferAllocator::ReserveNonPersistentOverlayMemory(unsigned int, unsigned int)
+8001c158 00000026 T arm::app::fwk::tflm::TflmModel::GetNumInputs() const
+8001c17e 00000026 T arm::app::fwk::tflm::TflmModel::GetNumOutputs() const
+80016c9c 0000002a T tflite::MicroContext::AllocateTempInputTensor(TfLiteNode const*, int)
+80016cc6 0000002a T tflite::MicroContext::AllocateTempOutputTensor(TfLiteNode const*, int)
+8001bf62 0000002c T arm::app::fwk::tflm::TflmModel::LogTensorInfo(std::shared_ptr<arm::app::fwk::iface::TensorIface>)
+800112e4 0000002c T arm::app::fwk::tflm::TflmModel::TflmModel()
+800112e4 0000002c T arm::app::fwk::tflm::TflmModel::TflmModel()
+80007210 0000002c T tflite::LinearMemoryPlanner::GetOffsetForBuffer(int, int*)
+8001f4f4 0000002c R vtable for arm::app::fwk::tflm::TflmTensor
+80001ef8 00000030 W arm::app::fwk::tflm::TflmModel::~TflmModel()
+80001ef8 00000030 W arm::app::fwk::tflm::TflmModel::~TflmModel()
+80006e0c 00000030 T tflite::MicroAllocator::Create(tflite::SingleArenaBufferAllocator*, tflite::MicroMemoryPlanner*)
+80016dac 00000030 T tflite::SingleArenaBufferAllocator::AllocateResizableBuffer(unsigned int, unsigned int)
+80007120 00000030 T tflite::SingleArenaBufferAllocator::AllocatePersistentBuffer(unsigned int, unsigned int)
+8001c0f4 00000032 T arm::app::fwk::tflm::TflmModel::GetInputTensor(unsigned int) const
+8001c126 00000032 T arm::app::fwk::tflm::TflmModel::GetOutputTensor(unsigned int) const
+800073ec 00000034 T tflite::GreedyMemoryPlanner::GetOffsetForBuffer(int, int*)
+800071dc 00000034 T tflite::LinearMemoryPlanner::AddBuffer(int, int, int)
+8001c1a4 00000034 W std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::resize(unsigned int)
+8001c420 00000036 T arm::app::fwk::tflm::TflmTensor::GetNumElements()
+8001c088 00000036 T arm::app::fwk::tflm::TflmModel::GetInputShape(unsigned int) const
+8001c0be 00000036 T arm::app::fwk::tflm::TflmModel::GetOutputShape(unsigned int) const
+80011404 00000038 W std::shared_ptr<std::enable_if<!std::is_array<arm::app::fwk::tflm::TflmTensor>::value, arm::app::fwk::tflm::TflmTensor>::type> std::make_shared<arm::app::fwk::tflm::TflmTensor, TfLiteTensor*>(TfLiteTensor*&&)
+8001687e 0000003a T tflite::MicroAllocator::DeallocateTempTfLiteTensor(TfLiteTensor*)
+80016fac 0000003a T tflite::GreedyMemoryPlanner::NextSimultaneouslyActiveBuffer(tflite::GreedyMemoryPlanner::ListEntry const*, int, int)
+80015e94 0000003a T tflite::TfLiteEvalTensorByteLength(TfLiteEvalTensor const*, unsigned int*)
+200001fc 0000003c d log_buffer
+8000709c 0000003c T tflite::SingleArenaBufferAllocator::AllocateTemp(unsigned int, unsigned int)
+8001822c 00000040 t tflite::(anonymous namespace)::GetAllInputTensorShapes(TfLiteContext const*, TfLiteNode const*, tflite::RuntimeShape*)
+800171d6 00000040 T tflite::tensor_utils::UnpackDenseInt4IntoInt8(signed char const*, int, signed char*)
+80007250 00000040 T tflite::GreedyMemoryPlanner::AddBuffer(int, int, int)
+80016956 00000040 T tflite::internal::GetFlatbufferTensorBuffer(tflite::Tensor const&, flatbuffers::Vector<flatbuffers::Offset<tflite::Buffer>, unsigned int> const*)
+8001c3cc 00000044 T arm::app::fwk::tflm::TflmTensor::GetQuantParams()
+80007904 00000044 t TfLiteStatus tflite::(anonymous namespace)::FlatBufferIntVectorToArray<int>(int, flatbuffers::Vector<int, unsigned int> const*, int*, tflite::ErrorReporter*, char const*)
+80013e58 00000044 W std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::~vector()
+80013e58 00000044 W std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::~vector()
+80006e3c 00000048 T tflite::MicroAllocator::FinishModelAllocation(tflite::Model const*, tflite::SubgraphAllocations*, tflite::ScratchBufferHandle**)
+80007170 0000004c T tflite::SingleArenaBufferAllocator::Create(unsigned char*, unsigned int)
+80006d04 00000050 T tflite::internal::InitializeTfLiteEvalTensorFromFlatbuffer(tflite::Tensor const&, flatbuffers::Vector<flatbuffers::Offset<tflite::Buffer>, unsigned int> const*, TfLiteEvalTensor*)
+8000758c 00000054 T tflite::GetQuantizedConvolutionMultipler(TfLiteContext*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, double*)
+80007044 00000058 T tflite::SingleArenaBufferAllocator::ResizeBuffer(unsigned char*, unsigned int, unsigned int)
+8001f478 00000058 R vtable for arm::app::fwk::tflm::TflmModel
+80016996 0000005c T tflite::MicroAllocator::PopulateTfLiteTensorFromFlatbuffer(tflite::Model const*, TfLiteTensor*, int, int, bool)
+8001f30c 0000005c R vtable for tflite::SingleArenaBufferAllocator
+800117f0 00000064 T arm::app::fwk::tflm::TflmTensor::Shape()
+80006a30 00000068 T tflite::MicroAllocator::AllocateTempTfLiteTensor(tflite::Model const*, tflite::SubgraphAllocations const*, int, int)
+80015e2a 0000006a T tflite::BytesRequiredForTensor(tflite::Tensor const&, unsigned int*, unsigned int*)
+800069c4 0000006c T tflite::MicroAllocator::AllocatePersistentTfLiteTensor(tflite::Model const*, tflite::SubgraphAllocations const*, int, int)
+80006f0c 00000070 T tflite::MicroAllocator::RequestScratchBufferInArena(unsigned int, int, int*)
+80006a98 00000074 T tflite::MicroAllocator::AllocateVariables(tflite::SubGraph const*, TfLiteEvalTensor*, int const*)
+80001d60 00000084 T tflite::GetQuantizedConvolutionMultipler(TfLiteContext*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, double*)
+80007948 00000088 T tflite::ConvertTensorType(tflite::TensorType, TfLiteType*, tflite::ErrorReporter*)
+80006278 00000088 T tflite::AllocationInfoBuilder::ValidateSubgraph(tflite::SubGraph const*, TfLiteEvalTensor*)
+8000cbac 00000088 T tflite::micro::CreateWritableTensorDimsWithCopy(TfLiteContext*, TfLiteTensor*, TfLiteEvalTensor*)
+80005fd4 00000090 W flatbuffers::StringToInt(char const*, int)
+80006fac 00000098 T tflite::GetRegistrationFromOpCode(tflite::OperatorCode const*, tflite::MicroOpResolver const&, TFLMRegistration const**)
+80011364 000000a0 T arm::app::fwk::tflm::TflmModel::ContainsEthosUOperator() const
+80019c30 000000a2 t tflite::(anonymous namespace)::GetFlatIndex(int, int, TfLiteEvalTensor const*, TfLiteIntArray const*, int*, int*, int)
+80001fb4 000000ac W tflite::MicroMutableOpResolver<29u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+80006d54 000000b8 T tflite::MicroAllocator::AllocateTfLiteEvalTensors(tflite::Model const*, tflite::SubgraphAllocations*)
+8001b5be 000000e4 T tflite::CalculateOpDataSub(TfLiteContext*, TfLiteSubParams*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, tflite::OpDataSub*)
+80015c84 000000e4 W flexbuffers::Reference::AsInt64() const
+800116e4 000000f4 W std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::_M_default_append(unsigned int)
+8001669c 000000fa T tflite::MicroInterpreterGraph::ResetVariableTensors()
+80016266 000000fc T tflite::AllocationInfoBuilder::MarkSubgraphLifetimesIfNecessary(tflite::Operator const*, tflite::internal::ScratchBufferRequest*, tflite::ScratchBufferHandle*, tflite::SubgraphAllocations*)
+800075e0 00000108 T tflite::CalculateActivationRangeQuantized(TfLiteContext*, TfLiteFusedActivation, TfLiteTensor*, int*, int*)
+80008770 00000130 T tflite::CalculateOpDataAdd(TfLiteContext*, TfLiteAddParams*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, tflite::OpDataAdd*)
+8000efb8 00000130 T tflite::EvalSub(TfLiteContext*, TfLiteNode*, TfLiteSubParams*, tflite::OpDataSub const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+8001a40c 0000013c T tflite::EvalMulFloatReference(TfLiteContext*, TfLiteNode*, TfLiteMulParams*, tflite::OpDataMul const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+8000b63c 00000144 t tflite::(anonymous namespace)::EvalQuantized(TfLiteContext*, TfLiteNode*, TfLiteDivParams*, tflite::(anonymous namespace)::OpDataDiv const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*) [clone .constprop.0]
+80006b68 0000019c T tflite::internal::InitializeTfLiteTensorFromFlatbuffer(tflite::IPersistentBufferAllocator*, tflite::INonPersistentBufferAllocator*, bool, tflite::Tensor const&, flatbuffers::Vector<flatbuffers::Offset<tflite::Buffer>, unsigned int> const*, TfLiteTensor*)
+800190a8 000001aa t void tflite::(anonymous namespace)::EvalDiv<int>(TfLiteContext*, TfLiteNode*, TfLiteDivParams*, tflite::(anonymous namespace)::OpDataDiv const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*) [clone .constprop.0]
+80016adc 000001bc T tflite::MicroAllocator::CommitStaticMemoryPlan(tflite::Model const*, tflite::SubgraphAllocations*, tflite::ScratchBufferHandle*)
+800160a6 000001c0 T tflite::AllocationInfoBuilder::MarkAllocationLifetimes(int, tflite::internal::ScratchBufferRequest*, tflite::ScratchBufferHandle*, tflite::SubgraphAllocations*)
+80008518 000001c8 T tflite::EvalAdd(TfLiteContext*, TfLiteNode*, TfLiteAddParams*, tflite::OpDataAdd const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+8000b780 000001e0 t void tflite::(anonymous namespace)::EvalDiv<float>(TfLiteContext*, TfLiteNode*, TfLiteDivParams*, tflite::(anonymous namespace)::OpDataDiv const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*) [clone .constprop.0]
+8001c1d8 000001e4 T arm::app::fwk::tflm::TflmModel::Init(arm::app::fwk::iface::MemoryRegion&, arm::app::fwk::iface::MemoryRegion&, void const*)
+800065c8 000001e8 T tflite::MicroInterpreter::AllocateTensors()
+800063c8 00000200 T tflite::MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer()
+800076e8 00000208 T tflite::PopulateConvolutionQuantizationParams(TfLiteContext*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, TfLiteFusedActivation const&, int*, int*, int*, int*, int*, int*, int)
+80008304 00000214 T tflite::EvalAddQuantized(TfLiteContext*, TfLiteNode*, TfLiteAddParams*, tflite::OpDataAdd const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+8000ed5c 0000025c T tflite::EvalSubQuantized(TfLiteContext*, TfLiteNode*, TfLiteSubParams*, tflite::OpDataSub const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+80011460 00000284 T arm::app::fwk::tflm::TflmModel::LogInterpreterInfo()
+8000d240 000002fc T tflite::EvalMulQuantizedReference(TfLiteContext*, TfLiteNode*, tflite::OpDataMul const*, TfLiteEvalTensor const*, TfLiteEvalTensor const*, TfLiteEvalTensor*)
+02010000 00280000 b (anonymous namespace)::activationBuf
+
+[4B] Exact activationBuf search
+02010000 00280000 b (anonymous namespace)::activationBuf
+
+[5] Linker map: activation buffer / SRAM0 references
+25250-
+25251-SRAM0           0x0000000002010000   0x280000
+25252-                0x0000000002010000                __SRAM0_start = .
+25253- *(SORT_BY_ALIGNMENT(SRAM0))
+25254- *(SORT_BY_ALIGNMENT(SRAM0.*))
+25255: SRAM0.activation_buf
+25256-                0x0000000002010000   0x280000 app/libapp.a(MainLoop.cc.obj)
+25257-                0x0000000002290000                __SRAM0_end = .
+25258-                0x0000000000280000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+25259-                0x0000000002010000                __SRAM0_load_start = LOADADDR (SRAM0)
+25260-
+
+[5B] Linker map: SRAM0 region and section boundaries
+278-                              (--whole-archive)
+279-modules/tflite-micro/libmodules__tflite-micro.a(tensor_utils.cc.obj)
+280-                              (--whole-archive)
+281:modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+282-                              (--whole-archive)
+283:modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+284-                              (--whole-archive)
+285-modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+286-                              (--whole-archive)
+--
+4035-                0x0000000000000000       0x1e modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+4036- .text._ZN6tflite20GetIntermediatesSafeEPK13TfLiteContextPK10TfLiteNodeiPP12TfLiteTensor
+4037-                0x0000000000000000       0x2c modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+4038: .text._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_
+4039-                0x0000000000000000       0x34 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+4040- .rodata._ZN6tflite23GetOutputShapeFromInputEP13TfLiteContextPK12TfLiteTensorPP14TfLiteIntArray.str1.1
+4041-                0x0000000000000000       0x30 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+--
+4329- .debug_str     0x0000000000000000      0xeec modules/tflite-micro/libmodules__tflite-micro.a(tensor_utils.cc.obj)
+4330- .comment       0x0000000000000000       0x21 modules/tflite-micro/libmodules__tflite-micro.a(tensor_utils.cc.obj)
+4331- .debug_frame   0x0000000000000000       0x2c modules/tflite-micro/libmodules__tflite-micro.a(tensor_utils.cc.obj)
+4332: .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4333: .text          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4334: .data          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4335: .bss           0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4336- .text._ZN6tflite12_GLOBAL__N_19Relu6InitEP13TfLiteContextPKcj
+4337:                0x0000000000000000        0x6 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4338- .text._ZNK6tflite12RuntimeShape8FlatSizeEv
+4339:                0x0000000000000000       0x20 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4340- .text._ZN6tflite12_GLOBAL__N_19Relu6EvalEP13TfLiteContextP10TfLiteNode
+4341:                0x0000000000000000      0x104 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4342- .text._ZN6tflite14Register_RELU6Ev
+4343:                0x0000000000000000       0x28 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+4344: .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4345: .text          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4346: .data          0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4347: .bss           0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4348- .text._ZNK6tflite12RuntimeShape8FlatSizeEv
+4349:                0x0000000000000000       0x20 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4350- .text._ZN6tflite10Relu6FloatERKNS_12RuntimeShapeEPKfS2_Pf
+4351:                0x0000000000000000       0x54 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4352- .text._ZN6tflite12Relu6PrepareEP13TfLiteContextP10TfLiteNode
+4353:                0x0000000000000000       0xb0 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+4354- .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+4355- .group         0x0000000000000000        0x8 modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+4356- .group         0x0000000000000000        0xc modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+--
+5278- .bss           0x0000000000000000        0x0 modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+5279- .text._ZN6tflite29FullyConnectedParamsQuantizedERKNS_20OpDataFullyConnectedE
+5280-                0x0000000000000000       0x22 modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+5281: .text._ZN6tflite25FullyConnectedParamsFloatE21TfLiteFusedActivation
+5282-                0x0000000000000000       0x4c modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+5283: .rodata._ZN6tflite29CalculateOpDataFullyConnectedEP13TfLiteContext21TfLiteFusedActivation10TfLiteTypePK12TfLiteTensorS6_S6_PS4_PNS_20OpDataFullyConnectedE.str1.1
+5284-                0x0000000000000000      0x147 modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+5285: .text._ZN6tflite29CalculateOpDataFullyConnectedEP13TfLiteContext21TfLiteFusedActivation10TfLiteTypePK12TfLiteTensorS6_S6_PS4_PNS_20OpDataFullyConnectedE
+5286-                0x0000000000000000      0x188 modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+5287- .rodata._ZN6tflite27kFullyConnectedOutputTensorE
+5288-                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(fully_connected_common.cc.obj)
+--
+5945-                0x0000000000000000       0x38 modules/tflite-micro/libmodules__tflite-micro.a(micro_tensor_utils.cc.obj)
+5946- .text._ZN6tflite25PortableApplyTanhToVectorEPKfiPf
+5947-                0x0000000000000000       0x20 modules/tflite-micro/libmodules__tflite-micro.a(micro_tensor_utils.cc.obj)
+5948: .text._ZN6tflite31PortableApplyActivationToVectorEPKfi21TfLiteFusedActivationPf
+5949-                0x0000000000000000       0x4c modules/tflite-micro/libmodules__tflite-micro.a(micro_tensor_utils.cc.obj)
+5950- .debug_info    0x0000000000000000     0x1348 modules/tflite-micro/libmodules__tflite-micro.a(micro_tensor_utils.cc.obj)
+5951- .debug_abbrev  0x0000000000000000      0x48f modules/tflite-micro/libmodules__tflite-micro.a(micro_tensor_utils.cc.obj)
+--
+6813-                0x0000000000000000      0x608 modules/tflite-micro/libmodules__tflite-micro.a(svdf_common.cc.obj)
+6814- .rodata._ZN6tflite17kSvdfOutputTensorE
+6815-                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(svdf_common.cc.obj)
+6816: .rodata._ZN6tflite31kSvdfInputActivationStateTensorE
+6817-                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(svdf_common.cc.obj)
+6818- .rodata._ZN6tflite15kSvdfBiasTensorE
+6819-                0x0000000000000000        0x4 modules/tflite-micro/libmodules__tflite-micro.a(svdf_common.cc.obj)
+--
+6953-                0x0000000000000000       0x28 modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6954- .text._ZN6tflite17CreateLSTMBuffersIsEENS_11LSTMBuffersIT_EEP13TfLiteContextPKi
+6955-                0x0000000000000000       0x34 modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6956: .text._ZN6tflite13lstm_internal17CalculateLstmGateIffffEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+6957-                0x0000000000000000      0x10e modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6958- .text._ZN6tflite13lstm_internal8LstmStepIffffEEvRKNS0_15LstmStepManagerERKNS_10OpDataLSTMERNS_18LSTMKernelContentsERKNS_11LSTMBuffersIT1_EE
+6959-                0x0000000000000000      0x1e6 modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6960: .text._ZN6tflite13lstm_internal17CalculateLstmGateIaasiEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+6961-                0x0000000000000000      0x10e modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6962- .text._ZN6tflite13lstm_internal14UpdateLstmCellIsEEvRKNS0_15LstmStepManagerEP16TfLiteEvalTensorPT_PKS7_SA_RKNS_16ArithmeticParamsESD_RKNS_13CellStateInfoES8_
+6963-                0x0000000000000000       0x88 modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6964- .text._ZN6tflite13lstm_internal8LstmStepIaasiEEvRKNS0_15LstmStepManagerERKNS_10OpDataLSTMERNS_18LSTMKernelContentsERKNS_11LSTMBuffersIT1_EE
+6965-                0x0000000000000000      0x17a modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6966: .text._ZN6tflite13lstm_internal17CalculateLstmGateIsasxEEvRKNS0_15LstmStepManagerERKNS_14GateParametersEPK16TfLiteEvalTensorSA_SA_SA_SA_SA_PT1_SC_21TfLiteFusedActivation
+6967-                0x0000000000000000      0x10e modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+6968- .text._ZN6tflite13lstm_internal8LstmStepIsasxEEvRKNS0_15LstmStepManagerERKNS_10OpDataLSTMERNS_18LSTMKernelContentsERKNS_11LSTMBuffersIT1_EE
+6969-                0x0000000000000000      0x180 modules/tflite-micro/libmodules__tflite-micro.a(unidirectional_sequence_lstm.cc.obj)
+--
+16746-
+16747-Name             Origin             Length             Attributes
+16748-FLASH            0x0000000080000000 0x0000000000580000 xr
+16749:RAM              0x0000000020000000 0x0000000000040000 xw
+16750:SRAM0            0x0000000002000000 0x0000000000400000 rw
+16751-HOST_PERIPHERAL  0x000000001a000000 0x0000000001000000 rw
+16752:SRAM1            0x0000000002400000 0x0000000000400000 rw
+16753-OSPI1            0x00000000c0000000 0x0000000004000000 rw
+16754-IDT_LIST         0x00000000ffff7fff 0x0000000000008000 xw
+16755-*default*        0x0000000000000000 0xffffffffffffffff
+--
+16794-LOAD /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/12.2.0/thumb/v8-m.main+dp/hard/libgcc.a
+16795-                0x0000000000000020                _region_min_align = 0x20
+16796-
+16797:.alif_sram0     0x0000000002000000    0x10000
+16798: *(SORT_BY_ALIGNMENT(.alif_sram0))
+16799: *(SORT_BY_ALIGNMENT(.alif_sram0.*))
+16800- *(SORT_BY_ALIGNMENT(.noinit.*kheap_buf_video_buffer_pool))
+16801- *(SORT_BY_ALIGNMENT(.bss.disk_buf_0))
+16802- *libkernel.a:mempool.*(SORT_BY_ALIGNMENT(.noinit.kheap_buf__system_heap) SORT_BY_ALIGNMENT(.noinit.*.kheap_buf__system_heap))
+16803- .noinit."WEST_TOPDIR/zephyr/kernel/mempool.c".kheap_buf__system_heap
+16804:                0x0000000002000000    0x10000 zephyr/kernel/libkernel.a(mempool.c.obj)
+16805:                0x0000000002000000                kheap__system_heap
+16806-
+16807-.alif_sram1
+16808- *(SORT_BY_ALIGNMENT(.alif_sram1))
+--
+17424- .text._ZN6tflite32GetQuantizedConvolutionMultiplerEP13TfLiteContextPK12TfLiteTensorS4_PS2_Pd
+17425-                0x000000008000758c       0x54 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+17426-                0x000000008000758c                tflite::GetQuantizedConvolutionMultipler(TfLiteContext*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, double*)
+17427: .text._ZN6tflite33CalculateActivationRangeQuantizedEP13TfLiteContext21TfLiteFusedActivationP12TfLiteTensorPiS5_
+17428-                0x00000000800075e0      0x108 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+17429:                0x00000000800075e0                tflite::CalculateActivationRangeQuantized(TfLiteContext*, TfLiteFusedActivation, TfLiteTensor*, int*, int*)
+17430: .text._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_i
+17431-                0x00000000800076e8      0x208 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+17432:                0x00000000800076e8                tflite::PopulateConvolutionQuantizationParams(TfLiteContext*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor const*, TfLiteTensor*, TfLiteFusedActivation const&, int*, int*, int*, int*, int*, int*, int)
+17433- .text._ZN6tflite17TfLiteTypeGetSizeE10TfLiteType
+17434-                0x00000000800078f0       0x14 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+17435-                0x00000000800078f0                tflite::TfLiteTypeGetSize(TfLiteType)
+--
+17475-                0x0000000080007fe8       0x9c modules/tflite-micro/libmodules__tflite-micro.a(flatbuffer_conversions.cc.obj)
+17476-                0x0000000080007fe8                tflite::ParseReshape(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**)
+17477- .text._ZN6tflite12_GLOBAL__N_18ReluEvalEP13TfLiteContextP10TfLiteNode
+17478:                0x0000000080008084       0x90 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+17479- .text._ZN6tflite13Register_RELUEv
+17480:                0x0000000080008114       0x28 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+17481-                0x0000000080008114                tflite::Register_RELU()
+17482- .text._ZN6tflite9ReluFloatERKNS_12RuntimeShapeEPKfS2_Pf
+17483:                0x000000008000813c       0x40 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+17484-                0x000000008000813c                tflite::ReluFloat(tflite::RuntimeShape const&, float const*, tflite::RuntimeShape const&, float*)
+17485- .text._ZN6tflite11ReluPrepareEP13TfLiteContextP10TfLiteNode
+17486:                0x000000008000817c       0xf4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+17487-                0x000000008000817c                tflite::ReluPrepare(TfLiteContext*, TfLiteNode*)
+17488- .text._ZN6tflite46MultiplyByQuantizedMultiplierSmallerThanOneExpEiii
+17489-                0x0000000080008270       0x6c modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+--
+19053-                0x00000000800173aa       0x12 modules/tflite-micro/libmodules__tflite-micro.a(flatbuffer_conversions.cc.obj)
+19054-                0x00000000800173aa                signed char flatbuffers::Table::GetField<signed char>(unsigned short, signed char) const
+19055- .text._ZN6tflite12_GLOBAL__N_18ReluInitEP13TfLiteContextPKcj
+19056:                0x00000000800173bc        0x6 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+19057- .text._ZN6tflite13ReluQuantizedERKNS_10ReluOpDataERKNS_12RuntimeShapeES5_PKaPa
+19058:                0x00000000800173c2       0x46 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+19059-                0x00000000800173c2                tflite::ReluQuantized(tflite::ReluOpData const&, tflite::RuntimeShape const&, tflite::RuntimeShape const&, signed char const*, signed char*)
+19060- .text._ZN6tflite7AddInitEP13TfLiteContextPKcj
+19061-                0x0000000080017408        0x6 modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+--
+21240- .rodata._ZTVN6tflite19GreedyMemoryPlannerE
+21241-                0x000000008001f3ac       0x30 modules/tflite-micro/libmodules__tflite-micro.a(greedy_memory_planner.cc.obj)
+21242-                0x000000008001f3ac                vtable for tflite::GreedyMemoryPlanner
+21243: .rodata._ZN6tflite24kActivationsOutputTensorE
+21244:                0x000000008001f3dc        0x4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+21245:                0x000000008001f3dc                tflite::kActivationsOutputTensor
+21246: .rodata._ZN6tflite23kActivationsInputTensorE
+21247:                0x000000008001f3e0        0x4 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+21248:                0x000000008001f3e0                tflite::kActivationsInputTensor
+21249- .rodata._ZN6tflite16kAddOutputTensorE
+21250-                0x000000008001f3e4        0x4 modules/tflite-micro/libmodules__tflite-micro.a(add_common.cc.obj)
+21251-                0x000000008001f3e4                tflite::kAddOutputTensor
+--
+21576-                0x0000000080021ee4       0x19 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+21577- .rodata._ZN6tflite32GetQuantizedConvolutionMultiplerEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_Pd.str1.1
+21578-                0x0000000080021efd       0x22 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+21579: .rodata._ZN6tflite33CalculateActivationRangeQuantizedEP13TfLiteContext21TfLiteFusedActivationP12TfLiteTensorPiS5_.str1.1
+21580-                0x0000000080021f1f        0x6 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+21581: .rodata._ZN6tflite37PopulateConvolutionQuantizationParamsEP13TfLiteContextPK12TfLiteTensorS4_S4_PS2_RK21TfLiteFusedActivationPiS9_S9_S9_S9_S9_i.str1.1
+21582-                0x0000000080021f25      0x176 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+21583- .rodata.CSWTCH.132
+21584-                0x000000008002209b       0x11 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+--
+21592- .rodata._ZN6tflite12ParseReshapeEPKNS_8OperatorEPNS_13ErrorReporterEPNS_20BuiltinDataAllocatorEPPv.str1.1
+21593-                0x00000000800221a0        0x8 modules/tflite-micro/libmodules__tflite-micro.a(flatbuffer_conversions.cc.obj)
+21594- .rodata._ZN6tflite12_GLOBAL__N_18ReluEvalEP13TfLiteContextP10TfLiteNode.str1.1
+21595:                0x00000000800221a8       0x2c modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+21596- .rodata._ZN6tflite11ReluPrepareEP13TfLiteContextP10TfLiteNode.str1.1
+21597:                0x00000000800221d4       0x85 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+21598-                                         0x9c (size before relaxing)
+21599- .rodata._ZN6tflite16EvalAddQuantizedEP13TfLiteContextP10TfLiteNodeP15TfLiteAddParamsPKNS_9OpDataAddEPK16TfLiteEvalTensorSB_PS9_.str1.1
+21600-                0x0000000080022259       0x1c modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+--
+21871- *(SORT_BY_ALIGNMENT(.igot.plt))
+21872- *(SORT_BY_ALIGNMENT(.got))
+21873- *(SORT_BY_ALIGNMENT(.igot))
+21874:                0x0000000020000000                . = 0x20000000
+21875:                0x0000000020000000                . = ALIGN (_region_min_align)
+21876:                0x0000000020000000                _image_ram_start = .
+21877-
+21878:.ramfunc        0x0000000020000000        0x0 load address 0x0000000080024f80
+21879:                0x0000000020000000                __ramfunc_region_start = .
+21880:                0x0000000020000000                . = ALIGN (_region_min_align)
+21881:                0x0000000020000000                __ramfunc_start = .
+21882- *(SORT_BY_ALIGNMENT(.ramfunc))
+21883- *(SORT_BY_ALIGNMENT(.ramfunc.*))
+21884:                0x0000000020000000                . = ALIGN (_region_min_align)
+21885:                0x0000000020000000                __ramfunc_end = .
+21886-                0x0000000000000000                __ramfunc_size = (__ramfunc_end - __ramfunc_start)
+21887-                0x0000000080024f80                __ramfunc_load_start = LOADADDR (.ramfunc)
+21888-
+21889:datas           0x0000000020000000      0x1d8 load address 0x0000000080024f80
+21890:                0x0000000020000000                __data_region_start = .
+21891:                0x0000000020000000                __data_start = .
+21892- *(SORT_BY_ALIGNMENT(.data))
+21893- *(SORT_BY_ALIGNMENT(.data.*))
+21894- .data._char_out
+21895:                0x0000000020000000        0x4 zephyr/libzephyr.a(printk.c.obj)
+21896- .data.timestamp_func
+21897:                0x0000000020000004        0x4 zephyr/libzephyr.a(log_core.c.obj)
+21898- .data.backend_cb_log_backend_uart
+21899:                0x0000000020000008        0x8 zephyr/libzephyr.a(log_backend_uart.c.obj)
+21900- .data.handler  0x0000000020000010        0x4 zephyr/arch/arch/arm/core/libarch__arm__core.a(nmi.c.obj)
+21901- .data.__stdout
+21902-                0x0000000020000014       0x10 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(stdio.c.obj)
+--
+22183- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(portable_tensor_utils.cc.obj)
+22184- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(kernel_util.cc.obj)
+22185- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(flatbuffer_conversions.cc.obj)
+22186: .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+22187: .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+22188- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(add.cc.obj)
+22189- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(add_common.cc.obj)
+22190- .comment       0x0000000000000020       0x21 modules/tflite-micro/libmodules__tflite-micro.a(broadcast_args.cc.obj)
+--
+22445- .debug_aranges
+22446-                0x00000000000020c8      0x448 modules/tflite-micro/libmodules__tflite-micro.a(flatbuffer_conversions.cc.obj)
+22447- .debug_aranges
+22448:                0x0000000000002510       0x50 modules/tflite-micro/libmodules__tflite-micro.a(activations.cc.obj)
+22449- .debug_aranges
+22450:                0x0000000000002560       0x48 modules/tflite-micro/libmodules__tflite-micro.a(activations_common.cc.obj)
+
+[6] ELF section headers
+There are 44 section headers, starting at offset 0x54a4ebc:
+Section Headers:
+  [ 1] .alif_sram0       NOBITS          02000000 000140 010000 00  WA  0   0  8
+  [16] tbss              NOBITS          8001e78c 01e8c4 000008 00 WAT  0   0  4
+  [17] rodata            PROGBITS        8001e790 01e8c8 0067f0 00   A  0   0  8
+  [19] datas             PROGBITS        20000000 0250b8 0001d8 00  WA  0   0  4
+  [23] k_heap_area       PROGBITS        2000023c 0252f4 000018 00  WA  0   0  4
+  [37] SRAM0             NOBITS          02010000 000140 280000 00  WA  0   0 16
+  [38] .last_section     PROGBITS        80025218 025350 000004 00   A  0   0  1
+  [39] bss               NOBITS          200002a0 000140 001386 00  WA  0   0 32
+  [40] noinit            NOBITS          20001628 000140 002c40 00  WA  0   0  8
+
+[6B] Object dump section sizes and addresses
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .alif_sram0   00010000  02000000  02000000  00000140  2**3
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .ARM.exidx    00000228  8001d31c  8001d31c  0001d454  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 15 tbss          00000008  8001e78c  8001e78c  0001e8c4  2**2
+ 16 rodata        000067f0  8001e790  8001e790  0001e8c8  2**3
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 18 datas         000001d8  20000000  80024f80  000250b8  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+ 22 k_heap_area   00000018  2000023c  800251bc  000252f4  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, DATA
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 36 SRAM0         00280000  02010000  02010000  00000140  2**4
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 38 bss           00001386  200002a0  200002a0  00000140  2**5
+ 39 noinit        00002c40  20001628  20001628  00000140  2**3
+
+[7] ELF program headers
+
+Elf file type is EXEC (Executable file)
+Entry point 0x80003ed1
+There are 8 program headers, starting at offset 52
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  EXIDX          0x01d454 0x8001d31c 0x8001d31c 0x00228 0x00228 R   0x4
+  LOAD           0x000000 0x02000000 0x02000000 0x00000 0x290000 RW  0x10
+  LOAD           0x000000 0x200002a0 0x200002a0 0x00000 0x03fc8 RW  0x20
+  LOAD           0x000138 0x80000000 0x80000000 0x24f80 0x24f80 RWE 0x8
+  LOAD           0x0250b8 0x20000000 0x80024f80 0x00298 0x00298 RW  0x4
+  LOAD           0x025350 0x80025218 0x80025218 0x00004 0x00004 R   0x1
+  LOAD           0x025360 0xc0000000 0xc0000000 0x25c0a20 0x25c0a20 R   0x10
+  TLS            0x01e8c4 0x8001e78c 0x8001e78c 0x00000 0x00008 R   0x4
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .ARM.exidx 
+   01     .alif_sram0 SRAM0 
+   02     bss noinit 
+   03     rom_start text .ARM.extab .ARM.exidx initlevel device_area sw_isr_table gpio_driver_api_area clock_control_driver_api_area uart_driver_api_area ctors init_array log_const_area log_backend_area rodata 
+   04     datas device_states log_mpsc_pbuf_area log_msg_ptr_area k_heap_area k_mutex_area k_sem_area 
+   05     .last_section 
+   06     ospi1 
+   07     tbss 
+
+[8] Runtime arena strings compiled into firmware
+arena_used_bytes
+TCN_V6: activation_buf=%p capacity=%u bytes
+TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes
+TCN_V6_ARENA: used=%u capacity=%u bytes
+TCN_V6_BOOT: main entered
+TCN_V6_BOOT: MainLoop returned
+TCN_V6_ERROR: generated model pointer/length invalid
+TCN_V6_ERROR: input %u dim%u=%d expected=%d
+TCN_V6_ERROR: input %u has no data buffer
+TCN_V6_ERROR: input %u missing metadata
+TCN_V6_ERROR: input %u rank=%d expected=%d
+TCN_V6_ERROR: input %u type=%d expected=%d
+TCN_V6_ERROR: Invoke failed
+TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u
+TCN_V6_ERROR: null interpreter
+TCN_V6_ERROR: output metadata mismatch
+TCN_V6_ERROR: resolver preparation failed
+TCN_V6_ERROR: tensor interface validation failed
+TCN_V6_ERROR: TFLM model initialization/AllocateTensors failed
+TCN_V6_ETHOSU: model_contains_ethosu=%u
+TCN_V6_INFERENCE: success=%u cycles=%llu elapsed_us=%llu
+TCN_V6: initializing TFLM model
+TCN_V6_INPUT_%u: type=%d bytes=%u rank=%d shape=
+TCN_V6: invoking zero-input smoke inference
+TCN_V6_MODEL: pointer=%p bytes=%u
+TCN_V6_OUTPUT_STATS: elements=%u nonfinite=%u min=%f max=%f mean=%f
+TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u
+TCN_V6_RESOLVER: AddEthosU failed: %d
+TCN_V6_RESOLVER: Add%s failed: %d
+TCN_V6_RESOLVER: builtin_expected=28 custom=ethos-u status=%s
+TCN_V6_RESOLVER: custom ethos-u registration not found
+TCN_V6_RESOLVER: missing builtin registration %d
+TCN_V6_RESOLVER: native Ethos-U registration/invoke missing
+TCN_V6_SMOKE_TEST: PASS (zero inputs; not an accuracy test)
+_ZNK6tflite16MicroInterpreter16arena_used_bytesEv
+
+[8B] Runtime instrumentation references in map
+17958-                0x000000008001143c       0x24 modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj)
+17959-                0x000000008001143c                std::vector<std::shared_ptr<arm::app::fwk::iface::TensorIface>, std::allocator<std::shared_ptr<arm::app::fwk::iface::TensorIface> > >::at(unsigned int) const
+17960: .text._ZN3arm3app3fwk4tflm9TflmModel18LogInterpreterInfoEv
+17961-                0x0000000080011460      0x284 modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj)
+17962:                0x0000000080011460                arm::app::fwk::tflm::TflmModel::LogInterpreterInfo()
+17963- .text._ZNSt6vectorISt10shared_ptrIN3arm3app3fwk5iface11TensorIfaceEESaIS6_EE17_M_default_appendEj
+17964-                0x00000000800116e4       0xf4 modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj)
+--
+21772- .rodata._ZNKSt6vectorISt10shared_ptrIN3arm3app3fwk5iface11TensorIfaceEESaIS6_EE2atEj.str1.1
+21773-                0x000000008002461f       0x4a modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj)
+21774: .rodata._ZN3arm3app3fwk4tflm9TflmModel18LogInterpreterInfoEv.str1.1
+21775-                0x0000000080024669       0x25 modules/mlek/mlek/mlek/fwk/tflm/libml_framework_tflm.a(TflmModel.cc.obj)
+21776-                                         0x26 (size before relaxing)
+
+[9] Memory usage summary from map
+
+[9B] Artifact sizes
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.elf : 88757660 bytes
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/zephyr.bin : 152092 bytes
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_full_offload_20261123_141827/zephyr/ospi1.bin : 39586336 bytes
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite : 39586336 bytes
+
+============================================================
+RESULT: ACTIVATION_BUFFER_DIAGNOSTIC_COMPLETED
+NO BUILD PERFORMED
+NO FLASH OPERATION PERFORMED
+============================================================
