@@ -1,0 +1,330 @@
+==============================================================================
+SAMPLE 164 - BLOCK 0 / LAYER 1 POINTWISE CONV ISOLATION
+==============================================================================
+ONNX SHA256: 4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+
+Loading TFLite audit JSON...
+NPZ: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101740/sample164_tflite_intermediates.npz
+
+TFLite tensors:
+  [357] /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_: shape=[1, 900, 1, 32] dtype=<class 'numpy.int8'>
+  [30] onnx::Conv_606_DequantizeLinear_Output: shape=[32, 1, 1, 32] dtype=<class 'numpy.int8'>
+  [52] onnx::Conv_607: shape=[32] dtype=<class 'numpy.int32'>
+  [360] /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_: shape=[1, 900, 1, 32] dtype=<class 'numpy.int8'>
+
+Loading ONNX...
+
+Original ONNX Conv:
+  Name: /tcn_blocks.0/layer1/pointwise/Conv
+  Inputs: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output', 'onnx::Conv_606_DequantizeLinear_Output', 'onnx::Conv_607']
+  Outputs: ['/tcn_blocks.0/layer1/pointwise/Conv_output_0']
+  Attributes: {"dilations": "[1]", "group": "1", "kernel_shape": "[1]", "pads": "[0, 0]", "strides": "[1]"}
+
+Original ONNX output quantizer:
+  Name: /tcn_blocks.0/layer1/pointwise/Conv_output_0_QuantizeLinear
+  Inputs: ['/tcn_blocks.0/layer1/pointwise/Conv_output_0', '/tcn_blocks.0/layer1/pointwise/Conv_output_0_scale', '/tcn_blocks.0/layer1/pointwise/Conv_output_0_zero_point']
+  Outputs: ['/tcn_blocks.0/layer1/pointwise/Conv_output_0_QuantizeLinear_Output']
+
+Quantization parameters:
+  TFLite input scale: 0.17871738970279694
+  TFLite input zero point: 0
+  TFLite output scale: 0.10038380324840546
+  TFLite output zero point: 0
+  ONNX weight DQ axis: 0
+  ONNX bias DQ axis: 0
+  Weight scale shape: (32,)
+  Bias scale shape: (32,)
+  ONNX output scale: [0.10038380324840546]
+  ONNX output zero point: [0]
+  Output scale matches TFLite: True
+  Output zero point matches TFLite: True
+  Bias scale vs input_scale*weight_scale max error: 5.7066261438531996e-11
+
+Isolated ONNX model:
+  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_pointwise_isolation_20261123_105503/block0_layer1_pointwise_isolated.onnx
+  ONNX checker: PASS
+
+Running ONNX Runtime isolated Conv...
+  ORT float output shape: (1, 32, 900)
+  ORT quantized output shape: (1, 32, 900)
+
+FLOAT CONV VS EXACT INTEGER ACCUMULATOR RECONSTRUCTION
+  Max absolute float error: 1.8138599644501596e-06
+  Mean absolute float error: 9.508706208800725e-08
+  RMSE: 1.6038689134939232e-07
+
+SAME-INPUT ONNX QUANTIZED OUTPUT VS TFLITE
+{
+  "shape": [
+    1,
+    32,
+    900
+  ],
+  "different_elements": 156,
+  "total_elements": 28800,
+  "difference_fraction": 0.005416666666666667,
+  "max_integer_difference": 1,
+  "mean_integer_absolute_difference": 0.005416666666666667,
+  "rmse_integer_codes": 0.07359800721939873,
+  "difference_histogram": {
+    "-1": 156,
+    "0": 28644
+  }
+}
+
+FIRST SAME-INPUT OUTPUT MISMATCHES
+[
+  {
+    "batch": 0,
+    "time": 416,
+    "output_channel": 0,
+    "tflite_code": -23,
+    "onnx_code": -24,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 551,
+    "output_channel": 0,
+    "tflite_code": 2,
+    "onnx_code": 1,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 590,
+    "output_channel": 0,
+    "tflite_code": 6,
+    "onnx_code": 5,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 703,
+    "output_channel": 0,
+    "tflite_code": 22,
+    "onnx_code": 21,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 719,
+    "output_channel": 0,
+    "tflite_code": -20,
+    "onnx_code": -21,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 846,
+    "output_channel": 0,
+    "tflite_code": 10,
+    "onnx_code": 9,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 11,
+    "output_channel": 1,
+    "tflite_code": 2,
+    "onnx_code": 1,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 34,
+    "output_channel": 1,
+    "tflite_code": 2,
+    "onnx_code": 1,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 194,
+    "output_channel": 3,
+    "tflite_code": 8,
+    "onnx_code": 7,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 350,
+    "output_channel": 3,
+    "tflite_code": 6,
+    "onnx_code": 5,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 491,
+    "output_channel": 3,
+    "tflite_code": -64,
+    "onnx_code": -65,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 561,
+    "output_channel": 3,
+    "tflite_code": -42,
+    "onnx_code": -43,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 597,
+    "output_channel": 3,
+    "tflite_code": -13,
+    "onnx_code": -14,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 820,
+    "output_channel": 3,
+    "tflite_code": 1,
+    "onnx_code": 0,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 112,
+    "output_channel": 4,
+    "tflite_code": 16,
+    "onnx_code": 15,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 168,
+    "output_channel": 4,
+    "tflite_code": 13,
+    "onnx_code": 12,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 336,
+    "output_channel": 4,
+    "tflite_code": -8,
+    "onnx_code": -9,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 353,
+    "output_channel": 4,
+    "tflite_code": 20,
+    "onnx_code": 19,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 878,
+    "output_channel": 4,
+    "tflite_code": 1,
+    "onnx_code": 0,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 879,
+    "output_channel": 4,
+    "tflite_code": 6,
+    "onnx_code": 5,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 56,
+    "output_channel": 5,
+    "tflite_code": -1,
+    "onnx_code": -2,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 251,
+    "output_channel": 5,
+    "tflite_code": 9,
+    "onnx_code": 8,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 528,
+    "output_channel": 5,
+    "tflite_code": -35,
+    "onnx_code": -36,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 663,
+    "output_channel": 5,
+    "tflite_code": -7,
+    "onnx_code": -8,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 897,
+    "output_channel": 5,
+    "tflite_code": -3,
+    "onnx_code": -4,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 201,
+    "output_channel": 6,
+    "tflite_code": 4,
+    "onnx_code": 3,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 395,
+    "output_channel": 6,
+    "tflite_code": 1,
+    "onnx_code": 0,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 496,
+    "output_channel": 6,
+    "tflite_code": -49,
+    "onnx_code": -50,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 780,
+    "output_channel": 6,
+    "tflite_code": 9,
+    "onnx_code": 8,
+    "difference_onnx_minus_tflite": -1
+  },
+  {
+    "batch": 0,
+    "time": 871,
+    "output_channel": 6,
+    "tflite_code": 7,
+    "onnx_code": 6,
+    "difference_onnx_minus_tflite": -1
+  }
+]
+
+CONSTANT CROSS-CHECK
+  Weight tensor exact: True
+  Bias tensor exact: True
+
+==============================================================================
+POINTWISE ISOLATION COMPLETE
+==============================================================================
+Same-input output differences: 156
+Maximum output code difference: 1
+Exact same-input output: False
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_pointwise_isolation_20261123_105503/pointwise_isolation_report.json
+Isolated ONNX: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_pointwise_isolation_20261123_105503/block0_layer1_pointwise_isolated.onnx
