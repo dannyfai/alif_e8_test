@@ -1,0 +1,152 @@
+============================================================
+TCN V6 TFLM INVOKE SOURCE INSPECTION
+============================================================
+2026-11-23T17:36:38+08:00
+
+========== SOURCE INTEGRITY ==========
+af3486a8661daf2e62c0833fadb49e5f864d47066d47fe08446ce52dbc22903b  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+af3486a8661daf2e62c0833fadb49e5f864d47066d47fe08446ce52dbc22903b  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_backup_20261123_173225/micro_interpreter_graph.cc.original
+SOURCE_UNMODIFIED=PASS
+
+========== INVOKE REFERENCES ==========
+185-      // make sure it's not nullptr;
+186-      if (registration != nullptr && registration->free != nullptr) {
+187-        registration->free(context_, node->user_data);
+188-      }
+189-    }
+190-  }
+191-  current_subgraph_index_ = previous_subgraph_idx;
+192-  current_operator_index_ = previous_operator_idx;
+193-
+194-  return kTfLiteOk;
+195-}
+196-
+197:TfLiteStatus MicroInterpreterGraph::InvokeSubgraph(int subgraph_idx) {
+198-  int previous_subgraph_idx = current_subgraph_index_;
+199-  uint32_t previous_operator_idx = current_operator_index_;
+200-  current_subgraph_index_ = subgraph_idx;
+201-
+202-  if (static_cast<size_t>(subgraph_idx) >= subgraphs_->size()) {
+203-    MicroPrintf("Accessing subgraph %d but only %d subgraphs found",
+204-                subgraph_idx, subgraphs_->size());
+205-    return kTfLiteError;
+206-  }
+207-  uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
+208-  for (current_operator_index_ = 0; current_operator_index_ < operators_size;
+209-       ++current_operator_index_) {
+210-    TfLiteNode* node = &(subgraph_allocations_[subgraph_idx]
+211-                             .node_and_registrations[current_operator_index_]
+212-                             .node);
+213-    const TFLMRegistration* registration =
+--
+215-            .node_and_registrations[current_operator_index_]
+216-            .registration;
+217-
+218-// This ifdef is needed (even though ScopedMicroProfiler itself is a no-op with
+219-// -DTF_LITE_STRIP_ERROR_STRINGS) because the function OpNameFromRegistration is
+220-// only defined for builds with the error strings.
+221-#if !defined(TF_LITE_STRIP_ERROR_STRINGS)
+222-    ScopedMicroProfiler scoped_profiler(
+223-        OpNameFromRegistration(registration),
+224-        reinterpret_cast<MicroProfilerInterface*>(context_->profiler));
+225-#endif
+226-
+227:    TFLITE_DCHECK(registration->invoke);
+228:    TfLiteStatus invoke_status = registration->invoke(context_, node);
+229-#ifdef USE_TFLM_COMPRESSION
+230-    GetMicroContext(context_)->ResetDecompressionMemoryAllocations();
+231-#endif  // USE_TFLM_COMPRESSION
+232-
+233-    // All TfLiteTensor structs used in the kernel are allocated from temp
+234-    // memory in the allocator. This creates a chain of allocations in the
+235-    // temp section. The call below resets the chain of allocations to
+236-    // prepare for the next call.
+237-    allocator_->ResetTempAllocations();
+238-
+239:    if (invoke_status == kTfLiteError) {
+240-      MicroPrintf("Node %s (number %d) failed to invoke with status %d",
+241-                  OpNameFromRegistration(registration), current_operator_index_,
+242:                  invoke_status);
+243-      return kTfLiteError;
+244:    } else if (invoke_status != kTfLiteOk) {
+245:      return invoke_status;
+246-    }
+247-  }
+248-  current_subgraph_index_ = previous_subgraph_idx;
+249-  current_operator_index_ = previous_operator_idx;
+250-  return kTfLiteOk;
+251-}
+252-
+253-TfLiteStatus MicroInterpreterGraph::ResetVariableTensors() {
+254-  for (size_t subgraph_idx = 0; subgraph_idx < subgraphs_->size();
+255-       subgraph_idx++) {
+256-    const SubGraph* subgraph = (*subgraphs_)[subgraph_idx];
+257-    for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+258-      auto* tensor = subgraph->tensors()->Get(i);
+259-      if (tensor->is_variable()) {
+260-        size_t buffer_size;
+261-        TF_LITE_ENSURE_STATUS(TfLiteEvalTensorByteLength(
+
+========== COMPLETE INVOKESUBGRAPH FUNCTION ==========
+TfLiteStatus MicroInterpreterGraph::InvokeSubgraph(int subgraph_idx) {
+  int previous_subgraph_idx = current_subgraph_index_;
+  uint32_t previous_operator_idx = current_operator_index_;
+  current_subgraph_index_ = subgraph_idx;
+
+  if (static_cast<size_t>(subgraph_idx) >= subgraphs_->size()) {
+    MicroPrintf("Accessing subgraph %d but only %d subgraphs found",
+                subgraph_idx, subgraphs_->size());
+    return kTfLiteError;
+  }
+  uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
+  for (current_operator_index_ = 0; current_operator_index_ < operators_size;
+       ++current_operator_index_) {
+    TfLiteNode* node = &(subgraph_allocations_[subgraph_idx]
+                             .node_and_registrations[current_operator_index_]
+                             .node);
+    const TFLMRegistration* registration =
+        subgraph_allocations_[subgraph_idx]
+            .node_and_registrations[current_operator_index_]
+            .registration;
+
+// This ifdef is needed (even though ScopedMicroProfiler itself is a no-op with
+// -DTF_LITE_STRIP_ERROR_STRINGS) because the function OpNameFromRegistration is
+// only defined for builds with the error strings.
+#if !defined(TF_LITE_STRIP_ERROR_STRINGS)
+    ScopedMicroProfiler scoped_profiler(
+        OpNameFromRegistration(registration),
+        reinterpret_cast<MicroProfilerInterface*>(context_->profiler));
+#endif
+
+    TFLITE_DCHECK(registration->invoke);
+    TfLiteStatus invoke_status = registration->invoke(context_, node);
+#ifdef USE_TFLM_COMPRESSION
+    GetMicroContext(context_)->ResetDecompressionMemoryAllocations();
+#endif  // USE_TFLM_COMPRESSION
+
+    // All TfLiteTensor structs used in the kernel are allocated from temp
+    // memory in the allocator. This creates a chain of allocations in the
+    // temp section. The call below resets the chain of allocations to
+    // prepare for the next call.
+    allocator_->ResetTempAllocations();
+
+    if (invoke_status == kTfLiteError) {
+      MicroPrintf("Node %s (number %d) failed to invoke with status %d",
+                  OpNameFromRegistration(registration), current_operator_index_,
+                  invoke_status);
+      return kTfLiteError;
+    } else if (invoke_status != kTfLiteOk) {
+      return invoke_status;
+    }
+  }
+  current_subgraph_index_ = previous_subgraph_idx;
+  current_operator_index_ = previous_operator_idx;
+  return kTfLiteOk;
+}
+
+========== SOURCE HASH ==========
+af3486a8661daf2e62c0833fadb49e5f864d47066d47fe08446ce52dbc22903b  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+
+INSPECTION_COMPLETE=PASS
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_invoke_inspection_20261123_173638.log
+Press Enter to close this terminal...
