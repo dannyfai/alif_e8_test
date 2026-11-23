@@ -1,0 +1,444 @@
+================================================================================
+SAMPLE 164 - RUY AVX2 REQUANTIZATION AUDIT
+================================================================================
+ONNX SHA256: 4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+
+CPU feature check:
+  AVX2: True
+  FMA: True
+  AVX512F: False
+  AVX2/FMA hardware is available. Ruy AVX2-FMA is a candidate path.
+
+TFLite interpreter path: BUILTIN_WITHOUT_DEFAULT_DELEGATES
+NPZ: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101740/sample164_tflite_intermediates.npz
+
+Selected convolution operators: 42
+
+================================================================================
+RUNNING RUY AVX2 AND REFERENCE REQUANTIZATION TESTS
+================================================================================
+
+[1/42] TFLite op #137 CONV_2D
+  ONNX Conv: /tcn_in/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 179 mismatches, max=1, +=0, -=179
+  tflite_single: 191 mismatches, max=1, +=0, -=191
+  Ruy vs double predicted-code differences: 179
+  Ruy vs single predicted-code differences: 191
+
+[2/42] TFLite op #142 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 32 mismatches, max=1, +=0, -=32
+  tflite_single: 30 mismatches, max=1, +=0, -=30
+  Ruy vs double predicted-code differences: 32
+  Ruy vs single predicted-code differences: 30
+
+[3/42] TFLite op #143 CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 188 mismatches, max=1, +=0, -=188
+  tflite_single: 156 mismatches, max=1, +=0, -=156
+  Ruy vs double predicted-code differences: 188
+  Ruy vs single predicted-code differences: 156
+
+[4/42] TFLite op #147 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 10 mismatches, max=1, +=0, -=10
+  tflite_single: 15 mismatches, max=1, +=0, -=15
+  Ruy vs double predicted-code differences: 10
+  Ruy vs single predicted-code differences: 15
+
+[5/42] TFLite op #148 CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 109 mismatches, max=1, +=0, -=109
+  tflite_single: 93 mismatches, max=1, +=0, -=93
+  Ruy vs double predicted-code differences: 109
+  Ruy vs single predicted-code differences: 93
+
+[6/42] TFLite op #156 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 20 mismatches, max=1, +=0, -=20
+  tflite_single: 14 mismatches, max=1, +=0, -=14
+  Ruy vs double predicted-code differences: 20
+  Ruy vs single predicted-code differences: 14
+
+[7/42] TFLite op #157 CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 164 mismatches, max=1, +=0, -=164
+  tflite_single: 157 mismatches, max=1, +=0, -=157
+  Ruy vs double predicted-code differences: 164
+  Ruy vs single predicted-code differences: 157
+
+[8/42] TFLite op #161 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 5 mismatches, max=1, +=0, -=5
+  tflite_single: 10 mismatches, max=1, +=0, -=10
+  Ruy vs double predicted-code differences: 5
+  Ruy vs single predicted-code differences: 10
+
+[9/42] TFLite op #162 CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 103 mismatches, max=1, +=0, -=103
+  tflite_single: 111 mismatches, max=1, +=0, -=111
+  Ruy vs double predicted-code differences: 103
+  Ruy vs single predicted-code differences: 111
+
+[10/42] TFLite op #170 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 7 mismatches, max=1, +=0, -=7
+  tflite_single: 12 mismatches, max=1, +=0, -=12
+  Ruy vs double predicted-code differences: 7
+  Ruy vs single predicted-code differences: 12
+
+[11/42] TFLite op #171 CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 143 mismatches, max=1, +=0, -=143
+  tflite_single: 135 mismatches, max=1, +=0, -=135
+  Ruy vs double predicted-code differences: 143
+  Ruy vs single predicted-code differences: 135
+
+[12/42] TFLite op #175 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 4 mismatches, max=1, +=0, -=4
+  tflite_single: 7 mismatches, max=1, +=0, -=7
+  Ruy vs double predicted-code differences: 4
+  Ruy vs single predicted-code differences: 7
+
+[13/42] TFLite op #176 CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 100 mismatches, max=1, +=0, -=100
+  tflite_single: 115 mismatches, max=1, +=0, -=115
+  Ruy vs double predicted-code differences: 100
+  Ruy vs single predicted-code differences: 115
+
+[14/42] TFLite op #184 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 17 mismatches, max=1, +=0, -=17
+  tflite_single: 15 mismatches, max=1, +=0, -=15
+  Ruy vs double predicted-code differences: 17
+  Ruy vs single predicted-code differences: 15
+
+[15/42] TFLite op #185 CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 125 mismatches, max=1, +=0, -=125
+  tflite_single: 125 mismatches, max=1, +=0, -=125
+  Ruy vs double predicted-code differences: 125
+  Ruy vs single predicted-code differences: 125
+
+[16/42] TFLite op #189 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 10 mismatches, max=1, +=0, -=10
+  tflite_single: 7 mismatches, max=1, +=0, -=7
+  Ruy vs double predicted-code differences: 10
+  Ruy vs single predicted-code differences: 7
+
+[17/42] TFLite op #190 CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 145 mismatches, max=1, +=0, -=145
+  tflite_single: 115 mismatches, max=1, +=0, -=115
+  Ruy vs double predicted-code differences: 145
+  Ruy vs single predicted-code differences: 115
+
+[18/42] TFLite op #198 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 23 mismatches, max=1, +=0, -=23
+  tflite_single: 24 mismatches, max=1, +=0, -=24
+  Ruy vs double predicted-code differences: 23
+  Ruy vs single predicted-code differences: 24
+
+[19/42] TFLite op #199 CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 104 mismatches, max=1, +=0, -=104
+  tflite_single: 98 mismatches, max=1, +=0, -=98
+  Ruy vs double predicted-code differences: 104
+  Ruy vs single predicted-code differences: 98
+
+[20/42] TFLite op #203 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 15 mismatches, max=1, +=0, -=15
+  tflite_single: 11 mismatches, max=1, +=0, -=11
+  Ruy vs double predicted-code differences: 15
+  Ruy vs single predicted-code differences: 11
+
+[21/42] TFLite op #204 CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 142 mismatches, max=1, +=0, -=142
+  tflite_single: 102 mismatches, max=1, +=0, -=102
+  Ruy vs double predicted-code differences: 142
+  Ruy vs single predicted-code differences: 102
+
+[22/42] TFLite op #212 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 16 mismatches, max=1, +=0, -=16
+  tflite_single: 13 mismatches, max=1, +=0, -=13
+  Ruy vs double predicted-code differences: 16
+  Ruy vs single predicted-code differences: 13
+
+[23/42] TFLite op #213 CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 116 mismatches, max=1, +=0, -=116
+  tflite_single: 123 mismatches, max=1, +=0, -=123
+  Ruy vs double predicted-code differences: 116
+  Ruy vs single predicted-code differences: 123
+
+[24/42] TFLite op #217 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 11 mismatches, max=1, +=0, -=11
+  tflite_single: 5 mismatches, max=1, +=0, -=5
+  Ruy vs double predicted-code differences: 11
+  Ruy vs single predicted-code differences: 5
+
+[25/42] TFLite op #218 CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 85 mismatches, max=1, +=0, -=85
+  tflite_single: 82 mismatches, max=1, +=0, -=82
+  Ruy vs double predicted-code differences: 85
+  Ruy vs single predicted-code differences: 82
+
+[26/42] TFLite op #226 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.6/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 9 mismatches, max=1, +=0, -=9
+  tflite_single: 20 mismatches, max=1, +=0, -=20
+  Ruy vs double predicted-code differences: 9
+  Ruy vs single predicted-code differences: 20
+
+[27/42] TFLite op #227 CONV_2D
+  ONNX Conv: /tcn_blocks.6/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 189 mismatches, max=1, +=0, -=189
+  tflite_single: 154 mismatches, max=1, +=0, -=154
+  Ruy vs double predicted-code differences: 189
+  Ruy vs single predicted-code differences: 154
+
+[28/42] TFLite op #231 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.6/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 5 mismatches, max=1, +=0, -=5
+  tflite_single: 5 mismatches, max=1, +=0, -=5
+  Ruy vs double predicted-code differences: 5
+  Ruy vs single predicted-code differences: 5
+
+[29/42] TFLite op #232 CONV_2D
+  ONNX Conv: /tcn_blocks.6/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 76 mismatches, max=1, +=0, -=76
+  tflite_single: 115 mismatches, max=1, +=0, -=115
+  Ruy vs double predicted-code differences: 76
+  Ruy vs single predicted-code differences: 115
+
+[30/42] TFLite op #240 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.7/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 17 mismatches, max=1, +=0, -=17
+  tflite_single: 23 mismatches, max=1, +=0, -=23
+  Ruy vs double predicted-code differences: 17
+  Ruy vs single predicted-code differences: 23
+
+[31/42] TFLite op #241 CONV_2D
+  ONNX Conv: /tcn_blocks.7/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 124 mismatches, max=1, +=0, -=124
+  tflite_single: 146 mismatches, max=1, +=0, -=146
+  Ruy vs double predicted-code differences: 124
+  Ruy vs single predicted-code differences: 146
+
+[32/42] TFLite op #245 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.7/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 4 mismatches, max=1, +=0, -=4
+  tflite_single: 5 mismatches, max=1, +=0, -=5
+  Ruy vs double predicted-code differences: 4
+  Ruy vs single predicted-code differences: 5
+
+[33/42] TFLite op #246 CONV_2D
+  ONNX Conv: /tcn_blocks.7/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 146 mismatches, max=1, +=0, -=146
+  tflite_single: 192 mismatches, max=1, +=0, -=192
+  Ruy vs double predicted-code differences: 146
+  Ruy vs single predicted-code differences: 192
+
+[34/42] TFLite op #254 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.8/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 21 mismatches, max=1, +=0, -=21
+  tflite_single: 19 mismatches, max=1, +=0, -=19
+  Ruy vs double predicted-code differences: 21
+  Ruy vs single predicted-code differences: 19
+
+[35/42] TFLite op #255 CONV_2D
+  ONNX Conv: /tcn_blocks.8/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 118 mismatches, max=1, +=0, -=118
+  tflite_single: 116 mismatches, max=1, +=0, -=116
+  Ruy vs double predicted-code differences: 118
+  Ruy vs single predicted-code differences: 116
+
+[36/42] TFLite op #259 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.8/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 7 mismatches, max=1, +=0, -=7
+  tflite_single: 7 mismatches, max=1, +=0, -=7
+  Ruy vs double predicted-code differences: 7
+  Ruy vs single predicted-code differences: 7
+
+[37/42] TFLite op #260 CONV_2D
+  ONNX Conv: /tcn_blocks.8/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 109 mismatches, max=1, +=0, -=109
+  tflite_single: 118 mismatches, max=1, +=0, -=118
+  Ruy vs double predicted-code differences: 109
+  Ruy vs single predicted-code differences: 118
+
+[38/42] TFLite op #268 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.9/layer1/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 14 mismatches, max=1, +=0, -=14
+  tflite_single: 13 mismatches, max=1, +=0, -=13
+  Ruy vs double predicted-code differences: 14
+  Ruy vs single predicted-code differences: 13
+
+[39/42] TFLite op #269 CONV_2D
+  ONNX Conv: /tcn_blocks.9/layer1/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 170 mismatches, max=1, +=0, -=170
+  tflite_single: 170 mismatches, max=1, +=0, -=170
+  Ruy vs double predicted-code differences: 170
+  Ruy vs single predicted-code differences: 170
+
+[40/42] TFLite op #273 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.9/layer2/depthwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 14 mismatches, max=1, +=0, -=14
+  tflite_single: 12 mismatches, max=1, +=0, -=12
+  Ruy vs double predicted-code differences: 14
+  Ruy vs single predicted-code differences: 12
+
+[41/42] TFLite op #274 CONV_2D
+  ONNX Conv: /tcn_blocks.9/layer2/pointwise/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 109 mismatches, max=1, +=0, -=109
+  tflite_single: 96 mismatches, max=1, +=0, -=96
+  Ruy vs double predicted-code differences: 109
+  Ruy vs single predicted-code differences: 96
+
+[42/42] TFLite op #281 CONV_2D
+  ONNX Conv: /tcn_out/Conv
+  Status: PASS_EMULATED
+  ruy_avx2: 0 mismatches, max=0, +=0, -=0
+  gemmlowp_double: 79 mismatches, max=1, +=0, -=79
+  tflite_single: 76 mismatches, max=1, +=0, -=76
+  Ruy vs double predicted-code differences: 79
+  Ruy vs single predicted-code differences: 76
+
+================================================================================
+FINAL RUY AVX2 ROUNDING SUMMARY
+================================================================================
+Selected operators: 42
+Completed: 42
+Errors: 0
+
+ruy_avx2:
+  Exact operators: 42 / 42
+  Differing values: 0
+  Difference fraction: 0.0
+  Positive differences: 0
+  Negative differences: 0
+  Signed sum: 0
+  All 42 exact: True
+
+gemmlowp_double:
+  Exact operators: 0 / 42
+  Differing values: 3084
+  Difference fraction: 0.0025998988366211432
+  Positive differences: 0
+  Negative differences: 3084
+  Signed sum: -3084
+  All 42 exact: False
+
+tflite_single:
+  Exact operators: 0 / 42
+  Differing values: 3053
+  Difference fraction: 0.0025737649637497893
+  Positive differences: 0
+  Negative differences: 3053
+  Signed sum: -3053
+  All 42 exact: False
+
+================================================================================
+INTERPRETATION
+================================================================================
+PASS: Ruy AVX2-style emulation matches all 42 captured TFLite convolution outputs exactly.
+This strongly supports the Ruy AVX2 requantization sequence as the source of the prior one-code differences.
+
+Important: CPU AVX2/FMA flags do not prove that the TensorFlow runtime dispatched to Ruy AVX2-FMA.
+
+JSON: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_ruy_avx2_rounding_20261123_131127/ruy_avx2_rounding_report.json
+CSV: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_ruy_avx2_rounding_20261123_131127/ruy_avx2_rounding_summary.csv
+
+RUY_AVX2_ROUNDING_AUDIT_COMPLETE
