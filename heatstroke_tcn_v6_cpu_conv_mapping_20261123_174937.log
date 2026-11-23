@@ -1,0 +1,285 @@
+============================================================
+TCN V6 VELA TFLITE CPU CONV NODE INSPECTION
+============================================================
+2026-11-23T17:49:37+08:00
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+MODEL_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+MODEL_INTEGRITY=PASS
+PYTHON=/home/user/onnx2tflite_env/bin/python
+Python 3.12.15
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795427380.524004  191267 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795427380.524176  191267 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795427380.551320  191267 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795427381.340562  191267 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795427381.340823  191267 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+========== MODEL SUMMARY ==========
+SCHEMA_SOURCE=tensorflow.lite.python.schema_py_generated
+MODEL_VERSION= 3
+SUBGRAPH_COUNT= 1
+OPCODE_COUNT= 29
+BUFFER_COUNT= 100
+
+========== SUBGRAPH 0 ==========
+OPERATOR_COUNT= 198
+CONV_2D_COUNT= 5
+FULLY_CONNECTED_COUNT= 7
+ETHOSU_CUSTOM_COUNT= 11
+
+NODE sg=0 index=1 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[299] name='worker_features_18' shape=[1, 18] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[274] name='model.non_seq_enc.weight' shape=[900, 18] dtype=FLOAT32 const_buffer_bytes=64800
+  INPUT[2] tensor[273] name='model.non_seq_enc.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[169] name='/non_seq_enc/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=17 op=CONV_2D builtin=CONV_2D custom='' builtin_options_type=1
+  INPUT[0] tensor[50] name='/cvf/cvf.0/Pad_output_0_4D_' shape=[1, 902, 1, 6] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[260] name='model.cvf.0.weight' shape=[16, 3, 1, 6] dtype=FLOAT32 const_buffer_bytes=1152
+  INPUT[2] tensor[259] name='model.cvf.0.bias' shape=[16] dtype=FLOAT32 const_buffer_bytes=64
+  OUTPUT[0] tensor[48] name='/cvf/cvf.0/Conv_output_0_4D_' shape=[1, 900, 1, 16] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=20 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[54] name='/cvf/cvf.1/Pad_output_0' shape=[1, 904, 16] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[55] name='/cvf/cvf.1/Pad_output_0_4D_' shape=[1, 904, 1, 16] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=21 op=CONV_2D builtin=CONV_2D custom='' builtin_options_type=1
+  INPUT[0] tensor[55] name='/cvf/cvf.1/Pad_output_0_4D_' shape=[1, 904, 1, 16] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[262] name='model.cvf.1.weight' shape=[32, 5, 1, 16] dtype=FLOAT32 const_buffer_bytes=10240
+  INPUT[2] tensor[261] name='model.cvf.1.bias' shape=[32] dtype=FLOAT32 const_buffer_bytes=128
+  OUTPUT[0] tensor[52] name='/cvf/cvf.1/Conv_output_0_4D_' shape=[1, 900, 1, 32] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=22 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[52] name='/cvf/cvf.1/Conv_output_0_4D_' shape=[1, 900, 1, 32] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[51] name='/cvf/cvf.1/Conv_output_0' shape=[1, 900, 32] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=62 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[108] name='/cvf/cvf.4/Pad_output_0' shape=[1, 906, 32] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[109] name='/cvf/cvf.4/Pad_output_0_4D_' shape=[1, 906, 1, 32] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=63 op=CONV_2D builtin=CONV_2D custom='' builtin_options_type=1
+  INPUT[0] tensor[109] name='/cvf/cvf.4/Pad_output_0_4D_' shape=[1, 906, 1, 32] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[266] name='model.cvf.4.weight' shape=[64, 7, 1, 32] dtype=FLOAT32 const_buffer_bytes=57344
+  INPUT[2] tensor[265] name='model.cvf.4.bias' shape=[64] dtype=FLOAT32 const_buffer_bytes=256
+  OUTPUT[0] tensor[107] name='/cvf/cvf.4/Conv_output_0_4D_' shape=[1, 900, 1, 64] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=64 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[107] name='/cvf/cvf.4/Conv_output_0_4D_' shape=[1, 900, 1, 64] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[106] name='/cvf/cvf.4/Conv_output_0' shape=[1, 900, 64] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=66 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[113] name='/cvf/cvf.5/Pad_output_0' shape=[1, 908, 64] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[114] name='/cvf/cvf.5/Pad_output_0_4D_' shape=[1, 908, 1, 64] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=67 op=CONV_2D builtin=CONV_2D custom='' builtin_options_type=1
+  INPUT[0] tensor[114] name='/cvf/cvf.5/Pad_output_0_4D_' shape=[1, 908, 1, 64] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[268] name='model.cvf.5.weight' shape=[128, 9, 1, 64] dtype=FLOAT32 const_buffer_bytes=294912
+  INPUT[2] tensor[267] name='model.cvf.5.bias' shape=[128] dtype=FLOAT32 const_buffer_bytes=512
+  OUTPUT[0] tensor[111] name='/cvf/cvf.5/Conv_output_0_4D_' shape=[1, 900, 1, 128] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=68 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[111] name='/cvf/cvf.5/Conv_output_0_4D_' shape=[1, 900, 1, 128] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[110] name='/cvf/cvf.5/Conv_output_0' shape=[1, 900, 128] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=108 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[167] name='/cvf/cvf.8/Pad_output_0' shape=[1, 910, 128] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[168] name='/cvf/cvf.8/Pad_output_0_4D_' shape=[1, 910, 1, 128] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=109 op=CONV_2D builtin=CONV_2D custom='' builtin_options_type=1
+  INPUT[0] tensor[168] name='/cvf/cvf.8/Pad_output_0_4D_' shape=[1, 910, 1, 128] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[272] name='model.cvf.8.weight' shape=[6, 11, 1, 128] dtype=FLOAT32 const_buffer_bytes=33792
+  INPUT[2] tensor[271] name='model.cvf.8.bias' shape=[6] dtype=FLOAT32 const_buffer_bytes=24
+  OUTPUT[0] tensor[166] name='/cvf/cvf.8/Conv_output_0_4D_' shape=[1, 900, 1, 6] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=110 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[166] name='/cvf/cvf.8/Conv_output_0_4D_' shape=[1, 900, 1, 6] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[165] name='/cvf/cvf.8/Conv_output_0' shape=[1, 900, 6] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=112 op=GATHER builtin=GATHER custom='' builtin_options_type=23
+  INPUT[0] tensor[257] name='compact_values' shape=[1, 1800, 6] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[15] name='/Constant_9_output_0' shape=[] dtype=INT64 const_buffer_bytes=8
+  OUTPUT[0] tensor[24] name='/Gather_5_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=113 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[24] name='/Gather_5_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[286] name='model.svf.5.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[285] name='model.svf.5.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[175] name='/svf.5/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=114 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[175] name='/svf.5/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[39] name='/Unsqueeze_5_output_0' shape=[1, 900, 1] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=115 op=GATHER builtin=GATHER custom='' builtin_options_type=23
+  INPUT[0] tensor[257] name='compact_values' shape=[1, 1800, 6] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[14] name='/Constant_8_output_0' shape=[] dtype=INT64 const_buffer_bytes=8
+  OUTPUT[0] tensor[23] name='/Gather_4_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=116 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[23] name='/Gather_4_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[284] name='model.svf.4.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[283] name='model.svf.4.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[174] name='/svf.4/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=117 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[174] name='/svf.4/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[38] name='/Unsqueeze_4_output_0' shape=[1, 900, 1] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=118 op=GATHER builtin=GATHER custom='' builtin_options_type=23
+  INPUT[0] tensor[257] name='compact_values' shape=[1, 1800, 6] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[13] name='/Constant_7_output_0' shape=[] dtype=INT64 const_buffer_bytes=8
+  OUTPUT[0] tensor[22] name='/Gather_3_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=119 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[22] name='/Gather_3_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[282] name='model.svf.3.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[281] name='model.svf.3.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[173] name='/svf.3/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=120 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[173] name='/svf.3/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[37] name='/Unsqueeze_3_output_0' shape=[1, 900, 1] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=122 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[21] name='/Gather_2_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[280] name='model.svf.2.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[279] name='model.svf.2.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[172] name='/svf.2/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=124 op=GATHER builtin=GATHER custom='' builtin_options_type=23
+  INPUT[0] tensor[257] name='compact_values' shape=[1, 1800, 6] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[11] name='/Constant_4_output_0' shape=[] dtype=INT64 const_buffer_bytes=8
+  OUTPUT[0] tensor[20] name='/Gather_1_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=125 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[20] name='/Gather_1_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[278] name='model.svf.1.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[277] name='model.svf.1.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[171] name='/svf.1/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=126 op=RESHAPE builtin=RESHAPE custom='' builtin_options_type=17
+  INPUT[0] tensor[171] name='/svf.1/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+  OUTPUT[0] tensor[35] name='/Unsqueeze_1_output_0' shape=[1, 900, 1] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=128 op=FULLY_CONNECTED builtin=FULLY_CONNECTED custom='' builtin_options_type=8
+  INPUT[0] tensor[25] name='/Gather_output_0' shape=[1, 1800] dtype=FLOAT32 const_buffer_bytes=0
+  INPUT[1] tensor[276] name='model.svf.0.weight' shape=[900, 1800] dtype=FLOAT32 const_buffer_bytes=6480000
+  INPUT[2] tensor[275] name='model.svf.0.bias' shape=[900] dtype=FLOAT32 const_buffer_bytes=3600
+  OUTPUT[0] tensor[170] name='/svf.0/Gemm_output_0' shape=[1, 900] dtype=FLOAT32 const_buffer_bytes=0
+
+NODE sg=0 index=136 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[238] name='_split_1_command_stream' shape=[1172] dtype=UINT8 const_buffer_bytes=1172
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[34] name='/Transpose_2_output_0_DequantizeLinear_Output' shape=[1, 900, 16] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[32] name='/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[1] tensor[181] name='/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=142 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[242] name='_split_2_command_stream' shape=[784] dtype=UINT8 const_buffer_bytes=784
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[178] name='/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[187] name='/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=148 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[243] name='_split_3_command_stream' shape=[772] dtype=UINT8 const_buffer_bytes=772
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[184] name='/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[193] name='/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=154 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[244] name='_split_4_command_stream' shape=[784] dtype=UINT8 const_buffer_bytes=784
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[190] name='/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[199] name='/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=160 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[245] name='_split_5_command_stream' shape=[772] dtype=UINT8 const_buffer_bytes=772
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[196] name='/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[205] name='/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=166 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[246] name='_split_6_command_stream' shape=[784] dtype=UINT8 const_buffer_bytes=784
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[202] name='/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[211] name='/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=172 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[247] name='_split_7_command_stream' shape=[772] dtype=UINT8 const_buffer_bytes=772
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[208] name='/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[217] name='/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=178 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[248] name='_split_8_command_stream' shape=[784] dtype=UINT8 const_buffer_bytes=784
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[214] name='/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[223] name='/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=184 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[249] name='_split_9_command_stream' shape=[772] dtype=UINT8 const_buffer_bytes=772
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[220] name='/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[229] name='/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=190 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[236] name='_split_10_command_stream' shape=[784] dtype=UINT8 const_buffer_bytes=784
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[226] name='/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[234] name='/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+
+NODE sg=0 index=196 op=ethos-u builtin=CUSTOM custom='ethos-u' builtin_options_type=0
+  INPUT[0] tensor[237] name='_split_11_command_stream' shape=[328] dtype=UINT8 const_buffer_bytes=328
+  INPUT[1] tensor[239] name='_split_1_flash' shape=[69072] dtype=UINT8 const_buffer_bytes=69072
+  INPUT[2] tensor[240] name='_split_1_scratch' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[3] tensor[241] name='_split_1_scratch_fast' shape=[2388608] dtype=UINT8 const_buffer_bytes=0
+  INPUT[4] tensor[231] name='/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] dtype=INT8 const_buffer_bytes=0
+  OUTPUT[0] tensor[235] name='/tcn_out/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] dtype=INT8 const_buffer_bytes=0
+
+========== FOCUSED SLOW-NODE SUMMARY ==========
+SLOW_NODE_INDICES= [21, 63, 67, 109, 113, 116, 119, 125]
+SLOW_CONV2D_PRESENT: subgraph=0 operator_index=21
+SLOW_CONV2D_PRESENT: subgraph=0 operator_index=63
+SLOW_CONV2D_PRESENT: subgraph=0 operator_index=67
+SLOW_CONV2D_PRESENT: subgraph=0 operator_index=109
+SLOW_FULLY_CONNECTED_PRESENT: subgraph=0 operator_index=113
+SLOW_FULLY_CONNECTED_PRESENT: subgraph=0 operator_index=116
+SLOW_FULLY_CONNECTED_PRESENT: subgraph=0 operator_index=119
+SLOW_FULLY_CONNECTED_PRESENT: subgraph=0 operator_index=125
+
+========== COMPLETE NODE COUNTS ==========
+TOTAL_CONV_2D_NODES= 5
+TOTAL_FULLY_CONNECTED_NODES= 7
+TOTAL_ETHOSU_CUSTOM_NODES= 11
+ETHOSU_CUSTOM_NODE_INDICES= [(0, 136), (0, 142), (0, 148), (0, 154), (0, 160), (0, 166), (0, 172), (0, 178), (0, 184), (0, 190), (0, 196)]
+
+INSPECTION_COMPLETE=PASS
+
+CPU_CONV_MAPPING_INSPECTION=PASS
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cpu_conv_mapping_20261123_174937.log
+
+CPU_CONV_MAPPING_INSPECTION=PASS
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cpu_conv_mapping_20261123_174937.log
+Press Enter to close this terminal...
