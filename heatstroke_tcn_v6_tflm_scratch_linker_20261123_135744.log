@@ -1,0 +1,2469 @@
+==============================================================================
+TCN V6 - FOCUSED TFLM / U55 / RTSS-HE MEMORY AUDIT
+==============================================================================
+READ ONLY: no model edits, no source edits, no build, no flashing.
+
+##############################################################################
+1. EXACT INSTALLED TFLM ETHOS-U KERNEL
+##############################################################################
+Selected kernel: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+==============================================================================
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+==============================================================================
+   1: /* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+   2: 
+   3: Licensed under the Apache License, Version 2.0 (the "License");
+   4: you may not use this file except in compliance with the License.
+   5: You may obtain a copy of the License at
+   6: 
+   7:     http://www.apache.org/licenses/LICENSE-2.0
+   8: 
+   9: Unless required by applicable law or agreed to in writing, software
+  10: distributed under the License is distributed on an "AS IS" BASIS,
+  11: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  12: See the License for the specific language governing permissions and
+  13: limitations under the License.
+  14: ==============================================================================*/
+  15: 
+  16: #include <ethosu_driver.h>
+  17: 
+  18: #include "flatbuffers/flexbuffers.h"
+  19: #include "tensorflow/lite/c/common.h"
+  20: #include "tensorflow/lite/micro/kernels/kernel_util.h"
+  21: #include "tensorflow/lite/micro/micro_context.h"
+  22: #include "tensorflow/lite/micro/micro_log.h"
+  23: 
+  24: namespace tflite {
+  25: namespace {
+  26: 
+  27: constexpr uint8_t CO_TYPE_ETHOSU = 1;
+  28: 
+  29: struct OpData {
+  30:   int cms_data_size;
+  31:   int base_addr_idx;
+  32:   int base_addr_size_idx;
+  33: };
+  34: 
+  35: void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+  36:   TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+  37:   return context->AllocatePersistentBuffer(context, sizeof(OpData));
+  38: }
+  39: 
+  40: TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+  41:   TFLITE_DCHECK(context != nullptr);
+  42:   TF_LITE_ENSURE(context, node->inputs->size > 0);
+  43:   TFLITE_DCHECK(node->user_data != nullptr);
+  44:   TF_LITE_ENSURE(context, node->custom_initial_data_size > 0);
+  45: 
+  46:   OpData* data = static_cast<OpData*>(node->user_data);
+  47:   int num_base_addr = node->inputs->size + node->outputs->size;
+  48: 
+  49:   // Request arrays for the base address pointers and sizes.
+  50:   TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+  51:       context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+  52:   TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+  53:       context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+  54: 
+  55:   // Get command stream data size.
+  56:   MicroContext* micro_context = GetMicroContext(context);
+  57:   TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+  58:   data->cms_data_size = tensor->bytes;
+  59:   micro_context->DeallocateTempTfLiteTensor(tensor);
+  60:   return kTfLiteOk;
+  61: }
+  62: 
+  63: TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+  64:   TFLITE_DCHECK(node->user_data != nullptr);
+  65:   TFLITE_DCHECK(context != nullptr);
+  66:   TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+  67: 
+  68:   // Get base addresses.
+  69:   TfLiteEvalTensor* tensor;
+  70:   int i = 0;
+  71:   int num_tensors = 0;
+  72:   void* cms_data;
+  73:   uint8_t co_type;
+  74:   int result;
+  75:   const OpData* data = static_cast<const OpData*>(node->user_data);
+  76:   uint64_t* base_addrs = static_cast<uint64_t*>(
+  77:       context->GetScratchBuffer(context, data->base_addr_idx));
+  78:   size_t* base_addrs_size = static_cast<size_t*>(
+  79:       context->GetScratchBuffer(context, data->base_addr_size_idx));
+  80: 
+  81:   const uint8_t* custom_data =
+  82:       static_cast<uint8_t const*>(node->custom_initial_data);
+  83:   auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+  84:   co_type = root.AsInt8();
+  85:   if (co_type != CO_TYPE_ETHOSU) {
+  86:     MicroPrintf("CO_TYPE != ETHOSU");
+  87:     return kTfLiteError;
+  88:   }
+  89: 
+  90:   // Get command stream data address.
+  91:   tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+  92:   cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+  93: 
+  94:   // Get addresses to weights/scratch/input data.
+  95:   for (i = 1; i < node->inputs->size; ++i) {
+  96:     tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+  97:     base_addrs[num_tensors] =
+  98:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+  99:     size_t byte_size = 1;
+ 100:     for (int k = 0; k < tensor->dims->size; k++) {
+ 101:       byte_size = byte_size * tensor->dims->data[k];
+ 102:     }
+ 103:     base_addrs_size[num_tensors] = byte_size;
+ 104:     num_tensors++;
+ 105:   }
+ 106: 
+ 107:   // Get addresses to output data.
+ 108:   for (i = 0; i < node->outputs->size; ++i) {
+ 109:     tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+ 110:     base_addrs[num_tensors] =
+ 111:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+ 112:     size_t byte_size = 1;
+ 113:     for (int k = 0; k < tensor->dims->size; k++) {
+ 114:       byte_size = byte_size * tensor->dims->data[k];
+ 115:     }
+ 116:     base_addrs_size[num_tensors] = byte_size;
+ 117:     num_tensors++;
+ 118:   }
+ 119: 
+ 120:   // When Vela optimizes a tflite file it will assign the tensors like this:
+ 121:   //
+ 122:   // +-------+------------------------+  +--------+-------------+
+ 123:   // | INPUT | Description            |  | OUTPUT | Description |
+ 124:   // +-------+------------------------+  +--------+-------------+
+ 125:   // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+ 126:   // |     1 | TFLM model             |  +--------+-------------+
+ 127:   // |     2 | TFLM arena             |
+ 128:   // |     3 | Ethos-U fast scratch   |
+ 129:   // |  4..n | Inputs                 |
+ 130:   // +-------+------------------------+
+ 131:   //
+ 132:   // This code will assign the NPU base addresses like this:
+ 133:   //
+ 134:   // +--------------+----------------------+
+ 135:   // | Base address | Description          |
+ 136:   // +--------------+----------------------+
+ 137:   // |            0 | TFLM model           |
+ 138:   // |            1 | TFLM arena           |
+ 139:   // |            2 | Ethos-U fast scratch |
+ 140:   // |         3..n | Input tensors        |
+ 141:   // |         n..m | Output tensors       |
+ 142:   // +--------------+----------------------+
+ 143:   //
+ 144:   // The number of base address will be limited to 8.
+ 145:   //
+ 146:   // NOTE! The command stream produced by Vela will access the IFM and OFM
+ 147:   // buffers using base address 1. This means that it is not possible to point
+ 148:   // the input and output tensors outside of the TFLM arena.
+ 149:   num_tensors = std::min(num_tensors, 8);
+ 150: 
+ 151:   struct ethosu_driver* drv = ethosu_reserve_driver();
+ 152:   result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+ 153:                             base_addrs_size, num_tensors,
+ 154:                             GetMicroContext(context)->external_context());
+ 155:   ethosu_release_driver(drv);
+ 156: 
+ 157:   if (-1 == result) {
+ 158:     return kTfLiteError;
+ 159:   } else {
+ 160:     return kTfLiteOk;
+ 161:   }
+ 162: }
+ 163: 
+ 164: }  // namespace
+ 165: 
+ 166: TFLMRegistration* Register_ETHOSU() {
+ 167:   static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+ 168:   return &r;
+ 169: }
+ 170: 
+ 171: const char* GetString_ETHOSU() { return "ethos-u"; }
+ 172: 
+ 173: }  // namespace tflite
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+==============================================================================
+--- lines 35-119 ---
+  35: void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+  36:   TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+  37:   return context->AllocatePersistentBuffer(context, sizeof(OpData));
+  38: }
+  39: 
+  40: TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+  41:   TFLITE_DCHECK(context != nullptr);
+  42:   TF_LITE_ENSURE(context, node->inputs->size > 0);
+  43:   TFLITE_DCHECK(node->user_data != nullptr);
+  44:   TF_LITE_ENSURE(context, node->custom_initial_data_size > 0);
+  45: 
+  46:   OpData* data = static_cast<OpData*>(node->user_data);
+  47:   int num_base_addr = node->inputs->size + node->outputs->size;
+  48: 
+  49:   // Request arrays for the base address pointers and sizes.
+  50:   TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+  51:       context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+  52:   TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+  53:       context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+  54: 
+  55:   // Get command stream data size.
+  56:   MicroContext* micro_context = GetMicroContext(context);
+  57:   TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+  58:   data->cms_data_size = tensor->bytes;
+  59:   micro_context->DeallocateTempTfLiteTensor(tensor);
+  60:   return kTfLiteOk;
+  61: }
+  62: 
+  63: TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+  64:   TFLITE_DCHECK(node->user_data != nullptr);
+  65:   TFLITE_DCHECK(context != nullptr);
+  66:   TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+  67: 
+  68:   // Get base addresses.
+  69:   TfLiteEvalTensor* tensor;
+  70:   int i = 0;
+  71:   int num_tensors = 0;
+  72:   void* cms_data;
+  73:   uint8_t co_type;
+  74:   int result;
+  75:   const OpData* data = static_cast<const OpData*>(node->user_data);
+  76:   uint64_t* base_addrs = static_cast<uint64_t*>(
+  77:       context->GetScratchBuffer(context, data->base_addr_idx));
+  78:   size_t* base_addrs_size = static_cast<size_t*>(
+  79:       context->GetScratchBuffer(context, data->base_addr_size_idx));
+  80: 
+  81:   const uint8_t* custom_data =
+  82:       static_cast<uint8_t const*>(node->custom_initial_data);
+  83:   auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+  84:   co_type = root.AsInt8();
+  85:   if (co_type != CO_TYPE_ETHOSU) {
+  86:     MicroPrintf("CO_TYPE != ETHOSU");
+  87:     return kTfLiteError;
+  88:   }
+  89: 
+  90:   // Get command stream data address.
+  91:   tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+  92:   cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+  93: 
+  94:   // Get addresses to weights/scratch/input data.
+  95:   for (i = 1; i < node->inputs->size; ++i) {
+  96:     tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+  97:     base_addrs[num_tensors] =
+  98:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+  99:     size_t byte_size = 1;
+ 100:     for (int k = 0; k < tensor->dims->size; k++) {
+ 101:       byte_size = byte_size * tensor->dims->data[k];
+ 102:     }
+ 103:     base_addrs_size[num_tensors] = byte_size;
+ 104:     num_tensors++;
+ 105:   }
+ 106: 
+ 107:   // Get addresses to output data.
+ 108:   for (i = 0; i < node->outputs->size; ++i) {
+ 109:     tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+ 110:     base_addrs[num_tensors] =
+ 111:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+ 112:     size_t byte_size = 1;
+ 113:     for (int k = 0; k < tensor->dims->size; k++) {
+ 114:       byte_size = byte_size * tensor->dims->data[k];
+ 115:     }
+ 116:     base_addrs_size[num_tensors] = byte_size;
+ 117:     num_tensors++;
+ 118:   }
+ 119: 
+--- lines 123-173 ---
+ 123:   // | INPUT | Description            |  | OUTPUT | Description |
+ 124:   // +-------+------------------------+  +--------+-------------+
+ 125:   // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+ 126:   // |     1 | TFLM model             |  +--------+-------------+
+ 127:   // |     2 | TFLM arena             |
+ 128:   // |     3 | Ethos-U fast scratch   |
+ 129:   // |  4..n | Inputs                 |
+ 130:   // +-------+------------------------+
+ 131:   //
+ 132:   // This code will assign the NPU base addresses like this:
+ 133:   //
+ 134:   // +--------------+----------------------+
+ 135:   // | Base address | Description          |
+ 136:   // +--------------+----------------------+
+ 137:   // |            0 | TFLM model           |
+ 138:   // |            1 | TFLM arena           |
+ 139:   // |            2 | Ethos-U fast scratch |
+ 140:   // |         3..n | Input tensors        |
+ 141:   // |         n..m | Output tensors       |
+ 142:   // +--------------+----------------------+
+ 143:   //
+ 144:   // The number of base address will be limited to 8.
+ 145:   //
+ 146:   // NOTE! The command stream produced by Vela will access the IFM and OFM
+ 147:   // buffers using base address 1. This means that it is not possible to point
+ 148:   // the input and output tensors outside of the TFLM arena.
+ 149:   num_tensors = std::min(num_tensors, 8);
+ 150: 
+ 151:   struct ethosu_driver* drv = ethosu_reserve_driver();
+ 152:   result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+ 153:                             base_addrs_size, num_tensors,
+ 154:                             GetMicroContext(context)->external_context());
+ 155:   ethosu_release_driver(drv);
+ 156: 
+ 157:   if (-1 == result) {
+ 158:     return kTfLiteError;
+ 159:   } else {
+ 160:     return kTfLiteOk;
+ 161:   }
+ 162: }
+ 163: 
+ 164: }  // namespace
+ 165: 
+ 166: TFLMRegistration* Register_ETHOSU() {
+ 167:   static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+ 168:   return &r;
+ 169: }
+ 170: 
+ 171: const char* GetString_ETHOSU() { return "ethos-u"; }
+ 172: 
+ 173: }  // namespace tflite
+
+RequestScratchBufferInArena calls: 2
+GetScratchBuffer references: 3
+
+##############################################################################
+2. TFLM ARENA ALLOCATOR IMPLEMENTATION
+##############################################################################
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+==============================================================================
+--- lines 50-69 ---
+  50: namespace {
+  51: 
+  52: // Maximum number of scratch buffer requests per operator. Operator kernels that
+  53: // request more than this value will receive an exception.
+  54: constexpr size_t kMaxScratchBuffersPerOp = 12;
+  55: 
+  56: // Sentinel value used as a placeholder to mark a ScratchBufferRequest request
+  57: // needs a node id assignment.
+  58: constexpr int kUnassignedScratchBufferRequestIndex = -1;
+  59: 
+  60: const TfLiteIntArray kZeroLengthIntArray = {};
+  61: 
+  62: class MicroBuiltinDataAllocator : public TfLiteBridgeBuiltinDataAllocator {
+  63:  public:
+  64:   explicit MicroBuiltinDataAllocator(
+  65:       IPersistentBufferAllocator* persistent_allocator)
+  66:       : persistent_allocator_(persistent_allocator) {}
+  67: 
+  68:   void* Allocate(size_t size, size_t alignment_hint) override {
+  69:     return persistent_allocator_->AllocatePersistentBuffer(size,
+--- lines 123-140 ---
+ 123:       }
+ 124:     }
+ 125:   }
+ 126:   return kTfLiteOk;
+ 127: }
+ 128: 
+ 129: TfLiteStatus CommitPlan(MicroMemoryPlanner* planner, uint8_t* starting_point,
+ 130:                         const AllocationInfo* allocation_info,
+ 131:                         size_t allocation_info_size) {
+ 132:   // Figure out the actual memory addresses for each buffer, based on the plan.
+ 133:   int planner_index = 0;
+ 134:   for (size_t i = 0; i < allocation_info_size; ++i) {
+ 135:     const AllocationInfo* current = &allocation_info[i];
+ 136:     if (current->needs_allocating) {
+ 137:       int offset = -1;
+ 138:       TF_LITE_ENSURE_STATUS(
+ 139:           planner->GetOffsetForBuffer(planner_index, &offset));
+ 140:       *current->output_ptr = reinterpret_cast<void*>(starting_point + offset);
+--- lines 287-322 ---
+ 287: 
+ 288:     // Populate per-channel quantization params.
+ 289:     int channels = src_quantization->scale()->size();
+ 290:     TfLiteAffineQuantization* quantization =
+ 291:         allocate_temp
+ 292:             ? reinterpret_cast<TfLiteAffineQuantization*>(
+ 293:                   non_persistent_buffer_allocator->AllocateTemp(
+ 294:                       sizeof(TfLiteAffineQuantization),
+ 295:                       alignof(TfLiteAffineQuantization)))
+ 296:             : reinterpret_cast<TfLiteAffineQuantization*>(
+ 297:                   persistent_buffer_allocator->AllocatePersistentBuffer(
+ 298:                       sizeof(TfLiteAffineQuantization),
+ 299:                       alignof(TfLiteAffineQuantization)));
+ 300:     if (quantization == nullptr) {
+ 301:       MicroPrintf("Unable to allocate TfLiteAffineQuantization.\n");
+ 302:       return kTfLiteError;
+ 303:     }
+ 304: 
+ 305:     // TODO(b/153688719): Reduce tail allocation by using a global zero-point
+ 306:     // buffer. This value can not be reused from the flatbuffer since the
+ 307:     // zero_point is stored as a int64_t.
+ 308:     quantization->zero_point =
+ 309:         allocate_temp
+ 310:             ? reinterpret_cast<TfLiteIntArray*>(
+ 311:                   non_persistent_buffer_allocator->AllocateTemp(
+ 312:                       TfLiteIntArrayGetSizeInBytes(channels),
+ 313:                       alignof(TfLiteIntArray)))
+ 314:             : reinterpret_cast<TfLiteIntArray*>(
+ 315:                   persistent_buffer_allocator->AllocatePersistentBuffer(
+ 316:                       TfLiteIntArrayGetSizeInBytes(channels),
+ 317:                       alignof(TfLiteIntArray)));
+ 318:     if (quantization->zero_point == nullptr) {
+ 319:       MicroPrintf("Unable to allocate quantization->zero_point.\n");
+ 320:       return kTfLiteError;
+ 321:     }
+ 322: 
+--- lines 663-771 ---
+ 663:       AllocateNodeAndRegistrations(model, output) != kTfLiteOk) {
+ 664:     return nullptr;
+ 665:   }
+ 666:   return output;
+ 667: }
+ 668: 
+ 669: TfLiteStatus MicroAllocator::FinishModelAllocation(
+ 670:     const Model* model, SubgraphAllocations* subgraph_allocations,
+ 671:     ScratchBufferHandle** scratch_buffer_handles) {
+ 672:   if (!model_is_allocating_) {
+ 673:     MicroPrintf(
+ 674:         "MicroAllocator: Model allocation finished before "
+ 675:         "starting allocating model");
+ 676:     return kTfLiteError;
+ 677:   }
+ 678: 
+ 679:   // Allocate scratch buffer metadata.
+ 680:   TF_LITE_ENSURE_STATUS(AllocateScratchBufferHandles(
+ 681:       scratch_buffer_handles, scratch_buffer_request_count_));
+ 682: 
+ 683:   // Plan all subgraphs and scratch buffers together.
+ 684:   TF_LITE_ENSURE_STATUS(CommitStaticMemoryPlan(model, subgraph_allocations,
+ 685:                                                *scratch_buffer_handles));
+ 686:   model_is_allocating_ = false;
+ 687:   return kTfLiteOk;
+ 688: }
+ 689: 
+ 690: void* MicroAllocator::AllocatePersistentBuffer(size_t bytes) {
+ 691:   return persistent_buffer_allocator_->AllocatePersistentBuffer(
+ 692:       bytes, MicroArenaBufferAlignment());
+ 693: }
+ 694: 
+ 695: TfLiteStatus MicroAllocator::RequestScratchBufferInArena(size_t bytes,
+ 696:                                                          int subgraph_idx,
+ 697:                                                          int* buffer_idx) {
+ 698:   // All scratch buffer requests are stored in the head section of the arena
+ 699:   // when a model is in the prepare phase. First align a scratch buffer request
+ 700:   // pointer to the start of the head:
+ 701:   internal::ScratchBufferRequest* requests = GetScratchBufferRequests();
+ 702: 
+ 703:   // Count the number of requested scratch buffers for the current node:
+ 704:   size_t current_node_request_count = 0;
+ 705:   for (size_t i = 0; i < scratch_buffer_request_count_; ++i) {
+ 706:     if (requests[i].node_idx == kUnassignedScratchBufferRequestIndex) {
+ 707:       ++current_node_request_count;
+ 708:     }
+ 709:   }
+ 710: 
+ 711:   // First, ensure that the per-kernel request has not exceeded the limit:
+ 712:   if (current_node_request_count >= kMaxScratchBuffersPerOp) {
+ 713:     MicroPrintf("Scratch buffer request exeeds limit per operator (%d)",
+ 714:                 kMaxScratchBuffersPerOp);
+ 715:     return kTfLiteError;
+ 716:   }
+ 717: 
+ 718:   // Initialize and assign values for the request at the current index:
+ 719:   internal::ScratchBufferRequest* current_request =
+ 720:       &requests[scratch_buffer_request_count_];
+ 721:   *current_request = {};
+ 722:   // Assign -1 as a sentinel value that will be updated when the node finishes
+ 723:   // allocating:
+ 724:   current_request->bytes = bytes;
+ 725:   current_request->node_idx = kUnassignedScratchBufferRequestIndex;
+ 726:   current_request->subgraph_idx = subgraph_idx;
+ 727: 
+ 728:   // Assign the current request index to the out-param:
+ 729:   *buffer_idx = scratch_buffer_request_count_;
+ 730: 
+ 731:   // Bump the request count to prepare for the next request:
+ 732:   ++scratch_buffer_request_count_;
+ 733:   return kTfLiteOk;
+ 734: }
+ 735: 
+ 736: TfLiteStatus MicroAllocator::FinishPrepareNodeAllocations(int node_id) {
+ 737:   // When a node has finished preparing, all temp allocations performed by the
+ 738:   // kernel should be cleaned up:
+ 739:   TF_LITE_ENSURE_STATUS(ResetTempAllocations());
+ 740: 
+ 741:   // Find and update any new scratch buffer requests for the current node:
+ 742:   internal::ScratchBufferRequest* requests = GetScratchBufferRequests();
+ 743: 
+ 744:   for (size_t i = 0; i < scratch_buffer_request_count_; ++i) {
+ 745:     // A request with a node_idx of -1 is a sentinel value used to indicate this
+ 746:     // was a new request for the current node. The allocator finally knows the
+ 747:     // node index at this point. Assign the value and update the list of new
+ 748:     // requests so the head section can be adjusted to allow for the next kernel
+ 749:     // to allocate at most kMaxScratchBuffersPerOp requests:
+ 750:     if (requests[i].node_idx == kUnassignedScratchBufferRequestIndex) {
+ 751:       requests[i].node_idx = node_id;
+ 752:     }
+ 753:   }
+ 754: 
+ 755:   // Ensure that the head is re-adjusted to allow for another at-most
+ 756:   // kMaxScratchBuffersPerOp scratch buffer requests in the next operator:
+ 757:   TF_LITE_ENSURE_STATUS(non_persistent_buffer_allocator_->ResizeBuffer(
+ 758:       scratch_buffer_head_,
+ 759:       sizeof(internal::ScratchBufferRequest) *
+ 760:           (scratch_buffer_request_count_ + kMaxScratchBuffersPerOp),
+ 761:       alignof(internal::ScratchBufferRequest)));
+ 762: 
+ 763:   return kTfLiteOk;
+ 764: }
+ 765: 
+ 766: size_t MicroAllocator::used_bytes() const {
+ 767:   return non_persistent_buffer_allocator_->GetNonPersistentUsedBytes() +
+ 768:          persistent_buffer_allocator_->GetPersistentUsedBytes();
+ 769: }
+ 770: 
+ 771: TfLiteStatus MicroAllocator::AllocateNodeAndRegistrations(
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h
+==============================================================================
+--- lines 56-73 ---
+  56: // any requests from previous kernel requests.
+  57: //
+  58: // When the memory plan is finalized, these structs are no longer used in favor
+  59: // of a sequential, array of ScratchBufferHandle allocations in the tail
+  60: // section. These allocations are indexed by the request API defined in the
+  61: // TfLiteContext struct.
+  62: struct ScratchBufferRequest {
+  63:   // Number of bytes required by the buffer. The actual allocated size might be
+  64:   // greater than `bytes` due to buffer alignment.
+  65:   size_t bytes;
+  66:   // Node where the buffer is allocated for. This provides useful information to
+  67:   // determine the lifetime of the buffer. In AllocationInfo, this buffer will
+  68:   // have `before` = node_idx and `after` = node_idx.
+  69:   int node_idx;
+  70:   int subgraph_idx;
+  71: };
+  72: 
+  73: }  // namespace internal
+--- lines 171-208 ---
+ 171: 
+ 172:   // Allocates internal resources required for model inference for each subgraph
+ 173:   // from the arena.
+ 174:   //
+ 175:   // This method will run through the flatbuffer data supplied in the model to
+ 176:   // properly allocate tensor, node, and op registration data. This method is
+ 177:   // expected to be followed with a call to FinishModelAllocation()  Returns a
+ 178:   // pointer to an array of SubgraphAllocations (also stored in the tail of the
+ 179:   // arena) where each index corresponds to a different subgraph in the model.
+ 180:   // Return value is nullptr if the allocations failed.
+ 181:   SubgraphAllocations* StartModelAllocation(const Model* model);
+ 182: 
+ 183:   // Finish allocating internal resources required for model inference.
+ 184:   //
+ 185:   // -Plan the memory for activation tensors and scratch buffers.
+ 186:   // -Update eval tensors for each subgraph based on planned offsets.
+ 187:   // -Allocate scratch buffer handles array and update based on planned offsets.
+ 188:   //
+ 189:   // This method should be called after assigning model resources
+ 190:   // in StartModelAllocation(). The subgraph_allocations pointer should be the
+ 191:   // value passed into this class during StartModelAllocation(). Scratch buffer
+ 192:   // handles are stored in the out-param `scratch_buffer_handles` array which is
+ 193:   // allocated in this method. This value will be used in `GetScratchBuffer`
+ 194:   // call to retrieve scratch buffers.
+ 195:   TfLiteStatus FinishModelAllocation(
+ 196:       const Model* model, SubgraphAllocations* subgraph_allocations,
+ 197:       ScratchBufferHandle** scratch_buffer_handles);
+ 198: 
+ 199:   // Allocates a TfLiteTensor struct and populates the returned value with
+ 200:   // properties from the model flatbuffer. This struct is allocated from
+ 201:   // persistent arena memory is only guaranteed for the lifetime of the
+ 202:   // application. The eval_tensors pointer should be the value passed into this
+ 203:   // class during StartModelAllocation() and contains the source-of-truth for
+ 204:   // buffers.
+ 205:   virtual TfLiteTensor* AllocatePersistentTfLiteTensor(
+ 206:       const Model* model, const SubgraphAllocations* subgraph_allocations,
+ 207:       int tensor_index, int subgraph_index);
+ 208: 
+--- lines 210-269 ---
+ 210:   // properties from the model flatbuffer. This struct is allocated from
+ 211:   // temporary arena memory is only guaranteed until a call is made to
+ 212:   // ResetTempAllocations(). Subgraph_allocations contains the array of
+ 213:   // TfLiteEvalTensors. If the newly allocated temp at the specified subgraph
+ 214:   // and tensor index is already present int the TfLiteEvalTensor array, its
+ 215:   // data buffer will be re-used.
+ 216:   virtual TfLiteTensor* AllocateTempTfLiteTensor(
+ 217:       const Model* model, const SubgraphAllocations* subgraph_allocations,
+ 218:       int tensor_index, int subgraph_index);
+ 219: 
+ 220:   virtual void DeallocateTempTfLiteTensor(TfLiteTensor*);
+ 221: 
+ 222:   // Returns a pointer to a buffer from the temporary arena memory and is only
+ 223:   // guaranteed until a call is made to ResetTempAllocations().
+ 224:   virtual uint8_t* AllocateTempBuffer(size_t size, size_t alignment);
+ 225: 
+ 226:   // Signals that the temporary buffer no longer needed.
+ 227:   virtual void DeallocateTempBuffer(uint8_t* buffer);
+ 228: 
+ 229:   // Resets all temporary allocations. This method should be called after a
+ 230:   // chain of temp allocations (e.g. chain of TfLiteTensor objects via
+ 231:   // AllocateTfLiteTensor()).
+ 232:   virtual TfLiteStatus ResetTempAllocations();
+ 233: 
+ 234:   // Returns true if all temporary buffers including temp TfLiteTensor are
+ 235:   // already deallocated.
+ 236:   virtual bool IsAllTempDeallocated();
+ 237: 
+ 238:   // Allocates persistent buffer which has the same life time as the allocator.
+ 239:   // The memory is immediately available and is allocated from the tail of the
+ 240:   // arena.
+ 241:   virtual void* AllocatePersistentBuffer(size_t bytes);
+ 242: 
+ 243:   // Register a scratch buffer of size `bytes` for Node with `node_id`.
+ 244:   // This method only requests a buffer with a given size to be used after a
+ 245:   // model has finished allocation via FinishModelAllocation(). All requested
+ 246:   // buffers will be accessible by the out-param in that method.
+ 247:   TfLiteStatus RequestScratchBufferInArena(size_t bytes, int subgraph_idx,
+ 248:                                            int* buffer_idx);
+ 249: 
+ 250:   // Finish allocating a specific NodeAndRegistration prepare block (kernel
+ 251:   // entry for a model) with a given node ID. This call ensures that any scratch
+ 252:   // buffer requests and temporary allocations are handled and ready for the
+ 253:   // next node prepare block.
+ 254:   TfLiteStatus FinishPrepareNodeAllocations(int node_id);
+ 255: 
+ 256:   // Returns the arena usage in bytes, only available after
+ 257:   // `FinishModelAllocation`. Otherwise, it will return 0.
+ 258:   size_t used_bytes() const;
+ 259: 
+ 260:   TfLiteBridgeBuiltinDataAllocator* GetBuiltinDataAllocator();
+ 261: 
+ 262:  protected:
+ 263:   MicroAllocator(SingleArenaBufferAllocator* memory_allocator,
+ 264:                  MicroMemoryPlanner* memory_planner);
+ 265:   MicroAllocator(IPersistentBufferAllocator* persistent_buffer_allocator,
+ 266:                  INonPersistentBufferAllocator* non_persistent_buffer_allocator,
+ 267:                  MicroMemoryPlanner* memory_planner);
+ 268:   virtual ~MicroAllocator();
+ 269: 
+--- lines 307-367 ---
+ 307:                                                           TfLiteTensor* tensor,
+ 308:                                                           int tensor_index,
+ 309:                                                           int subgraph_idx,
+ 310:                                                           bool allocate_temp);
+ 311: 
+ 312:  private:
+ 313:   // Commits a memory plan for all non-persistent buffer allocations in the
+ 314:   // 'head' section of the memory arena. The eval_tensors pointer is the list of
+ 315:   // pre-allocated TfLiteEvalTensor structs that will point to the buffers that
+ 316:   // will be allocated into the head section in this function call. The
+ 317:   // scratch_buffer_handles pointer is the array of pre-allocated
+ 318:   // ScratchBufferHandle structs that will point to allocated buffers also in
+ 319:   // the head section.
+ 320:   virtual TfLiteStatus CommitStaticMemoryPlan(
+ 321:       const Model* model, SubgraphAllocations* allocations,
+ 322:       ScratchBufferHandle* scratch_buffer_handles);
+ 323: 
+ 324:   // Allocates an array of ScratchBufferHandle structs in the tail section for a
+ 325:   // given number of handles.
+ 326:   virtual TfLiteStatus AllocateScratchBufferHandles(
+ 327:       ScratchBufferHandle** scratch_buffer_handles, size_t handle_count);
+ 328: 
+ 329:   // Clears all internal scratch buffer request counts and resets the head to
+ 330:   // prepare for kernels to request scratch buffer data when a model is
+ 331:   // preparing.
+ 332:   TfLiteStatus InitScratchBufferData();
+ 333: 
+ 334:   // Returns the pointer for the array of ScratchBufferRequest allocations in
+ 335:   // the head section.
+ 336:   internal::ScratchBufferRequest* GetScratchBufferRequests();
+ 337: 
+ 338:   // A simple memory allocator that always allocate from the arena tail or head.
+ 339:   INonPersistentBufferAllocator* non_persistent_buffer_allocator_;
+ 340:   IPersistentBufferAllocator* persistent_buffer_allocator_;
+ 341: 
+ 342:   // Allocator used to allocate persistent builtin data.
+ 343:   TfLiteBridgeBuiltinDataAllocator* builtin_data_allocator_ =
+ 344:       nullptr;  // Initialized as nullptr to prevent any possible issues related
+ 345:                 // to accessing uninitialized memory.
+ 346: 
+ 347:   // Activation buffer memory planner.
+ 348:   MicroMemoryPlanner* memory_planner_;
+ 349: 
+ 350:   bool model_is_allocating_;
+ 351: 
+ 352:   // Holds the number of ScratchBufferRequest instances stored in the head
+ 353:   // section when a model is allocating.
+ 354:   size_t scratch_buffer_request_count_ = 0;
+ 355: 
+ 356:   // Holds ScratchBufferRequest when a model is allocating
+ 357:   uint8_t* scratch_buffer_head_ = nullptr;
+ 358: 
+ 359:   // Holds the byte length of the memory plan with the largest head usage. Used
+ 360:   // to ensure that multi-tenant allocations can share the head for buffers.
+ 361:   size_t max_head_buffer_usage_ = 0;
+ 362: 
+ 363:   TF_LITE_REMOVE_VIRTUAL_DELETE
+ 364: };
+ 365: 
+ 366: }  // namespace tflite
+ 367: #endif  // TENSORFLOW_LITE_MICRO_MICRO_ALLOCATOR_H_
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc
+==============================================================================
+--- lines 92-113 ---
+  92:       MicroInterpreterContext::InterpreterState::kInit);
+  93:   context_.impl_ = static_cast<void*>(&micro_context_);
+  94:   context_.ReportError = MicroContextReportOpError;
+  95:   context_.GetTensor = MicroContextGetTensor;
+  96:   context_.GetEvalTensor = MicroContextGetEvalTensor;
+  97:   context_.profiler = profiler;
+  98:   context_.RequestScratchBufferInArena =
+  99:       MicroContextRequestScratchBufferInArena;
+ 100:   context_.GetExternalContext = MicroContextGetExternalContext;
+ 101:   context_.AllocatePersistentBuffer = MicroContextAllocatePersistentBuffer;
+ 102:   context_.GetScratchBuffer = MicroContextGetScratchBuffer;
+ 103: 
+ 104:   initialization_status_ = kTfLiteOk;
+ 105: }
+ 106: 
+ 107: TfLiteStatus MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer() {
+ 108:   for (int subgraph_idx = 0; subgraph_idx < graph_.NumSubgraphs();
+ 109:        subgraph_idx++) {
+ 110:     const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+ 111:     TFLITE_DCHECK(subgraph != nullptr);
+ 112: 
+ 113:     auto* opcodes = model_->operator_codes();
+--- lines 219-240 ---
+ 219: 
+ 220:   TF_LITE_ENSURE_STATUS(graph_.PrepareSubgraphs());
+ 221: 
+ 222:   micro_context_.SetInterpreterState(
+ 223:       MicroInterpreterContext::InterpreterState::kMemoryPlanning);
+ 224: 
+ 225:   TF_LITE_ENSURE_OK(&context_, allocator_.FinishModelAllocation(
+ 226:                                    model_, graph_.GetAllocations(),
+ 227:                                    &scratch_buffer_handles_));
+ 228: 
+ 229:   micro_context_.SetScratchBufferHandles(scratch_buffer_handles_);
+ 230: 
+ 231:   // TODO(b/162311891): Drop these allocations when the interpreter supports
+ 232:   // handling buffers from TfLiteEvalTensor.
+ 233:   input_tensors_ =
+ 234:       reinterpret_cast<TfLiteTensor**>(allocator_.AllocatePersistentBuffer(
+ 235:           sizeof(TfLiteTensor*) * inputs_size()));
+ 236:   if (input_tensors_ == nullptr) {
+ 237:     MicroPrintf(
+ 238:         "Failed to allocate memory for context->input_tensors_, "
+ 239:         "%d bytes required",
+ 240:         sizeof(TfLiteTensor*) * inputs_size());
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+==============================================================================
+--- lines 137-158 ---
+ 137: 
+ 138: void RecordingMicroAllocator::PrintRecordedAllocation(
+ 139:     RecordedAllocationType allocation_type, const char* allocation_name,
+ 140:     const char* allocation_description) const {
+ 141: #ifndef TF_LITE_STRIP_ERROR_STRINGS
+ 142:   RecordedAllocation allocation = GetRecordedAllocation(allocation_type);
+ 143:   if (allocation.used_bytes > 0 || allocation.requested_bytes > 0) {
+ 144:     MicroPrintf(
+ 145:         "[RecordingMicroAllocator] '%s' used %d bytes with alignment overhead "
+ 146:         "(requested %d bytes for %d %s)",
+ 147:         allocation_name, allocation.used_bytes, allocation.requested_bytes,
+ 148:         allocation.count, allocation_description);
+ 149:   }
+ 150: #endif
+ 151: }
+ 152: 
+ 153: TfLiteStatus RecordingMicroAllocator::AllocateNodeAndRegistrations(
+ 154:     const Model* model, SubgraphAllocations* subgraph_allocations) {
+ 155:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 156: 
+ 157:   TfLiteStatus status =
+ 158:       MicroAllocator::AllocateNodeAndRegistrations(model, subgraph_allocations);
+--- lines 255-279 ---
+ 255: }
+ 256: 
+ 257: #endif  // USE_TFLM_COMPRESSION
+ 258: 
+ 259: RecordedAllocation RecordingMicroAllocator::SnapshotAllocationUsage() const {
+ 260:   return {/*requested_bytes=*/recording_memory_allocator_->GetRequestedBytes(),
+ 261:           /*used_bytes=*/recording_memory_allocator_->GetUsedBytes(),
+ 262:           /*count=*/recording_memory_allocator_->GetAllocatedCount()};
+ 263: }
+ 264: 
+ 265: void RecordingMicroAllocator::RecordAllocationUsage(
+ 266:     const RecordedAllocation& snapshotted_allocation,
+ 267:     RecordedAllocation& recorded_allocation) {
+ 268:   recorded_allocation.requested_bytes +=
+ 269:       recording_memory_allocator_->GetRequestedBytes() -
+ 270:       snapshotted_allocation.requested_bytes;
+ 271:   recorded_allocation.used_bytes +=
+ 272:       recording_memory_allocator_->GetUsedBytes() -
+ 273:       snapshotted_allocation.used_bytes;
+ 274:   recorded_allocation.count +=
+ 275:       recording_memory_allocator_->GetAllocatedCount() -
+ 276:       snapshotted_allocation.count;
+ 277: }
+ 278: 
+ 279: }  // namespace tflite
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.h
+==============================================================================
+--- lines 43-60 ---
+  43: // Container for holding information about allocation recordings by a given
+  44: // type. Each recording contains the number of bytes requested, the actual bytes
+  45: // allocated (can defer from requested by alignment), and the number of items
+  46: // allocated.
+  47: struct RecordedAllocation {
+  48:   size_t requested_bytes;
+  49:   size_t used_bytes;
+  50:   size_t count;
+  51: };
+  52: 
+  53: // Utility subclass of MicroAllocator that records all allocations
+  54: // inside the arena. A summary of allocations can be logged through the
+  55: // ErrorReporter by invoking LogAllocations(). This special allocator requires
+  56: // an instance of RecordingSingleArenaBufferAllocator to capture allocations in
+  57: // the head and tail. Arena allocation recording can be retrieved by type
+  58: // through the GetRecordedAllocation() function. This class should only be used
+  59: // for auditing memory usage or integration testing.
+  60: class RecordingMicroAllocator : public MicroAllocator {
+
+==============================================================================
+RELEVANT SOURCE CONTEXT: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_interpreter.h
+==============================================================================
+
+==============================================================================
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+==============================================================================
+   1: /* Copyright 2024 The TensorFlow Authors. All Rights Reserved.
+   2: 
+   3: Licensed under the Apache License, Version 2.0 (the "License");
+   4: you may not use this file except in compliance with the License.
+   5: You may obtain a copy of the License at
+   6: 
+   7:     http://www.apache.org/licenses/LICENSE-2.0
+   8: 
+   9: Unless required by applicable law or agreed to in writing, software
+  10: distributed under the License is distributed on an "AS IS" BASIS,
+  11: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  12: See the License for the specific language governing permissions and
+  13: limitations under the License.
+  14: ==============================================================================*/
+  15: 
+  16: #include "tensorflow/lite/micro/recording_micro_allocator.h"
+  17: 
+  18: #include "tensorflow/lite/kernels/internal/compatibility.h"
+  19: #include "tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.h"
+  20: #include "tensorflow/lite/micro/compatibility.h"
+  21: #include "tensorflow/lite/micro/memory_helpers.h"
+  22: #include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+  23: #include "tensorflow/lite/micro/micro_allocator.h"
+  24: #include "tensorflow/lite/micro/micro_log.h"
+  25: 
+  26: namespace tflite {
+  27: 
+  28: size_t RecordingMicroAllocator::GetDefaultTailUsage() {
+  29:   // RecordingMicroAllocator inherits from MicroAllocator and its tail usage is
+  30:   // similar with MicroAllocator with SingleArenaBufferAllocator and
+  31:   // MicroAllocator being replaced.
+  32:   return MicroAllocator::GetDefaultTailUsage(
+  33:              /*is_memory_planner_given=*/false) +
+  34:          AlignSizeUp<RecordingSingleArenaBufferAllocator>() -
+  35:          AlignSizeUp<SingleArenaBufferAllocator>() +
+  36:          AlignSizeUp<RecordingMicroAllocator>() - AlignSizeUp<MicroAllocator>();
+  37: }
+  38: 
+  39: RecordingMicroAllocator::RecordingMicroAllocator(
+  40:     RecordingSingleArenaBufferAllocator* recording_memory_allocator,
+  41:     MicroMemoryPlanner* memory_planner)
+  42:     : MicroAllocator(recording_memory_allocator, memory_planner),
+  43:       recording_memory_allocator_(recording_memory_allocator) {}
+  44: 
+  45: RecordingMicroAllocator* RecordingMicroAllocator::Create(uint8_t* tensor_arena,
+  46:                                                          size_t arena_size) {
+  47:   RecordingSingleArenaBufferAllocator* simple_memory_allocator =
+  48:       RecordingSingleArenaBufferAllocator::Create(tensor_arena, arena_size);
+  49:   TFLITE_DCHECK(simple_memory_allocator != nullptr);
+  50: 
+  51:   uint8_t* memory_planner_buffer =
+  52:       simple_memory_allocator->AllocatePersistentBuffer(
+  53:           sizeof(GreedyMemoryPlanner), alignof(GreedyMemoryPlanner));
+  54:   GreedyMemoryPlanner* memory_planner =
+  55:       new (memory_planner_buffer) GreedyMemoryPlanner();
+  56: 
+  57:   uint8_t* allocator_buffer = simple_memory_allocator->AllocatePersistentBuffer(
+  58:       sizeof(RecordingMicroAllocator), alignof(RecordingMicroAllocator));
+  59:   RecordingMicroAllocator* allocator = new (allocator_buffer)
+  60:       RecordingMicroAllocator(simple_memory_allocator, memory_planner);
+  61:   return allocator;
+  62: }
+  63: 
+  64: RecordedAllocation RecordingMicroAllocator::GetRecordedAllocation(
+  65:     RecordedAllocationType allocation_type) const {
+  66:   switch (allocation_type) {
+  67:     case RecordedAllocationType::kTfLiteEvalTensorData:
+  68:       return recorded_tflite_eval_tensor_data_;
+  69:     case RecordedAllocationType::kPersistentTfLiteTensorData:
+  70:       return recorded_persistent_tflite_tensor_data_;
+  71:     case RecordedAllocationType::kPersistentTfLiteTensorQuantizationData:
+  72:       return recorded_persistent_tflite_tensor_quantization_data_;
+  73:     case RecordedAllocationType::kPersistentBufferData:
+  74:       return recorded_persistent_buffer_data_;
+  75:     case RecordedAllocationType::kTfLiteTensorVariableBufferData:
+  76:       return recorded_tflite_tensor_variable_buffer_data_;
+  77:     case RecordedAllocationType::kNodeAndRegistrationArray:
+  78:       return recorded_node_and_registration_array_data_;
+  79:     case RecordedAllocationType::kOpData:
+  80:       return recorded_op_data_;
+  81: #ifdef USE_TFLM_COMPRESSION
+  82:     case RecordedAllocationType::kCompressionData:
+  83:       return recorded_compression_data_;
+  84: #endif  // USE_TFLM_COMPRESSION
+  85:     default:
+  86:       break;
+  87:   }
+  88:   MicroPrintf("Invalid allocation type supplied: %d", allocation_type);
+  89:   return RecordedAllocation();
+  90: }
+  91: 
+  92: const RecordingSingleArenaBufferAllocator*
+  93: RecordingMicroAllocator::GetSimpleMemoryAllocator() const {
+  94:   return recording_memory_allocator_;
+  95: }
+  96: 
+  97: void RecordingMicroAllocator::PrintAllocations() const {
+  98:   MicroPrintf("[RecordingMicroAllocator] Arena allocation total %d bytes",
+  99:               recording_memory_allocator_->GetUsedBytes());
+ 100:   MicroPrintf("[RecordingMicroAllocator] Arena allocation head %d bytes",
+ 101:               recording_memory_allocator_->GetNonPersistentUsedBytes());
+ 102:   MicroPrintf("[RecordingMicroAllocator] Arena allocation tail %d bytes",
+ 103:               recording_memory_allocator_->GetPersistentUsedBytes());
+ 104:   PrintRecordedAllocation(RecordedAllocationType::kTfLiteEvalTensorData,
+ 105:                           "TfLiteEvalTensor data", "allocations");
+ 106:   PrintRecordedAllocation(RecordedAllocationType::kPersistentTfLiteTensorData,
+ 107:                           "Persistent TfLiteTensor data", "tensors");
+ 108:   PrintRecordedAllocation(
+ 109:       RecordedAllocationType::kPersistentTfLiteTensorQuantizationData,
+ 110:       "Persistent TfLiteTensor quantization data", "allocations");
+ 111:   PrintRecordedAllocation(RecordedAllocationType::kPersistentBufferData,
+ 112:                           "Persistent buffer data", "allocations");
+ 113:   PrintRecordedAllocation(
+ 114:       RecordedAllocationType::kTfLiteTensorVariableBufferData,
+ 115:       "TfLiteTensor variable buffer data", "allocations");
+ 116:   PrintRecordedAllocation(RecordedAllocationType::kNodeAndRegistrationArray,
+ 117:                           "NodeAndRegistration struct",
+ 118:                           "NodeAndRegistration structs");
+ 119:   PrintRecordedAllocation(RecordedAllocationType::kOpData,
+ 120:                           "Operator runtime data", "OpData structs");
+ 121: 
+ 122: #ifdef USE_TFLM_COMPRESSION
+ 123: 
+ 124:   PrintRecordedAllocation(RecordedAllocationType::kCompressionData,
+ 125:                           "Persistent compression data", "allocations");
+ 126: 
+ 127: #endif  // USE_TFLM_COMPRESSION
+ 128: }
+ 129: 
+ 130: void* RecordingMicroAllocator::AllocatePersistentBuffer(size_t bytes) {
+ 131:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 132:   void* buffer = MicroAllocator::AllocatePersistentBuffer(bytes);
+ 133:   RecordAllocationUsage(allocations, recorded_persistent_buffer_data_);
+ 134: 
+ 135:   return buffer;
+ 136: }
+ 137: 
+ 138: void RecordingMicroAllocator::PrintRecordedAllocation(
+ 139:     RecordedAllocationType allocation_type, const char* allocation_name,
+ 140:     const char* allocation_description) const {
+ 141: #ifndef TF_LITE_STRIP_ERROR_STRINGS
+ 142:   RecordedAllocation allocation = GetRecordedAllocation(allocation_type);
+ 143:   if (allocation.used_bytes > 0 || allocation.requested_bytes > 0) {
+ 144:     MicroPrintf(
+ 145:         "[RecordingMicroAllocator] '%s' used %d bytes with alignment overhead "
+ 146:         "(requested %d bytes for %d %s)",
+ 147:         allocation_name, allocation.used_bytes, allocation.requested_bytes,
+ 148:         allocation.count, allocation_description);
+ 149:   }
+ 150: #endif
+ 151: }
+ 152: 
+ 153: TfLiteStatus RecordingMicroAllocator::AllocateNodeAndRegistrations(
+ 154:     const Model* model, SubgraphAllocations* subgraph_allocations) {
+ 155:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 156: 
+ 157:   TfLiteStatus status =
+ 158:       MicroAllocator::AllocateNodeAndRegistrations(model, subgraph_allocations);
+ 159: 
+ 160:   RecordAllocationUsage(allocations,
+ 161:                         recorded_node_and_registration_array_data_);
+ 162: 
+ 163:   for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+ 164:        subgraph_idx++) {
+ 165:     // The allocation count in SingleArenaBufferAllocator will only be 1. To
+ 166:     // provide better logging, decrement by 1 and add in the actual number of
+ 167:     // operators used in the graph: The allocation for this recording will
+ 168:     // always be 1. This is because the parent class mallocs one large
+ 169:     // allocation for the number of nodes in the graph (e.g.
+ 170:     // sizeof(NodeAndRegistration) * num_nodes). To prevent extra overhead and
+ 171:     // potential for fragmentation, manually adjust the accounting by
+ 172:     // decrementing by 1 and adding the actual number of nodes used in the
+ 173:     // graph:
+ 174:     if (model->subgraphs()->Get(subgraph_idx)->operators()) {
+ 175:       recorded_node_and_registration_array_data_.count +=
+ 176:           model->subgraphs()->Get(subgraph_idx)->operators()->size() - 1;
+ 177:     } else {
+ 178:       recorded_node_and_registration_array_data_.count -= 1;
+ 179:     }
+ 180:   }
+ 181:   return status;
+ 182: }
+ 183: 
+ 184: TfLiteStatus RecordingMicroAllocator::AllocateTfLiteEvalTensors(
+ 185:     const Model* model, SubgraphAllocations* subgraph_allocations) {
+ 186:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 187: 
+ 188:   TfLiteStatus status =
+ 189:       MicroAllocator::AllocateTfLiteEvalTensors(model, subgraph_allocations);
+ 190: 
+ 191:   RecordAllocationUsage(allocations, recorded_tflite_eval_tensor_data_);
+ 192: 
+ 193:   for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+ 194:        subgraph_idx++) {
+ 195:     // The allocation for this recording will always be 1. This is because the
+ 196:     // parent class mallocs one large allocation for the number of tensors in
+ 197:     // the graph (e.g. sizeof(TfLiteEvalTensor) * num_tensors). To prevent extra
+ 198:     // overhead and potential for fragmentation, manually adjust the accounting
+ 199:     // by decrementing by 1 and adding the actual number of tensors used in the
+ 200:     // graph:
+ 201:     recorded_tflite_eval_tensor_data_.count +=
+ 202:         model->subgraphs()->Get(subgraph_idx)->tensors()->size() - 1;
+ 203:   }
+ 204:   return status;
+ 205: }
+ 206: 
+ 207: TfLiteStatus RecordingMicroAllocator::AllocateVariables(
+ 208:     const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+ 209:     const int32_t* offline_planner_offsets) {
+ 210:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 211: 
+ 212:   TfLiteStatus status = MicroAllocator::AllocateVariables(
+ 213:       subgraph, eval_tensors, offline_planner_offsets);
+ 214: 
+ 215:   RecordAllocationUsage(allocations,
+ 216:                         recorded_tflite_tensor_variable_buffer_data_);
+ 217:   return status;
+ 218: }
+ 219: 
+ 220: TfLiteTensor*
+ 221: RecordingMicroAllocator::AllocatePersistentTfLiteTensorInternal() {
+ 222:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 223: 
+ 224:   TfLiteTensor* result =
+ 225:       MicroAllocator::AllocatePersistentTfLiteTensorInternal();
+ 226: 
+ 227:   RecordAllocationUsage(allocations, recorded_persistent_tflite_tensor_data_);
+ 228:   return result;
+ 229: }
+ 230: 
+ 231: TfLiteStatus RecordingMicroAllocator::PopulateTfLiteTensorFromFlatbuffer(
+ 232:     const Model* model, TfLiteTensor* tensor, int tensor_index,
+ 233:     int subgraph_index, bool allocate_temp) {
+ 234:   RecordedAllocation allocations = SnapshotAllocationUsage();
+ 235: 
+ 236:   TfLiteStatus status = MicroAllocator::PopulateTfLiteTensorFromFlatbuffer(
+ 237:       model, tensor, tensor_index, subgraph_index, allocate_temp);
+ 238: 
+ 239:   RecordAllocationUsage(allocations,
+ 240:                         recorded_persistent_tflite_tensor_quantization_data_);
+... truncated after 240 lines
+
+==============================================================================
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.h
+==============================================================================
+   1: /* Copyright 2024 The TensorFlow Authors. All Rights Reserved.
+   2: 
+   3: Licensed under the Apache License, Version 2.0 (the "License");
+   4: you may not use this file except in compliance with the License.
+   5: You may obtain a copy of the License at
+   6: 
+   7:     http://www.apache.org/licenses/LICENSE-2.0
+   8: 
+   9: Unless required by applicable law or agreed to in writing, software
+  10: distributed under the License is distributed on an "AS IS" BASIS,
+  11: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  12: See the License for the specific language governing permissions and
+  13: limitations under the License.
+  14: ==============================================================================*/
+  15: 
+  16: #ifndef TENSORFLOW_LITE_MICRO_RECORDING_MICRO_ALLOCATOR_H_
+  17: #define TENSORFLOW_LITE_MICRO_RECORDING_MICRO_ALLOCATOR_H_
+  18: 
+  19: #include "tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.h"
+  20: #include "tensorflow/lite/micro/compatibility.h"
+  21: #include "tensorflow/lite/micro/micro_allocator.h"
+  22: 
+  23: namespace tflite {
+  24: 
+  25: // List of buckets currently recorded by this class. Each type keeps a list of
+  26: // allocated information during model initialization.
+  27: // TODO(b/169834511): Add tracking for scratch buffer allocations.
+  28: enum class RecordedAllocationType {
+  29:   kTfLiteEvalTensorData,
+  30:   kPersistentTfLiteTensorData,
+  31:   kPersistentTfLiteTensorQuantizationData,
+  32:   kPersistentBufferData,
+  33:   kTfLiteTensorVariableBufferData,
+  34:   kNodeAndRegistrationArray,
+  35:   kOpData,
+  36: #ifdef USE_TFLM_COMPRESSION
+  37:   kCompressionData,
+  38: #endif  // USE_TFLM_COMPRESSION
+  39: 
+  40:   kNumAllocationTypes,  // must be last
+  41: };
+  42: 
+  43: // Container for holding information about allocation recordings by a given
+  44: // type. Each recording contains the number of bytes requested, the actual bytes
+  45: // allocated (can defer from requested by alignment), and the number of items
+  46: // allocated.
+  47: struct RecordedAllocation {
+  48:   size_t requested_bytes;
+  49:   size_t used_bytes;
+  50:   size_t count;
+  51: };
+  52: 
+  53: // Utility subclass of MicroAllocator that records all allocations
+  54: // inside the arena. A summary of allocations can be logged through the
+  55: // ErrorReporter by invoking LogAllocations(). This special allocator requires
+  56: // an instance of RecordingSingleArenaBufferAllocator to capture allocations in
+  57: // the head and tail. Arena allocation recording can be retrieved by type
+  58: // through the GetRecordedAllocation() function. This class should only be used
+  59: // for auditing memory usage or integration testing.
+  60: class RecordingMicroAllocator : public MicroAllocator {
+  61:  public:
+  62:   static RecordingMicroAllocator* Create(uint8_t* tensor_arena,
+  63:                                          size_t arena_size);
+  64: 
+  65:   // Returns the fixed amount of memory overhead of RecordingMicroAllocator.
+  66:   static size_t GetDefaultTailUsage();
+  67: 
+  68:   // Returns the recorded allocations information for a given allocation type.
+  69:   RecordedAllocation GetRecordedAllocation(
+  70:       RecordedAllocationType allocation_type) const;
+  71: 
+  72:   const RecordingSingleArenaBufferAllocator* GetSimpleMemoryAllocator() const;
+  73: 
+  74:   // Logs out through the ErrorReporter all allocation recordings by type
+  75:   // defined in RecordedAllocationType.
+  76:   void PrintAllocations() const;
+  77: 
+  78:   void* AllocatePersistentBuffer(size_t bytes) override;
+  79: 
+  80:  protected:
+  81:   TfLiteStatus AllocateNodeAndRegistrations(
+  82:       const Model* model, SubgraphAllocations* subgraph_allocations) override;
+  83:   TfLiteStatus AllocateTfLiteEvalTensors(
+  84:       const Model* model, SubgraphAllocations* subgraph_allocations) override;
+  85:   TfLiteStatus AllocateVariables(
+  86:       const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+  87:       const int32_t* offline_planner_offsets) override;
+  88:   // TODO(b/162311891): Once all kernels have been updated to the new API drop
+  89:   // this method. It is only used to record TfLiteTensor persistent allocations.
+  90:   TfLiteTensor* AllocatePersistentTfLiteTensorInternal() override;
+  91: 
+  92:   // TODO(b/162311891): Once all kernels have been updated to the new API drop
+  93:   // this function since all allocations for quantized data will take place in
+  94:   // the temp section.
+  95:   TfLiteStatus PopulateTfLiteTensorFromFlatbuffer(const Model* model,
+  96:                                                   TfLiteTensor* tensor,
+  97:                                                   int tensor_index,
+  98:                                                   int subgraph_index,
+  99:                                                   bool allocate_temp) override;
+ 100: 
+ 101: #ifdef USE_TFLM_COMPRESSION
+ 102: 
+ 103:   TfLiteStatus AllocateCompressedTensorsList(
+ 104:       const Model* model, SubgraphAllocations* subgraph_allocations) override;
+ 105: 
+ 106: #endif  // USE_TFLM_COMPRESSION
+ 107: 
+ 108:  private:
+ 109:   RecordingMicroAllocator(RecordingSingleArenaBufferAllocator* memory_allocator,
+ 110:                           MicroMemoryPlanner* memory_planner);
+ 111: 
+ 112:   void PrintRecordedAllocation(RecordedAllocationType allocation_type,
+ 113:                                const char* allocation_name,
+ 114:                                const char* allocation_description) const;
+ 115: 
+ 116:   RecordedAllocation SnapshotAllocationUsage() const;
+ 117:   void RecordAllocationUsage(const RecordedAllocation& snapshotted_allocation,
+ 118:                              RecordedAllocation& recorded_allocation);
+ 119: 
+ 120:   const RecordingSingleArenaBufferAllocator* recording_memory_allocator_;
+ 121: 
+ 122:   RecordedAllocation recorded_tflite_eval_tensor_data_ = {};
+ 123:   RecordedAllocation recorded_persistent_tflite_tensor_data_ = {};
+ 124:   RecordedAllocation recorded_persistent_tflite_tensor_quantization_data_ = {};
+ 125:   RecordedAllocation recorded_persistent_buffer_data_ = {};
+ 126:   RecordedAllocation recorded_tflite_tensor_variable_buffer_data_ = {};
+ 127:   RecordedAllocation recorded_node_and_registration_array_data_ = {};
+ 128: #ifdef USE_TFLM_COMPRESSION
+ 129:   RecordedAllocation recorded_compression_data_ = {};
+ 130: #endif  // USE_TFLM_COMPRESSION
+ 131: 
+ 132:   // TODO(b/187993291): Re-enable OpData allocating tracking.
+ 133:   RecordedAllocation recorded_op_data_ = {};
+ 134: 
+ 135:   TF_LITE_REMOVE_VIRTUAL_DELETE
+ 136: };
+ 137: 
+ 138: }  // namespace tflite
+ 139: 
+ 140: #endif  // TENSORFLOW_LITE_MICRO_RECORDING_MICRO_ALLOCATOR_H_
+
+##############################################################################
+3. APPLICATION TENSOR-ARENA DECLARATIONS
+##############################################################################
+
+Application source files scanned: 8108
+Files with arena/inference references: 0
+
+##############################################################################
+4. SCRATCH-FAST REFERENCES IN INSTALLED U55/TFLM CODE
+##############################################################################
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:63: #if defined(ETHOSU55) || defined(ETHOSU65)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu65_interface.h:19: #ifndef ETHOSU65_INTERFACE_H
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu65_interface.h:20: #define ETHOSU65_INTERFACE_H
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:28: #ifdef ETHOSU55
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:50: #ifdef ETHOSU65
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:104: #ifdef ETHOSU55
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:173: #ifdef ETHOSU65
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:185: #ifdef ETHOSU65
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:26: #if defined(ETHOSU55)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:28: #elif defined(ETHOSU65)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu55_interface.h:19: #ifndef ETHOSU55_INTERFACE_H
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu55_interface.h:20: #define ETHOSU55_INTERFACE_H
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c:83: #if defined(ETHOSU55) || defined(ETHOSU65)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c:128: #endif /* defined(ETHOSU55) || defined(ETHOSU65) */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_profiler.h:23: #if defined(ETHOSU55) || defined(ETHOSU65)
+
+##############################################################################
+5. EXACT KNOWN-GOOD BUILD
+##############################################################################
+Build path: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501
+Exists: True
+
+elf: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.elf
+  exists: True
+  size: 29,196,852 bytes
+  SHA256: 5ac3e33420e91460e710ed27921f5784a09d973255fca7de696ee09f058f4e78
+
+map: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.map
+  exists: True
+  size: 2,514,695 bytes
+  SHA256: a1e1be83c3a53f8344e41d1b79bf6ac5af20346173237e76d2f1f70d064a18a6
+
+config: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/.config
+  exists: True
+  size: 45,036 bytes
+  SHA256: 0b0872f0d90485b0e838348dde78f3bbe62bb543140fda7558fdd3bdec0d107c
+
+bin: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.bin
+  exists: True
+  size: 153,552 bytes
+  SHA256: 1f0455ac708c9f472d8284d43aa595be6681f71516ddaf04681d8036ff423162
+
+ospi1: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/ospi1.bin
+  exists: True
+  size: 9,790,064 bytes
+  SHA256: 7813a2b72c633828dc1f41160d3e9c2b21ccab6e0e19cd0c9a907d8327158414
+
+cmake_cache: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/CMakeCache.txt
+  exists: True
+  size: 31,938 bytes
+  SHA256: 2ad57d808e2c6cc1c65913361f3a67e2d2fb550dec140073ac20f929c2ce87bd
+
+linker_cmd: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/linker.cmd
+  exists: True
+  size: 30,256 bytes
+  SHA256: 040f3e383838234801904efde996d542e6541831a1e94d7de9ba3944b05c680e
+
+linker_ld: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/linker.ld
+  exists: False
+
+Relevant known-good Kconfig values:
+  CONFIG_MAIN_STACK_SIZE=8192
+  CONFIG_ISR_STACK_SIZE=2048
+  CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE=1024
+  CONFIG_SRAM_OFFSET=0
+  CONFIG_ETHOSU_VERBOSE_LEVEL=1
+  CONFIG_SRAM_SIZE=256
+  CONFIG_SRAM_BASE_ADDRESS=0x20000000
+  CONFIG_MPU=y
+  CONFIG_MPU_LOG_LEVEL_DEFAULT=y
+  CONFIG_MPU_LOG_LEVEL=3
+  CONFIG_MPU_REQUIRES_NON_OVERLAPPING_REGIONS=y
+  CONFIG_MPU_GAP_FILLING=y
+  CONFIG_SRAM_REGION_PERMISSIONS=y
+  CONFIG_MAIN_THREAD_PRIORITY=0
+  CONFIG_THREAD_STACK_INFO=y
+  CONFIG_HEAP_MEM_POOL_SIZE=65536
+
+Relevant CMake configuration:
+  BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+  CACHED_BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+  CACHED_SNIPPET:STRING=ospi-flash;ospi-flash ethos-u55-enable
+  CMSIS_PATH:PATH=/home/user/sdk-alif/modules/hal/ethos_u/../cmsis
+  CONF_FILE:STRING=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/prj.conf;/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf
+  DTC_OVERLAY_FILE:STRING=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/boards/alif_e8_common.overlay
+  ETHOSU_INFERENCE_TIMEOUT:STRING=
+  ETHOSU_LOG_ENABLE:BOOL=ON
+  ETHOSU_LOG_SEVERITY:STRING=warning
+  ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-128
+  SNIPPET:STRING=ospi-flash;ospi-flash ethos-u55-enable
+  ZEPHYR_BASE:PATH=/home/user/sdk-alif/zephyr
+  ethosu_core_driver_BINARY_DIR:STATIC=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/modules/hal_ethos_u/ethos-u-core-driver
+  ethosu_core_driver_IS_TOP_LEVEL:STATIC=OFF
+  ethosu_core_driver_SOURCE_DIR:STATIC=/home/user/sdk-alif/modules/hal/ethos_u
+  CLI_CONFIG_ARM_ETHOS_U55_128:INTERNAL=y
+  //STRINGS property for variable: ETHOSU_LOG_SEVERITY
+  ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+  SOC_LINKER_SCRIPT:INTERNAL=/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld
+
+Linker map memory configuration:
+  Memory Configuration
+  
+  Name             Origin             Length             Attributes
+  FLASH            0x0000000080000000 0x0000000000580000 xr
+  RAM              0x0000000020000000 0x0000000000040000 xw
+  SRAM0            0x0000000002000000 0x0000000000400000 rw
+  HOST_PERIPHERAL  0x000000001a000000 0x0000000001000000 rw
+  SRAM1            0x0000000002400000 0x0000000000400000 rw
+  OSPI1            0x00000000c0000000 0x0000000004000000 rw
+  IDT_LIST         0x00000000ffff7fff 0x0000000000008000 xw
+  *default*        0x0000000000000000 0xffffffffffffffff
+  
+  Linker script and memory map
+
+Important linker map lines:
+  L1337: .data          0x0000000000000000        0x0 zephyr/CMakeFiles/zephyr_final.dir/misc/empty_file.c.obj
+  L1338: .bss           0x0000000000000000        0x0 zephyr/CMakeFiles/zephyr_final.dir/misc/empty_file.c.obj
+  L1343: .data          0x0000000000000000        0x0 zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+  L1344: .bss           0x0000000000000000        0x0 zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+  L1346: .data          0x0000000000000000        0x0 zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+  L1347: .bss           0x0000000000000000        0x0 zephyr/CMakeFiles/offsets.dir/./arch/arm/core/offsets/offsets.c.obj
+  L1349: .data          0x0000000000000000        0x0 app/libapp.a(Main.cc.obj)
+  L1350: .bss           0x0000000000000000        0x0 app/libapp.a(Main.cc.obj)
+  L1360: .data          0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+  L1361: .bss           0x0000000000000000        0x0 app/libapp.a(MainLoop.cc.obj)
+  L1368: .data          0x0000000000000000        0x0 app/libapp.a(TcnV6Model.cc.obj)
+  L1369: .bss           0x0000000000000000        0x0 app/libapp.a(TcnV6Model.cc.obj)
+  L1381: .data          0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  L1382: .bss           0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  L1384: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(cpp_dtors.c.obj)
+  L1385: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(cpp_dtors.c.obj)
+  L1387: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(heap.c.obj)
+  L1388: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(heap.c.obj)
+  L1394: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+  L1395: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+  L1399: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(printk.c.obj)
+  L1400: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(printk.c.obj)
+  L1407: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(sem.c.obj)
+  L1408: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(sem.c.obj)
+  L1428: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(thread_entry.c.obj)
+  L1429: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(thread_entry.c.obj)
+  L1431: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(cbprintf_complete.c.obj)
+  L1432: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(cbprintf_complete.c.obj)
+  L1454: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(assert.c.obj)
+  L1455: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(assert.c.obj)
+  L1471: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(mpsc_pbuf.c.obj)
+  L1472: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(mpsc_pbuf.c.obj)
+  L1484: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(reboot.c.obj)
+  L1485: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(reboot.c.obj)
+  L1501: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(dec.c.obj)
+  L1502: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(dec.c.obj)
+  L1516: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(hex.c.obj)
+  L1517: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(hex.c.obj)
+  L1535: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(rb.c.obj)
+  L1536: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(rb.c.obj)
+  L1571: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(timeutil.c.obj)
+  L1572: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(timeutil.c.obj)
+  L1600: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(bitarray.c.obj)
+  L1601: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(bitarray.c.obj)
+  L1653: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(ring_buffer.c.obj)
+  L1654: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(ring_buffer.c.obj)
+  L1684: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(configs.c.obj)
+  L1685: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(configs.c.obj)
+  L1687: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(soc_common.c.obj)
+  L1688: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(soc_common.c.obj)
+  L1690: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(startup.S.obj)
+  L1691: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(startup.S.obj)
+  L1693: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(mpu_regions.c.obj)
+  L1694: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(mpu_regions.c.obj)
+  L1696: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_core.c.obj)
+  L1697: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_core.c.obj)
+  L1732: .bss.unordered_cnt
+  L1734: .bss.prev_timestamp
+  L1737: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_mgmt.c.obj)
+  L1738: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_mgmt.c.obj)
+  L1781: .bss.sname_cache
+  L1783: .bss.dname_cache
+  L1785: .bss.sname_cache_buffer
+  L1787: .bss.dname_cache_buffer
+  L1790: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_cache.c.obj)
+  L1791: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_cache.c.obj)
+  L1811: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_msg.c.obj)
+  L1812: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_msg.c.obj)
+  L1814: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_output.c.obj)
+  L1815: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_output.c.obj)
+  L1819: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(log_backend_uart.c.obj)
+  L1820: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(log_backend_uart.c.obj)
+  L1822: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(mem_attr.c.obj)
+  L1823: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(mem_attr.c.obj)
+  L1827: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(tracing_none.c.obj)
+  L1828: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(tracing_none.c.obj)
+  L1847: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(flash_util.c.obj)
+  L1848: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(flash_util.c.obj)
+  L1858: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(sau_tcm_ns_setup.c.obj)
+  L1859: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(sau_tcm_ns_setup.c.obj)
+  L1872: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(tgu.c.obj)
+  L1873: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(tgu.c.obj)
+  L1887: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(system.c.obj)
+  L1888: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(system.c.obj)
+  L1892: .data          0x0000000000000000        0x0 zephyr/libzephyr.a(mram_rw.c.obj)
+  L1893: .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(mram_rw.c.obj)
+  L1901: .data          0x0000000000000000        0x0 zephyr/arch/common/libarch__common.a(sw_isr_common.c.obj)
+  L1902: .bss           0x0000000000000000        0x0 zephyr/arch/common/libarch__common.a(sw_isr_common.c.obj)
+  L1916: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(fatal.c.obj)
+  L1917: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(fatal.c.obj)
+  L1921: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(nmi.c.obj)
+  L1922: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(nmi.c.obj)
+  L1926: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(nmi_on_reset.S.obj)
+  L1927: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(nmi_on_reset.S.obj)
+  L1929: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(__aeabi_atexit.c.obj)
+  L1930: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(__aeabi_atexit.c.obj)
+  L1932: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(tls.c.obj)
+  L1933: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/libarch__arm__core.a(tls.c.obj)
+  L1935: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(exc_exit.c.obj)
+  L1936: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(exc_exit.c.obj)
+  L1938: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fault.c.obj)
+  L1939: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fault.c.obj)
+  L1941: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fault_s.S.obj)
+  L1942: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fault_s.S.obj)
+  L1944: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fpu.c.obj)
+  L1945: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(fpu.c.obj)
+  L1961: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(reset.S.obj)
+  L1962: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(reset.S.obj)
+  L1964: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+  L1965: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(scb.c.obj)
+  L1981: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(thread_abort.c.obj)
+  L1982: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(thread_abort.c.obj)
+  L1984: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(vector_table.S.obj)
+  L1985: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(vector_table.S.obj)
+  L1987: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(swap_helper.S.obj)
+  L1988: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(swap_helper.S.obj)
+  L1990: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(irq_manage.c.obj)
+  L1991: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(irq_manage.c.obj)
+  L1993: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(prep_c.c.obj)
+  L1994: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(prep_c.c.obj)
+  L1996: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(thread.c.obj)
+  L1997: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(thread.c.obj)
+  L2003: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cpu_idle.c.obj)
+  L2004: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cpu_idle.c.obj)
+  L2008: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(irq_init.c.obj)
+  L2009: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(irq_init.c.obj)
+  L2011: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(isr_wrapper.c.obj)
+  L2012: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(isr_wrapper.c.obj)
+  L2014: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(__aeabi_read_tp.S.obj)
+  L2015: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(__aeabi_read_tp.S.obj)
+  L2017: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+  L2018: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/libarch__arm__core__cortex_m.a(cache.c.obj)
+  L2048: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+  L2049: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/cortex_m/cmse/libarch__arm__core__cortex_m__cmse.a(arm_core_cmse.c.obj)
+  L2059: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+  L2060: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_core_mpu.c.obj)
+  L2063: .bss.dynamic_regions.0
+  L2066: .data          0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+  L2067: .bss           0x0000000000000000        0x0 zephyr/arch/arch/arm/core/mpu/libarch__arm__core__mpu.a(arm_mpu.c.obj)
+  L2071: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(assert.c.obj)
+  L2072: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(assert.c.obj)
+  L2085: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(cbprintf.c.obj)
+  L2086: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(cbprintf.c.obj)
+  L2088: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(chk_fail.c.obj)
+  L2089: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(chk_fail.c.obj)
+  L2105: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(errno_wrap.c.obj)
+  L2106: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(errno_wrap.c.obj)
+  L2115: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(exit.c.obj)
+  L2116: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(exit.c.obj)
+  L2131: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(locks.c.obj)
+  L2132: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(locks.c.obj)
+  L2166: .data          0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(stdio.c.obj)
+  L2167: .bss           0x0000000000000000        0x0 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(stdio.c.obj)
+  L2171: .bss.__stdin   0x0000000000000000       0x10 zephyr/lib/libc/picolibc/liblib__libc__picolibc.a(stdio.c.obj)
+  L2173: .data          0x0000000000000000        0x0 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+  L2174: .bss           0x0000000000000000        0x0 zephyr/lib/libc/common/liblib__libc__common.a(abort.c.obj)
+  L2176: .data          0x0000000000000000        0x0 zephyr/lib/libc/common/liblib__libc__common.a(malloc.c.obj)
+  L2177: .bss           0x0000000000000000        0x0 zephyr/lib/libc/common/liblib__libc__common.a(malloc.c.obj)
+  L2187: .data          0x0000000000000000        0x0 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+  L2188: .bss           0x0000000000000000        0x0 zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a(ethos_u.c.obj)
+
+Available ELF inspection tools:
+  arm-none-eabi-size: /usr/bin/arm-none-eabi-size
+  size: /usr/bin/size
+  arm-none-eabi-readelf: /usr/bin/arm-none-eabi-readelf
+  readelf: /usr/bin/readelf
+
+ELF section sizes:
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.elf  :
+section                             size         addr
+.alif_sram0                        65536     33554432
+rom_start                           1984   2147483648
+text                              118352   2147485632
+.ARM.extab                           304   2147603984
+.ARM.exidx                           552   2147604288
+initlevel                            208   2147604840
+device_area                          380   2147605048
+sw_isr_table                        3840   2147605428
+gpio_driver_api_area                  36   2147609268
+clock_control_driver_api_area         28   2147609304
+uart_driver_api_area                  76   2147609332
+ctors                                 12   2147609408
+init_array                             8   2147609420
+log_const_area                       112   2147609428
+log_backend_area                      16   2147609540
+tbss                                   8   2147609556
+rodata                             26968   2147609560
+.ramfunc                               0    536870912
+datas                                472    536870912
+device_states                         38    536871384
+log_mpsc_pbuf_area                    60    536871424
+log_msg_ptr_area                       4    536871484
+k_heap_area                           24    536871488
+k_mutex_area                          20    536871512
+k_sem_area                            48    536871532
+ospi1                            9790064   3221225472
+.comment                              32            0
+.debug_aranges                     16440            0
+.debug_info                     16052542            0
+.debug_abbrev                     248116            0
+.debug_line                       600906            0
+.debug_frame                       65272            0
+.debug_str                       1171294            0
+.debug_loc                        794827            0
+.debug_ranges                     136088            0
+.ARM.attributes                       64            0
+SRAM0                            2621440     33619968
+.last_section                          4   2147637196
+bss                                 5070    536871584
+noinit                             11328    536876656
+Total                           31732573
+
+
+
+
+ELF RAM / OSPI section table:
+    [ 1] .alif_sram0       NOBITS          02000000 000140 010000 00  WA  0   0  8
+    [26] ospi1             PROGBITS        c0000000 025910 956270 00   A  0   0 16
+    [37] SRAM0             NOBITS          02010000 000140 280000 00  WA  0   0 16
+
+Model-related linker map references:
+  app/libapp.a(TcnV6Model.cc.obj)
+  app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  app/libapp.a(TcnV6Model.cc.obj) (arm::app::fwk::tflm::TflmModel::IsInited() const)
+  app/libapp.a(TcnV6Model.cc.obj) (memcpy)
+  .group         0x0000000000000000        0xc app/libapp.a(TcnV6Model.cc.obj)
+  .group         0x0000000000000000        0xc app/libapp.a(TcnV6Model.cc.obj)
+  .group         0x0000000000000000        0xc app/libapp.a(TcnV6Model.cc.obj)
+  .group         0x0000000000000000       0x14 app/libapp.a(TcnV6Model.cc.obj)
+  .group         0x0000000000000000       0x14 app/libapp.a(TcnV6Model.cc.obj)
+  .text          0x0000000000000000        0x0 app/libapp.a(TcnV6Model.cc.obj)
+  .data          0x0000000000000000        0x0 app/libapp.a(TcnV6Model.cc.obj)
+  .bss           0x0000000000000000        0x0 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000000000000       0x44 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000000000000       0x30 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000000000000       0x14 app/libapp.a(TcnV6Model.cc.obj)
+  .text._ZN17heatstroke_tcn_v610TcnV6ModelD2Ev
+  0x0000000000000000       0x14 app/libapp.a(TcnV6Model.cc.obj)
+  .text._ZN17heatstroke_tcn_v610TcnV6ModelD0Ev
+  0x0000000000000000       0x16 app/libapp.a(TcnV6Model.cc.obj)
+  .text          0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .data          0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .bss           0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .text._ZN17heatstroke_tcn_v610TcnV6ModelD2Ev
+  0x0000000080001f28                heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+  0x0000000080001f28                heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+  0x0000000080001f3c       0x78 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000080001fb4       0xac app/libapp.a(TcnV6Model.cc.obj)
+  .text._ZN17heatstroke_tcn_v610TcnV6Model16EnlistOperationsEv.part.0
+  0x0000000080002060      0x57c app/libapp.a(TcnV6Model.cc.obj)
+  0x00000000800025dc        0x8 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  0x00000000800025e4        0x8 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .text._ZN17heatstroke_tcn_v610TcnV6ModelD0Ev
+  0x000000008001410c                heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+  .text._ZN17heatstroke_tcn_v610TcnV6Model13GetOpResolverEv
+  0x0000000080014122        0x4 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000080014122                heatstroke_tcn_v6::TcnV6Model::GetOpResolver()
+  .text._ZN17heatstroke_tcn_v610TcnV6Model16EnlistOperationsEv
+  0x0000000080014126       0x10 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000080014126                heatstroke_tcn_v6::TcnV6Model::EnlistOperations()
+  .text._ZN17heatstroke_tcn_v610TcnV6Model15PrepareResolverEv
+  0x0000000080014136        0x4 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000080014136                heatstroke_tcn_v6::TcnV6Model::PrepareResolver()
+  .rodata        0x000000008001ebd8       0x70 app/libapp.a(TcnV6Model.cc.obj)
+  .rodata._ZTVN17heatstroke_tcn_v610TcnV6ModelE
+  0x000000008001ef44       0x58 app/libapp.a(TcnV6Model.cc.obj)
+  0x000000008001ef44                vtable for heatstroke_tcn_v6::TcnV6Model
+  0x00000000800200af       0x8e app/libapp.a(TcnV6Model.cc.obj)
+  0x000000008002013d       0xda app/libapp.a(TcnV6Model.cc.obj)
+  .rodata._ZN17heatstroke_tcn_v610TcnV6Model16EnlistOperationsEv.part.0.str1.1
+  0x0000000080020217      0x210 app/libapp.a(TcnV6Model.cc.obj)
+  0x00000000c0000000   0x956270 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .comment       0x0000000000000020       0x21 app/libapp.a(TcnV6Model.cc.obj)
+  .comment       0x0000000000000020       0x21 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  0x0000000000000198       0x70 app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000000000208       0x28 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_info    0x0000000000055d8f    0x5693a app/libapp.a(TcnV6Model.cc.obj)
+  .debug_info    0x00000000000ac6c9   0x956757 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_abbrev  0x0000000000001582     0x1132 app/libapp.a(TcnV6Model.cc.obj)
+  .debug_abbrev  0x00000000000026b4      0x14f app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_line    0x0000000000001bd9     0x1701 app/libapp.a(TcnV6Model.cc.obj)
+  .debug_line    0x00000000000032da      0x389 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_frame   0x00000000000001c0      0x138 app/libapp.a(TcnV6Model.cc.obj)
+  .debug_frame   0x00000000000002f8       0x30 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_str     0x000000000009e57e     0x11ac app/libapp.a(TcnV6Model.cc.obj)
+  .debug_str     0x000000000009f72a       0xf9 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  .debug_loc     0x0000000000000b7c     0x12cf app/libapp.a(TcnV6Model.cc.obj)
+  .debug_ranges  0x00000000000002a0      0x190 app/libapp.a(TcnV6Model.cc.obj)
+  .debug_ranges  0x0000000000000430       0x18 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+  0x0000000000000136       0x3e app/libapp.a(TcnV6Model.cc.obj)
+  0x0000000000000174       0x3e app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+
+##############################################################################
+6. E8 RTSS-HE LINKER SCRIPT VARIANTS
+##############################################################################
+
+LINKER: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/E1.ld
+  L32: __STACK_SIZE = 0x00001800;
+  L33: __HEAP_SIZE  = 0x00008000;
+  L37: MEMORY
+  L39: ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+  L40: DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+  L41: SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+  L42: MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+  L49: .startup.at_mram : ALIGN(16)
+  L51: /* MRAM has start-up code, and most constant data */
+  L86: } > MRAM
+  L88: .copy.table.at_mram : ALIGN(4)
+  L91: LONG ( LOADADDR(.text.itcm.at_mram) )
+  L92: LONG ( ADDR(.text.itcm.at_mram) )
+  L93: LONG ( SIZEOF(.text.itcm.at_mram)/4 )
+  L94: LONG ( LOADADDR(.data.dtcm.at_mram) )
+  L95: LONG ( ADDR(.data.dtcm.at_mram) )
+  L96: LONG ( SIZEOF(.data.dtcm.at_mram)/4 )
+  L97: LONG ( LOADADDR(.data.sram0.at_mram) )
+  L98: LONG ( ADDR(.data.sram0.at_mram) )
+  L99: LONG ( SIZEOF(.data.sram0.at_mram)/4 )
+  L101: } > MRAM
+  L103: .zero.table.at_mram : ALIGN(4)
+  L106: LONG (ADDR(.bss.itcm))
+  L107: LONG (SIZEOF(.bss.itcm)/4)
+  L108: LONG (ADDR(.bss))
+  L109: LONG (SIZEOF(.bss)/4)
+  L110: LONG (ADDR(.bss.sram0))
+  L111: LONG (SIZEOF(.bss.sram0)/4)
+  L113: } > MRAM
+  L117: *(.bss.noinit.ram_vectors)
+  L120: .text.itcm.at_mram : ALIGN(8)
+  L125: } > ITCM AT> MRAM
+  L127: .data.dtcm.at_mram : ALIGN(8)
+  L131: *(.data)
+  L132: *(.data*)
+  L143: } > DTCM AT> MRAM
+  L145: /* Place non-zero code/data here if required in SRAM0 */
+  L146: .data.sram0.at_mram : ALIGN(8)
+  L149: } > SRAM0 AT> MRAM
+  L151: .bss.sram0 (NOLOAD) : ALIGN(8)
+  L153: * (.bss.large_ram)                     /* Large LVGL buffers */
+  L154: * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+  L155: * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+  L156: * (.bss.lcd_image_buf)
+  L157: * (.bss.NoInit.activation_buf_sram) /* 2MB */
+  L158: } > SRAM0
+  L160: .bss.itcm (NOLOAD) : ALIGN(8)
+  L168: * (.bss.lvgl_buf)
+  L169: * (.bss.d0_heap)
+  L174: .bss (NOLOAD) : ALIGN(8)
+  L177: *(.bss)
+  L178: *(.bss.*)
+  L188: . = . + __HEAP_SIZE;
+  L190: __HeapLimit = .;
+  L193: .stack (ORIGIN(DTCM) + LENGTH(DTCM) - __STACK_SIZE) (NOLOAD) : ALIGN(8)
+  L195: __StackLimit = .;
+  L196: . = . + __STACK_SIZE;
+  L198: __StackTop = .;
+  L200: PROVIDE(__stack = __StackTop);
+  L202: .readonly.at_mram : ALIGN(8)
+  L249: } > MRAM
+
+LINKER: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE.ld
+  L32: __STACK_SIZE = 0x00002000;
+  L33: __HEAP_SIZE  = 0x00008000;
+  L36: __OSPI_FLASH_BASE = 0xC0000000;
+  L37: __OSPI_FLASH_SIZE = 0x02000000;
+  L39: MEMORY
+  L41: ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+  L42: DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+  L43: SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+  L44: SRAM1 (rwx) : ORIGIN = 0x08000000, LENGTH = 0x00280000
+  L45: MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+  L46: OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+  L53: .startup.at_mram : ALIGN(16)
+  L55: /* MRAM has start-up code, and most constant data */
+  L90: } > MRAM
+  L92: .copy.table.at_mram : ALIGN(4)
+  L95: LONG ( LOADADDR(.text.itcm.at_mram) )
+  L96: LONG ( ADDR(.text.itcm.at_mram) )
+  L97: LONG ( SIZEOF(.text.itcm.at_mram)/4 )
+  L98: LONG ( LOADADDR(.data.dtcm.at_mram) )
+  L99: LONG ( ADDR(.data.dtcm.at_mram) )
+  L100: LONG ( SIZEOF(.data.dtcm.at_mram)/4 )
+  L101: LONG ( LOADADDR(.data.sram0.at_mram) )
+  L102: LONG ( ADDR(.data.sram0.at_mram) )
+  L103: LONG ( SIZEOF(.data.sram0.at_mram)/4 )
+  L105: } > MRAM
+  L107: .zero.table.at_mram : ALIGN(4)
+  L110: LONG (ADDR(.bss.itcm))
+  L111: LONG (SIZEOF(.bss.itcm)/4)
+  L112: LONG (ADDR(.bss))
+  L113: LONG (SIZEOF(.bss)/4)
+  L114: LONG (ADDR(.bss.sram0))
+  L115: LONG (SIZEOF(.bss.sram0)/4)
+  L116: LONG (ADDR(.bss.sram1))
+  L117: LONG (SIZEOF(.bss.sram1)/4)
+  L119: } > MRAM
+  L123: *(.bss.noinit.ram_vectors)
+  L126: .text.itcm.at_mram : ALIGN(8)
+  L131: } > ITCM AT> MRAM
+  L133: .data.dtcm.at_mram : ALIGN(8)
+  L137: *(.data)
+  L138: *(.data*)
+  L149: } > DTCM AT> MRAM
+  L151: /* Place non-zero code/data here if required in SRAM0 */
+  L152: .data.sram0.at_mram : ALIGN(8)
+  L155: } > SRAM0 AT> MRAM
+  L157: .bss.sram0 (NOLOAD) : ALIGN(8)
+  L159: * (.bss.large_ram)                     /* Large LVGL buffers */
+  L160: * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+  L161: * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+  L162: * (.bss.lcd_image_buf)
+  L163: } > SRAM0
+  L165: .bss.sram1 (NOLOAD) : ALIGN(8)
+  L167: * (.bss.NoInit.activation_buf_sram) /* 2MB */
+  L168: } > SRAM1
+  L170: .bss.itcm (NOLOAD) : ALIGN(8)
+  L178: * (.bss.lvgl_buf)
+  L179: * (.bss.d0_heap)
+  L184: .bss (NOLOAD) : ALIGN(8)
+  L187: *(.bss)
+  L188: *(.bss.*)
+  L198: . = . + __HEAP_SIZE;
+  L200: __HeapLimit = .;
+  L203: .stack (ORIGIN(DTCM) + LENGTH(DTCM) - __STACK_SIZE) (NOLOAD) : ALIGN(8)
+  L205: __StackLimit = .;
+  L206: . = . + __STACK_SIZE;
+  L208: __StackTop = .;
+  L210: PROVIDE(__stack = __StackTop);
+  L212: .readonly.at_mram : ALIGN(8)
+  L258: } > MRAM
+  L263: } > OSPI_FLASH
+
+LINKER: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-infrun.ld
+  L30: __STACK_SIZE = 0x00002000;
+  L31: __HEAP_SIZE  = 0x00008000;
+  L34: __OSPI_FLASH_BASE = 0xC0000000;
+  L35: __OSPI_FLASH_SIZE = 0x02000000;
+  L37: MEMORY
+  L39: ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+  L40: DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+  L41: SRAM0 (rwx) : ORIGIN = 0x02000000, LENGTH = 0x00400000
+  L42: SRAM1 (rwx) : ORIGIN = 0x08000000, LENGTH = 0x00280000
+  L43: MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+  L44: OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+  L51: .startup.at_mram : ALIGN(16)
+  L53: /* MRAM has all read-only code and data except fast LVGL code and some maths tables
+  L54: * This memory layout is a safe default for high-memory builds like the inference runner
+  L63: } > MRAM
+  L65: .copy.table.at_mram : ALIGN(4)
+  L68: LONG ( LOADADDR(.text.itcm.at_mram) )
+  L69: LONG ( ADDR(.text.itcm.at_mram) )
+  L70: LONG ( SIZEOF(.text.itcm.at_mram)/4 )
+  L71: LONG ( LOADADDR(.data.dtcm.at_mram) )
+  L72: LONG ( ADDR(.data.dtcm.at_mram) )
+  L73: LONG ( SIZEOF(.data.dtcm.at_mram)/4 )
+  L74: LONG ( LOADADDR(.data.sram0.at_mram) )
+  L75: LONG ( ADDR(.data.sram0.at_mram) )
+  L76: LONG ( SIZEOF(.data.sram0.at_mram)/4 )
+  L78: } > MRAM
+  L80: .zero.table.at_mram : ALIGN(4)
+  L83: LONG (ADDR(.bss.itcm))
+  L84: LONG (SIZEOF(.bss.itcm)/4)
+  L85: LONG (ADDR(.bss))
+  L86: LONG (SIZEOF(.bss)/4)
+  L87: LONG (ADDR(.bss.sram0))
+  L88: LONG (SIZEOF(.bss.sram0)/4)
+  L89: LONG (ADDR(.bss.sram1))
+  L90: LONG (SIZEOF(.bss.sram1)/4)
+  L92: } > MRAM
+  L96: *(.bss.noinit.ram_vectors)
+  L99: .text.itcm.at_mram : ALIGN(8)
+  L103: } > ITCM AT> MRAM
+  L105: .data.dtcm.at_mram : ALIGN(8)
+  L109: *(.data)
+  L110: *(.data*)
+  L114: } > DTCM AT> MRAM
+  L116: /* Place non-zero code/data here if required in SRAM0 */
+  L117: .data.sram0.at_mram : ALIGN(8)
+  L120: } > SRAM0 AT> MRAM
+  L122: .bss.sram0 (NOLOAD) : ALIGN(8)
+  L124: * (.bss.large_ram)                     /* Large LVGL buffers */
+  L125: * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+  L126: * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+  L127: * (.bss.lcd_image_buf)
+  L128: } > SRAM0
+  L130: .bss.sram1 (NOLOAD) : ALIGN(8)
+  L132: * (.bss.NoInit.activation_buf_sram) /* 2MB */
+  L133: } > SRAM1
+  L135: .bss.itcm (NOLOAD) : ALIGN(8)
+  L139: .bss (NOLOAD) : ALIGN(8)
+  L142: *(.bss)
+  L143: *(.bss.*)
+  L153: . = . + __HEAP_SIZE;
+  L155: __HeapLimit = .;
+  L158: .stack (ORIGIN(DTCM) + LENGTH(DTCM) - __STACK_SIZE) (NOLOAD) : ALIGN(8)
+  L160: __StackLimit = .;
+  L161: . = . + __STACK_SIZE;
+  L163: __StackTop = .;
+  L165: PROVIDE(__stack = __StackTop);
+  L167: .readonly.at_mram : ALIGN(8)
+  L223: } > MRAM
+  L228: } > OSPI_FLASH
+
+LINKER: /home/user/sdk-alif/modules/alif-mlek/scripts/cmake/platforms/alif/AE722F80F55D5/rtss_he/RTSS-HE-merged-SRAM.ld
+  L32: __STACK_SIZE = 0x00001800;
+  L33: __HEAP_SIZE  = 0x00008000;
+  L36: __OSPI_FLASH_BASE = 0xC0000000;
+  L37: __OSPI_FLASH_SIZE = 0x02000000;
+  L39: MEMORY
+  L41: ITCM  (rwx) : ORIGIN = 0x01000000, LENGTH = 0x00040000
+  L42: DTCM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+  L43: SRAM  (rwx) : ORIGIN = 0x30000000, LENGTH = 0x00680000 // Combined SRAM0+1 view from custom system package
+  L44: MRAM  (rx)  : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
+  L45: OSPI_FLASH (rx) : ORIGIN = __OSPI_FLASH_BASE, LENGTH = __OSPI_FLASH_SIZE
+  L52: .startup.at_mram : ALIGN(16)
+  L54: /* MRAM has start-up code, and most constant data */
+  L89: } > MRAM
+  L91: .copy.table.at_mram : ALIGN(4)
+  L94: LONG ( LOADADDR(.text.itcm.at_mram) )
+  L95: LONG ( ADDR(.text.itcm.at_mram) )
+  L96: LONG ( SIZEOF(.text.itcm.at_mram)/4 )
+  L97: LONG ( LOADADDR(.data.dtcm.at_mram) )
+  L98: LONG ( ADDR(.data.dtcm.at_mram) )
+  L99: LONG ( SIZEOF(.data.dtcm.at_mram)/4 )
+  L100: LONG ( LOADADDR(.data.sram.at_mram) )
+  L101: LONG ( ADDR(.data.sram.at_mram) )
+  L102: LONG ( SIZEOF(.data.sram.at_mram)/4 )
+  L104: } > MRAM
+  L106: .zero.table.at_mram : ALIGN(4)
+  L109: LONG (ADDR(.bss.itcm))
+  L110: LONG (SIZEOF(.bss.itcm)/4)
+  L111: LONG (ADDR(.bss))
+  L112: LONG (SIZEOF(.bss)/4)
+  L113: LONG (ADDR(.bss.sram))
+  L114: LONG (SIZEOF(.bss.sram)/4)
+  L116: } > MRAM
+  L120: *(.bss.noinit.ram_vectors)
+  L123: .text.itcm.at_mram : ALIGN(8)
+  L128: } > ITCM AT> MRAM
+  L130: .data.dtcm.at_mram : ALIGN(8)
+  L134: *(.data)
+  L135: *(.data*)
+  L136: *arm_common_tables.c.obj(.data* .rodata*)
+  L147: } > DTCM AT> MRAM
+  L149: /* Place non-zero code/data here if required in SRAM0 */
+  L150: .data.sram.at_mram : ALIGN(8)
+  L153: } > SRAM AT> MRAM
+  L155: .bss.sram (NOLOAD) : ALIGN(8)
+  L157: * (.bss.large_ram)                     /* Large LVGL buffers */
+  L158: * (.bss.camera_frame_buf)              /* Camera Frame Buffer */
+  L159: * (.bss.camera_frame_bayer_to_rgb_buf) /* (Optional) Camera Frame Buffer for Bayer to RGB Convertion.*/
+  L160: * (.bss.lcd_image_buf)
+  L161: * (.bss.NoInit.activation_buf_sram) /* 2MB */
+  L162: } > SRAM
+  L164: .bss.itcm (NOLOAD) : ALIGN(8)
+  L172: * (.bss.lvgl_buf)
+  L173: * (.bss.d0_heap)
+  L178: .bss (NOLOAD) : ALIGN(8)
+  L181: *(.bss)
+  L182: *(.bss.*)
+  L192: . = . + __HEAP_SIZE;
+  L194: __HeapLimit = .;
+  L197: .stack (ORIGIN(DTCM) + LENGTH(DTCM) - __STACK_SIZE) (NOLOAD) : ALIGN(8)
+  L199: __StackLimit = .;
+  L200: . = . + __STACK_SIZE;
+  L202: __StackTop = .;
+  L204: PROVIDE(__stack = __StackTop);
+  L206: .readonly.at_mram : ALIGN(8)
+  L253: } > MRAM
+  L258: } > OSPI_FLASH
+
+##############################################################################
+7. ALIF NPU MEMORY / U55 CONFIGURATION
+##############################################################################
+
+==============================================================================
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h
+==============================================================================
+   1: /*
+   2:  * SPDX-FileCopyrightText: Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+   3:  * SPDX-License-Identifier: Apache-2.0
+   4:  *
+   5:  * Licensed under the Apache License, Version 2.0 (the "License");
+   6:  * you may not use this file except in compliance with the License.
+   7:  * You may obtain a copy of the License at
+   8:  *
+   9:  *     http://www.apache.org/licenses/LICENSE-2.0
+  10:  *
+  11:  * Unless required by applicable law or agreed to in writing, software
+  12:  * distributed under the License is distributed on an "AS IS" BASIS,
+  13:  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  14:  * See the License for the specific language governing permissions and
+  15:  * limitations under the License.
+  16:  */
+  17: 
+  18: #ifndef ETHOS_U_NPU_MEM_CONFIG_H
+  19: #define ETHOS_U_NPU_MEM_CONFIG_H
+  20: 
+  21: #define ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY           0
+  22: #define ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM         1
+  23: #define ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM      2
+  24: 
+  25: #define ETHOS_U_MEM_BYTE_ALIGNMENT                  16
+  26: 
+  27: #ifndef ETHOS_U_NPU_MEMORY_MODE
+  28:     #define ETHOS_U_NPU_MEMORY_MODE                 ETHOS_U_MEMORY_MODE_SHARED_SRAM
+  29: #endif /* ETHOS_U_NPU_MEMORY_MODE */
+  30: 
+  31: #if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+  32:     #ifndef ETHOS_U_NPU_CACHE_SIZE
+  33:         #define ETHOS_U_CACHE_BUF_SZ                (393216U)  /* See vela doc for reference */
+  34:     #else
+  35:         #define ETHOS_U_CACHE_BUF_SZ                ETHOS_U_NPU_CACHE_SIZE
+  36:     #endif /* ETHOS_U_NPU_CACHE_SIZE */
+  37: #else
+  38:     #define ETHOS_U_CACHE_BUF_SZ    (0U)
+  39: #endif /* CACHE_BUF_SZ */
+  40: 
+  41: /**
+  42:  * Activation buffer aka tensor arena section name
+  43:  * We have to place the tensor arena in different region based on the memory config.
+  44:  **/
+  45: #if (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SHARED_SRAM)
+  46:     #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+  47:     #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+  48: #elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_SRAM_ONLY)
+  49:     #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_sram")
+  50:     #define ACTIVATION_BUF_SECTION_NAME ("SRAM")
+  51: #elif (ETHOS_U_NPU_MEMORY_MODE==ETHOS_U_NPU_MEMORY_MODE_DEDICATED_SRAM)
+  52:     #define ACTIVATION_BUF_SECTION      section(".bss.NoInit.activation_buf_dram")
+  53:     #define CACHE_BUF_SECTION           section(".bss.NoInit.ethos_u_cache")
+  54:     #define ACTIVATION_BUF_SECTION_NAME ("DDR/DRAM")
+  55:     #define CACHE_BUF_ATTRIBUTE         __attribute__((aligned(ETHOS_U_MEM_BYTE_ALIGNMENT), CACHE_BUF_SECTION))
+  56: #endif
+  57: 
+  58: #endif /* ETHOS_U_NPU_MEM_CONFIG_H */
+
+==============================================================================
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_config_u55.h
+==============================================================================
+   1: /*
+   2:  * Copyright (c) 2019-2020,2022 Arm Limited.
+   3:  *
+   4:  * SPDX-License-Identifier: Apache-2.0
+   5:  *
+   6:  * Licensed under the Apache License, Version 2.0 (the License); you may
+   7:  * not use this file except in compliance with the License.
+   8:  * You may obtain a copy of the License at
+   9:  *
+  10:  * www.apache.org/licenses/LICENSE-2.0
+  11:  *
+  12:  * Unless required by applicable law or agreed to in writing, software
+  13:  * distributed under the License is distributed on an AS IS BASIS, WITHOUT
+  14:  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  15:  * See the License for the specific language governing permissions and
+  16:  * limitations under the License.
+  17:  */
+  18: 
+  19: #ifndef ETHOSU_CONFIG_H
+  20: #define ETHOSU_CONFIG_H
+  21: 
+  22: /* Set default values if not manually overriden */
+  23: 
+  24: #ifndef NPU_QCONFIG
+  25: #define NPU_QCONFIG 2
+  26: #endif
+  27: 
+  28: #ifndef NPU_REGIONCFG_0
+  29: #define NPU_REGIONCFG_0 3
+  30: #endif
+  31: 
+  32: #ifndef NPU_REGIONCFG_1
+  33: #define NPU_REGIONCFG_1 0
+  34: #endif
+  35: 
+  36: #ifndef NPU_REGIONCFG_2
+  37: #define NPU_REGIONCFG_2 1
+  38: #endif
+  39: 
+  40: #ifndef NPU_REGIONCFG_3
+  41: #define NPU_REGIONCFG_3 1
+  42: #endif
+  43: 
+  44: #ifndef NPU_REGIONCFG_4
+  45: #define NPU_REGIONCFG_4 1
+  46: #endif
+  47: 
+  48: #ifndef NPU_REGIONCFG_5
+  49: #define NPU_REGIONCFG_5 1
+  50: #endif
+  51: 
+  52: #ifndef NPU_REGIONCFG_6
+  53: #define NPU_REGIONCFG_6 1
+  54: #endif
+  55: 
+  56: #ifndef NPU_REGIONCFG_7
+  57: #define NPU_REGIONCFG_7 1
+  58: #endif
+  59: 
+  60: #ifndef AXI_LIMIT0_MAX_BEATS_BYTES
+  61: #define AXI_LIMIT0_MAX_BEATS_BYTES 0x0
+  62: #endif
+  63: 
+  64: #ifndef AXI_LIMIT0_MEM_TYPE
+  65: #define AXI_LIMIT0_MEM_TYPE 0x0
+  66: #endif
+  67: 
+  68: #ifndef AXI_LIMIT0_MAX_OUTSTANDING_READS
+  69: #define AXI_LIMIT0_MAX_OUTSTANDING_READS 32
+  70: #endif
+  71: 
+  72: #ifndef AXI_LIMIT0_MAX_OUTSTANDING_WRITES
+  73: #define AXI_LIMIT0_MAX_OUTSTANDING_WRITES 16
+  74: #endif
+  75: 
+  76: #ifndef AXI_LIMIT1_MAX_BEATS_BYTES
+  77: #define AXI_LIMIT1_MAX_BEATS_BYTES 0x0
+  78: #endif
+  79: 
+  80: #ifndef AXI_LIMIT1_MEM_TYPE
+  81: #define AXI_LIMIT1_MEM_TYPE 0x0
+  82: #endif
+  83: 
+  84: #ifndef AXI_LIMIT1_MAX_OUTSTANDING_READS
+  85: #define AXI_LIMIT1_MAX_OUTSTANDING_READS 32
+  86: #endif
+  87: 
+  88: #ifndef AXI_LIMIT1_MAX_OUTSTANDING_WRITES
+  89: #define AXI_LIMIT1_MAX_OUTSTANDING_WRITES 16
+  90: #endif
+  91: 
+  92: #ifndef AXI_LIMIT2_MAX_BEATS_BYTES
+  93: #define AXI_LIMIT2_MAX_BEATS_BYTES 0x0
+  94: #endif
+  95: 
+  96: #ifndef AXI_LIMIT2_MEM_TYPE
+  97: #define AXI_LIMIT2_MEM_TYPE 0x0
+  98: #endif
+  99: 
+ 100: #ifndef AXI_LIMIT2_MAX_OUTSTANDING_READS
+ 101: #define AXI_LIMIT2_MAX_OUTSTANDING_READS 32
+ 102: #endif
+ 103: 
+ 104: #ifndef AXI_LIMIT2_MAX_OUTSTANDING_WRITES
+ 105: #define AXI_LIMIT2_MAX_OUTSTANDING_WRITES 16
+ 106: #endif
+ 107: 
+ 108: #ifndef AXI_LIMIT3_MAX_BEATS_BYTES
+ 109: #define AXI_LIMIT3_MAX_BEATS_BYTES 0x0
+ 110: #endif
+ 111: 
+ 112: #ifndef AXI_LIMIT3_MEM_TYPE
+ 113: #define AXI_LIMIT3_MEM_TYPE 0x0
+ 114: #endif
+ 115: 
+ 116: #ifndef AXI_LIMIT3_MAX_OUTSTANDING_READS
+ 117: #define AXI_LIMIT3_MAX_OUTSTANDING_READS 32
+ 118: #endif
+ 119: 
+ 120: #ifndef AXI_LIMIT3_MAX_OUTSTANDING_WRITES
+ 121: #define AXI_LIMIT3_MAX_OUTSTANDING_WRITES 16
+ 122: #endif
+ 123: 
+ 124: #endif /* #ifndef ETHOSU_CONFIG_H */
+
+==============================================================================
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c
+==============================================================================
+   1: /*
+   2:  * SPDX-FileCopyrightText: Copyright 2019-2025 Arm Limited and/or its affiliates <open-source-office@arm.com>
+   3:  * SPDX-FileCopyrightText: Copyright 2025 Alif Semiconductor
+   4:  * SPDX-License-Identifier: Apache-2.0
+   5:  *
+   6:  * Licensed under the Apache License, Version 2.0 (the License); you may
+   7:  * not use this file except in compliance with the License.
+   8:  * You may obtain a copy of the License at
+   9:  *
+  10:  * www.apache.org/licenses/LICENSE-2.0
+  11:  *
+  12:  * Unless required by applicable law or agreed to in writing, software
+  13:  * distributed under the License is distributed on an AS IS BASIS, WITHOUT
+  14:  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  15:  * See the License for the specific language governing permissions and
+  16:  * limitations under the License.
+  17:  */
+  18: 
+  19: /******************************************************************************
+  20:  * Includes
+  21:  ******************************************************************************/
+  22: 
+  23: #include "ethosu_interface.h"
+  24: 
+  25: #include "ethosu_device.h"
+  26: #include "ethosu_log.h"
+  27: 
+  28: #ifdef ETHOSU55
+  29: #include "ethosu_config_u55.h"
+  30: #else
+  31: #include "ethosu_config_u65.h"
+  32: #endif
+  33: 
+  34: #include <assert.h>
+  35: #include <inttypes.h>
+  36: #include <stdbool.h>
+  37: #include <stddef.h>
+  38: #include <stdio.h>
+  39: #include <stdlib.h>
+  40: 
+  41: /******************************************************************************
+  42:  * Defines
+  43:  ******************************************************************************/
+  44: 
+  45: #define ETHOSU_PRODUCT_U55 0
+  46: #define ETHOSU_PRODUCT_U65 1
+  47: 
+  48: #define BASEP_OFFSET 4
+  49: 
+  50: #ifdef ETHOSU65
+  51: #define ADDRESS_BITS 40
+  52: #else
+  53: #define ADDRESS_BITS 32
+  54: #endif
+  55: 
+  56: #define ADDRESS_MASK ((1ull << ADDRESS_BITS) - 1)
+  57: 
+  58: #define NPU_CMD_PWR_CLK_MASK (0xC)
+  59: 
+  60: /******************************************************************************
+  61:  * Functions
+  62:  ******************************************************************************/
+  63: 
+  64: uint64_t __attribute__((weak)) ethosu_address_remap(uint64_t address, int index)
+  65: {
+  66:     (void)(index);
+  67:     return address;
+  68: }
+  69: 
+  70: unsigned int __attribute__((weak)) ethosu_config_select(uint64_t address, int index)
+  71: {
+  72:     (void)(address);
+  73:     assert(index >= -1 && index <= 7);
+  74:     switch (index)
+  75:     {
+  76:     case -1:
+  77:         return NPU_QCONFIG;
+  78:     default:
+  79:     case 0:
+  80:         return NPU_REGIONCFG_0;
+  81:     case 1:
+  82:         return NPU_REGIONCFG_1;
+  83:     case 2:
+  84:         return NPU_REGIONCFG_2;
+  85:     case 3:
+  86:         return NPU_REGIONCFG_3;
+  87:     case 4:
+  88:         return NPU_REGIONCFG_4;
+  89:     case 5:
+  90:         return NPU_REGIONCFG_5;
+  91:     case 6:
+  92:         return NPU_REGIONCFG_6;
+  93:     case 7:
+  94:         return NPU_REGIONCFG_7;
+  95:     }
+  96: }
+  97: 
+  98: bool ethosu_dev_init(struct ethosu_device *dev, void *base_address, uint32_t secure_enable, uint32_t privilege_enable)
+  99: {
+ 100:     dev->reg        = (volatile struct NPU_REG *)base_address;
+ 101:     dev->secure     = secure_enable;
+ 102:     dev->privileged = privilege_enable;
+ 103: 
+ 104: #ifdef ETHOSU55
+ 105:     if (dev->reg->CONFIG.product != ETHOSU_PRODUCT_U55)
+ 106: #else
+ 107:     if (dev->reg->CONFIG.product != ETHOSU_PRODUCT_U65)
+ 108: #endif
+ 109:     {
+ 110:         LOG_ERR("Failed to initialize device. Driver has not been compiled for this product");
+ 111:         return false;
+ 112:     }
+ 113: 
+ 114:     // Make sure the NPU is in a known state
+ 115:     if (ethosu_dev_soft_reset(dev) != ETHOSU_SUCCESS)
+ 116:     {
+ 117:         return false;
+ 118:     }
+ 119: 
+ 120:     return true;
+ 121: }
+ 122: 
+ 123: enum ethosu_error_codes ethosu_dev_axi_init(struct ethosu_device *dev)
+ 124: {
+ 125:     struct axi_limit0_r l0 = {0};
+ 126:     struct axi_limit1_r l1 = {0};
+ 127:     struct axi_limit2_r l2 = {0};
+ 128:     struct axi_limit3_r l3 = {0};
+ 129: 
+ 130:     l0.max_beats                = AXI_LIMIT0_MAX_BEATS_BYTES;
+ 131:     l0.memtype                  = AXI_LIMIT0_MEM_TYPE;
+ 132:     l0.max_outstanding_read_m1  = AXI_LIMIT0_MAX_OUTSTANDING_READS - 1;
+ 133:     l0.max_outstanding_write_m1 = AXI_LIMIT0_MAX_OUTSTANDING_WRITES - 1;
+ 134: 
+ 135:     l1.max_beats                = AXI_LIMIT1_MAX_BEATS_BYTES;
+ 136:     l1.memtype                  = AXI_LIMIT1_MEM_TYPE;
+ 137:     l1.max_outstanding_read_m1  = AXI_LIMIT1_MAX_OUTSTANDING_READS - 1;
+ 138:     l1.max_outstanding_write_m1 = AXI_LIMIT1_MAX_OUTSTANDING_WRITES - 1;
+ 139: 
+ 140:     l2.max_beats                = AXI_LIMIT2_MAX_BEATS_BYTES;
+ 141:     l2.memtype                  = AXI_LIMIT2_MEM_TYPE;
+ 142:     l2.max_outstanding_read_m1  = AXI_LIMIT2_MAX_OUTSTANDING_READS - 1;
+ 143:     l2.max_outstanding_write_m1 = AXI_LIMIT2_MAX_OUTSTANDING_WRITES - 1;
+ 144: 
+ 145:     l3.max_beats                = AXI_LIMIT3_MAX_BEATS_BYTES;
+ 146:     l3.memtype                  = AXI_LIMIT3_MEM_TYPE;
+ 147:     l3.max_outstanding_read_m1  = AXI_LIMIT3_MAX_OUTSTANDING_READS - 1;
+ 148:     l3.max_outstanding_write_m1 = AXI_LIMIT3_MAX_OUTSTANDING_WRITES - 1;
+ 149: 
+ 150:     dev->reg->AXI_LIMIT0.word = l0.word;
+ 151:     dev->reg->AXI_LIMIT1.word = l1.word;
+ 152:     dev->reg->AXI_LIMIT2.word = l2.word;
+ 153:     dev->reg->AXI_LIMIT3.word = l3.word;
+ 154: 
+ 155:     return ETHOSU_SUCCESS;
+ 156: }
+ 157: 
+ 158: void ethosu_dev_run_command_stream(struct ethosu_device *dev,
+ 159:                                    const uint8_t *cmd_stream_ptr,
+ 160:                                    uint32_t cms_length,
+ 161:                                    const uint64_t *base_addr,
+ 162:                                    int num_base_addr)
+ 163: {
+ 164:     assert(num_base_addr <= NPU_REG_BASEP_ARRLEN);
+ 165: 
+ 166:     struct cmd_r cmd;
+ 167:     struct regioncfg_r rcfg = {0};
+ 168:     uint64_t qbase          = ethosu_address_remap((uintptr_t)cmd_stream_ptr, -1);
+ 169:     assert(qbase <= ADDRESS_MASK);
+ 170:     LOG_DEBUG("QBASE=0x%016llx, QSIZE=%" PRIu32 ", cmd_stream_ptr=%p", qbase, cms_length, cmd_stream_ptr);
+ 171: 
+ 172:     dev->reg->QBASE.word[0] = qbase & 0xffffffff;
+ 173: #ifdef ETHOSU65
+ 174:     dev->reg->QBASE.word[1] = qbase >> 32;
+ 175: #endif
+ 176:     dev->reg->QSIZE.word   = cms_length;
+ 177:     dev->reg->QCONFIG.word = ethosu_config_select(qbase, -1);
+ 178: 
+ 179:     for (int i = 0; i < num_base_addr; i++)
+ 180:     {
+ 181:         uint64_t addr = ethosu_address_remap(base_addr[i], i);
+ 182:         assert(addr <= ADDRESS_MASK);
+ 183:         LOG_DEBUG("BASEP%d=0x%016llx", i, addr);
+ 184:         dev->reg->BASEP[i].word[0] = addr & 0xffffffff;
+ 185: #ifdef ETHOSU65
+ 186:         dev->reg->BASEP[i].word[1] = addr >> 32;
+ 187: #endif
+ 188:         rcfg.word |= ethosu_config_select(addr, i) << (i * 2);
+ 189:     }
+ 190: 
+ 191:     dev->reg->REGIONCFG.word = rcfg.word;
+ 192: 
+ 193:     cmd.word                        = dev->reg->CMD.word & NPU_CMD_PWR_CLK_MASK;
+ 194:     cmd.transition_to_running_state = 1;
+ 195: 
+ 196:     dev->reg->CMD.word = cmd.word;
+ 197:     LOG_DEBUG("CMD=0x%08" PRIx32, cmd.word);
+ 198: }
+ 199: 
+ 200: void ethosu_dev_print_err_status(struct ethosu_device *dev)
+ 201: {
+ 202:     LOG_ERR("NPU status=0x%08" PRIx32 ", qread=%" PRIu32 ", cmd_end_reached=%u",
+ 203:             dev->reg->STATUS.word,
+ 204:             dev->reg->QREAD.word,
+ 205:             dev->reg->STATUS.cmd_end_reached);
+ 206: }
+ 207: 
+ 208: bool ethosu_dev_handle_interrupt(struct ethosu_device *dev)
+ 209: {
+ 210:     struct cmd_r cmd;
+ 211: 
+ 212:     // Clear interrupt
+ 213:     cmd.word           = dev->reg->CMD.word & NPU_CMD_PWR_CLK_MASK;
+ 214:     cmd.clear_irq      = 1;
+ 215:     dev->reg->CMD.word = cmd.word;
+ 216: 
+ 217:     // If a fault has occured, the NPU needs to be reset
+ 218:     if (dev->reg->STATUS.bus_status || dev->reg->STATUS.cmd_parse_error || dev->reg->STATUS.wd_fault ||
+ 219:         dev->reg->STATUS.ecc_fault || !dev->reg->STATUS.cmd_end_reached)
+ 220:     {
+... truncated after 220 lines
+
+==============================================================================
+FINAL FOCUSED AUDIT SUMMARY
+==============================================================================
+Known-good build exists: True
+Kernel source reviewed: True
+Allocator source files reviewed: 6
+Application arena source matches: 0
+Scratch-fast references found: 15
+E8 linker script variants read: 4
+Result: REVIEW_REQUIRED
+Warnings:
+  WARNING: Kernel contains at least two scratch requests. Check whether both are enabled for Ethos-U55.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: Application source scan hit 8000-file cap.
+  WARNING: No application tensor arena declaration was found in the scanned source directories.
+
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/tflm_scratch_linker_audit_20261123_135744/tflm_scratch_linker_report.json
+FOCUSED_TFLM_SCRATCH_LINKER_AUDIT_COMPLETE
