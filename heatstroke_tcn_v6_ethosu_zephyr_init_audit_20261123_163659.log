@@ -1,0 +1,889 @@
+============================================================
+TCN V6 ETHOS-U ZEPHYR INITIALIZATION AUDIT
+============================================================
+DATE=2026-11-23T16:36:59+08:00
+SDK=/home/user/sdk-alif
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_zephyr_init_audit_20261123_163659.log
+
+========== WORKSPACE ==========
+/home/user/sdk-alif
+ZEPHYR_PROJECT_PATH=/home/user/sdk-alif/zephyr
+ZEPHYR_ROOT=/home/user/sdk-alif/zephyr
+
+========== ETHOS-U DRIVER SOURCE FILES ==========
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+
+ETHOS_U_DRIVER_DIRECTORY=/home/user/sdk-alif/zephyr/drivers/misc/ethos_u
+
+----- /home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt -----
+     1	# Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	#
+     3	# SPDX-License-Identifier: Apache-2.0
+     4	
+     5	# Compile driver only if there are enabled Ethos-U devices in the device tree
+     6	# Zephyr auto-generates CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED when device tree has
+     7	# a node with compatible="arm,ethos-u" and status="okay"
+     8	if(CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED)
+     9	  zephyr_library()
+    10	  zephyr_library_sources(ethos_u.c)
+    11	  # Expose the Ethos-U core driver's private headers (src/) to this library
+    12	  # only, so device-layer APIs such as ethosu_dev_set_clock_and_power() can be
+    13	  # used for power management.
+    14	  zephyr_library_include_directories(${ZEPHYR_HAL_ETHOS_U_MODULE_DIR}/src)
+    15	endif()
+
+========== ALL ETHOS-U INIT CALL SITES ==========
+
+----- SEARCH: /home/user/sdk-alif/zephyr -----
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_gpio_monitor.c:150:DT_INST_FOREACH_STATUS_OKAY(POWER_DOMAIN_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_soc_state_change.c:117:DT_INST_FOREACH_STATUS_OKAY(POWER_DOMAIN_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_gpio.c:141:DT_INST_FOREACH_STATUS_OKAY(POWER_DOMAIN_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_nxp_scu.c:88:DT_INST_FOREACH_STATUS_OKAY(SCU_PD_DEVICE_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_alif.c:258:DT_INST_FOREACH_STATUS_OKAY(ALIF_POWER_DOMAIN_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/power_domain/power_domain_intel_adsp.c:106:DT_INST_FOREACH_STATUS_OKAY(POWER_DOMAIN_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/espi/espi_saf_mchp_xec_v2.c:1175:DT_INST_FOREACH_STATUS_OKAY(ESPI_SAF_XEC_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/espi/espi_emul.c:245:DT_INST_FOREACH_STATUS_OKAY(ESPI_EMUL_INIT)
+/home/user/sdk-alif/zephyr/drivers/led_strip/ws2812_gpio.c:244:DT_INST_FOREACH_STATUS_OKAY(WS2812_GPIO_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/led_strip/ws2812_rpi_pico_pio.c:252:DT_INST_FOREACH_STATUS_OKAY(WS2812_RPI_PICO_PIO_INIT)
+/home/user/sdk-alif/zephyr/drivers/led_strip/tlc59731.c:189:DT_INST_FOREACH_STATUS_OKAY(TLC59731_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/led_strip/ws2812_spi.c:227:DT_INST_FOREACH_STATUS_OKAY(WS2812_SPI_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/led_strip/ws2812_i2s.c:250:DT_INST_FOREACH_STATUS_OKAY(WS2812_I2S_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/led_strip/apa102.c:135:DT_INST_FOREACH_STATUS_OKAY(APA102_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/led_strip/tlc5971.c:352:DT_INST_FOREACH_STATUS_OKAY(TLC5971_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_mb85rsxx.c:318:DT_INST_FOREACH_STATUS_OKAY(MB85RSXX_INIT)
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_at2x_emul.c:167:DT_INST_FOREACH_STATUS_OKAY(EEPROM_AT24_EMUL)
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_tmp116.c:70:DT_INST_FOREACH_STATUS_OKAY(DEFINE_TMP116);
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_mb85rcxx.c:233:DT_INST_FOREACH_STATUS_OKAY(MB85RCXX_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_fake.c:78:DT_INST_FOREACH_STATUS_OKAY(FAKE_EEPROM_INIT)
+/home/user/sdk-alif/zephyr/drivers/eeprom/eeprom_emulator.c:808:DT_INST_FOREACH_STATUS_OKAY(EEPROM_EMU_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_adsp_hda_link_in.c:47:DT_INST_FOREACH_STATUS_OKAY(INTEL_ADSP_HDA_DMA_LINK_IN_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_lpss.c:172:DT_INST_FOREACH_STATUS_OKAY(DMA_INTEL_LPSS_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_smartbond.c:1048:DT_INST_FOREACH_STATUS_OKAY(SMARTBOND_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_ifx_cat1.c:749:DT_INST_FOREACH_STATUS_OKAY(INFINEON_CAT1_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_rpi_pico.c:387:DT_INST_FOREACH_STATUS_OKAY(RPI_PICO_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_stm32.c:164:	DT_INST_FOREACH_STATUS_OKAY(HANDLE_IRQS)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_stm32u5.c:824:DT_INST_FOREACH_STATUS_OKAY(DMA_STM32_INIT_DEV)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_xilinx_axi_dma.c:1128:DT_INST_FOREACH_STATUS_OKAY(XILINX_AXI_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_xilinx_axi_dma.c:1132:DT_INST_FOREACH_STATUS_OKAY(XILINX_AXI_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_adsp_gpdma.c:563:DT_INST_FOREACH_STATUS_OKAY(INTEL_ADSP_GPDMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dmamux_stm32.c:398:DT_INST_FOREACH_STATUS_OKAY(DMAMUX_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_adsp_hda_host_out.c:60:DT_INST_FOREACH_STATUS_OKAY(INTEL_ADSP_HDA_DMA_HOST_OUT_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mcux_pxp.c:224:DT_INST_FOREACH_STATUS_OKAY(DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_xmc4xxx.c:671:DT_INST_FOREACH_STATUS_OKAY(XMC4XXX_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:1227:DT_INST_FOREACH_STATUS_OKAY(DMAC_PL330_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_nxp_sdma.c:484:DT_INST_FOREACH_STATUS_OKAY(DMA_NXP_SDMA_INIT);
+/home/user/sdk-alif/zephyr/drivers/dma/dma_emul.c:612:DT_INST_FOREACH_STATUS_OKAY(DEFINE_DMA_EMUL)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_esp32_gdma.c:707:DT_INST_FOREACH_STATUS_OKAY(DMA_ESP32_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_adsp_hda_link_out.c:47:DT_INST_FOREACH_STATUS_OKAY(INTEL_ADSP_HDA_DMA_LINK_OUT_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_silabs_siwx91x.c:461:DT_INST_FOREACH_STATUS_OKAY(SIWX91X_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_andes_atcdmac300.c:535:DT_INST_FOREACH_STATUS_OKAY(ATCDMAC300_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_silabs_ldma.c:618:DT_INST_FOREACH_STATUS_OKAY(DMA_SILABS_LDMA_INIT);
+/home/user/sdk-alif/zephyr/drivers/dma/dma_alif_event_router.c:552:DT_INST_FOREACH_STATUS_OKAY(DMA_ALIF_EVTRTR_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mcux_smartdma.c:162:DT_INST_FOREACH_STATUS_OKAY(SMARTDMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_max32.c:353:DT_INST_FOREACH_STATUS_OKAY(MAX32_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_dw.c:124:DT_INST_FOREACH_STATUS_OKAY(DW_DMAC_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_sedi.c:392:DT_INST_FOREACH_STATUS_OKAY(DMA_DEVICE_INIT_SEDI)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mchp_xec.c:842:DT_INST_FOREACH_STATUS_OKAY(DMA_XEC_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mcux_edma.c:31:#define DMA_MCUX_HAS_CHANNEL_GAP	(DT_INST_FOREACH_STATUS_OKAY(HAS_CHANNEL_GAP) 0)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mcux_edma.c:996:DT_INST_FOREACH_STATUS_OKAY(DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_intel_adsp_hda_host_in.c:56:DT_INST_FOREACH_STATUS_OKAY(INTEL_ADSP_HDA_DMA_HOST_IN_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_dw_axi.c:912:DT_INST_FOREACH_STATUS_OKAY(DW_AXI_DMAC_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_nxp_edma.c:776:DT_INST_FOREACH_STATUS_OKAY(EDMA_INIT);
+/home/user/sdk-alif/zephyr/drivers/dma/dma_gd32.c:704:DT_INST_FOREACH_STATUS_OKAY(GD32_DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_mcux_lpc.c:926:DT_INST_FOREACH_STATUS_OKAY(DMA_INIT)
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_cdns.c:3679:DT_INST_FOREACH_STATUS_OKAY(CADENCE_I3C_INSTANTIATE)
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_mcux.c:2167:DT_INST_FOREACH_STATUS_OKAY(I3C_MCUX_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_dw.c:2862:DT_INST_FOREACH_STATUS_OKAY(DEFINE_DEVICE_FN);
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_npcx.c:3049:DT_INST_FOREACH_STATUS_OKAY(I3C_NPCX_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_test.c:47:DT_INST_FOREACH_STATUS_OKAY(VND_I3C_INIT)
+/home/user/sdk-alif/zephyr/drivers/i3c/i3c_stm32.c:2210:DT_INST_FOREACH_STATUS_OKAY(I3C_STM32_INIT)
+/home/user/sdk-alif/zephyr/drivers/fpga/fpga_altera_agilex_bridge.c:482:DT_INST_FOREACH_STATUS_OKAY(CREATE_ALTERA_FPGA_BRIDGE_DEV);
+/home/user/sdk-alif/zephyr/drivers/fpga/fpga_ice40_spi.c:188:DT_INST_FOREACH_STATUS_OKAY(FPGA_ICE40_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/fpga/fpga_ice40_bitbang.c:278:DT_INST_FOREACH_STATUS_OKAY(FPGA_ICE40_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/fpga/fpga_slg471x5.c:195:DT_INST_FOREACH_STATUS_OKAY(SLG47105_INIT)
+/home/user/sdk-alif/zephyr/drivers/fpga/fpga_slg471x5.c:207:DT_INST_FOREACH_STATUS_OKAY(SLG47115_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_nrfx_adc.c:311:DT_INST_FOREACH_STATUS_OKAY(ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_tla202x.c:455:DT_INST_FOREACH_STATUS_OKAY_VARGS(TLA202X_INIT, tla2021, ADC_TLA2021_PGA, ADC_TLA2021_CHANNELS)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_tla202x.c:460:DT_INST_FOREACH_STATUS_OKAY_VARGS(TLA202X_INIT, tla2022, ADC_TLA2022_PGA, ADC_TLA2022_CHANNELS)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_tla202x.c:465:DT_INST_FOREACH_STATUS_OKAY_VARGS(TLA202X_INIT, tla2024, ADC_TLA2024_PGA, ADC_TLA2024_CHANNELS)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_renesas_ra.c:398:DT_INST_FOREACH_STATUS_OKAY(ADC_RA_INIT);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads7052.c:314:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS7052_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_esp32.c:774:DT_INST_FOREACH_STATUS_OKAY(ESP32_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/iadc_gecko.c:428:DT_INST_FOREACH_STATUS_OKAY(GECKO_IADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_xmc4xxx.c:342:DT_INST_FOREACH_STATUS_OKAY(ADC_XMC4XXX_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_mcux_gau_adc.c:392:DT_INST_FOREACH_STATUS_OKAY(GAU_ADC_MCUX_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_vf610.c:275:DT_INST_FOREACH_STATUS_OKAY(VF610_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_npcx.c:875:DT_INST_FOREACH_STATUS_OKAY(NPCX_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:100:	(DT_INST_FOREACH_STATUS_OKAY_VARGS(IS_EQ_PROP_OR, \
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:105:	(DT_INST_FOREACH_STATUS_OKAY_VARGS(IS_EQ_STRING_PROP, \
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:110:	(DT_INST_FOREACH_STATUS_OKAY_VARGS(IS_EQ_STRING_PROP, \
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:1860:	GET_ARG_N(1, LIST_DROP_EMPTY(DT_INST_FOREACH_STATUS_OKAY_VARGS(FIRST_WITH_IRQN_INTERNAL,   \
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:1892:		DT_INST_FOREACH_STATUS_OKAY_VARGS(HANDLE_IRQS, DT_INST_IRQN(index))                \
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:1911:DT_INST_FOREACH_STATUS_OKAY(GENERATE_ISR)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_stm32.c:1967:DT_INST_FOREACH_STATUS_OKAY(ADC_STM32_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_numaker.c:405:DT_INST_FOREACH_STATUS_OKAY(ADC_NUMAKER_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_smartbond_sdadc.c:437:DT_INST_FOREACH_STATUS_OKAY(SDADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_nxp_s32_adc_sar.c:458:DT_INST_FOREACH_STATUS_OKAY(ADC_NXP_S32_INIT_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_gd32.c:434:	DT_INST_FOREACH_STATUS_OKAY_VARGS(HANDLE_SHARED_IRQ, (cfg->irq_num));
+/home/user/sdk-alif/zephyr/drivers/adc/adc_gd32.c:507:DT_INST_FOREACH_STATUS_OKAY(ADC_GD32_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ltc2451.c:105:DT_INST_FOREACH_STATUS_OKAY(LTC2451_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_emul.c:655:DT_INST_FOREACH_STATUS_OKAY(ADC_EMUL_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_mcux_adc12.c:323:DT_INST_FOREACH_STATUS_OKAY(ACD12_MCUX_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_sam.c:419:DT_INST_FOREACH_STATUS_OKAY(ADC_SAM_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ad7124.c:1377:DT_INST_FOREACH_STATUS_OKAY(ADC_AD7124_INST_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max1125x.c:858:DT_INST_FOREACH_STATUS_OKAY(MAX11253_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max1125x.c:868:DT_INST_FOREACH_STATUS_OKAY(MAX11254_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_mcux_lpadc.c:608:DT_INST_FOREACH_STATUS_OKAY(LPADC_MCUX_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1088:DT_INST_FOREACH_STATUS_OKAY(LMP90077_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1096:DT_INST_FOREACH_STATUS_OKAY(LMP90078_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1104:DT_INST_FOREACH_STATUS_OKAY(LMP90079_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1112:DT_INST_FOREACH_STATUS_OKAY(LMP90080_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1120:DT_INST_FOREACH_STATUS_OKAY(LMP90097_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1128:DT_INST_FOREACH_STATUS_OKAY(LMP90098_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1136:DT_INST_FOREACH_STATUS_OKAY(LMP90099_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_lmp90xxx.c:1144:DT_INST_FOREACH_STATUS_OKAY(LMP90100_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_alif.c:1296:DT_INST_FOREACH_STATUS_OKAY(ADC_ALIF_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ad559x.c:320:DT_INST_FOREACH_STATUS_OKAY(ADC_AD559X_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_gecko.c:315:DT_INST_FOREACH_STATUS_OKAY(GECKO_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_cc32xx.c:328:DT_INST_FOREACH_STATUS_OKAY(cc32xx_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:849:DT_INST_FOREACH_STATUS_OKAY(ADS1115_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:857:DT_INST_FOREACH_STATUS_OKAY(ADS1114_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:866:DT_INST_FOREACH_STATUS_OKAY(ADS1113_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:892:DT_INST_FOREACH_STATUS_OKAY(ADS1015_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:900:DT_INST_FOREACH_STATUS_OKAY(ADS1014_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x1x.c:909:DT_INST_FOREACH_STATUS_OKAY(ADS1013_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ene_kb1200.c:259:DT_INST_FOREACH_STATUS_OKAY(ADC_KB1200_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max32.c:340:DT_INST_FOREACH_STATUS_OKAY(MAX32_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ad4114.c:452:DT_INST_FOREACH_STATUS_OKAY(ADC_AD4114_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:421:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:428:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:435:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:442:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:449:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:456:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:463:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:470:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_max11102_17.c:477:DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_MAX11102_17_INST_DEFINE, DT_DRV_COMPAT,
+/home/user/sdk-alif/zephyr/drivers/adc/adc_cc13xx_cc26xx.c:311:DT_INST_FOREACH_STATUS_OKAY(CC13XX_CC26XX_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_nrfx_saadc.c:737:DT_INST_FOREACH_STATUS_OKAY(SAADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ambiq.c:439:DT_INST_FOREACH_STATUS_OKAY(ADC_AMBIQ_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads131m02.c:733:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS131M02_INST_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_mcux_12b1msps_sar.c:319:DT_INST_FOREACH_STATUS_OKAY(ACD_MCUX_12B1MSPS_SAR_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_smartbond_gpadc.c:432:DT_INST_FOREACH_STATUS_OKAY(ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ifx_cat1.c:339:DT_INST_FOREACH_STATUS_OKAY(INFINEON_CAT1_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_mcux_adc16.c:505:DT_INST_FOREACH_STATUS_OKAY(ACD16_MCUX_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_test.c:54:DT_INST_FOREACH_STATUS_OKAY(VND_ADC_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_sam0.c:596:DT_INST_FOREACH_STATUS_OKAY(ADC_SAM0_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x4s0x.c:1600:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS114S06_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x4s0x.c:1610:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS114S08_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x4s0x.c:1620:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS124S06_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1x4s0x.c:1630:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS124S08_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_sam_afec.c:397:DT_INST_FOREACH_STATUS_OKAY(ADC_SAM_INIT)
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1112.c:393:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS1112_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_rpi_pico.c:384:DT_INST_FOREACH_STATUS_OKAY(ADC_RPI_INIT);
+/home/user/sdk-alif/zephyr/drivers/adc/adc_ads1119.c:507:DT_INST_FOREACH_STATUS_OKAY(ADC_ADS1119_INST_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/virtualization/virt_ivshmem.c:595:DT_INST_FOREACH_STATUS_OKAY(IVSHMEM_DEVICE_INIT)
+/home/user/sdk-alif/zephyr/drivers/disk/ramdisk.c:175:DT_INST_FOREACH_STATUS_OKAY(RAMDISK_DEVICE_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/disk/nvme/nvme_controller.c:490:DT_INST_FOREACH_STATUS_OKAY(NVME_CONTROLLER_DEVICE_INIT)
+/home/user/sdk-alif/zephyr/drivers/disk/mmc_subsys.c:146:DT_INST_FOREACH_STATUS_OKAY(DISK_ACCESS_MMC_INIT)
+/home/user/sdk-alif/zephyr/drivers/disk/flashdisk.c:480:DT_INST_FOREACH_STATUS_OKAY(DEFINE_FLASHDISKS_CACHE)
+/home/user/sdk-alif/zephyr/drivers/disk/flashdisk.c:497:	DT_INST_FOREACH_STATUS_OKAY(DEFINE_FLASHDISKS_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/disk/flashdisk.c:506:DT_INST_FOREACH_STATUS_OKAY(VERIFY_CACHE_SIZE_IS_NOT_ZERO_IF_NOT_READ_ONLY)
+/home/user/sdk-alif/zephyr/drivers/disk/flashdisk.c:512:DT_INST_FOREACH_STATUS_OKAY(VERIFY_CACHE_SIZE_IS_MULTIPLY_OF_SECTOR_SIZE)
+/home/user/sdk-alif/zephyr/drivers/disk/sdmmc_subsys.c:145:DT_INST_FOREACH_STATUS_OKAY(DISK_ACCESS_SDMMC_INIT)
+/home/user/sdk-alif/zephyr/drivers/ptp_clock/ptp_clock_nxp_enet.c:268:DT_INST_FOREACH_STATUS_OKAY(PTP_CLOCK_NXP_ENET_INIT)
+/home/user/sdk-alif/zephyr/drivers/pm_cpu_ops/pm_cpu_ops_psci.c:233:DT_INST_FOREACH_STATUS_OKAY(PSCI_0_2_INIT)
+/home/user/sdk-alif/zephyr/drivers/pm_cpu_ops/pm_cpu_ops_psci.c:238:DT_INST_FOREACH_STATUS_OKAY(PSCI_1_1_INIT)
+/home/user/sdk-alif/zephyr/drivers/flash/spi_nor.c:1835:DT_INST_FOREACH_STATUS_OKAY(SPI_NOR_INST)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_andes_qspi.c:997:DT_INST_FOREACH_STATUS_OKAY(FLASH_ANDES_QSPI_INIT)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_npcx_fiu_qspi.c:319:DT_INST_FOREACH_STATUS_OKAY(NPCX_SPI_FIU_INIT)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_nxp_s32_qspi_nor.c:30:	(DT_INST_FOREACH_STATUS_OKAY_VARGS(QSPI_INST_NODE_HAS_PROP_EQ_AND_OR, prop, val) 0)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_nxp_s32_qspi_nor.c:36:	(DT_INST_FOREACH_STATUS_OKAY_VARGS(QSPI_INST_NODE_NOT_HAS_PROP_AND_OR, prop) 0)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_nxp_s32_qspi_nor.c:777:DT_INST_FOREACH_STATUS_OKAY(FLASH_NXP_S32_QSPI_INIT_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_stm32_xspi.h:14:	(DT_INST_FOREACH_STATUS_OKAY(STM32_XSPI_DOMAIN_CLOCK_INST_SUPPORT) 0)
+/home/user/sdk-alif/zephyr/drivers/flash/soc_flash_silabs_siwx91x.c:176:DT_INST_FOREACH_STATUS_OKAY(SIWX91X_FLASH_INIT)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_cadence_nand.c:270:DT_INST_FOREACH_STATUS_OKAY(CREATE_FLASH_CADENCE_NAND_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_max32.c:177:DT_INST_FOREACH_STATUS_OKAY(DEFINE_FLASH_MAX32)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mcux_flexspi_mx25um51345g.c:630:DT_INST_FOREACH_STATUS_OKAY(FLASH_FLEXSPI_NOR)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mcux_flexspi_nor.c:1411:DT_INST_FOREACH_STATUS_OKAY(FLASH_FLEXSPI_NOR)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mspi_is25xX0xx.c:1049:DT_INST_FOREACH_STATUS_OKAY(FLASH_MSPI_IS25XX0XX)
+/home/user/sdk-alif/zephyr/drivers/flash/spi_flash_at45.c:49:#define ANY_INST_HAS_WP_GPIOS DT_INST_FOREACH_STATUS_OKAY(INST_HAS_WP_OR) 0
+/home/user/sdk-alif/zephyr/drivers/flash/spi_flash_at45.c:52:#define ANY_INST_HAS_RESET_GPIOS DT_INST_FOREACH_STATUS_OKAY(INST_HAS_RESET_OR) 0
+/home/user/sdk-alif/zephyr/drivers/flash/spi_flash_at45.c:742:DT_INST_FOREACH_STATUS_OKAY(SPI_FLASH_AT45_INST)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_npcx_fiu_nor.c:642:DT_INST_FOREACH_STATUS_OKAY(NPCX_FLASH_NOR_INIT)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mcux_flexspi_hyperflash.c:707:DT_INST_FOREACH_STATUS_OKAY(FLASH_FLEXSPI_HYPERFLASH)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mspi_emul_device.c:457:DT_INST_FOREACH_STATUS_OKAY(EMUL_TEST);
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mspi_emul_device.c:459:DT_INST_FOREACH_STATUS_OKAY(FLASH_MSPI_EMUL_DEVICE);
+/home/user/sdk-alif/zephyr/drivers/flash/flash_cadence_qspi_nor.c:168:DT_INST_FOREACH_STATUS_OKAY(CREATE_FLASH_CADENCE_QSPI_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_mspi_atxp032.c:866:DT_INST_FOREACH_STATUS_OKAY(FLASH_MSPI_ATXP032)
+/home/user/sdk-alif/zephyr/drivers/flash/flash_nxp_s32_qspi_hyperflash.c:247:DT_INST_FOREACH_STATUS_OKAY(FLASH_NXP_S32_QSPI_INIT_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_mcux_pcc.c:153:DT_INST_FOREACH_STATUS_OKAY(MCUX_PCC_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_r8a7795_cpg_mssr.c:296:DT_INST_FOREACH_STATUS_OKAY(R8A7795_MSSR_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_r8a779f0_cpg_mssr.c:287:DT_INST_FOREACH_STATUS_OKAY(R8A779F0_MSSR_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_stm32_mux.c:48:DT_INST_FOREACH_STATUS_OKAY(STM32_MUX_CLK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_nrf_auxpll.c:148:DT_INST_FOREACH_STATUS_OKAY(CLOCK_CONTROL_NRF_AUXPLL_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_stm32_mco.c:84:DT_INST_FOREACH_STATUS_OKAY(STM32_MCO_INIT);
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_wch_rcc.c:154:DT_INST_FOREACH_STATUS_OKAY(CLOCK_CONTROL_WCH_RCC_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_rv32m1_pcc.c:73:DT_INST_FOREACH_STATUS_OKAY(RV32M1_PCC_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_mcux_syscon.c:624:DT_INST_FOREACH_STATUS_OKAY(LPC_CLOCK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_fixed_rate.c:78:DT_INST_FOREACH_STATUS_OKAY(FIXED_CLK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_agilex5.c:96:DT_INST_FOREACH_STATUS_OKAY(CLOCK_CONTROL_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_pwm.c:159:DT_INST_FOREACH_STATUS_OKAY(PWM_CLOCK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_ambiq.c:138:DT_INST_FOREACH_STATUS_OKAY(AMBIQ_CLOCK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_silabs_siwx91x.c:186:DT_INST_FOREACH_STATUS_OKAY(SIWX91X_CLOCK_INIT)
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_numaker_scc.c:162:DT_INST_FOREACH_STATUS_OKAY(NUMICRO_SCC_INIT);
+/home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_ast10x0.c:162:DT_INST_FOREACH_STATUS_OKAY(ASPEED_CLOCK_INIT)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_aw9523b.c:65:DT_INST_FOREACH_STATUS_OKAY(MFD_AW9523B_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_pf1550.c:50:DT_INST_FOREACH_STATUS_OKAY(MFD_PF1550_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_ite_it8801.c:134:DT_INST_FOREACH_STATUS_OKAY(MFD_IT8801_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_tle9104.c:625:DT_INST_FOREACH_STATUS_OKAY(TLE9104_INIT);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_max20335.c:51:DT_INST_FOREACH_STATUS_OKAY(MFD_MA20335_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_npm1300.c:325:DT_INST_FOREACH_STATUS_OKAY(MFD_NPM1300_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_ad559x.c:110:DT_INST_FOREACH_STATUS_OKAY(MFD_AD559X_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_adp5585.c:144:DT_INST_FOREACH_STATUS_OKAY(MFD_ADP5585_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_nxp_lp_flexcomm.c:169:DT_INST_FOREACH_STATUS_OKAY(NXP_LP_FLEXCOMM_INIT)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_bd8lb600fs.c:242:DT_INST_FOREACH_STATUS_OKAY(BD8LB600FS_INIT)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_axp192.c:620:DT_INST_FOREACH_STATUS_OKAY(MFD_AXP192_DEFINE);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_npm2100.c:417:DT_INST_FOREACH_STATUS_OKAY(MFD_NPM2100_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_nct38xx.c:56:DT_INST_FOREACH_STATUS_OKAY(MFD_NCT38XX_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_ds3231.c:77:DT_INST_FOREACH_STATUS_OKAY(MFD_DS3231_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_npm6001.c:99:DT_INST_FOREACH_STATUS_OKAY(MFD_NPM6001_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_max31790.c:81:DT_INST_FOREACH_STATUS_OKAY(MAX31790_INIT);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_max22017.c:390:DT_INST_FOREACH_STATUS_OKAY(INST_DT_MAX22017);
+/home/user/sdk-alif/zephyr/drivers/mfd/mfd_it8801_altctrl.c:66:DT_INST_FOREACH_STATUS_OKAY(MFD_IT8801_ALTCTRL_INIT)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_sam_smc.c:106:DT_INST_FOREACH_STATUS_OKAY(MEMC_SMC_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_smartbond_nor_psram.c:242:DT_INST_FOREACH_STATUS_OKAY(SMARTBOND_MEMC_INIT)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi_aps6404l.c:268:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI_APS6404L)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi.c:449:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_nxp_s32_qspi.c:274:DT_INST_FOREACH_STATUS_OKAY(MEMC_NXP_S32_QSPI_INIT_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi_w956a8mbya.c:190:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI_W956A8MBYA)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi_aps6408l.c:324:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI_APS6408L)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mspi_aps6404l.c:469:DT_INST_FOREACH_STATUS_OKAY(MEMC_MSPI_APS6404L)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi_s27ks0641.c:198:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI_S27KS0641)
+/home/user/sdk-alif/zephyr/drivers/memc/memc_mcux_flexspi_is66wvq8m4.c:247:DT_INST_FOREACH_STATUS_OKAY(MEMC_FLEXSPI_IS66WVQ8M4)
+/home/user/sdk-alif/zephyr/drivers/crc/alif_crc.c:568:DT_INST_FOREACH_STATUS_OKAY(CRC_INIT)
+/home/user/sdk-alif/zephyr/drivers/mipi_dphy/dphy_dw.c:881:DT_INST_FOREACH_STATUS_OKAY(ALIF_MIPI_DPHY_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/stepper/gpio_stepper_controller.c:395:DT_INST_FOREACH_STATUS_OKAY(GPIO_STEPPER_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/stepper/adi_tmc/adi_tmc22xx_stepper_controller.c:194:DT_INST_FOREACH_STATUS_OKAY_VARGS(TMC22XX_STEPPER_DEFINE, tmc2209_msx_resolutions)
+/home/user/sdk-alif/zephyr/drivers/stepper/adi_tmc/adi_tmc50xx_stepper_controller.c:748:DT_INST_FOREACH_STATUS_OKAY(TMC50XX_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/stepper/fake_stepper_controller.c:148:DT_INST_FOREACH_STATUS_OKAY(FAKE_STEPPER_INIT)
+/home/user/sdk-alif/zephyr/drivers/stepper/ti/drv8424.c:368:DT_INST_FOREACH_STATUS_OKAY(DRV8424_DEVICE)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad559x.c:134:DT_INST_FOREACH_STATUS_OKAY(DAC_AD559X_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_dacx0501.c:196:DT_INST_FOREACH_STATUS_OKAY(DACX0501_DEFINE)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_test.c:45:DT_INST_FOREACH_STATUS_OKAY(VND_DAC_INIT)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_mcux_dac.c:114:DT_INST_FOREACH_STATUS_OKAY(MCUX_DAC_INIT)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_stm32.c:199:DT_INST_FOREACH_STATUS_OKAY(STM32_DAC_INIT)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad569x.c:183:DT_INST_FOREACH_STATUS_OKAY_VARGS(INST_DT_AD569X, DT_DRV_COMPAT, DAC_AD5691_RESOLUTION)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad569x.c:190:DT_INST_FOREACH_STATUS_OKAY_VARGS(INST_DT_AD569X, DT_DRV_COMPAT, DAC_AD5692_RESOLUTION)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad569x.c:197:DT_INST_FOREACH_STATUS_OKAY_VARGS(INST_DT_AD569X, DT_DRV_COMPAT, DAC_AD5693_RESOLUTION)
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:192:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5628_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:205:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5648_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:218:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5668_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:231:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5672_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:244:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5674_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:257:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5676_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:270:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5679_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:286:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5684_RESOLUTION,
+/home/user/sdk-alif/zephyr/drivers/dac/dac_ad56xx.c:302:DT_INST_FOREACH_STATUS_OKAY_VARGS(DAC_AD56XX_INST_DEFINE, DT_DRV_COMPAT, DAC_AD5686_RESOLUTION,
+
+----- SEARCH: /home/user/sdk-alif/modules -----
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:111:    if (0 != (err = ethosu_init(&ethosu_drv,         /* Ethos-U driver device pointer */
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:244:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:402:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:268:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:407:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/lib/executorch/backends/arm/third-party/ethos-u-core-driver/include/ethosu_driver.h:254:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/lib/executorch/backends/arm/third-party/ethos-u-core-driver/src/ethosu_driver.c:410:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/lib/executorch/src/executorch/backends/arm/third-party/ethos-u-core-driver/include/ethosu_driver.h:254:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/lib/executorch/src/executorch/backends/arm/third-party/ethos-u-core-driver/src/ethosu_driver.c:410:int ethosu_init(struct ethosu_driver *drv,
+
+----- SEARCH: /home/user/sdk-alif/beeinventor -----
+
+========== CONFIGURATION ==========
+1:# CONFIG_INPUT is not set
+28:# CONFIG_PM_DEVICE is not set
+33:CONFIG_CLOCK_CONTROL_INIT_PRIORITY=30
+74:CONFIG_SERIAL_INIT_PRIORITY=50
+79:CONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=-1
+83:CONFIG_FLASH_INIT_PRIORITY=50
+100:# Devicetree Info
+137:# end of Devicetree Info
+160:CONFIG_BLE_DEVICE_NAME="ALIF"
+162:CONFIG_BLE_DEVICE_NAME_MAX=28
+171:# CONFIG_ALIF_ETHOSU_SHELL is not set
+172:CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY=10
+173:CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE=1024
+174:CONFIG_ETHOSU_VERBOSE_LEVEL=1
+202:# CONFIG_CMSIS_M_CHECK_DEVICE_DEFINES is not set
+321:CONFIG_SE_SERVICE_INIT_PRIORITY=45
+328:# hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+330:CONFIG_ARM_ETHOS_U=y
+333:# Arm Ethos-U NPU configuration
+335:# CONFIG_ARM_ETHOS_U55_64 is not set
+336:CONFIG_ARM_ETHOS_U55_128=y
+337:# CONFIG_ARM_ETHOS_U55_256 is not set
+338:# CONFIG_ARM_ETHOS_U65_128 is not set
+339:# CONFIG_ARM_ETHOS_U65_256 is not set
+340:# CONFIG_ARM_ETHOS_U65_512 is not set
+341:# CONFIG_ARM_ETHOS_U85_128 is not set
+342:# CONFIG_ARM_ETHOS_U85_256 is not set
+343:# CONFIG_ARM_ETHOS_U85_512 is not set
+344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+346:# end of Arm Ethos-U NPU configuration
+348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+356:CONFIG_ZEPHYR_HAL_ETHOS_U_MODULE=y
+357:# end of hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+457:# hal_gigadevice module not available.
+517:CONFIG_GPIO_INIT_PRIORITY=40
+702:CONFIG_MULTITHREADING=y
+811:# Device Options
+813:# CONFIG_DEVICE_DEPS is not set
+814:# CONFIG_DEVICE_MUTABLE is not set
+815:# CONFIG_DEVICE_DT_METADATA is not set
+816:# end of Device Options
+821:CONFIG_KERNEL_INIT_PRIORITY_OBJECTS=30
+822:CONFIG_KERNEL_INIT_PRIORITY_LIBC=35
+823:CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=40
+824:CONFIG_KERNEL_INIT_PRIORITY_DEVICE=50
+825:CONFIG_APPLICATION_INIT_PRIORITY=90
+850:# Device Drivers
+866:# Device Drivers
+881:CONFIG_CONSOLE_INPUT_MAX_LINE_LEN=128
+884:CONFIG_CONSOLE_INIT_PRIORITY=60
+903:# CONFIG_COREDUMP_DEVICE is not set
+929:# MSPI flash device driver
+931:# end of MSPI flash device driver
+973:CONFIG_INTC_INIT_PRIORITY=40
+1081:CONFIG_SYSTEM_CLOCK_INIT_PRIORITY=0
+1093:# CONFIG_USB_DEVICE_DRIVER is not set
+1122:# end of Device Drivers
+1141:CONFIG_COMMON_LIBC_MALLOC=y
+1263:# POSIX device I/O
+1265:# CONFIG_POSIX_DEVICE_IO is not set
+1267:# end of POSIX device I/O
+1459:CONFIG_LOG_CORE_INIT_PRIORITY=0
+1555:# Device Management
+1565:# end of Device Management
+1635:# CONFIG_USB_DEVICE_STACK is not set
+1636:# CONFIG_USB_DEVICE_STACK_NEXT is not set
+
+========== GENERATED DEVICE TREE: ETHOS-U ==========
+36-			reg = < 0xe000e100 0xc00 >;
+37-			interrupt-controller;
+38-			#interrupt-cells = < 0x2 >;
+39-			arm,num-irq-priority-bits = < 0x8 >;
+40-			phandle = < 0x1 >;
+41-		};
+42-		systick: timer@e000e010 {
+43-			compatible = "arm,armv8.1m-systick";
+44-			reg = < 0xe000e010 0x10 >;
+45-		};
+46:		ethosu0: ethosu55@400e1000 {
+47:			compatible = "arm,ethos-u";
+48-			reg = < 0x400e1000 0x1000 >;
+49-			interrupts = < 0x37 0x0 >;
+50-			interrupt-parent = < &nvic >;
+51-			secure-enable;
+52-			privilege-enable;
+53-			status = "disabled";
+54-		};
+55-		clockctrl: clock-controller@1a602000 {
+56-			compatible = "alif,clockctrl";
+57-			reg = < 0x1a602000 0x2c 0x4903f000 0xb0 0x4902f000 0xbc 0x1a604000 0x44 0x1a609000 0x14 0x43007000 0x2c 0x400f0000 0x14 >;
+58-			reg-names = "cgu", "clkctl_per_mst", "clkctl_per_slv", "aon", "vbat", "m55he_cfg", "m55hp_cfg";
+59-			#clock-cells = < 0x1 >;
+60-			status = "okay";
+61-			phandle = < 0x6 >;
+62-		};
+63-		mram_flash: mram_flash@80000000 {
+64-			compatible = "alif,mram-flash-controller";
+65-			#address-cells = < 0x1 >;
+66-			#size-cells = < 0x1 >;
+67-			reg = < 0x80000000 0x580000 >;
+68-			mram_storage: mram_storage@80000000 {
+69-				compatible = "soc-nv-flash";
+--
+2748-					write-block-size = < 0x2 >;
+2749-				};
+2750-			};
+2751-		};
+2752-		sram1: sram@2400000 {
+2753-			compatible = "zephyr,memory-region", "mmio-sram";
+2754-			reg = < 0x2400000 0x400000 >;
+2755-			zephyr,memory-region = "SRAM1";
+2756-			zephyr,memory-attr = < 0x100000 >;
+2757-		};
+2758:		ethosu1: ethosu85@49042000 {
+2759:			compatible = "arm,ethos-u";
+2760-			reg = < 0x49042000 0x1000 >;
+2761-			interrupts = < 0x16e 0x3 >;
+2762-			interrupt-parent = < &nvic >;
+2763-			secure-enable;
+2764-			privilege-enable;
+2765-			clocks = < &clockctrl 0x1f8a1 >;
+2766-			status = "disabled";
+2767-		};
+2768-		gpio16: gpio@4300a000 {
+2769-			compatible = "snps,designware-gpio";
+2770-			reg = < 0x4300a000 0x1000 >;
+2771-			ngpios = < 0x8 >;
+2772-			interrupts = < 0x1dc 0x0 >;
+2773-			pinctrl-0 = < &pinctrl_gpio16 >;
+2774-			pinctrl-names = "default";
+2775-			gpio-controller;
+2776-			#gpio-cells = < 0x2 >;
+2777-			status = "disabled";
+2778-		};
+2779-		gpio17: gpio@4300b000 {
+2780-			compatible = "snps,designware-gpio";
+2781-			reg = < 0x4300b000 0x1000 >;
+
+========== GENERATED DEVICE TREE HEADER ==========
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr/devicetree_generated.h
+
+----- /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr/devicetree_generated.h -----
+102- *   91  /soc/pin-controller@1a603000/pinctrl_dac0
+103- *   92  /soc/dac0@49028000
+104- *   93  /soc/pin-controller@1a603000/pinctrl_dac1
+105- *   94  /soc/dac1@49029000
+106- *   95  /soc/dtcm@20000000
+107: *   96  /soc/ethosu55@400e1000
+108: *   97  /soc/ethosu85@49042000
+109- *   98  /soc/dma2@400c0000
+110- *   99  /soc/event-router@400e2000
+111- *   100 /soc/dma0@49080000
+112- *   101 /soc/event-router@49035000
+113- *   102 /soc/pin-controller@1a603000/pinctrl_gpio16
+114- *   103 /soc/gpio@4300a000
+115- *   104 /soc/pin-controller@1a603000/pinctrl_gpio17
+116- *   105 /soc/gpio@4300b000
+117- *   106 /soc/pin-controller@1a603000/pinctrl_gpio0
+118- *   107 /soc/gpio@49000000
+119- *   108 /soc/pin-controller@1a603000/pinctrl_gpio1
+120- *   109 /soc/gpio@49001000
+--
+1041-#define DT_N_S_soc_FOREACH_ANCESTOR(fn) fn(DT_N)
+1042-
+1043-/* Helper macros for child nodes of this node. */
+1044-#define DT_N_S_soc_CHILD_NUM 129
+1045-#define DT_N_S_soc_CHILD_NUM_STATUS_OKAY 34
+1046:#define DT_N_S_soc_FOREACH_CHILD(fn) fn(DT_N_S_soc_S_interrupt_controller_e000e100) fn(DT_N_S_soc_S_timer_e000e010) fn(DT_N_S_soc_S_ethosu55_400e1000) fn(DT_N_S_soc_S_clock_controller_1a602000) fn(DT_N_S_soc_S_mram_flash_80000000) fn(DT_N_S_soc_S_sram_2000000) fn(DT_N_S_soc_S_ns_20018000) fn(DT_N_S_soc_S_host_peripheral_1a000000) fn(DT_N_S_soc_S_pin_controller_1a603000) fn(DT_N_S_soc_S_lprtc_42000000) fn(DT_N_S_soc_S_sdhc_48102000) fn(DT_N_S_soc_S_peripheral_40000000) fn(DT_N_S_soc_S_usb_48200000) fn(DT_N_S_soc_S_hwsem_4902e000) fn(DT_N_S_soc_S_hwsem_4902e010) fn(DT_N_S_soc_S_hwsem_4902e020) fn(DT_N_S_soc_S_hwsem_4902e030) fn(DT_N_S_soc_S_hwsem_4902e040) fn(DT_N_S_soc_S_hwsem_4902e050) fn(DT_N_S_soc_S_hwsem_4902e060) fn(DT_N_S_soc_S_hwsem_4902e070) fn(DT_N_S_soc_S_hwsem_4902e080) fn(DT_N_S_soc_S_hwsem_4902e090) fn(DT_N_S_soc_S_hwsem_4902e0a0) fn(DT_N_S_soc_S_hwsem_4902e0b0) fn(DT_N_S_soc_S_hwsem_4902e0c0) fn(DT_N_S_soc_S_hwsem_4902e0d0) fn(DT_N_S_soc_S_hwsem_4902e0e0) fn(DT_N_S_soc_S_hwsem_4902e0f0) fn(DT_N_S_soc_S_uart_49018000) fn(DT_N_S_soc_S_uart_49019000) fn(DT_N_S_soc_S_uart_4901a000) fn(DT_N_S_soc_S_uart_4901b000) fn(DT_N_S_soc_S_uart_4901c000) fn(DT_N_S_soc_S_uart_4901d000) fn(DT_N_S_soc_S_spi_48103000) fn(DT_N_S_soc_S_spi_48104000) fn(DT_N_S_soc_S_spi_48105000) fn(DT_N_S_soc_S_spi_48106000) fn(DT_N_S_soc_S_dma0_49080000) fn(DT_N_S_soc_S_event_router_49035000) fn(DT_N_S_soc_S_timer_42001000) fn(DT_N_S_soc_S_timer_42001014) fn(DT_N_S_soc_S_timer_42001028) fn(DT_N_S_soc_S_timer_4200103c) fn(DT_N_S_soc_S_utimer_48001000) fn(DT_N_S_soc_S_utimer_48002000) fn(DT_N_S_soc_S_utimer_48003000) fn(DT_N_S_soc_S_utimer_48004000) fn(DT_N_S_soc_S_utimer_48005000) fn(DT_N_S_soc_S_utimer_48006000) fn(DT_N_S_soc_S_utimer_48007000) fn(DT_N_S_soc_S_utimer_48008000) fn(DT_N_S_soc_S_utimer_48009000) fn(DT_N_S_soc_S_utimer_4800a000) fn(DT_N_S_soc_S_utimer_4800b000) fn(DT_N_S_soc_S_utimer_4800c000) fn(DT_N_S_soc_S_dac0_49028000) fn(DT_N_S_soc_S_dac1_49029000) fn(DT_N_S_soc_S_gpio_49000000) fn(DT_N_S_soc_S_gpio_49001000) fn(DT_N_S_soc_S_gpio_49002000) fn(DT_N_S_soc_S_gpio_49003000) fn(DT_N_S_soc_S_gpio_49004000) fn(DT_N_S_soc_S_gpio_49005000) fn(DT_N_S_soc_S_gpio_49006000) fn(DT_N_S_soc_S_gpio_49007000) fn(DT_N_S_soc_S_gpio_49008000) fn(DT_N_S_soc_S_gpio_49009000) fn(DT_N_S_soc_S_gpio_42002000) fn(DT_N_S_soc_S_crc0_48107000) fn(DT_N_S_soc_S_crc1_48108000) fn(DT_N_S_soc_S_pdm_4902d000) fn(DT_N_S_soc_S_adc0_49020000) fn(DT_N_S_soc_S_adc1_49021000) fn(DT_N_S_soc_S_adc2_49022000) fn(DT_N_S_soc_S_adc24_49027000) fn(DT_N_S_soc_S_cmp0_49023000) fn(DT_N_S_soc_S_cmp1_49024000) fn(DT_N_S_soc_S_cmp2_49025000) fn(DT_N_S_soc_S_cmp3_49026000) fn(DT_N_S_soc_S_i2c0_49010000) fn(DT_N_S_soc_S_i2c1_49011000) fn(DT_N_S_soc_S_lpi2c0_43009000) fn(DT_N_S_soc_S_i3c0_49034000) fn(DT_N_S_soc_S_can_49036000) fn(DT_N_S_soc_S_i2s0_49014000) fn(DT_N_S_soc_S_i2s1_49015000) fn(DT_N_S_soc_S_lpi2s_43001000) fn(DT_N_S_soc_S_ospi0_83000000) fn(DT_N_S_soc_S_ethernet_48100000) fn(DT_N_S_soc_S_cdc200_49031000) fn(DT_N_S_soc_S_mipi_dsi_49032000) fn(DT_N_S_soc_S_d_phy_4903f000) fn(DT_N_S_soc_S_uart_4901e000) fn(DT_N_S_soc_S_uart_4901f000) fn(DT_N_S_soc_S_gpio_4900a000) fn(DT_N_S_soc_S_gpio_4900b000) fn(DT_N_S_soc_S_gpio_4900c000) fn(DT_N_S_soc_S_gpio_4900d000) fn(DT_N_S_soc_S_gpio_4900e000) fn(DT_N_S_soc_S_i2c2_49012000) fn(DT_N_S_soc_S_i2c3_49013000) fn(DT_N_S_soc_S_i2s2_49016000) fn(DT_N_S_soc_S_i2s3_49017000) fn(DT_N_S_soc_S_cam_49030000) fn(DT_N_S_soc_S_csi_49033000) fn(DT_N_S_soc_S_ospi1_83002000) fn(DT_N_S_soc_S_sram_2400000) fn(DT_N_S_soc_S_ethosu85_49042000) fn(DT_N_S_soc_S_gpio_4300a000) fn(DT_N_S_soc_S_gpio_4300b000) fn(DT_N_S_soc_S_isp_49046000) fn(DT_N_S_soc_S_lpi2c1_43005000) fn(DT_N_S_soc_S_lputimer_4300d000) fn(DT_N_S_soc_S_lputimer_4300e000) fn(DT_N_S_soc_S_lputimer_4300f000) fn(DT_N_S_soc_S_lpi3c0_43006000) fn(DT_N_S_soc_S_lpcmp_42003000) fn(DT_N_S_soc_S_jpeg_49044000) fn(DT_N_S_soc_S_itcm_0) fn(DT_N_S_soc_S_dtcm_20000000) fn(DT_N_S_soc_S_lpspi_43000000) fn(DT_N_S_soc_S_dma2_400c0000) fn(DT_N_S_soc_S_event_router_400e2000) fn(DT_N_S_soc_S_uart_43008000) fn(DT_N_S_soc_S_lppdm_43002000) fn(DT_N_S_soc_S_lpcam_43003000) fn(DT_N_S_soc_S_wdog0_40100000)
+1047:#define DT_N_S_soc_FOREACH_CHILD_SEP(fn, sep) fn(DT_N_S_soc_S_interrupt_controller_e000e100) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_e000e010) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethosu55_400e1000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_clock_controller_1a602000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mram_flash_80000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ns_20018000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_host_peripheral_1a000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pin_controller_1a603000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lprtc_42000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sdhc_48102000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_peripheral_40000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_usb_48200000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e010) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e020) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e030) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e040) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e050) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e060) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e070) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e080) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e090) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0a0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0b0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0c0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0d0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0e0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0f0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_49018000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_49019000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901a000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901b000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901c000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901d000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48103000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48104000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48105000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48106000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dma0_49080000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_event_router_49035000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001014) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001028) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_4200103c) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48001000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48003000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48004000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48005000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48006000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48007000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48008000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48009000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800a000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800b000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800c000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dac0_49028000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dac1_49029000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49001000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49003000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49004000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49005000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49006000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49007000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49008000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49009000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_42002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_crc0_48107000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_crc1_48108000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pdm_4902d000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc0_49020000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc1_49021000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc2_49022000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc24_49027000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp0_49023000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp1_49024000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp2_49025000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp3_49026000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c0_49010000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c1_49011000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2c0_43009000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i3c0_49034000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_can_49036000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s0_49014000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s1_49015000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2s_43001000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi0_83000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethernet_48100000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cdc200_49031000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mipi_dsi_49032000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_d_phy_4903f000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901e000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901f000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900a000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900b000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900c000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900d000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900e000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c2_49012000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c3_49013000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s2_49016000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s3_49017000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cam_49030000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_csi_49033000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi1_83002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2400000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethosu85_49042000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4300a000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4300b000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_isp_49046000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2c1_43005000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300d000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300e000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300f000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi3c0_43006000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpcmp_42003000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_jpeg_49044000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_itcm_0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dtcm_20000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpspi_43000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dma2_400c0000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_event_router_400e2000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_43008000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lppdm_43002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpcam_43003000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_wdog0_40100000)
+1048:#define DT_N_S_soc_FOREACH_CHILD_VARGS(fn, ...) fn(DT_N_S_soc_S_interrupt_controller_e000e100, __VA_ARGS__) fn(DT_N_S_soc_S_timer_e000e010, __VA_ARGS__) fn(DT_N_S_soc_S_ethosu55_400e1000, __VA_ARGS__) fn(DT_N_S_soc_S_clock_controller_1a602000, __VA_ARGS__) fn(DT_N_S_soc_S_mram_flash_80000000, __VA_ARGS__) fn(DT_N_S_soc_S_sram_2000000, __VA_ARGS__) fn(DT_N_S_soc_S_ns_20018000, __VA_ARGS__) fn(DT_N_S_soc_S_host_peripheral_1a000000, __VA_ARGS__) fn(DT_N_S_soc_S_pin_controller_1a603000, __VA_ARGS__) fn(DT_N_S_soc_S_lprtc_42000000, __VA_ARGS__) fn(DT_N_S_soc_S_sdhc_48102000, __VA_ARGS__) fn(DT_N_S_soc_S_peripheral_40000000, __VA_ARGS__) fn(DT_N_S_soc_S_usb_48200000, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e000, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e010, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e020, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e030, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e040, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e050, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e060, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e070, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e080, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e090, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0a0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0b0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0c0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0d0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0e0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0f0, __VA_ARGS__) fn(DT_N_S_soc_S_uart_49018000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_49019000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901a000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901b000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901c000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901d000, __VA_ARGS__) fn(DT_N_S_soc_S_spi_48103000, __VA_ARGS__) fn(DT_N_S_soc_S_spi_48104000, __VA_ARGS__) fn(DT_N_S_soc_S_spi_48105000, __VA_ARGS__) fn(DT_N_S_soc_S_spi_48106000, __VA_ARGS__) fn(DT_N_S_soc_S_dma0_49080000, __VA_ARGS__) fn(DT_N_S_soc_S_event_router_49035000, __VA_ARGS__) fn(DT_N_S_soc_S_timer_42001000, __VA_ARGS__) fn(DT_N_S_soc_S_timer_42001014, __VA_ARGS__) fn(DT_N_S_soc_S_timer_42001028, __VA_ARGS__) fn(DT_N_S_soc_S_timer_4200103c, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48001000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48002000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48003000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48004000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48005000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48006000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48007000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48008000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_48009000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_4800a000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_4800b000, __VA_ARGS__) fn(DT_N_S_soc_S_utimer_4800c000, __VA_ARGS__) fn(DT_N_S_soc_S_dac0_49028000, __VA_ARGS__) fn(DT_N_S_soc_S_dac1_49029000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49000000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49001000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49002000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49003000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49004000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49005000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49006000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49007000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49008000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49009000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_42002000, __VA_ARGS__) fn(DT_N_S_soc_S_crc0_48107000, __VA_ARGS__) fn(DT_N_S_soc_S_crc1_48108000, __VA_ARGS__) fn(DT_N_S_soc_S_pdm_4902d000, __VA_ARGS__) fn(DT_N_S_soc_S_adc0_49020000, __VA_ARGS__) fn(DT_N_S_soc_S_adc1_49021000, __VA_ARGS__) fn(DT_N_S_soc_S_adc2_49022000, __VA_ARGS__) fn(DT_N_S_soc_S_adc24_49027000, __VA_ARGS__) fn(DT_N_S_soc_S_cmp0_49023000, __VA_ARGS__) fn(DT_N_S_soc_S_cmp1_49024000, __VA_ARGS__) fn(DT_N_S_soc_S_cmp2_49025000, __VA_ARGS__) fn(DT_N_S_soc_S_cmp3_49026000, __VA_ARGS__) fn(DT_N_S_soc_S_i2c0_49010000, __VA_ARGS__) fn(DT_N_S_soc_S_i2c1_49011000, __VA_ARGS__) fn(DT_N_S_soc_S_lpi2c0_43009000, __VA_ARGS__) fn(DT_N_S_soc_S_i3c0_49034000, __VA_ARGS__) fn(DT_N_S_soc_S_can_49036000, __VA_ARGS__) fn(DT_N_S_soc_S_i2s0_49014000, __VA_ARGS__) fn(DT_N_S_soc_S_i2s1_49015000, __VA_ARGS__) fn(DT_N_S_soc_S_lpi2s_43001000, __VA_ARGS__) fn(DT_N_S_soc_S_ospi0_83000000, __VA_ARGS__) fn(DT_N_S_soc_S_ethernet_48100000, __VA_ARGS__) fn(DT_N_S_soc_S_cdc200_49031000, __VA_ARGS__) fn(DT_N_S_soc_S_mipi_dsi_49032000, __VA_ARGS__) fn(DT_N_S_soc_S_d_phy_4903f000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901e000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901f000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4900a000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4900b000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4900c000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4900d000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4900e000, __VA_ARGS__) fn(DT_N_S_soc_S_i2c2_49012000, __VA_ARGS__) fn(DT_N_S_soc_S_i2c3_49013000, __VA_ARGS__) fn(DT_N_S_soc_S_i2s2_49016000, __VA_ARGS__) fn(DT_N_S_soc_S_i2s3_49017000, __VA_ARGS__) fn(DT_N_S_soc_S_cam_49030000, __VA_ARGS__) fn(DT_N_S_soc_S_csi_49033000, __VA_ARGS__) fn(DT_N_S_soc_S_ospi1_83002000, __VA_ARGS__) fn(DT_N_S_soc_S_sram_2400000, __VA_ARGS__) fn(DT_N_S_soc_S_ethosu85_49042000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4300a000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_4300b000, __VA_ARGS__) fn(DT_N_S_soc_S_isp_49046000, __VA_ARGS__) fn(DT_N_S_soc_S_lpi2c1_43005000, __VA_ARGS__) fn(DT_N_S_soc_S_lputimer_4300d000, __VA_ARGS__) fn(DT_N_S_soc_S_lputimer_4300e000, __VA_ARGS__) fn(DT_N_S_soc_S_lputimer_4300f000, __VA_ARGS__) fn(DT_N_S_soc_S_lpi3c0_43006000, __VA_ARGS__) fn(DT_N_S_soc_S_lpcmp_42003000, __VA_ARGS__) fn(DT_N_S_soc_S_jpeg_49044000, __VA_ARGS__) fn(DT_N_S_soc_S_itcm_0, __VA_ARGS__) fn(DT_N_S_soc_S_dtcm_20000000, __VA_ARGS__) fn(DT_N_S_soc_S_lpspi_43000000, __VA_ARGS__) fn(DT_N_S_soc_S_dma2_400c0000, __VA_ARGS__) fn(DT_N_S_soc_S_event_router_400e2000, __VA_ARGS__) fn(DT_N_S_soc_S_uart_43008000, __VA_ARGS__) fn(DT_N_S_soc_S_lppdm_43002000, __VA_ARGS__) fn(DT_N_S_soc_S_lpcam_43003000, __VA_ARGS__) fn(DT_N_S_soc_S_wdog0_40100000, __VA_ARGS__)
+1049:#define DT_N_S_soc_FOREACH_CHILD_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_interrupt_controller_e000e100, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_e000e010, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethosu55_400e1000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_clock_controller_1a602000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mram_flash_80000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ns_20018000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_host_peripheral_1a000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pin_controller_1a603000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lprtc_42000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sdhc_48102000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_peripheral_40000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_usb_48200000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e010, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e020, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e030, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e040, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e050, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e060, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e070, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e080, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e090, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0a0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0b0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0c0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0d0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0e0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0f0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_49018000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_49019000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901a000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901b000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901c000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901d000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48103000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48104000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48105000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_spi_48106000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dma0_49080000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_event_router_49035000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001014, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_42001028, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_4200103c, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48001000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48003000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48004000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48005000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48006000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48007000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48008000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_48009000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800a000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800b000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_utimer_4800c000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dac0_49028000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dac1_49029000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49001000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49003000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49004000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49005000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49006000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49007000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49008000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49009000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_42002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_crc0_48107000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_crc1_48108000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pdm_4902d000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc0_49020000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc1_49021000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc2_49022000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_adc24_49027000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp0_49023000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp1_49024000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp2_49025000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cmp3_49026000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c0_49010000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c1_49011000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2c0_43009000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i3c0_49034000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_can_49036000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s0_49014000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s1_49015000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2s_43001000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi0_83000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethernet_48100000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cdc200_49031000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mipi_dsi_49032000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_d_phy_4903f000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901e000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901f000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900a000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900b000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900c000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900d000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4900e000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c2_49012000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c3_49013000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s2_49016000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2s3_49017000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cam_49030000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_csi_49033000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi1_83002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2400000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ethosu85_49042000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4300a000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_4300b000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_isp_49046000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi2c1_43005000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300d000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300e000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lputimer_4300f000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpi3c0_43006000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpcmp_42003000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_jpeg_49044000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_itcm_0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dtcm_20000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpspi_43000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dma2_400c0000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_event_router_400e2000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_43008000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lppdm_43002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_lpcam_43003000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_wdog0_40100000, __VA_ARGS__)
+1050-#define DT_N_S_soc_FOREACH_CHILD_STATUS_OKAY(fn) fn(DT_N_S_soc_S_interrupt_controller_e000e100) fn(DT_N_S_soc_S_timer_e000e010) fn(DT_N_S_soc_S_clock_controller_1a602000) fn(DT_N_S_soc_S_mram_flash_80000000) fn(DT_N_S_soc_S_sram_2000000) fn(DT_N_S_soc_S_host_peripheral_1a000000) fn(DT_N_S_soc_S_pin_controller_1a603000) fn(DT_N_S_soc_S_peripheral_40000000) fn(DT_N_S_soc_S_hwsem_4902e000) fn(DT_N_S_soc_S_hwsem_4902e010) fn(DT_N_S_soc_S_hwsem_4902e020) fn(DT_N_S_soc_S_hwsem_4902e030) fn(DT_N_S_soc_S_hwsem_4902e040) fn(DT_N_S_soc_S_hwsem_4902e050) fn(DT_N_S_soc_S_hwsem_4902e060) fn(DT_N_S_soc_S_hwsem_4902e070) fn(DT_N_S_soc_S_hwsem_4902e080) fn(DT_N_S_soc_S_hwsem_4902e090) fn(DT_N_S_soc_S_hwsem_4902e0a0) fn(DT_N_S_soc_S_hwsem_4902e0b0) fn(DT_N_S_soc_S_hwsem_4902e0c0) fn(DT_N_S_soc_S_hwsem_4902e0d0) fn(DT_N_S_soc_S_hwsem_4902e0e0) fn(DT_N_S_soc_S_hwsem_4902e0f0) fn(DT_N_S_soc_S_uart_4901a000) fn(DT_N_S_soc_S_gpio_49006000) fn(DT_N_S_soc_S_gpio_42002000) fn(DT_N_S_soc_S_i2c1_49011000) fn(DT_N_S_soc_S_cdc200_49031000) fn(DT_N_S_soc_S_d_phy_4903f000) fn(DT_N_S_soc_S_ospi1_83002000) fn(DT_N_S_soc_S_sram_2400000) fn(DT_N_S_soc_S_itcm_0) fn(DT_N_S_soc_S_dtcm_20000000)
+1051-#define DT_N_S_soc_FOREACH_CHILD_STATUS_OKAY_SEP(fn, sep) fn(DT_N_S_soc_S_interrupt_controller_e000e100) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_e000e010) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_clock_controller_1a602000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mram_flash_80000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_host_peripheral_1a000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pin_controller_1a603000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_peripheral_40000000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e010) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e020) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e030) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e040) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e050) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e060) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e070) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e080) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e090) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0a0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0b0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0c0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0d0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0e0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0f0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901a000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49006000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_42002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c1_49011000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cdc200_49031000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_d_phy_4903f000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi1_83002000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2400000) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_itcm_0) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dtcm_20000000)
+1052-#define DT_N_S_soc_FOREACH_CHILD_STATUS_OKAY_VARGS(fn, ...) fn(DT_N_S_soc_S_interrupt_controller_e000e100, __VA_ARGS__) fn(DT_N_S_soc_S_timer_e000e010, __VA_ARGS__) fn(DT_N_S_soc_S_clock_controller_1a602000, __VA_ARGS__) fn(DT_N_S_soc_S_mram_flash_80000000, __VA_ARGS__) fn(DT_N_S_soc_S_sram_2000000, __VA_ARGS__) fn(DT_N_S_soc_S_host_peripheral_1a000000, __VA_ARGS__) fn(DT_N_S_soc_S_pin_controller_1a603000, __VA_ARGS__) fn(DT_N_S_soc_S_peripheral_40000000, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e000, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e010, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e020, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e030, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e040, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e050, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e060, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e070, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e080, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e090, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0a0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0b0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0c0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0d0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0e0, __VA_ARGS__) fn(DT_N_S_soc_S_hwsem_4902e0f0, __VA_ARGS__) fn(DT_N_S_soc_S_uart_4901a000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_49006000, __VA_ARGS__) fn(DT_N_S_soc_S_gpio_42002000, __VA_ARGS__) fn(DT_N_S_soc_S_i2c1_49011000, __VA_ARGS__) fn(DT_N_S_soc_S_cdc200_49031000, __VA_ARGS__) fn(DT_N_S_soc_S_d_phy_4903f000, __VA_ARGS__) fn(DT_N_S_soc_S_ospi1_83002000, __VA_ARGS__) fn(DT_N_S_soc_S_sram_2400000, __VA_ARGS__) fn(DT_N_S_soc_S_itcm_0, __VA_ARGS__) fn(DT_N_S_soc_S_dtcm_20000000, __VA_ARGS__)
+1053-#define DT_N_S_soc_FOREACH_CHILD_STATUS_OKAY_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_interrupt_controller_e000e100, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_timer_e000e010, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_clock_controller_1a602000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_mram_flash_80000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_host_peripheral_1a000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_pin_controller_1a603000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_peripheral_40000000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e010, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e020, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e030, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e040, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e050, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e060, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e070, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e080, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e090, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0a0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0b0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0c0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0d0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0e0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_hwsem_4902e0f0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_uart_4901a000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_49006000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_gpio_42002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_i2c1_49011000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_cdc200_49031000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_d_phy_4903f000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_ospi1_83002000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_sram_2400000, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_itcm_0, __VA_ARGS__) DT_DEBRACKET_INTERNAL sep fn(DT_N_S_soc_S_dtcm_20000000, __VA_ARGS__)
+1054-
+1055-/* Node's hash: */
+1056-#define DT_N_S_soc_HASH DcVqqq9YzG86l3_Hk7pNncUh2rnHG8USjbVY6wBdFts
+1057-
+1058-/* Node's dependency ordinal: */
+1059-#define DT_N_S_soc_ORD 5
+1060-#define DT_N_S_soc_ORD_STR_SORTABLE 00005
+1061-
+--
+1087-	89, /* /soc/d-phy@4903f000 */ \
+1088-	90, /* /soc/csi@49033000 */ \
+1089-	92, /* /soc/dac0@49028000 */ \
+1090-	94, /* /soc/dac1@49029000 */ \
+1091-	95, /* /soc/dtcm@20000000 */ \
+1092:	96, /* /soc/ethosu55@400e1000 */ \
+1093:	97, /* /soc/ethosu85@49042000 */ \
+1094-	98, /* /soc/dma2@400c0000 */ \
+1095-	99, /* /soc/event-router@400e2000 */ \
+1096-	100, /* /soc/dma0@49080000 */ \
+1097-	101, /* /soc/event-router@49035000 */ \
+1098-	103, /* /soc/gpio@4300a000 */ \
+1099-	105, /* /soc/gpio@4300b000 */ \
+1100-	107, /* /soc/gpio@49000000 */ \
+1101-	109, /* /soc/gpio@49001000 */ \
+1102-	111, /* /soc/gpio@49002000 */ \
+1103-	113, /* /soc/gpio@49004000 */ \
+1104-	115, /* /soc/gpio@49005000 */ \
+1105-	117, /* /soc/gpio@49008000 */ \
+--
+1298-	80, /* /soc/cmp0@49023000 */ \
+1299-	82, /* /soc/cmp1@49024000 */ \
+1300-	84, /* /soc/cmp2@49025000 */ \
+1301-	86, /* /soc/cmp3@49026000 */ \
+1302-	90, /* /soc/csi@49033000 */ \
+1303:	96, /* /soc/ethosu55@400e1000 */ \
+1304:	97, /* /soc/ethosu85@49042000 */ \
+1305-	98, /* /soc/dma2@400c0000 */ \
+1306-	100, /* /soc/dma0@49080000 */ \
+1307-	103, /* /soc/gpio@4300a000 */ \
+1308-	105, /* /soc/gpio@4300b000 */ \
+1309-	107, /* /soc/gpio@49000000 */ \
+1310-	109, /* /soc/gpio@49001000 */ \
+1311-	111, /* /soc/gpio@49002000 */ \
+1312-	113, /* /soc/gpio@49004000 */ \
+1313-	115, /* /soc/gpio@49005000 */ \
+1314-	117, /* /soc/gpio@49008000 */ \
+1315-	119, /* /soc/gpio@49009000 */ \
+1316-	121, /* /soc/gpio@4900a000 */ \
+--
+10505-	82, /* /soc/cmp1@49024000 */ \
+10506-	84, /* /soc/cmp2@49025000 */ \
+10507-	86, /* /soc/cmp3@49026000 */ \
+10508-	89, /* /soc/d-phy@4903f000 */ \
+10509-	90, /* /soc/csi@49033000 */ \
+10510:	97, /* /soc/ethosu85@49042000 */ \
+10511-	98, /* /soc/dma2@400c0000 */ \
+10512-	100, /* /soc/dma0@49080000 */ \
+10513-	147, /* /soc/i2c0@49010000 */ \
+10514-	150, /* /soc/i2c2@49012000 */ \
+10515-	153, /* /soc/i2c3@49013000 */ \
+10516-	157, /* /soc/i2s0@49014000 */ \
+10517-	160, /* /soc/i2s1@49015000 */ \
+10518-	163, /* /soc/i2s2@49016000 */ \
+10519-	166, /* /soc/i2s3@49017000 */ \
+10520-	170, /* /soc/i3c0@49034000 */ \
+10521-	173, /* /soc/jpeg@49044000 */ \
+10522-	175, /* /soc/lpcam@43003000 */ \
+--
+14663-#define DT_N_S_soc_S_dtcm_20000000_P_zephyr_memory_region_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_dtcm_20000000, zephyr_memory_region, 0, __VA_ARGS__)
+14664-#define DT_N_S_soc_S_dtcm_20000000_P_zephyr_memory_region_LEN 1
+14665-#define DT_N_S_soc_S_dtcm_20000000_P_zephyr_memory_region_EXISTS 1
+14666-
+14667-/*
+14668: * Devicetree node: /soc/ethosu55@400e1000
+14669- *
+14670: * Node identifier: DT_N_S_soc_S_ethosu55_400e1000
+14671- *
+14672- * Binding (compatible = arm,ethos-u):
+14673- *   $ZEPHYR_BASE/dts/bindings/arm/arm,ethos-u.yaml
+14674- *
+14675- * (Descriptions have moved to the Devicetree Bindings Index
+14676- * in the documentation.)
+14677- */
+14678-
+14679-/* Node's full path: */
+14680:#define DT_N_S_soc_S_ethosu55_400e1000_PATH "/soc/ethosu55@400e1000"
+14681-
+14682-/* Node's name with unit-address: */
+14683:#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME "ethosu55@400e1000"
+14684:#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME_UNQUOTED ethosu55@400e1000
+14685:#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME_TOKEN ethosu55_400e1000
+14686:#define DT_N_S_soc_S_ethosu55_400e1000_FULL_NAME_UPPER_TOKEN ETHOSU55_400E1000
+14687-
+14688-/* Node parent (/soc) identifier: */
+14689:#define DT_N_S_soc_S_ethosu55_400e1000_PARENT DT_N_S_soc
+14690-
+14691-/* Node's index in its parent's list of children: */
+14692:#define DT_N_S_soc_S_ethosu55_400e1000_CHILD_IDX 2
+14693-
+14694-/* Helpers for dealing with node labels: */
+14695:#define DT_N_S_soc_S_ethosu55_400e1000_NODELABEL_NUM 1
+14696:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_NODELABEL(fn) fn(ethosu0)
+14697:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_NODELABEL_VARGS(fn, ...) fn(ethosu0, __VA_ARGS__)
+14698:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_ANCESTOR(fn) fn(DT_N_S_soc) fn(DT_N)
+14699-
+14700-/* Helper macros for child nodes of this node. */
+14701:#define DT_N_S_soc_S_ethosu55_400e1000_CHILD_NUM 0
+14702:#define DT_N_S_soc_S_ethosu55_400e1000_CHILD_NUM_STATUS_OKAY 0
+14703:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD(fn) 
+14704:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_SEP(fn, sep) 
+14705:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_VARGS(fn, ...) 
+14706:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_SEP_VARGS(fn, sep, ...) 
+14707:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_STATUS_OKAY(fn) 
+14708:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_STATUS_OKAY_SEP(fn, sep) 
+14709:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_STATUS_OKAY_VARGS(fn, ...) 
+14710:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_CHILD_STATUS_OKAY_SEP_VARGS(fn, sep, ...) 
+14711-
+14712-/* Node's hash: */
+14713:#define DT_N_S_soc_S_ethosu55_400e1000_HASH GNOsWRo6G8L0ok8UFXFQgKjkEhrgdz7H_o1KMvzsOec
+14714-
+14715-/* Node's dependency ordinal: */
+14716:#define DT_N_S_soc_S_ethosu55_400e1000_ORD 96
+14717:#define DT_N_S_soc_S_ethosu55_400e1000_ORD_STR_SORTABLE 00096
+14718-
+14719-/* Ordinals for what this node depends on directly: */
+14720:#define DT_N_S_soc_S_ethosu55_400e1000_REQUIRES_ORDS \
+14721-	5, /* /soc */ \
+14722-	6, /* /soc/interrupt-controller@e000e100 */
+14723-
+14724-/* Ordinals for what depends directly on this node: */
+14725:#define DT_N_S_soc_S_ethosu55_400e1000_SUPPORTS_ORDS /* nothing */
+14726-
+14727-/* Existence and alternate IDs: */
+14728:#define DT_N_S_soc_S_ethosu55_400e1000_EXISTS 1
+14729:#define DT_N_INST_0_arm_ethos_u DT_N_S_soc_S_ethosu55_400e1000
+14730:#define DT_N_NODELABEL_ethosu0  DT_N_S_soc_S_ethosu55_400e1000
+14731-
+14732-/* Macros for properties that are special in the specification: */
+14733:#define DT_N_S_soc_S_ethosu55_400e1000_REG_NUM 1
+14734:#define DT_N_S_soc_S_ethosu55_400e1000_REG_IDX_0_EXISTS 1
+14735:#define DT_N_S_soc_S_ethosu55_400e1000_REG_IDX_0_VAL_ADDRESS 1074663424 /* 0x400e1000 */
+14736:#define DT_N_S_soc_S_ethosu55_400e1000_REG_IDX_0_VAL_SIZE 4096 /* 0x1000 */
+14737:#define DT_N_S_soc_S_ethosu55_400e1000_RANGES_NUM 0
+14738:#define DT_N_S_soc_S_ethosu55_400e1000_FOREACH_RANGE(fn) 
+14739:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_NUM 1
+14740:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_EXISTS 1
+14741:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_VAL_irq 55
+14742:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_VAL_irq_EXISTS 1
+14743:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_EXISTS 1
+14744:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_VAL_priority 0
+14745:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_VAL_priority_EXISTS 1
+14746:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_IDX_0_CONTROLLER DT_N_S_soc_S_interrupt_controller_e000e100
+14747:#define DT_N_S_soc_S_ethosu55_400e1000_IRQ_LEVEL 1
+14748:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_MATCHES_arm_ethos_u 1
+14749:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_VENDOR_IDX_0_EXISTS 1
+14750:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_VENDOR_IDX_0 "ARM Ltd."
+14751:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_MODEL_IDX_0_EXISTS 1
+14752:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_MODEL_IDX_0 "ethos-u"
+14753:#define DT_N_S_soc_S_ethosu55_400e1000_STATUS_disabled 1
+14754-
+14755-/* Pin control (pinctrl-<i>, pinctrl-names) properties: */
+14756:#define DT_N_S_soc_S_ethosu55_400e1000_PINCTRL_NUM 0
+14757-
+14758-/* Generic property macros: */
+14759:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg {1074663424 /* 0x400e1000 */, 4096 /* 0x1000 */}
+14760:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg_IDX_0_EXISTS 1
+14761:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg_IDX_0 1074663424
+14762:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg_IDX_1_EXISTS 1
+14763:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg_IDX_1 4096
+14764:#define DT_N_S_soc_S_ethosu55_400e1000_P_reg_EXISTS 1
+14765:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts {55 /* 0x37 */, 0 /* 0x0 */}
+14766:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts_IDX_0_EXISTS 1
+14767:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts_IDX_0 55
+14768:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts_IDX_1_EXISTS 1
+14769:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts_IDX_1 0
+14770:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupts_EXISTS 1
+14771:#define DT_N_S_soc_S_ethosu55_400e1000_P_secure_enable 1
+14772:#define DT_N_S_soc_S_ethosu55_400e1000_P_secure_enable_EXISTS 1
+14773:#define DT_N_S_soc_S_ethosu55_400e1000_P_privilege_enable 1
+14774:#define DT_N_S_soc_S_ethosu55_400e1000_P_privilege_enable_EXISTS 1
+14775:#define DT_N_S_soc_S_ethosu55_400e1000_P_status "disabled"
+14776:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_STRING_UNQUOTED disabled
+14777:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_STRING_TOKEN disabled
+14778:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_STRING_UPPER_TOKEN DISABLED
+14779:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_IDX_0 "disabled"
+14780:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_IDX_0_EXISTS 1
+14781:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_IDX_0_ENUM_IDX 2
+14782:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_IDX_0_ENUM_VAL_disabled_EXISTS 1
+14783:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_ethosu55_400e1000, status, 0)
+14784:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_ethosu55_400e1000, status, 0)
+14785:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, status, 0, __VA_ARGS__)
+14786:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, status, 0, __VA_ARGS__)
+14787:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_LEN 1
+14788:#define DT_N_S_soc_S_ethosu55_400e1000_P_status_EXISTS 1
+14789:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible {"arm,ethos-u"}
+14790:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_EXISTS 1
+14791:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0 "arm,ethos-u"
+14792:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_STRING_UNQUOTED arm,ethos-u
+14793:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_STRING_TOKEN arm_ethos_u
+14794:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_STRING_UPPER_TOKEN ARM_ETHOS_U
+14795:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_ethosu55_400e1000, compatible, 0)
+14796:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_ethosu55_400e1000, compatible, 0)
+14797:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, compatible, 0, __VA_ARGS__)
+14798:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, compatible, 0, __VA_ARGS__)
+14799:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_LEN 1
+14800:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_EXISTS 1
+14801:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent DT_N_S_soc_S_interrupt_controller_e000e100
+14802:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_IDX_0 DT_N_S_soc_S_interrupt_controller_e000e100
+14803:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_IDX_0_PH DT_N_S_soc_S_interrupt_controller_e000e100
+14804:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_IDX_0_EXISTS 1
+14805:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_FOREACH_PROP_ELEM(fn) fn(DT_N_S_soc_S_ethosu55_400e1000, interrupt_parent, 0)
+14806:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_FOREACH_PROP_ELEM_SEP(fn, sep) fn(DT_N_S_soc_S_ethosu55_400e1000, interrupt_parent, 0)
+14807:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_FOREACH_PROP_ELEM_VARGS(fn, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, interrupt_parent, 0, __VA_ARGS__)
+14808:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...) fn(DT_N_S_soc_S_ethosu55_400e1000, interrupt_parent, 0, __VA_ARGS__)
+14809:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_LEN 1
+14810:#define DT_N_S_soc_S_ethosu55_400e1000_P_interrupt_parent_EXISTS 1
+14811:#define DT_N_S_soc_S_ethosu55_400e1000_P_zephyr_deferred_init 0
+14812:#define DT_N_S_soc_S_ethosu55_400e1000_P_zephyr_deferred_init_EXISTS 1
+14813:#define DT_N_S_soc_S_ethosu55_400e1000_P_wakeup_source 0
+14814:#define DT_N_S_soc_S_ethosu55_400e1000_P_wakeup_source_EXISTS 1
+14815:#define DT_N_S_soc_S_ethosu55_400e1000_P_zephyr_pm_device_runtime_auto 0
+14816:#define DT_N_S_soc_S_ethosu55_400e1000_P_zephyr_pm_device_runtime_auto_EXISTS 1
+14817-
+14818-/*
+14819: * Devicetree node: /soc/ethosu85@49042000
+14820- *
+14821: * Node identifier: DT_N_S_soc_S_ethosu85_49042000
+14822- *
+14823- * Binding (compatible = arm,ethos-u):
+14824- *   $ZEPHYR_BASE/dts/bindings/arm/arm,ethos-u.yaml
+14825- *
+14826- * (Descriptions have moved to the Devicetree Bindings Index
+14827- * in the documentation.)
+14828- */
+14829-
+14830-/* Node's full path: */
+14831:#define DT_N_S_soc_S_ethosu85_49042000_PATH "/soc/ethosu85@49042000"
+14832-
+14833-/* Node's name with unit-address: */
+14834:#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME "ethosu85@49042000"
+14835:#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME_UNQUOTED ethosu85@49042000
+14836:#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME_TOKEN ethosu85_49042000
+14837:#define DT_N_S_soc_S_ethosu85_49042000_FULL_NAME_UPPER_TOKEN ETHOSU85_49042000
+14838-
+14839-/* Node parent (/soc) identifier: */
+14840:#define DT_N_S_soc_S_ethosu85_49042000_PARENT DT_N_S_soc
+14841-
+14842-/* Node's index in its parent's list of children: */
+14843:#define DT_N_S_soc_S_ethosu85_49042000_CHILD_IDX 109
+14844-
+14845-/* Helpers for dealing with node labels: */
+14846:#define DT_N_S_soc_S_ethosu85_49042000_NODELABEL_NUM 1
+14847:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_NODELABEL(fn) fn(ethosu1)
+14848:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_NODELABEL_VARGS(fn, ...) fn(ethosu1, __VA_ARGS__)
+14849:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_ANCESTOR(fn) fn(DT_N_S_soc) fn(DT_N)
+14850-
+14851-/* Helper macros for child nodes of this node. */
+14852:#define DT_N_S_soc_S_ethosu85_49042000_CHILD_NUM 0
+14853:#define DT_N_S_soc_S_ethosu85_49042000_CHILD_NUM_STATUS_OKAY 0
+14854:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD(fn) 
+14855:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_SEP(fn, sep) 
+14856:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_VARGS(fn, ...) 
+14857:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_SEP_VARGS(fn, sep, ...) 
+14858:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_STATUS_OKAY(fn) 
+14859:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_STATUS_OKAY_SEP(fn, sep) 
+14860:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_STATUS_OKAY_VARGS(fn, ...) 
+14861:#define DT_N_S_soc_S_ethosu85_49042000_FOREACH_CHILD_STATUS_OKAY_SEP_VARGS(fn, sep, ...) 
+
+========== COMPILED ETHOS-U OBJECTS ==========
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/alif/drivers/ethos_u/CMakeFiles/..__modules__hal__alif__drivers__ethos_u.dir/src/ethosu_callback.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj
+
+========== BUILD COMMAND REFERENCES ==========
+14520:build modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj: C_COMPILER__ethosu_core_driver_unscanned_Release /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c || cmake_object_order_depends_target_ethosu_core_driver
+14522:  DEP_FILE = modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj.d
+14540:build modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj: C_COMPILER__ethosu_core_driver_unscanned_Release /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c || cmake_object_order_depends_target_ethosu_core_driver
+14542:  DEP_FILE = modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj.d
+14558:build modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a: C_STATIC_LIBRARY_LINKER__ethosu_core_driver_Release modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj || zephyr/device_api_ld_target zephyr/driver_validation_h_target zephyr/kobj_types_h_target zephyr/syscall_list_h_target
+3190:  "command": "/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_LOG_ENABLE=1 -DETHOSU_LOG_SEVERITY=1 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/modules/hal/ethos_u/include -I/home/user/sdk-alif/modules/hal/ethos_u/src -I/home/user/sdk-alif/modules/hal/ethos_u/../cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -Werror -fno-strict-aliasing -Os -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -std=c99 -o modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj -c /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c",
+3191:  "file": "/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c",
+3192:  "output": "modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj"
+3202:  "command": "/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_LOG_ENABLE=1 -DETHOSU_LOG_SEVERITY=1 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/modules/hal/ethos_u/include -I/home/user/sdk-alif/modules/hal/ethos_u/src -I/home/user/sdk-alif/modules/hal/ethos_u/../cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -Werror -fno-strict-aliasing -Os -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -std=c99 -o modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj -c /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c",
+3203:  "file": "/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c",
+3204:  "output": "modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj"
+
+========== LINK MAP ETHOS-U INITIALIZATION ==========
+12312: .text.ethosu_mutex_create
+12314: .text.ethosu_mutex_destroy
+12316: .text.ethosu_semaphore_create
+12318: .text.ethosu_semaphore_destroy
+12320: .text.ethosu_irq_handler
+12324: .text.ethosu_init
+19628: .text.ethosu_mutex_lock
+19630:                0x000000008001d3b8                ethosu_mutex_lock
+19631: .text.ethosu_mutex_unlock
+19633:                0x000000008001d3bc                ethosu_mutex_unlock
+19634: .text.ethosu_semaphore_take
+19636:                0x000000008001d3c0                ethosu_semaphore_take
+19637: .text.ethosu_semaphore_give
+19639:                0x000000008001d3d0                ethosu_semaphore_give
+21792: .rodata.ethosu_init.str1.1
+25443: .bss.ethosu_semaphore
+25445: .bss.ethosu_mutex
+25447: .bss.registered_drivers
+
+========== ELF SYMBOL CHECK ==========
+20001600 b ethosu_semaphore
+20001604 b ethosu_mutex
+20001608 b registered_drivers
+80012a48 T ethosu_reserve_driver
+8001d3b8 W ethosu_mutex_lock
+8001d3bc W ethosu_mutex_unlock
+8001d3c0 W ethosu_semaphore_take
+8001d3d0 W ethosu_semaphore_give
+
+========== ELF SECTION CHECK ==========
+  2149: 20001604     4 OBJECT  LOCAL  DEFAULT   39 ethosu_mutex
+  2150: 20001600     4 OBJECT  LOCAL  DEFAULT   39 ethosu_semaphore
+  2151: 20001608     4 OBJECT  LOCAL  DEFAULT   39 registered_drivers
+  3381: 8001d3b9     4 FUNC    WEAK   DEFAULT    3 ethosu_mutex_lock
+  3694: 8001d3c1    16 FUNC    WEAK   DEFAULT    3 ethosu_semaphore_take
+  4071: 8001d3d1    12 FUNC    WEAK   DEFAULT    3 ethosu_semaphore_give
+  4612: 8001d3bd     4 FUNC    WEAK   DEFAULT    3 ethosu_mutex_unlock
+
+========== INIT DEVICE REGISTRY REFERENCES ==========
+1089:modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12336: .text          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12337: .data          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12338: .bss           0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12340:                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12342:                0x0000000000000000       0x44 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12344:                0x0000000000000000       0x57 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12346:                0x0000000000000000       0x38 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12348:                0x0000000000000000       0x42 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+17961:                0x0000000080012b10       0x14 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+17964:                0x0000000080012b24       0x1c modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+17967:                0x0000000080012b40       0x34 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+17970:                0x0000000080012b74       0x80 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+17973:                0x0000000080012bf4      0x120 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+19650:                0x000000008001d410       0x6c modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+19653:                0x000000008001d47c       0x2e modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+19656:                0x000000008001d4aa       0x3a modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+20295:                0x000000008001e560                __device_dts_ord_74
+20298:                0x000000008001e574                __device_dts_ord_20
+20299:                0x000000008001e588                __device_dts_ord_46
+20302:                0x000000008001e59c                __device_dts_ord_298
+20303:                0x000000008001e5b0                __device_dts_ord_297
+20304:                0x000000008001e5c4                __device_dts_ord_296
+20305:                0x000000008001e5d8                __device_dts_ord_295
+20306:                0x000000008001e5ec                __device_dts_ord_304
+20307:                0x000000008001e600                __device_dts_ord_303
+20308:                0x000000008001e614                __device_dts_ord_302
+20309:                0x000000008001e628                __device_dts_ord_301
+20310:                0x000000008001e63c                __device_dts_ord_300
+20311:                0x000000008001e650                __device_dts_ord_299
+20312:                0x000000008001e664                __device_dts_ord_9
+20313:                0x000000008001e678                __device_dts_ord_8
+20316:                0x000000008001e68c                __device_dts_ord_233
+20319:                0x000000008001e6a0                __device_dts_ord_293
+20322:                0x000000008001e6b4                __device_dts_ord_280
+21143: .rodata.__pinctrl_dev_config__device_dts_ord_292
+21145: .rodata.__pinctrl_states__device_dts_ord_292
+21147: .rodata.__pinctrl_state_pins_0__device_dts_ord_292
+21151: .rodata.__pinctrl_dev_config__device_dts_ord_20
+21153: .rodata.__pinctrl_states__device_dts_ord_20
+21155: .rodata.__pinctrl_state_pins_0__device_dts_ord_20
+21159: .rodata.__pinctrl_dev_config__device_dts_ord_46
+21161: .rodata.__pinctrl_states__device_dts_ord_46
+21163: .rodata.__pinctrl_state_pins_0__device_dts_ord_46
+21191: .rodata.__pinctrl_dev_config__device_dts_ord_233
+21193: .rodata.__pinctrl_states__device_dts_ord_233
+21195: .rodata.__pinctrl_state_pins_0__device_dts_ord_233
+21807:                0x0000000080044464       0x79 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+21809:                0x00000000800444dd       0x61 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+21811:                0x000000008004453e      0x186 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+21813:                0x00000000800446c4        0x9 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+22259: .comment       0x0000000000000020       0x21 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+22588:                0x0000000000003fd8       0x78 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+22751: .debug_info    0x0000000002bd7881     0x59ca modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+22911: .debug_abbrev  0x000000000003d26b      0x38d modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+23071: .debug_line    0x0000000000094380      0x6ec modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+23223: .debug_frame   0x000000000000bac4      0x128 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+23596: .debug_str     0x000000000011ce30     0x1a53 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+23740: .debug_loc     0x00000000000c3dab      0x693 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+23911: .debug_ranges  0x0000000000021ae8       0x80 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+25038:                0x0000000000007fa6       0x3e modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+
+========== FINAL ==========
+RESULT=ETHOSU_ZEPHYR_INIT_AUDIT_CAPTURED
+NO_SOURCE_MODIFICATIONS=YES
+NO_BUILD_PERFORMED=YES
+NO_FLASH_PERFORMED=YES
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_zephyr_init_audit_20261123_163659.log
+============================================================
+
+SCRIPT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_zephyr_init_audit_20261123_163659.log
+
+Press Enter to close this terminal...
