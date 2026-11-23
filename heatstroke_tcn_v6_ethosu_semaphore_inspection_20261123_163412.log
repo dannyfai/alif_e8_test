@@ -1,0 +1,846 @@
+============================================================
+ETHOS-U SEMAPHORE INITIALIZATION INSPECTION
+============================================================
+DATE=2026-11-23T16:34:12+08:00
+SDK=/home/user/sdk-alif
+APP=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+ELF=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf
+DRIVER=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_semaphore_inspection_20261123_163412.log
+
+========== ARTIFACT IDENTITY ==========
+d10661b7095a4fec416e1e529b93ce885b8b086eec37cbbe5d543e69404b8f5e  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf
+227f7f247c163427f0531e43f42436eeccb202d2e5545f83af1626db10f5c5a0  /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf SIZE=89088364 bytes
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c SIZE=24511 bytes
+
+========== ETHOS-U DRIVER SOURCE: SEMAPHORE IMPLEMENTATION ==========
+   170	
+   171	void __attribute__((weak)) ethosu_mutex_destroy(void *mutex)
+   172	{
+   173	    UNUSED(mutex);
+   174	}
+   175	
+   176	int __attribute__((weak)) ethosu_mutex_lock(void *mutex)
+   177	{
+   178	    UNUSED(mutex);
+   179	    return 0;
+   180	}
+   181	
+   182	int __attribute__((weak)) ethosu_mutex_unlock(void *mutex)
+   183	{
+   184	    UNUSED(mutex);
+   185	    return 0;
+   186	}
+   187	
+   188	// Baremetal implementation of creating a semaphore
+   189	void *__attribute__((weak)) ethosu_semaphore_create(void)
+   190	{
+   191	    struct ethosu_semaphore_t *sem = malloc(sizeof(*sem));
+   192	    if (sem != NULL)
+   193	    {
+   194	        sem->count = 0;
+   195	    }
+   196	    return sem;
+   197	}
+   198	
+   199	void __attribute__((weak)) ethosu_semaphore_destroy(void *sem)
+   200	{
+   201	    free((struct ethosu_semaphore_t *)sem);
+   202	}
+   203	
+   204	// Baremetal simulation of waiting/sleeping for and then taking a semaphore using intrisics
+   205	int __attribute__((weak)) ethosu_semaphore_take(void *sem, uint64_t timeout)
+   206	{
+   207	    UNUSED(timeout);
+   208	    // Baremetal pseudo-example on how to trigger a timeout:
+   209	    // if (timeout != ETHOSU_SEMAPHORE_WAIT_FOREVER) {
+   210	    //     setup_a_timer_to_call_SEV_after_time(timeout);
+   211	    // }
+   212	    struct ethosu_semaphore_t *s = sem;
+   213	    while (s->count == 0)
+   214	    {
+   215	        __WFE();
+   216	        // Baremetal pseudo-example check if timeout triggered:
+   217	        // if (SEV_timer_triggered()) {
+   218	        //     return -1;
+   219	        // }
+   220	    }
+   221	    s->count--;
+   222	    return 0;
+   223	}
+   224	
+   225	// Baremetal simulation of giving a semaphore and waking up processes using intrinsics
+   226	int __attribute__((weak)) ethosu_semaphore_give(void *sem)
+   227	{
+   228	    struct ethosu_semaphore_t *s = sem;
+   229	    s->count++;
+   230	    __SEV();
+   231	    return 0;
+   232	}
+   233	
+   234	/******************************************************************************
+   235	 * Weak functions - Inference begin/end callbacks
+   236	 ******************************************************************************/
+   237	
+   238	void __attribute__((weak)) ethosu_inference_begin(struct ethosu_driver *drv, void *user_arg)
+   239	{
+   240	    UNUSED(user_arg);
+   241	    UNUSED(drv);
+   242	}
+   243	
+   244	void __attribute__((weak)) ethosu_inference_end(struct ethosu_driver *drv, void *user_arg)
+   245	{
+
+========== ETHOS-U DRIVER SOURCE: RESERVATION ==========
+   720	            break;
+   721	        case NOP:
+   722	            LOG_DEBUG("NOP");
+   723	            data_ptr += DRIVER_ACTION_LENGTH_32_BIT_WORD;
+   724	            break;
+   725	        default:
+   726	            LOG_ERR("UNSUPPORTED driver_action_command: %u", data_ptr->driver_action_command);
+   727	            goto err;
+   728	            break;
+   729	        }
+   730	    }
+   731	
+   732	    return 0;
+   733	err:
+   734	    LOG_ERR("Failed to invoke inference.");
+   735	    ethosu_reset_job(drv);
+   736	    return -1;
+   737	}
+   738	
+   739	int ethosu_invoke_v3(struct ethosu_driver *drv,
+   740	                     const void *custom_data_ptr,
+   741	                     const int custom_data_size,
+   742	                     uint64_t *const base_addr,
+   743	                     const size_t *base_addr_size,
+   744	                     const int num_base_addr,
+   745	                     void *user_arg)
+   746	{
+   747	    if (ethosu_invoke_async(
+   748	            drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, user_arg) < 0)
+   749	    {
+   750	        return -1;
+   751	    }
+   752	
+   753	    return ethosu_wait(drv, true);
+   754	}
+   755	
+   756	struct ethosu_driver *ethosu_reserve_driver(void)
+   757	{
+   758	    struct ethosu_driver *drv = NULL;
+   759	
+   760	    LOG_INFO("Acquiring NPU driver handle");
+   761	    ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+   762	
+   763	    ethosu_mutex_lock(ethosu_mutex);
+   764	    drv = registered_drivers;
+   765	
+   766	    while (drv != NULL)
+   767	    {
+   768	        if (!drv->reserved)
+   769	        {
+   770	            drv->reserved = true;
+   771	            LOG_DEBUG("NPU driver handle %p reserved", drv);
+   772	            break;
+   773	        }
+   774	        drv = drv->next;
+   775	    }
+   776	    ethosu_mutex_unlock(ethosu_mutex);
+   777	
+   778	    if (!drv)
+   779	    {
+   780	        LOG_ERR("No NPU driver handle available, but semaphore taken");
+   781	    }
+   782	
+   783	    return drv;
+   784	}
+   785	
+   786	void ethosu_release_driver(struct ethosu_driver *drv)
+   787	{
+   788	    ethosu_mutex_lock(ethosu_mutex);
+   789	    if (drv != NULL && drv->reserved)
+   790	    {
+   791	        if (drv->job.state == ETHOSU_JOB_RUNNING || drv->job.state == ETHOSU_JOB_DONE)
+   792	        {
+   793	            // Give the inference one shot to complete or force kill the job
+   794	            if (ethosu_wait(drv, false) == 1)
+   795	            {
+
+========== ETHOS-U DRIVER SOURCE: INITIALIZATION ==========
+147-}
+148-
+149-/******************************************************************************
+150- * Weak functions - Semaphore/Mutex for multi NPU
+151- *
+152: * Following section handles the minimal sempahore and mutex implementation in
+153- * case of baremetal applications. Weak symbols will be overridden by RTOS
+154- * definitions and implement true thread-safety (in application layer).
+155- ******************************************************************************/
+156-
+157:struct ethosu_semaphore_t
+158-{
+159-    uint8_t count;
+160-};
+161-
+162:static void *ethosu_mutex;
+163:static void *ethosu_semaphore;
+164-
+165:void *__attribute__((weak)) ethosu_mutex_create(void)
+166-{
+167:    static uint8_t mutex_placeholder;
+168:    return &mutex_placeholder;
+169-}
+170-
+171:void __attribute__((weak)) ethosu_mutex_destroy(void *mutex)
+172-{
+173:    UNUSED(mutex);
+174-}
+175-
+176:int __attribute__((weak)) ethosu_mutex_lock(void *mutex)
+177-{
+178:    UNUSED(mutex);
+179-    return 0;
+180-}
+181-
+182:int __attribute__((weak)) ethosu_mutex_unlock(void *mutex)
+183-{
+184:    UNUSED(mutex);
+185-    return 0;
+186-}
+187-
+188:// Baremetal implementation of creating a semaphore
+189:void *__attribute__((weak)) ethosu_semaphore_create(void)
+190-{
+191:    struct ethosu_semaphore_t *sem = malloc(sizeof(*sem));
+192-    if (sem != NULL)
+193-    {
+194-        sem->count = 0;
+195-    }
+196-    return sem;
+197-}
+198-
+199:void __attribute__((weak)) ethosu_semaphore_destroy(void *sem)
+200-{
+201:    free((struct ethosu_semaphore_t *)sem);
+202-}
+203-
+204:// Baremetal simulation of waiting/sleeping for and then taking a semaphore using intrisics
+205:int __attribute__((weak)) ethosu_semaphore_take(void *sem, uint64_t timeout)
+206-{
+207-    UNUSED(timeout);
+208-    // Baremetal pseudo-example on how to trigger a timeout:
+209-    // if (timeout != ETHOSU_SEMAPHORE_WAIT_FOREVER) {
+210-    //     setup_a_timer_to_call_SEV_after_time(timeout);
+211-    // }
+212:    struct ethosu_semaphore_t *s = sem;
+213-    while (s->count == 0)
+214-    {
+215-        __WFE();
+216-        // Baremetal pseudo-example check if timeout triggered:
+217-        // if (SEV_timer_triggered()) {
+--
+220-    }
+221-    s->count--;
+222-    return 0;
+223-}
+224-
+225:// Baremetal simulation of giving a semaphore and waking up processes using intrinsics
+226:int __attribute__((weak)) ethosu_semaphore_give(void *sem)
+227-{
+228:    struct ethosu_semaphore_t *s = sem;
+229-    s->count++;
+230-    __SEV();
+231-    return 0;
+232-}
+233-
+--
+250-/******************************************************************************
+251- * Static functions
+252- ******************************************************************************/
+253-static void ethosu_register_driver(struct ethosu_driver *drv)
+254-{
+255:    ethosu_mutex_lock(ethosu_mutex);
+256-    drv->next          = registered_drivers;
+257-    registered_drivers = drv;
+258:    ethosu_mutex_unlock(ethosu_mutex);
+259-
+260:    ethosu_semaphore_give(ethosu_semaphore);
+261-
+262-    LOG_INFO("New NPU driver registered (handle: 0x%p, NPU: 0x%p)", drv, drv->dev.reg);
+263-}
+264-
+265-static int ethosu_deregister_driver(struct ethosu_driver *drv)
+266-{
+267-    struct ethosu_driver *curr;
+268-    struct ethosu_driver **prev;
+269-
+270:    ethosu_mutex_lock(ethosu_mutex);
+271-    curr = registered_drivers;
+272-    prev = &registered_drivers;
+273-
+274-    while (curr != NULL)
+275-    {
+276-        if (curr == drv)
+277-        {
+278-            *prev = curr->next;
+279-            LOG_INFO("NPU driver handle %p deregistered.", drv);
+280:            ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER);
+281-            break;
+282-        }
+283-
+284-        prev = &curr->next;
+285-        curr = curr->next;
+286-    }
+287-
+288:    ethosu_mutex_unlock(ethosu_mutex);
+289-
+290-    if (curr == NULL)
+291-    {
+292-        LOG_ERR("No NPU driver handle registered at address %p.", drv);
+293-        return -1;
+--
+381- * Weak functions - Interrupt handler
+382- ******************************************************************************/
+383-void __attribute__((weak)) ethosu_irq_handler(struct ethosu_driver *drv)
+384-{
+385-    // Prevent race condition where interrupt triggered after a timeout waiting
+386:    // for semaphore, but before NPU is reset.
+387-    if (drv->job.result == ETHOSU_JOB_RESULT_TIMEOUT)
+388-    {
+389-        return;
+390-    }
+391-
+392-    drv->job.state  = ETHOSU_JOB_DONE;
+393-    drv->job.result = ethosu_dev_handle_interrupt(&drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+394:    ethosu_semaphore_give(drv->semaphore);
+395-}
+396-
+397-/******************************************************************************
+398- * Functions API
+399- ******************************************************************************/
+--
+402-{
+403-    drv->basep_flush_mask      = flush_mask;
+404-    drv->basep_invalidate_mask = invalidate_mask;
+405-}
+406-
+407:int ethosu_init(struct ethosu_driver *drv,
+408-                void *const base_address,
+409-                const void *fast_memory,
+410-                const size_t fast_memory_size,
+411-                uint32_t secure_enable,
+412-                uint32_t privilege_enable)
+--
+417-             fast_memory,
+418-             fast_memory_size,
+419-             secure_enable,
+420-             privilege_enable);
+421-
+422:    if (!ethosu_mutex)
+423-    {
+424:        ethosu_mutex = ethosu_mutex_create();
+425:        if (!ethosu_mutex)
+426-        {
+427:            LOG_ERR("Failed to create global driver mutex");
+428-            return -1;
+429-        }
+430-    }
+431-
+432:    if (!ethosu_semaphore)
+433-    {
+434:        ethosu_semaphore = ethosu_semaphore_create();
+435:        if (!ethosu_semaphore)
+436-        {
+437:            LOG_ERR("Failed to create global driver semaphore");
+438-            return -1;
+439-        }
+440-    }
+441-
+442-    drv->fast_memory           = (uintptr_t)fast_memory;
+--
+452-    {
+453-        LOG_ERR("Failed to initialize Ethos-U device");
+454-        return -1;
+455-    }
+456-
+457:    drv->semaphore = ethosu_semaphore_create();
+458:    if (!drv->semaphore)
+459-    {
+460:        LOG_ERR("Failed to create driver semaphore");
+461-        return -1;
+462-    }
+463-
+464-    ethosu_reset_job(drv);
+465-    ethosu_register_driver(drv);
+466-
+467-    return 0;
+468-}
+469-
+470:void ethosu_deinit(struct ethosu_driver *drv)
+471-{
+472-    ethosu_deregister_driver(drv);
+473:    ethosu_semaphore_destroy(drv->semaphore);
+474-}
+475-
+476-int ethosu_soft_reset(struct ethosu_driver *drv)
+477-{
+478-    // Soft reset the NPU
+--
+567-            }
+568-        }
+569-
+570-        // Wait for interrupt in blocking mode. In non-blocking mode
+571-        // the interrupt has already triggered
+572:        ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+573-        if (ret < 0)
+574-        {
+575-            drv->job.result = ETHOSU_JOB_RESULT_TIMEOUT;
+576-
+577:            // There's a race where the NPU interrupt can have fired between semaphore
+578-            // timing out and setting the result above (checked in interrupt handler).
+579-            // By checking if the job state has been changed (only set to DONE by interrupt
+580-            // handler), we know if the interrupt handler has run, if so decrement the
+581:            // semaphore count by one (given in interrupt handler).
+582-            if (drv->job.state == ETHOSU_JOB_DONE)
+583-            {
+584-                drv->job.result = ETHOSU_JOB_RESULT_TIMEOUT; // Reset back to timeout
+585:                ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+586-            }
+587-        }
+588-
+589-        // Inference done callback - always called even in case of timeout
+590-        ethosu_inference_end(drv, drv->job.user_arg);
+--
+751-    }
+752-
+753-    return ethosu_wait(drv, true);
+754-}
+755-
+756:struct ethosu_driver *ethosu_reserve_driver(void)
+757-{
+758-    struct ethosu_driver *drv = NULL;
+759-
+760-    LOG_INFO("Acquiring NPU driver handle");
+761:    ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+762-
+763:    ethosu_mutex_lock(ethosu_mutex);
+764-    drv = registered_drivers;
+765-
+766-    while (drv != NULL)
+767-    {
+768-        if (!drv->reserved)
+--
+771-            LOG_DEBUG("NPU driver handle %p reserved", drv);
+772-            break;
+773-        }
+774-        drv = drv->next;
+775-    }
+776:    ethosu_mutex_unlock(ethosu_mutex);
+777-
+778-    if (!drv)
+779-    {
+780:        LOG_ERR("No NPU driver handle available, but semaphore taken");
+781-    }
+782-
+783-    return drv;
+784-}
+785-
+786:void ethosu_release_driver(struct ethosu_driver *drv)
+787-{
+788:    ethosu_mutex_lock(ethosu_mutex);
+789-    if (drv != NULL && drv->reserved)
+790-    {
+791-        if (drv->job.state == ETHOSU_JOB_RUNNING || drv->job.state == ETHOSU_JOB_DONE)
+792-        {
+793-            // Give the inference one shot to complete or force kill the job
+--
+800-            }
+801-        }
+802-
+803-        drv->reserved = false;
+804-        LOG_DEBUG("NPU driver handle %p released", drv);
+805:        ethosu_semaphore_give(ethosu_semaphore);
+806-    }
+807:    ethosu_mutex_unlock(ethosu_mutex);
+808-}
+
+========== ALL ETHOS-U SEMAPHORE REFERENCES ==========
+
+----- SEARCH DIRECTORY: /home/user/sdk-alif/modules/hal/ethos_u -----
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:164:void *ethosu_semaphore_create(void);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:171:void ethosu_semaphore_destroy(void *sem);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:196:int ethosu_semaphore_take(void *sem, uint64_t timeout);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:204:int ethosu_semaphore_give(void *sem);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:268:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:378:struct ethosu_driver *ethosu_reserve_driver(void);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:381: * Release driver that was previously reserved with @see ethosu_reserve_driver.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:385:void ethosu_release_driver(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:398:    struct ethosu_driver *drv = ethosu_reserve_driver();
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:404:    ethosu_release_driver(drv);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:157:struct ethosu_semaphore_t
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:163:static void *ethosu_semaphore;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:189:void *__attribute__((weak)) ethosu_semaphore_create(void)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:191:    struct ethosu_semaphore_t *sem = malloc(sizeof(*sem));
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:199:void __attribute__((weak)) ethosu_semaphore_destroy(void *sem)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:201:    free((struct ethosu_semaphore_t *)sem);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:205:int __attribute__((weak)) ethosu_semaphore_take(void *sem, uint64_t timeout)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:212:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:226:int __attribute__((weak)) ethosu_semaphore_give(void *sem)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:228:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:260:    ethosu_semaphore_give(ethosu_semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:280:            ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:394:    ethosu_semaphore_give(drv->semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:407:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:432:    if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:434:        ethosu_semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:435:        if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:457:    drv->semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:473:    ethosu_semaphore_destroy(drv->semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:572:        ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:585:                ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:756:struct ethosu_driver *ethosu_reserve_driver(void)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:761:    ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:786:void ethosu_release_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:805:        ethosu_semaphore_give(ethosu_semaphore);
+
+----- SEARCH DIRECTORY: /home/user/sdk-alif/modules/hal -----
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/include/cyhal_ipc.h:152:cy_rslt_t cyhal_ipc_semaphore_init(cyhal_ipc_t *obj, uint32_t semaphore_num, bool preemptable);
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/include_pvt/cyhal_ipc_impl.h:242:/** This macro defines what device's core will initialize IPC PDL semaphores in scope of cyhal_ipc_semaphore_init call.
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/source/cyhal_ipc.c:75:* code does not initialize IPC PDL driver semaphores, so it is done by cyhal_ipc_semaphore_init() function, which
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/source/cyhal_ipc.c:76:* requires one device core call cyhal_ipc_semaphore_init() prior to other cores. By default, for CAT1C, CM7_0 should
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/source/cyhal_ipc.c:79:* CORE_NAME_CM7_1 will make cyhal_ipc_semaphore_init() on CAT1C device initialize IPC PDL semaphores on CM7_1 core.
+/home/user/sdk-alif/modules/hal/infineon/mtb-hal-cat1/source/cyhal_ipc.c:1004:cy_rslt_t cyhal_ipc_semaphore_init(cyhal_ipc_t *obj, uint32_t semaphore_num, bool preemptable)
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/include/cyabs_rtos.h:540:cy_rslt_t cy_rtos_semaphore_init(cy_semaphore_t* semaphore, uint32_t maxcount, uint32_t initcount);
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/include/cyabs_rtos.h:1249:    cy_rtos_semaphore_init(semaphore, maxcount, initcount)
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/source/COMPONENT_RTX/cyabs_rtos_rtxv5.c:606:cy_rslt_t cy_rtos_semaphore_init(cy_semaphore_t* semaphore, uint32_t maxcount, uint32_t initcount)
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/source/COMPONENT_FREERTOS/cyabs_rtos_freertos.c:634:// cy_rtos_semaphore_init
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/source/COMPONENT_FREERTOS/cyabs_rtos_freertos.c:636:cy_rslt_t cy_rtos_semaphore_init(cy_semaphore_t* semaphore, uint32_t maxcount, uint32_t initcount)
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/source/COMPONENT_THREADX/cyabs_rtos_threadx.c:582:// cy_rtos_semaphore_init
+/home/user/sdk-alif/modules/hal/infineon/abstraction-rtos/source/COMPONENT_THREADX/cyabs_rtos_threadx.c:584:cy_rslt_t cy_rtos_semaphore_init(cy_semaphore_t* semaphore, uint32_t maxcount, uint32_t initcount)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:161:void *ethosu_semaphore_create(void);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:168:void ethosu_semaphore_destroy(void *sem);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:193:int ethosu_semaphore_take(void *sem, uint64_t timeout);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:201:int ethosu_semaphore_give(void *sem);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:244:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:354:struct ethosu_driver *ethosu_reserve_driver(void);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:357: * Release driver that was previously reserved with @see ethosu_reserve_driver.
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:361:void ethosu_release_driver(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:374:    struct ethosu_driver *drv = ethosu_reserve_driver();
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h:380:    ethosu_release_driver(drv);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:161:struct ethosu_semaphore_t
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:167:static void *ethosu_semaphore;
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:193:void *__attribute__((weak)) ethosu_semaphore_create(void)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:195:    struct ethosu_semaphore_t *sem = malloc(sizeof(*sem));
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:203:void __attribute__((weak)) ethosu_semaphore_destroy(void *sem)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:205:    free((struct ethosu_semaphore_t *)sem);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:209:int __attribute__((weak)) ethosu_semaphore_take(void *sem, uint64_t timeout)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:216:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:230:int __attribute__((weak)) ethosu_semaphore_give(void *sem)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:232:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:264:    ethosu_semaphore_give(ethosu_semaphore);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:284:            ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:395:    ethosu_semaphore_give(drv->semaphore);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:402:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:427:    if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:429:        ethosu_semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:430:        if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:450:    drv->semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:468:    ethosu_semaphore_destroy(drv->semaphore);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:469:    ethosu_semaphore_destroy(ethosu_semaphore);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:472:    ethosu_semaphore = NULL;
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:562:        ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:575:                ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:758:struct ethosu_driver *ethosu_reserve_driver(void)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:763:    ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:788:void ethosu_release_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c:807:        ethosu_semaphore_give(ethosu_semaphore);
+/home/user/sdk-alif/modules/hal/infineon/mtb-srf/source/COMPONENT_NON_SECURE_DEVICE/COMPONENT_MW_MTB_IPC/mtb_srf_ipc.c:320:                result = cy_rtos_semaphore_init(&pool->ipc_pool_request_arr_semaphore,
+/home/user/sdk-alif/modules/hal/infineon/mtb-srf/source/COMPONENT_NON_SECURE_DEVICE/COMPONENT_MW_MTB_IPC/mtb_srf_ipc.c:327:                result = cy_rtos_semaphore_init(&pool->ipc_pool_sem_arr_semaphore,
+/home/user/sdk-alif/modules/hal/infineon/mtb-srf/source/COMPONENT_NON_SECURE_DEVICE/COMPONENT_MW_MTB_IPC/mtb_srf_ipc.c:782:        result = mtb_ipc_semaphore_init(cfg->ipc_instance, &(cfg->semaphore_handles[i]),
+/home/user/sdk-alif/modules/hal/infineon/mtb-srf/source/COMPONENT_NON_SECURE_DEVICE/mtb_srf_pool.c:84:        return cy_rtos_semaphore_init(&pool->mtb_srf_pool_semaphore, num_entries, num_entries);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:164:void *ethosu_semaphore_create(void);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:171:void ethosu_semaphore_destroy(void *sem);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:196:int ethosu_semaphore_take(void *sem, uint64_t timeout);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:204:int ethosu_semaphore_give(void *sem);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:268:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:378:struct ethosu_driver *ethosu_reserve_driver(void);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:381: * Release driver that was previously reserved with @see ethosu_reserve_driver.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:385:void ethosu_release_driver(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:398:    struct ethosu_driver *drv = ethosu_reserve_driver();
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:404:    ethosu_release_driver(drv);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:157:struct ethosu_semaphore_t
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:163:static void *ethosu_semaphore;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:189:void *__attribute__((weak)) ethosu_semaphore_create(void)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:191:    struct ethosu_semaphore_t *sem = malloc(sizeof(*sem));
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:199:void __attribute__((weak)) ethosu_semaphore_destroy(void *sem)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:201:    free((struct ethosu_semaphore_t *)sem);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:205:int __attribute__((weak)) ethosu_semaphore_take(void *sem, uint64_t timeout)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:212:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:226:int __attribute__((weak)) ethosu_semaphore_give(void *sem)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:228:    struct ethosu_semaphore_t *s = sem;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:260:    ethosu_semaphore_give(ethosu_semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:280:            ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:394:    ethosu_semaphore_give(drv->semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:407:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:432:    if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:434:        ethosu_semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:435:        if (!ethosu_semaphore)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:457:    drv->semaphore = ethosu_semaphore_create();
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:473:    ethosu_semaphore_destroy(drv->semaphore);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:572:        ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:585:                ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:756:struct ethosu_driver *ethosu_reserve_driver(void)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:761:    ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:786:void ethosu_release_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:805:        ethosu_semaphore_give(ethosu_semaphore);
+
+----- SEARCH DIRECTORY: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652 -----
+
+========== ELF SEMAPHORE / ETHOS-U SYMBOLS ==========
+00000000 a ethosu_callback.c
+00000000 a ethosu.cc
+00000000 a ethosu_device_u55_u65.c
+00000000 a ethosu_driver.c
+00000000 a mutex.c
+00000001 A CONFIG_ETHOSU_VERBOSE_LEVEL
+0000000a A CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY
+00000400 A CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE
+20000024 D z_malloc_heap_mutex
+20000254 d k_mutex_area
+20000254 D _k_mutex_list_start
+20000254 d svc_mutex
+20000268 D _k_mutex_list_end
+20001574 b guard variable for tflite::Register_ETHOSU()::r
+20001578 b tflite::Register_ETHOSU()::r
+20001600 b ethosu_semaphore
+20001604 b ethosu_mutex
+800020fc W tflite::MicroMutableOpResolver<30u>::AddEthosU()
+8000c4bc T tflite::Register_ETHOSU()
+8000c504 T tflite::GetString_ETHOSU()
+80010698 W ethosu_area_needs_invalidate_dcache
+80010698 t ethosu_area_needs_invalidate_dcache.localalias
+800106dc T ethosu_flush_dcache
+80010780 T ethosu_invalidate_dcache
+80010830 t k_mutex_lock.constprop.0
+80010840 t k_mutex_unlock.constprop.0.isra.0
+800111a0 T z_impl_k_mutex_lock
+80011290 T z_impl_k_mutex_unlock
+800121a0 T arm::app::fwk::tflm::TflmModel::ContainsEthosUOperator() const
+8001269c T ethosu_soft_reset
+800126e0 T ethosu_request_power
+80012720 T ethosu_release_power
+80012748 T ethosu_wait
+80012850 T ethosu_invoke_async
+80012a48 T ethosu_reserve_driver
+80012ab4 T ethosu_release_driver
+80012b10 W ethosu_config_select
+80012b24 T ethosu_dev_axi_init
+80012b40 T ethosu_dev_print_err_status
+80012b74 T ethosu_dev_soft_reset
+80012bf4 T ethosu_dev_verify_optimizer_config
+8001c9ea W ethosu_area_needs_flush_dcache
+8001c9ee T ethosu_address_remap
+8001d3ae t ethosu_reset_job
+8001d3b8 W ethosu_mutex_lock
+8001d3bc W ethosu_mutex_unlock
+8001d3c0 W ethosu_semaphore_take
+8001d3d0 W ethosu_semaphore_give
+8001d3dc W ethosu_inference_begin
+8001d3de W ethosu_inference_end
+8001d3e0 T ethosu_invoke_v3
+8001d410 T ethosu_dev_run_command_stream
+8001d47c T ethosu_dev_verify_access_state
+8001d4aa T ethosu_dev_set_clock_and_power
+
+========== ELF SYMBOL TABLE: WEAK / GLOBAL ==========
+  2149: 20001604     4 OBJECT  LOCAL  DEFAULT   39 ethosu_mutex
+  2150: 20001600     4 OBJECT  LOCAL  DEFAULT   39 ethosu_semaphore
+  3279: 80012a49   108 FUNC    GLOBAL DEFAULT    3 ethosu_reserve_driver
+  3381: 8001d3b9     4 FUNC    WEAK   DEFAULT    3 ethosu_mutex_lock
+  3694: 8001d3c1    16 FUNC    WEAK   DEFAULT    3 ethosu_semaphore_take
+  3713: 80012ab5    92 FUNC    GLOBAL DEFAULT    3 ethosu_release_driver
+  4071: 8001d3d1    12 FUNC    WEAK   DEFAULT    3 ethosu_semaphore_give
+  4612: 8001d3bd     4 FUNC    WEAK   DEFAULT    3 ethosu_mutex_unlock
+
+========== RESERVE DRIVER DISASSEMBLY ==========
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section text:
+
+80012a48 <ethosu_reserve_driver>:
+80012a48:	b538      	push	{r3, r4, r5, lr}
+80012a4a:	4914      	ldr	r1, [pc, #80]	@ (80012a9c <ethosu_reserve_driver+0x54>)
+80012a4c:	4d14      	ldr	r5, [pc, #80]	@ (80012aa0 <ethosu_reserve_driver+0x58>)
+80012a4e:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
+80012a52:	f04f 32ff 	mov.w	r2, #4294967295	@ 0xffffffff
+80012a56:	6808      	ldr	r0, [r1, #0]
+80012a58:	f00a fcb2 	bl	8001d3c0 <ethosu_semaphore_take>
+80012a5c:	6828      	ldr	r0, [r5, #0]
+80012a5e:	f00a fcab 	bl	8001d3b8 <ethosu_mutex_lock>
+80012a62:	4b10      	ldr	r3, [pc, #64]	@ (80012aa4 <ethosu_reserve_driver+0x5c>)
+80012a64:	681c      	ldr	r4, [r3, #0]
+80012a66:	b95c      	cbnz	r4, 80012a80 <ethosu_reserve_driver+0x38>
+80012a68:	6828      	ldr	r0, [r5, #0]
+80012a6a:	f00a fca7 	bl	8001d3bc <ethosu_mutex_unlock>
+80012a6e:	480e      	ldr	r0, [pc, #56]	@ (80012aa8 <ethosu_reserve_driver+0x60>)
+80012a70:	f44f 7343 	mov.w	r3, #780	@ 0x30c
+80012a74:	4a0d      	ldr	r2, [pc, #52]	@ (80012aac <ethosu_reserve_driver+0x64>)
+80012a76:	490e      	ldr	r1, [pc, #56]	@ (80012ab0 <ethosu_reserve_driver+0x68>)
+80012a78:	6800      	ldr	r0, [r0, #0]
+80012a7a:	f00b f971 	bl	8001dd60 <fprintf>
+80012a7e:	e008      	b.n	80012a92 <ethosu_reserve_driver+0x4a>
+80012a80:	f894 3040 	ldrb.w	r3, [r4, #64]	@ 0x40
+80012a84:	b93b      	cbnz	r3, 80012a96 <ethosu_reserve_driver+0x4e>
+80012a86:	2301      	movs	r3, #1
+80012a88:	6828      	ldr	r0, [r5, #0]
+80012a8a:	f884 3040 	strb.w	r3, [r4, #64]	@ 0x40
+80012a8e:	f00a fc95 	bl	8001d3bc <ethosu_mutex_unlock>
+80012a92:	4620      	mov	r0, r4
+80012a94:	bd38      	pop	{r3, r4, r5, pc}
+80012a96:	68e4      	ldr	r4, [r4, #12]
+80012a98:	e7e5      	b.n	80012a66 <ethosu_reserve_driver+0x1e>
+80012a9a:	bf00      	nop
+80012a9c:	20001600 	.word	0x20001600
+80012aa0:	20001604 	.word	0x20001604
+80012aa4:	20001608 	.word	0x20001608
+80012aa8:	8003e1a8 	.word	0x8003e1a8
+80012aac:	8004401d 	.word	0x8004401d
+80012ab0:	80044424 	.word	0x80044424
+
+80012ab4 <ethosu_release_driver>:
+80012ab4:	b538      	push	{r3, r4, r5, lr}
+80012ab6:	4604      	mov	r4, r0
+
+========== RESERVE DRIVER LITERAL DATA ==========
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf:     file format elf32-littlearm
+
+Contents of section text:
+ 80012a90 95fc2046 38bde468 e5e700bf 00160020  .. F8..h....... 
+ 80012aa0 04160020 08160020 a8e10380 1d400480  ... ... .....@..
+ 80012ab0 24440480 38b50446                    $D..8..F        
+
+========== ETHOS-U DRIVER CONFIGURATION ==========
+5:CONFIG_UART_INTERRUPT_DRIVEN=y
+6:CONFIG_NUM_IRQS=480
+27:# CONFIG_SHARED_INTERRUPTS is not set
+35:# CONFIG_MULTI_LEVEL_INTERRUPTS is not set
+39:# CONFIG_ZERO_LATENCY_IRQS is not set
+42:CONFIG_NUM_METAIRQ_PRIORITIES=0
+43:CONFIG_GEN_IRQ_VECTOR_TABLE=y
+44:# CONFIG_DYNAMIC_INTERRUPTS is not set
+82:# CONFIG_UART_NS16550_WA_ISR_REENABLE_INTERRUPT is not set
+84:CONFIG_GEN_IRQ_START_VECTOR=0
+87:CONFIG_ARCH_IRQ_VECTOR_TABLE_ALIGN=4
+171:# CONFIG_ALIF_ETHOSU_SHELL is not set
+172:CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY=10
+173:CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE=1024
+174:CONFIG_ETHOSU_VERBOSE_LEVEL=1
+328:# hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+330:CONFIG_ARM_ETHOS_U=y
+333:# Arm Ethos-U NPU configuration
+335:# CONFIG_ARM_ETHOS_U55_64 is not set
+336:CONFIG_ARM_ETHOS_U55_128=y
+337:# CONFIG_ARM_ETHOS_U55_256 is not set
+338:# CONFIG_ARM_ETHOS_U65_128 is not set
+339:# CONFIG_ARM_ETHOS_U65_256 is not set
+340:# CONFIG_ARM_ETHOS_U65_512 is not set
+341:# CONFIG_ARM_ETHOS_U85_128 is not set
+342:# CONFIG_ARM_ETHOS_U85_256 is not set
+343:# CONFIG_ARM_ETHOS_U85_512 is not set
+344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+346:# end of Arm Ethos-U NPU configuration
+348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+356:CONFIG_ZEPHYR_HAL_ETHOS_U_MODULE=y
+357:# end of hal_ethos_u (/home/user/sdk-alif/modules/hal/ethos_u)
+390:# openthread (/home/user/sdk-alif/modules/lib/openthread)
+392:# CONFIG_OPENTHREAD is not set
+393:CONFIG_ZEPHYR_OPENTHREAD_MODULE=y
+394:# end of openthread (/home/user/sdk-alif/modules/lib/openthread)
+541:CONFIG_ARCH_HAS_SINGLE_THREAD_SUPPORT=y
+626:# Interrupt Configuration
+630:CONFIG_IRQ_VECTOR_TABLE_JUMP_BY_ADDRESS=y
+631:# CONFIG_IRQ_VECTOR_TABLE_JUMP_BY_CODE is not set
+634:# end of Interrupt Configuration
+644:CONFIG_ARCH_SUPPORTS_COREDUMP_THREADS=y
+648:CONFIG_ARCH_HAS_THREAD_LOCAL_STORAGE=y
+650:CONFIG_ARCH_HAS_THREAD_ABORT=y
+702:CONFIG_MULTITHREADING=y
+704:CONFIG_MAIN_THREAD_PRIORITY=0
+709:CONFIG_THREAD_STACK_INFO=y
+710:# CONFIG_THREAD_CUSTOM_DATA is not set
+711:# CONFIG_DYNAMIC_THREAD is not set
+723:CONFIG_CURRENT_THREAD_USE_TLS=y
+733:# CONFIG_THREAD_MONITOR is not set
+734:# CONFIG_THREAD_NAME is not set
+735:# CONFIG_THREAD_RUNTIME_STATS is not set
+764:# CONFIG_TIMESLICE_PER_THREAD is not set
+803:CONFIG_TOOLCHAIN_SUPPORTS_THREAD_LOCAL_STORAGE=y
+804:CONFIG_THREAD_LOCAL_STORAGE=y
+960:# CONFIG_GPIO_ENABLE_DISABLE_INTERRUPT is not set
+971:# Interrupt controller drivers
+981:# end of Interrupt controller drivers
+1040:CONFIG_SERIAL_SUPPORT_INTERRUPT=y
+1068:# CONFIG_UART_NS16550_WA_TX_FIFO_EMPTY_INTERRUPT is not set
+1285:# CONFIG_POSIX_THREADS is not set
+1294:# CONFIG_POSIX_SEMAPHORES is not set
+1320:# CONFIG_XSI_THREADS_EXT is not set
+1335:CONFIG_MAX_PTHREAD_COUNT=0
+1336:CONFIG_MAX_PTHREAD_KEY_COUNT=0
+1349:# CONFIG_PTHREAD is not set
+1350:# CONFIG_PTHREAD_BARRIER is not set
+1351:# CONFIG_PTHREAD_COND is not set
+1352:# CONFIG_PTHREAD_IPC is not set
+1353:# CONFIG_PTHREAD_KEY is not set
+1354:# CONFIG_PTHREAD_MUTEX is not set
+1355:# CONFIG_PTHREAD_RWLOCK is not set
+1356:# CONFIG_PTHREAD_SPINLOCK is not set
+1405:# CONFIG_THREAD_ANALYZER is not set
+1424:# CONFIG_DEBUG_THREAD_INFO is not set
+1482:# CONFIG_LOG_BLOCK_IN_THREAD is not set
+1484:CONFIG_LOG_PROCESS_THREAD=y
+1485:CONFIG_LOG_PROCESS_THREAD_STARTUP_DELAY_MS=0
+1486:CONFIG_LOG_PROCESS_THREAD_SLEEP_MS=1000
+1487:CONFIG_LOG_PROCESS_THREAD_STACK_SIZE=768
+1488:# CONFIG_LOG_PROCESS_THREAD_CUSTOM_PRIORITY is not set
+1509:# CONFIG_LOG_THREAD_ID_PREFIX is not set
+1644:CONFIG_TOOLCHAIN_ZEPHYR_SUPPORTS_THREAD_LOCAL_STORAGE=y
+
+========== APPLICATION INITIALIZATION REFERENCES ==========
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/MainLoop.cc:332:    printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/MainLoop.cc:333:           model.ContainsEthosUOperator() ? 1U : 0U);
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:5:#include "tensorflow/lite/micro/kernels/ethosu.h"
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:73:    // AddEthosU() in this SDK can return kTfLiteOk even when the
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:74:    // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:76:        tflite::Register_ETHOSU();
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:80:        printk("TCN_V6_RESOLVER: native Ethos-U registration/invoke missing\n");
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:83:        const TfLiteStatus status = m_resolver.AddEthosU();
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/TcnV6Model.cc:85:            printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+
+========== FINAL ==========
+RESULT=ETHOSU_SEMAPHORE_DIAGNOSTIC_CAPTURED
+NO_SOURCE_MODIFICATIONS=YES
+NO_BUILD_PERFORMED=YES
+NO_FLASH_PERFORMED=YES
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_semaphore_inspection_20261123_163412.log
+============================================================
+
+SCRIPT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_semaphore_inspection_20261123_163412.log
+
+Press Enter to close this terminal...
