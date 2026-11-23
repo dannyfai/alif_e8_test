@@ -1,0 +1,481 @@
+============================================================
+TCN V6 ETHOS-U DRIVER ROUTE INSPECTION
+============================================================
+DATE=2026-11-23T16:43:48+08:00
+APP=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_driver_route_20261123_164348.log
+
+========== ZEPHYR ETHOS-U DRIVER ==========
+
+----- /home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt -----
+     1	# Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+     2	#
+     3	# SPDX-License-Identifier: Apache-2.0
+     4	
+     5	# Compile driver only if there are enabled Ethos-U devices in the device tree
+     6	# Zephyr auto-generates CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED when device tree has
+     7	# a node with compatible="arm,ethos-u" and status="okay"
+     8	if(CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED)
+     9	  zephyr_library()
+    10	  zephyr_library_sources(ethos_u.c)
+    11	  # Expose the Ethos-U core driver's private headers (src/) to this library
+    12	  # only, so device-layer APIs such as ethosu_dev_set_clock_and_power() can be
+    13	  # used for power management.
+    14	  zephyr_library_include_directories(${ZEPHYR_HAL_ETHOS_U_MODULE_DIR}/src)
+    15	endif()
+NOT_FOUND=/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/Kconfig
+
+----- /home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c -----
+     1	/*
+     2	 * SPDX-FileCopyrightText: <text>Copyright 2021-2022, 2024 Arm Limited and/or its
+     3	 * affiliates <open-source-office@arm.com></text>
+     4	 * SPDX-License-Identifier: Apache-2.0
+     5	 */
+     6	
+     7	#include "zephyr/sys_clock.h"
+     8	#include <zephyr/device.h>
+     9	#include <zephyr/devicetree.h>
+    10	#include <zephyr/drivers/clock_control.h>
+    11	#include <zephyr/init.h>
+    12	#include <zephyr/kernel.h>
+    13	#include <zephyr/irq.h>
+    14	#include <zephyr/sys/util.h>
+    15	#include <zephyr/pm/device.h>
+    16	#include <zephyr/pm/policy.h>
+    17	#include <ethosu_driver.h>
+    18	#include <ethosu_device.h>
+    19	
+    20	#include <zephyr/logging/log.h>
+    21	LOG_MODULE_REGISTER(ethos_u, CONFIG_ARM_ETHOS_U_LOG_LEVEL);
+    22	
+    23	#define DT_DRV_COMPAT arm_ethos_u
+    24	
+    25	/*******************************************************************************
+    26	 * Re-implementation/Overrides __((weak)) symbol functions from ethosu_driver.c
+    27	 * To handle mutex and semaphores
+    28	 *******************************************************************************/
+    29	
+    30	void *ethosu_mutex_create(void)
+    31	{
+    32		struct k_mutex *mutex;
+    33	
+    34		mutex = k_malloc(sizeof(*mutex));
+    35		if (mutex == NULL) {
+    36			LOG_ERR("Failed allocate mutex");
+    37			return NULL;
+    38		}
+    39	
+    40		k_mutex_init(mutex);
+    41	
+    42		return (void *)mutex;
+    43	}
+    44	
+    45	int ethosu_mutex_lock(void *mutex)
+    46	{
+    47		int status;
+    48	
+    49		status = k_mutex_lock((struct k_mutex *)mutex, K_FOREVER);
+    50		if (status != 0) {
+    51			LOG_ERR("Failed to lock mutex with error - %d", status);
+    52			return -1;
+    53		}
+    54	
+    55		return 0;
+    56	}
+    57	
+    58	int ethosu_mutex_unlock(void *mutex)
+    59	{
+    60		k_mutex_unlock((struct k_mutex *)mutex);
+    61		return 0;
+    62	}
+    63	
+    64	void *ethosu_semaphore_create(void)
+    65	{
+    66		struct k_sem *sem;
+    67	
+    68		sem = k_malloc(sizeof(*sem));
+    69		if (sem == NULL) {
+    70			LOG_ERR("Failed to allocate semaphore");
+    71			return NULL;
+    72		}
+    73	
+    74		k_sem_init(sem, 0, 100);
+    75	
+    76		return (void *)sem;
+    77	}
+    78	
+    79	int ethosu_semaphore_take(void *sem, uint64_t timeout)
+    80	{
+    81		int status;
+    82	
+    83		status = k_sem_take((struct k_sem *)sem, (timeout == ETHOSU_SEMAPHORE_WAIT_FOREVER)
+    84								 ? K_FOREVER
+    85								 : Z_TIMEOUT_TICKS(timeout));
+    86	
+    87		if (status != 0) {
+    88			/* The Ethos-U driver expects the semaphore implementation to never fail except for
+    89			 * when a timeout occurs, and the current ethosu_semaphore_take implementation makes
+    90			 * no distinction, in terms of return codes, between a timeout and other semaphore
+    91			 * take failures. Also, note that a timeout is virtually indistinguishable from
+    92			 * other failures if the driver logging is disabled. Handling errors other than a
+    93			 * timeout is therefore not covered here and is deferred to the application
+    94			 * developer if necessary.
+    95			 */
+    96			if (status != -EAGAIN) {
+    97				LOG_ERR("Failed to take semaphore with error - %d", status);
+    98			}
+    99			return -1;
+   100		}
+   101	
+   102		return 0;
+   103	}
+   104	
+   105	int ethosu_semaphore_give(void *sem)
+   106	{
+   107		k_sem_give((struct k_sem *)sem);
+   108		return 0;
+   109	}
+   110	
+   111	void ethosu_semaphore_destroy(void *sem)
+   112	{
+   113		k_free(sem);
+   114	}
+   115	
+   116	void ethosu_mutex_destroy(void *mutex)
+   117	{
+   118		k_free(mutex);
+   119	}
+   120	
+   121	struct ethosu_dts_info {
+   122		void *base_addr;
+   123		bool secure_enable;
+   124		bool privilege_enable;
+   125		unsigned int irqn;
+   126		void (*irq_config)(void);
+   127		const struct device *clk_dev;
+   128		clock_control_subsys_t clk_id;
+   129	};
+   130	
+   131	struct ethosu_data {
+   132		struct ethosu_driver drv;
+   133	};
+   134	
+   135	void ethosu_zephyr_irq_handler(const struct device *dev)
+   136	{
+   137		struct ethosu_data *data = dev->data;
+   138		struct ethosu_driver *drv = &data->drv;
+   139	
+   140		ethosu_irq_handler(drv);
+   141	}
+   142	
+   143	static int ethosu_zephyr_init(const struct device *dev)
+   144	{
+   145		const struct ethosu_dts_info *config = dev->config;
+   146		struct ethosu_data *data = dev->data;
+   147		struct ethosu_driver *drv = &data->drv;
+   148		struct ethosu_driver_version version;
+   149	
+   150		LOG_DBG("Ethos-U DTS info. base_address=0x%p, secure_enable=%u, privilege_enable=%u",
+   151			config->base_addr, config->secure_enable, config->privilege_enable);
+   152	
+   153		if (config->clk_dev != NULL) {
+   154			if (!device_is_ready(config->clk_dev)) {
+   155				LOG_ERR("Clock device not ready");
+   156				return -ENODEV;
+   157			}
+   158			if (clock_control_on(config->clk_dev, config->clk_id)) {
+   159				LOG_ERR("Failed to enable NPU clock");
+   160				return -EIO;
+   161			}
+   162		}
+   163	
+   164		ethosu_get_driver_version(&version);
+   165	
+   166		LOG_DBG("Version. major=%u, minor=%u, patch=%u", version.major, version.minor,
+   167			version.patch);
+   168	
+   169		if (ethosu_init(drv, config->base_addr, NULL, 0, config->secure_enable,
+   170				config->privilege_enable)) {
+   171			LOG_ERR("Failed to initialize NPU with ethosu_init().");
+   172			return -EINVAL;
+   173		}
+   174	
+   175		config->irq_config();
+   176	
+   177		return 0;
+   178	}
+   179	
+   180	#if defined(CONFIG_PM_DEVICE)
+   181	/**
+   182	 * @brief Ethos-U PM device action handler
+   183	 *
+   184	 * Handles power management state transitions for the Ethos-U device.
+   185	 * Coordinates with power domain via PM framework.
+   186	 *
+   187	 * @param dev Ethos-U device struct
+   188	 * @param action PM device action
+   189	 *
+   190	 * @return 0 if successful, negative errno otherwise
+   191	 */
+   192	static int ethosu_pm_action(const struct device *dev, enum pm_device_action action)
+   193	{
+   194		int ret = 0;
+   195		const struct ethosu_dts_info *config = dev->config;
+   196		struct ethosu_data *data = dev->data;
+   197		struct ethosu_driver *drv = &data->drv;
+   198	
+   199		switch (action) {
+   200		case PM_DEVICE_ACTION_RESUME:
+   201			return ethosu_zephyr_init(dev);
+   202	
+   203		case PM_DEVICE_ACTION_SUSPEND:
+   204			/*
+   205			 * Refuse to suspend while the NPU is reserved or an inference is
+   206			 * in flight. Tearing down in that state would free the driver
+   207			 * semaphore under an active job, and ethosu_deregister_driver()
+   208			 * would block on the global handle semaphore while holding the
+   209			 * driver mutex, deadlocking the subsystem.
+   210			 */
+   211			if (drv->reserved || drv->job.state != ETHOSU_JOB_IDLE) {
+   212				return -EBUSY;
+   213			}
+   214	
+   215			/*
+   216			 * Enable NPU clock and power gating for low-power STOP mode.
+   217			 * This writes NPU registers, so it must run while the NPU is
+   218			 * still powered and accessible (before ethosu_deinit()).
+   219			 */
+   220			if (ethosu_dev_set_clock_and_power(&drv->dev, ETHOSU_CLOCK_Q_ENABLE,
+   221							   ETHOSU_POWER_Q_ENABLE) != ETHOSU_SUCCESS) {
+   222				return -EIO;
+   223			}
+   224	
+   225			/*
+   226			 * Disable the NPU IRQ before freeing the driver semaphore so a
+   227			 * stale/pending interrupt cannot call ethosu_semaphore_give() on
+   228			 * freed memory.
+   229			 */
+   230			irq_disable(config->irqn);
+   231	
+   232			/*
+   233			 * Symmetric teardown: deregister the handle and free the driver
+   234			 * semaphore so the next RESUME's ethosu_init() starts from a clean
+   235			 * state. Retained SRAM would otherwise make
+   236			 * ethosu_register_driver() splice the driver onto itself.
+   237			 */
+   238			ethosu_deinit(drv);
+   239			return 0;
+   240	
+   241		case PM_DEVICE_ACTION_TURN_OFF:
+   242		case PM_DEVICE_ACTION_TURN_ON:
+   243			break;
+   244	
+   245		default:
+   246			ret = -ENOTSUP;
+   247			break;
+   248		}
+   249	
+   250		return ret;
+   251	}
+   252	#endif /* CONFIG_PM_DEVICE */
+   253	
+   254	#define ETHOSU_DEVICE_INIT(n)                                                                      \
+   255		static struct ethosu_data ethosu_data_##n;                                                 \
+   256	                                                                                                   \
+   257		static void ethosu_zephyr_irq_config_##n(void)                                             \
+   258		{                                                                                          \
+   259			IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority), ethosu_zephyr_irq_handler,  \
+   260				    DEVICE_DT_INST_GET(n), 0);                                             \
+   261			irq_enable(DT_INST_IRQN(n));                                                       \
+   262		}                                                                                          \
+   263	                                                                                                   \
+   264		static const struct ethosu_dts_info ethosu_dts_info_##n = {                                \
+   265			.base_addr = (void *)DT_INST_REG_ADDR(n),                                          \
+   266			.secure_enable = DT_INST_PROP(n, secure_enable),                                   \
+   267			.privilege_enable = DT_INST_PROP(n, privilege_enable),                             \
+   268			.irqn = DT_INST_IRQN(n),                                                           \
+   269			.irq_config = &ethosu_zephyr_irq_config_##n,                                       \
+   270			.clk_dev = COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clocks),                           \
+   271				(DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n))), (NULL)),			   \
+   272			.clk_id = COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clocks),                            \
+   273				((clock_control_subsys_t)DT_INST_CLOCKS_CELL(n, clkid)), (NULL)),	   \
+   274		};                                                                                         \
+   275	                                                                                                   \
+   276		PM_DEVICE_DT_INST_DEFINE(n, ethosu_pm_action);                                             \
+   277	                                                                                                   \
+   278		DEVICE_DT_INST_DEFINE(n, ethosu_zephyr_init, PM_DEVICE_DT_INST_GET(n), &ethosu_data_##n,   \
+   279				      &ethosu_dts_info_##n, POST_KERNEL,                                   \
+   280				      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, NULL);
+   281	
+   282	DT_INST_FOREACH_STATUS_OKAY(ETHOSU_DEVICE_INIT);
+
+========== ALIF ETHOS-U DRIVER INTEGRATION ==========
+ALIF_ETHOSU_DIRECTORY_NOT_FOUND
+
+========== APPLICATION DEVICETREE OVERLAYS ==========
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/boards/alif_e8_common.overlay
+
+----- /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/boards/alif_e8_common.overlay -----
+
+========== BUILD CONFIGURATION ==========
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:11:CONFIG_SOC_RESET_HOOK=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:59:CONFIG_CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:134:CONFIG_DT_HAS_SOC_NV_FLASH_ENABLED=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:171:# CONFIG_ALIF_ETHOSU_SHELL is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:172:CONFIG_ALIF_ETHOSU_SHELL_THREAD_PRIORITY=10
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:173:CONFIG_ALIF_ETHOSU_SHELL_THREAD_STACKSIZE=1024
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:174:CONFIG_ETHOSU_VERBOSE_LEVEL=1
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:330:CONFIG_ARM_ETHOS_U=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:335:# CONFIG_ARM_ETHOS_U55_64 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:336:CONFIG_ARM_ETHOS_U55_128=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:337:# CONFIG_ARM_ETHOS_U55_256 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:338:# CONFIG_ARM_ETHOS_U65_128 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:339:# CONFIG_ARM_ETHOS_U65_256 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:340:# CONFIG_ARM_ETHOS_U65_512 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:341:# CONFIG_ARM_ETHOS_U85_128 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:342:# CONFIG_ARM_ETHOS_U85_256 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:343:# CONFIG_ARM_ETHOS_U85_512 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:490:CONFIG_BOARD="alif_e8_dk"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:491:CONFIG_BOARD_REVISION=""
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:492:CONFIG_BOARD_TARGET="alif_e8_dk/ae822fa0e5597xx0/rtss_he"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:494:CONFIG_BOARD_ALIF_E8_DK=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:495:CONFIG_BOARD_ALIF_E8_DK_AE822FA0E5597XX0_RTSS_HE=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:496:CONFIG_BOARD_QUALIFIERS="ae822fa0e5597xx0/rtss_he"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:506:CONFIG_SOC="ae822fa0e5597xx0"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:507:CONFIG_SOC_SERIES="e8"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:508:CONFIG_SOC_FAMILY="ensemble"
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:513:CONFIG_SOC_SERIES_E8=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:514:CONFIG_SOC_AE822FA0E5597XX0=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:515:CONFIG_SOC_AE822FA0E5597XX0_RTSS_HE=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:518:CONFIG_SOC_FAMILY_ENSEMBLE=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:523:CONFIG_SOC_SUPPORT_ARM_MHUV2=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:529:# CONFIG_SOC_FAMILY_BALLETTO is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:530:# CONFIG_SOC_LOG_LEVEL_OFF is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:531:# CONFIG_SOC_LOG_LEVEL_ERR is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:532:# CONFIG_SOC_LOG_LEVEL_WRN is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:533:# CONFIG_SOC_LOG_LEVEL_INF is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:534:# CONFIG_SOC_LOG_LEVEL_DBG is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:535:CONFIG_SOC_LOG_LEVEL_DEFAULT=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:536:CONFIG_SOC_LOG_LEVEL=3
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:841:# CONFIG_SOC_PREP_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:842:# CONFIG_SOC_EARLY_INIT_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:843:# CONFIG_SOC_LATE_INIT_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:844:# CONFIG_SOC_PER_CORE_INIT_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:845:# CONFIG_BOARD_EARLY_INIT_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config:846:# CONFIG_BOARD_LATE_INIT_HOOK is not set
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:27:BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:30:BOARD_DIR:PATH=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:33:BOARD_EXTENSIONS:BOOL=ON
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:42:CACHED_BOARD:STRING=alif_e8_dk/ae822fa0e5597xx0/rtss_he
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:332:DTC_OVERLAY_FILE:STRING=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/boards/alif_e8_common.overlay
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:335:ETHOSU_INFERENCE_TIMEOUT:STRING=
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:338:ETHOSU_LOG_ENABLE:BOOL=ON
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:340:ETHOSU_LOG_SEVERITY:STRING=warning
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:343:ETHOSU_TARGET_NPU_CONFIG:STRING=ethos-u55-128
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:414:SOC_FULL_DIR:PATH=/home/user/sdk-alif/zephyr/soc/alif/ensemble
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:608:BOARD_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:611:CLI_CONFIG_ARM_ETHOS_U55_128:INTERNAL=y
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:769://STRINGS property for variable: ETHOSU_LOG_SEVERITY
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:770:ETHOSU_LOG_SEVERITY-STRINGS:INTERNAL=err;warning;info;debug
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:785:SOC_DIRECTORIES:INTERNAL=/home/user/sdk-alif/zephyr/soc/alif/ensemble
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/CMakeCache.txt:786:SOC_LINKER_SCRIPT:INTERNAL=/home/user/sdk-alif/zephyr/soc/alif/ensemble/common/linker.ld
+
+========== FINAL GENERATED U55 NODE ==========
+41-		};
+42-		systick: timer@e000e010 {
+43-			compatible = "arm,armv8.1m-systick";
+44-			reg = < 0xe000e010 0x10 >;
+45-		};
+46:		ethosu0: ethosu55@400e1000 {
+47-			compatible = "arm,ethos-u";
+48-			reg = < 0x400e1000 0x1000 >;
+49-			interrupts = < 0x37 0x0 >;
+50-			interrupt-parent = < &nvic >;
+51-			secure-enable;
+52-			privilege-enable;
+53-			status = "disabled";
+54-		};
+55-		clockctrl: clock-controller@1a602000 {
+56-			compatible = "alif,clockctrl";
+57-			reg = < 0x1a602000 0x2c 0x4903f000 0xb0 0x4902f000 0xbc 0x1a604000 0x44 0x1a609000 0x14 0x43007000 0x2c 0x400f0000 0x14 >;
+58-			reg-names = "cgu", "clkctl_per_mst", "clkctl_per_slv", "aon", "vbat", "m55he_cfg", "m55hp_cfg";
+59-			#clock-cells = < 0x1 >;
+60-			status = "okay";
+61-			phandle = < 0x6 >;
+62-		};
+63-		mram_flash: mram_flash@80000000 {
+64-			compatible = "alif,mram-flash-controller";
+65-			#address-cells = < 0x1 >;
+66-			#size-cells = < 0x1 >;
+67-			reg = < 0x80000000 0x580000 >;
+68-			mram_storage: mram_storage@80000000 {
+
+========== FINAL GENERATED U85 NODE ==========
+2753-			compatible = "zephyr,memory-region", "mmio-sram";
+2754-			reg = < 0x2400000 0x400000 >;
+2755-			zephyr,memory-region = "SRAM1";
+2756-			zephyr,memory-attr = < 0x100000 >;
+2757-		};
+2758:		ethosu1: ethosu85@49042000 {
+2759-			compatible = "arm,ethos-u";
+2760-			reg = < 0x49042000 0x1000 >;
+2761-			interrupts = < 0x16e 0x3 >;
+2762-			interrupt-parent = < &nvic >;
+2763-			secure-enable;
+2764-			privilege-enable;
+2765-			clocks = < &clockctrl 0x1f8a1 >;
+2766-			status = "disabled";
+2767-		};
+2768-		gpio16: gpio@4300a000 {
+2769-			compatible = "snps,designware-gpio";
+2770-			reg = < 0x4300a000 0x1000 >;
+2771-			ngpios = < 0x8 >;
+2772-			interrupts = < 0x1dc 0x0 >;
+2773-			pinctrl-0 = < &pinctrl_gpio16 >;
+2774-			pinctrl-names = "default";
+2775-			gpio-controller;
+2776-			#gpio-cells = < 0x2 >;
+2777-			status = "disabled";
+2778-		};
+2779-		gpio17: gpio@4300b000 {
+2780-			compatible = "snps,designware-gpio";
+
+========== ETHOS-U COMPILED OBJECTS ==========
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/alif/drivers/ethos_u/CMakeFiles/..__modules__hal__alif__drivers__ethos_u.dir/src/ethosu_callback.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj
+
+========== ETHOS-U INITIALIZATION SYMBOLS ==========
+20001600 b ethosu_semaphore
+20001604 b ethosu_mutex
+80012a48 T ethosu_reserve_driver
+8001d3b8 W ethosu_mutex_lock
+8001d3bc W ethosu_mutex_unlock
+8001d3c0 W ethosu_semaphore_take
+8001d3d0 W ethosu_semaphore_give
+
+========== FINAL ==========
+RESULT=ETHOSU_DRIVER_ROUTE_INSPECTION_COMPLETE
+NO_SOURCE_MODIFICATIONS=YES
+NO_BUILD_PERFORMED=YES
+NO_FLASH_PERFORMED=YES
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_driver_route_20261123_164348.log
+============================================================
+
+SCRIPT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_driver_route_20261123_164348.log
+
+Press Enter to close this terminal...
