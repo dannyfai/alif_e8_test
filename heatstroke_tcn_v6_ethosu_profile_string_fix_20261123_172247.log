@@ -1,0 +1,67 @@
+============================================================
+TCN V6 ETHOS-U PROFILE STRING REPAIR
+============================================================
+2026-11-23T17:22:47+08:00
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_profile_string_fix_20261123_172247.log
+EXISTING_INSTRUMENTATION=PASS
+PROFILE_STRING_REPAIR=PASS
+
+========== VERIFY CORRECTED SOURCE ==========
+176-  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+177-  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+178-  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+179:  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+180-         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+181-         "invoke_ms=%u release_ms=%u irq_before=%u "
+182-         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+183-         "cumulative_irq_delta=%u\n",
+184-         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+185-         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+186-         tcn_v6_invoke_ms, tcn_v6_release_ms,
+187-         tcn_v6_irq_before, tcn_v6_irq_after,
+188-         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+189-         tcn_v6_npu_cumulative_irq_delta);
+190-
+191-  if (-1 == result) {
+
+========== VERIFY MODEL ==========
+MODEL_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+MODEL_UNCHANGED=PASS
+DEVICE_CONFIGURATION=PASS
+
+============================================================
+RESUMING INCREMENTAL BUILD
+============================================================
+[1/7] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj
+[2/7] Linking CXX static library modules/tflite-micro/libmodules__tflite-micro.a
+[3/7] Linking CXX executable zephyr/zephyr_pre0.elf
+[4/7] Generating linker.cmd
+[5/7] Generating isr_tables.c, isr_tables_vt.ld, isr_tables_swi.ld
+[6/7] Building C object zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+[7/7] Linking CXX executable zephyr/zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      283288 B      5632 KB      4.91%
+             RAM:       17128 B       256 KB      6.53%
+           SRAM0:       2624 KB         4 MB     64.06%
+ HOST_PERIPHERAL:          0 GB        16 MB      0.00%
+           SRAM1:          0 GB         4 MB      0.00%
+           OSPI1:    39586336 B        64 MB     58.99%
+        IDT_LIST:          0 GB        32 KB      0.00%
+Generating files from /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf for board: alif_e8_dk
+WEST_BUILD_RETURN_CODE=0
+
+========== FINAL FIRMWARE ==========
+1b687c1b47351a372098eb19cb48464e2254a7a2643e5d8be97cc1c600b05585  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.bin
+0a25740bc6d660feec73b3c49917a7f0881ad3993a26b8b541308023c40c1537  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf
+FIRMWARE_BYTES=283288
+
+========== PROFILE SYMBOL ==========
+800128bc T ethosu_init
+800049b0 T ethosu_zephyr_irq_handler
+80004b10 T tcn_v6_ethosu_irq_count_get
+ERROR: IRQ getter not linked
+
+PROFILE_STRING_FIX_AND_BUILD=FAILED
+EXIT_CODE=1
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_profile_string_fix_20261123_172247.log
+Press Enter to close this terminal...
