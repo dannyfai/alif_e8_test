@@ -1,0 +1,513 @@
+============================================================
+TCN V6 GATHER INT64 DIAGNOSTIC
+============================================================
+DATE=2026-11-23T16:17:15+08:00
+SDK=/home/user/sdk-alif
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+OSPI=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/ospi1.bin
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_int64_inspection_20261123_161715.log
+
+========== MODEL FILES ==========
+f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/ospi1.bin
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite SIZE=39586336 bytes
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/ospi1.bin SIZE=39586336 bytes
+MODEL_OSPI_BYTE_MATCH=YES
+
+========== GATHER KERNEL SOURCE ==========
+GATHER_SOURCE_COUNT=1
+
+----- SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc -----
+156800ee9c0bce283defae15d51a7207dc0b51134e3f9182fbcd2047cd8969c8  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+----- INT64 / INT32 / POSITION HANDLING -----
+92-                                     inner_size,
+93-                    sizeof(InputT) * inner_size);
+94-      }
+95-    }
+96-  }
+97-  return kTfLiteOk;
+98-}
+99-
+100:TfLiteStatus GatherPrepare(TfLiteContext* context, TfLiteNode* node) {
+101-  MicroContext* micro_context = GetMicroContext(context);
+102-
+103-  TF_LITE_ENSURE_EQ(context, NumInputs(node), 2);
+104-  TF_LITE_ENSURE_EQ(context, NumOutputs(node), 1);
+105-
+106-  const auto* params =
+107-      reinterpret_cast<const TfLiteGatherParams*>(node->builtin_data);
+108-  TfLiteTensor* input =
+--
+111-  TfLiteTensor* coords =
+112-      micro_context->AllocateTempInputTensor(node, kInputPositions);
+113-  TF_LITE_ENSURE(context, coords != nullptr);
+114-  TfLiteTensor* output =
+115-      micro_context->AllocateTempOutputTensor(node, kOutputTensor);
+116-  TF_LITE_ENSURE(context, output != nullptr);
+117-
+118-  switch (coords->type) {
+119:    case kTfLiteInt32:
+120-      break;
+121-    default:
+122:      MicroPrintf("Positions of type '%s' are not supported by gather.",
+123-                  TfLiteTypeGetName(coords->type));
+124-      return kTfLiteError;
+125-      break;
+126-  }
+127-
+128-  // Assign to output the input type.
+129-  output->type = input->type;
+130-
+--
+183-
+184-  micro_context->DeallocateTempTfLiteTensor(input);
+185-  micro_context->DeallocateTempTfLiteTensor(coords);
+186-  micro_context->DeallocateTempTfLiteTensor(output);
+187-
+188-  return kTfLiteOk;
+189-}
+190-
+191:TfLiteStatus GatherEval(TfLiteContext* context, TfLiteNode* node) {
+192-  const auto* params =
+193-      reinterpret_cast<const TfLiteGatherParams*>(node->builtin_data);
+194-  const TfLiteEvalTensor* input =
+195-      tflite::micro::GetEvalInput(context, node, kInputTensor);
+196-  const TfLiteEvalTensor* coords =
+197-      tflite::micro::GetEvalInput(context, node, kInputPositions);
+198-  TfLiteEvalTensor* output =
+199-      tflite::micro::GetEvalOutput(context, node, kOutputTensor);
+200-
+201:  if (coords->type == kTfLiteInt32) {
+202-    switch (input->type) {
+203-      case kTfLiteFloat32:
+204-        return Gather<float, int32_t>(params, input, coords, output);
+205-        break;
+206-      case kTfLiteInt8:
+207-        return Gather<int8_t, int32_t>(params, input, coords, output);
+208-        break;
+209-      default:
+--
+212-        return kTfLiteError;
+213-        break;
+214-    }
+215-  }
+216-  return kTfLiteOk;
+217-}
+218-}  // namespace
+219-
+220:TFLMRegistration Register_GATHER() {
+221:  return tflite::micro::RegisterOp(nullptr, GatherPrepare, GatherEval);
+222-}
+223-
+224-}  // namespace tflite
+
+----- COMPLETE SOURCE (up to 420 lines) -----
+     1	/* Copyright 2021 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include "tensorflow/lite/c/builtin_op_data.h"
+    17	#include "tensorflow/lite/c/common.h"
+    18	#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
+    19	#include "tensorflow/lite/kernels/kernel_util.h"
+    20	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    21	#include "tensorflow/lite/micro/micro_log.h"
+    22	#include "tensorflow/lite/micro/micro_utils.h"
+    23	
+    24	namespace tflite {
+    25	namespace {
+    26	
+    27	constexpr int kInputTensor = 0;
+    28	constexpr int kInputPositions = 1;
+    29	constexpr int kOutputTensor = 0;
+    30	
+    31	template <typename InputT, typename CoordsT = int32_t>
+    32	TfLiteStatus Gather(const TfLiteGatherParams* params,
+    33	                    const TfLiteEvalTensor* input,
+    34	                    const TfLiteEvalTensor* coords, TfLiteEvalTensor* output) {
+    35	  const InputT* input_data = tflite::micro::GetTensorData<InputT>(input);
+    36	  const CoordsT* coords_data = tflite::micro::GetTensorData<CoordsT>(coords);
+    37	  InputT* output_data = tflite::micro::GetTensorData<InputT>(output);
+    38	  const TfLiteIntArray* input_dims = input->dims;
+    39	  const int input_dims_size = input_dims->size;
+    40	  int axis = params->axis;
+    41	  if (axis < 0) {
+    42	    axis += input_dims_size;
+    43	  }
+    44	  TFLITE_DCHECK_GE(axis, 0);
+    45	  TFLITE_DCHECK_LT(axis, input_dims_size);
+    46	
+    47	  int batch_dims = params->batch_dims;
+    48	  // batch_dims should be in range: [-rank(coords), rank(coords)].
+    49	  // Negative batch_dims is added with rank of coords.
+    50	  const TfLiteIntArray* coords_dims = coords->dims;
+    51	  const int coords_dims_size = coords_dims->size;
+    52	  if (batch_dims < 0) {
+    53	    batch_dims += coords_dims_size;
+    54	  }
+    55	  TFLITE_DCHECK_GE(batch_dims, 0);
+    56	  TFLITE_DCHECK_LT(batch_dims, input_dims_size);
+    57	  TFLITE_DCHECK_LE(batch_dims, coords_dims_size);
+    58	  TFLITE_DCHECK_GE(axis, batch_dims);
+    59	  for (int i = 0; i < batch_dims; ++i) {
+    60	    TFLITE_DCHECK_EQ(input_dims->data[i], coords_dims->data[i]);
+    61	  }
+    62	
+    63	  const int axis_size = input_dims->data[axis];
+    64	
+    65	  int batch_size = 1;
+    66	  for (int i = 0; i < batch_dims; ++i) {
+    67	    batch_size *= input_dims->data[i];
+    68	  }
+    69	  int outer_size = 1;
+    70	  for (int i = batch_dims; i < axis; ++i) {
+    71	    outer_size *= input_dims->data[i];
+    72	  }
+    73	  int inner_size = 1;
+    74	  for (int i = axis + 1; i < input_dims_size; ++i) {
+    75	    inner_size *= input_dims->data[i];
+    76	  }
+    77	  int coord_size = 1;
+    78	  for (int i = batch_dims; i < coords_dims_size; ++i) {
+    79	    coord_size *= coords_dims->data[i];
+    80	  }
+    81	
+    82	  for (int batch = 0; batch < batch_size; ++batch) {
+    83	    for (int outer = 0; outer < outer_size; ++outer) {
+    84	      for (int coord = 0; coord < coord_size; ++coord) {
+    85	        TFLITE_DCHECK_GE(coords_data[coord], 0);
+    86	        TFLITE_DCHECK_LT(coords_data[coord], axis_size);
+    87	        std::memcpy(output_data +
+    88	                        (((batch * outer_size) + outer) * coord_size + coord) *
+    89	                            inner_size,
+    90	                    input_data + (((batch * outer_size) + outer) * axis_size +
+    91	                                  coords_data[batch * coord_size + coord]) *
+    92	                                     inner_size,
+    93	                    sizeof(InputT) * inner_size);
+    94	      }
+    95	    }
+    96	  }
+    97	  return kTfLiteOk;
+    98	}
+    99	
+   100	TfLiteStatus GatherPrepare(TfLiteContext* context, TfLiteNode* node) {
+   101	  MicroContext* micro_context = GetMicroContext(context);
+   102	
+   103	  TF_LITE_ENSURE_EQ(context, NumInputs(node), 2);
+   104	  TF_LITE_ENSURE_EQ(context, NumOutputs(node), 1);
+   105	
+   106	  const auto* params =
+   107	      reinterpret_cast<const TfLiteGatherParams*>(node->builtin_data);
+   108	  TfLiteTensor* input =
+   109	      micro_context->AllocateTempInputTensor(node, kInputTensor);
+   110	  TF_LITE_ENSURE(context, input != nullptr);
+   111	  TfLiteTensor* coords =
+   112	      micro_context->AllocateTempInputTensor(node, kInputPositions);
+   113	  TF_LITE_ENSURE(context, coords != nullptr);
+   114	  TfLiteTensor* output =
+   115	      micro_context->AllocateTempOutputTensor(node, kOutputTensor);
+   116	  TF_LITE_ENSURE(context, output != nullptr);
+   117	
+   118	  switch (coords->type) {
+   119	    case kTfLiteInt32:
+   120	      break;
+   121	    default:
+   122	      MicroPrintf("Positions of type '%s' are not supported by gather.",
+   123	                  TfLiteTypeGetName(coords->type));
+   124	      return kTfLiteError;
+   125	      break;
+   126	  }
+   127	
+   128	  // Assign to output the input type.
+   129	  output->type = input->type;
+   130	
+   131	  // Check conditions for different types.
+   132	  switch (input->type) {
+   133	    case kTfLiteFloat32:
+   134	    case kTfLiteInt8:
+   135	      break;
+   136	    default:
+   137	      MicroPrintf("Type '%s' is not supported by gather.",
+   138	                  TfLiteTypeGetName(input->type));
+   139	      return kTfLiteError;
+   140	      break;
+   141	  }
+   142	
+   143	  int axis = params->axis;
+   144	  if (axis < 0) {
+   145	    axis += NumDimensions(input);
+   146	  }
+   147	  TF_LITE_ENSURE(context, 0 <= axis && axis < NumDimensions(input));
+   148	
+   149	  int batch_dims = params->batch_dims;
+   150	  // batch_dims should be in range: [-rank(coords), rank(coords)].
+   151	  // Negative batch_dims is added with rank of coords.
+   152	  if (batch_dims < 0) {
+   153	    batch_dims += NumDimensions(coords);
+   154	  }
+   155	  TF_LITE_ENSURE(context, batch_dims <= axis);
+   156	  TF_LITE_ENSURE(context, 0 <= batch_dims && batch_dims < NumDimensions(input));
+   157	  TF_LITE_ENSURE(context, batch_dims <= NumDimensions(coords));
+   158	  for (int i = 0; i < batch_dims; ++i) {
+   159	    TF_LITE_ENSURE_EQ(context, input->dims->data[i], coords->dims->data[i]);
+   160	  }
+   161	
+   162	  // GATHER updates the output tensor dimensions, but TfLiteTensor in the
+   163	  // MicroInterpreter is a temporary allocation. We must therefore relocate the
+   164	  // dims from the FlatBuffer to the persistent storage arena.
+   165	  TfLiteEvalTensor* output_eval =
+   166	      tflite::micro::GetEvalOutput(context, node, kOutputTensor);
+   167	  TF_LITE_ENSURE_OK(context, tflite::micro::CreateWritableTensorDimsWithCopy(
+   168	                                 context, output, output_eval));
+   169	
+   170	  TfLiteIntArray* output_shape = output->dims;
+   171	  output_shape->size =
+   172	      NumDimensions(input) + NumDimensions(coords) - 1 - batch_dims;
+   173	  int output_index = 0;
+   174	  for (int i = 0; i < axis; ++i) {
+   175	    output_shape->data[output_index++] = input->dims->data[i];
+   176	  }
+   177	  for (int i = batch_dims; i < coords->dims->size; ++i) {
+   178	    output_shape->data[output_index++] = coords->dims->data[i];
+   179	  }
+   180	  for (int i = axis + 1; i < input->dims->size; ++i) {
+   181	    output_shape->data[output_index++] = input->dims->data[i];
+   182	  }
+   183	
+   184	  micro_context->DeallocateTempTfLiteTensor(input);
+   185	  micro_context->DeallocateTempTfLiteTensor(coords);
+   186	  micro_context->DeallocateTempTfLiteTensor(output);
+   187	
+   188	  return kTfLiteOk;
+   189	}
+   190	
+   191	TfLiteStatus GatherEval(TfLiteContext* context, TfLiteNode* node) {
+   192	  const auto* params =
+   193	      reinterpret_cast<const TfLiteGatherParams*>(node->builtin_data);
+   194	  const TfLiteEvalTensor* input =
+   195	      tflite::micro::GetEvalInput(context, node, kInputTensor);
+   196	  const TfLiteEvalTensor* coords =
+   197	      tflite::micro::GetEvalInput(context, node, kInputPositions);
+   198	  TfLiteEvalTensor* output =
+   199	      tflite::micro::GetEvalOutput(context, node, kOutputTensor);
+   200	
+   201	  if (coords->type == kTfLiteInt32) {
+   202	    switch (input->type) {
+   203	      case kTfLiteFloat32:
+   204	        return Gather<float, int32_t>(params, input, coords, output);
+   205	        break;
+   206	      case kTfLiteInt8:
+   207	        return Gather<int8_t, int32_t>(params, input, coords, output);
+   208	        break;
+   209	      default:
+   210	        MicroPrintf("Type '%s' is not supported by gather.",
+   211	                    TfLiteTypeGetName(input->type));
+   212	        return kTfLiteError;
+   213	        break;
+   214	    }
+   215	  }
+   216	  return kTfLiteOk;
+   217	}
+   218	}  // namespace
+   219	
+   220	TFLMRegistration Register_GATHER() {
+   221	  return tflite::micro::RegisterOp(nullptr, GatherPrepare, GatherEval);
+   222	}
+   223	
+   224	}  // namespace tflite
+
+========== LOCATE PYTHON WITH TFLITE SCHEMA ==========
+PYTHON=/home/user/onnx2tflite_env/bin/python
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795421838.214811  185459 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795421838.214976  185459 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795421838.242226  185459 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795421839.001828  185459 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795421839.002017  185459 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TENSORFLOW_VERSION=2.21.0
+
+========== TFLITE GATHER GRAPH INSPECTION ==========
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795421840.363038  185488 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795421840.363214  185488 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795421840.390884  185488 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795421841.155658  185488 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795421841.155855  185488 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL_BYTES=39586336
+SUBGRAPH_OPERATOR_COUNT=198
+SUBGRAPH_TENSOR_COUNT=303
+
+GATHER_OPERATOR_COUNT=6
+
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=112
+GATHER_OPERATOR_INDEX_HEX=0x70
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 15]
+OUTPUT_TENSOR_IDS=[24]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=15
+POSITIONS_NAME=/Constant_9_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=11
+POSITIONS_CONSTANT_VALUES=[5] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 24, 'name': '/Gather_5_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=115
+GATHER_OPERATOR_INDEX_HEX=0x73
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 14]
+OUTPUT_TENSOR_IDS=[23]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=14
+POSITIONS_NAME=/Constant_8_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=10
+POSITIONS_CONSTANT_VALUES=[4] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 23, 'name': '/Gather_4_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=118
+GATHER_OPERATOR_INDEX_HEX=0x76
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 13]
+OUTPUT_TENSOR_IDS=[22]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=13
+POSITIONS_NAME=/Constant_7_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=9
+POSITIONS_CONSTANT_VALUES=[3] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 22, 'name': '/Gather_3_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=121
+GATHER_OPERATOR_INDEX_HEX=0x79
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 12]
+OUTPUT_TENSOR_IDS=[21]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=12
+POSITIONS_NAME=/Constant_6_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=8
+POSITIONS_CONSTANT_VALUES=[2] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 21, 'name': '/Gather_2_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=124
+GATHER_OPERATOR_INDEX_HEX=0x7c
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 11]
+OUTPUT_TENSOR_IDS=[20]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=11
+POSITIONS_NAME=/Constant_4_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=7
+POSITIONS_CONSTANT_VALUES=[1] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 20, 'name': '/Gather_1_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+============================================================================
+GATHER_OPERATOR_INDEX_DECIMAL=127
+GATHER_OPERATOR_INDEX_HEX=0x7f
+OPCODE_INDEX=10
+INPUT_TENSOR_IDS=[257, 16]
+OUTPUT_TENSOR_IDS=[25]
+
+PARAMS_TENSOR_ID=257
+PARAMS_NAME=compact_values
+PARAMS_TYPE=FLOAT32
+PARAMS_SHAPE=[1, 1800, 6]
+PARAMS_BUFFER_INDEX=0
+
+POSITIONS_TENSOR_ID=16
+POSITIONS_NAME=/Constant_output_0
+POSITIONS_TYPE=INT64
+POSITIONS_SHAPE=[]
+POSITIONS_BUFFER_INDEX=12
+POSITIONS_CONSTANT_VALUES=[0] (total_elements=1)
+POSITIONS_PRODUCER=NONE (constant or graph input)
+
+OUTPUT_INFO={'id': 25, 'name': '/Gather_output_0', 'type': 'FLOAT32', 'shape': [1, 1800], 'buffer': 0}
+
+========== GATHER INSPECTION SUMMARY ==========
+OP=112 (0x70) POSITIONS=/Constant_9_output_0 TYPE=INT64 SHAPE=[] BUFFER=11
+OP=115 (0x73) POSITIONS=/Constant_8_output_0 TYPE=INT64 SHAPE=[] BUFFER=10
+OP=118 (0x76) POSITIONS=/Constant_7_output_0 TYPE=INT64 SHAPE=[] BUFFER=9
+OP=121 (0x79) POSITIONS=/Constant_6_output_0 TYPE=INT64 SHAPE=[] BUFFER=8
+OP=124 (0x7c) POSITIONS=/Constant_4_output_0 TYPE=INT64 SHAPE=[] BUFFER=7
+OP=127 (0x7f) POSITIONS=/Constant_output_0 TYPE=INT64 SHAPE=[] BUFFER=12
+
+GATHER_GRAPH_INSPECTION=COMPLETE
+
+========== BUILD REFERENCES ==========
+Build directory:
+drwxrwxr-x 8 user user 4096 Nov 23 16:10 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+
+Relevant compiled Gather object references:
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc.obj
+/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc.obj
+
+========== FINAL ==========
+RESULT=GATHER_INT64_DIAGNOSTIC_CAPTURED
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_int64_inspection_20261123_161715.log
+No model, kernel, firmware, or rollback files were modified.
+============================================================
