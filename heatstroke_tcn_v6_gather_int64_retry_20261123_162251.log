@@ -1,0 +1,152 @@
+============================================================
+TCN V6 GATHER INT64 REPAIR — RETRY
+============================================================
+DATE=2026-11-23T16:22:51+08:00
+SDK=/home/user/sdk-alif
+APP=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+KERNEL=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_int64_retry_20261123_162251.log
+
+========== PREFLIGHT ==========
+APPLICATION_BUILD_CONFIGURATION=PASS
+CURRENT_GATHER_SHA=156800ee9c0bce283defae15d51a7207dc0b51134e3f9182fbcd2047cd8969c8
+PREVIOUS_FIRMWARE_SHA=27481b7f6b875f5705d712f827451a087ca5ea8bf45ac0bcb428ebf0d1992013
+VELA_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+OSPI1_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+VELA_OSPI_BYTE_MATCH=PASS
+BROADCAST_TO_REPAIR_PRESERVED=PASS
+
+========== ROLLBACK INTEGRITY ==========
+ROLLBACK_FIRMWARE_SHA=1f0455ac708c9f472d8284d43aa595be6681f71516ddaf04681d8036ff423162
+ROLLBACK_OSPI1_SHA=7813a2b72c633828dc1f41160d3e9c2b21ccab6e0e19cd0c9a907d8327158414
+KNOWN_GOOD_ROLLBACK=UNCHANGED
+
+========== CREATE BACKUPS ==========
+KERNEL_BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_kernel_backup_20261123_162251/gather.cc.original
+BUILD_BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251
+BACKUP_RESULT=PASS
+
+========== PATCH GATHER KERNEL ==========
+INDEX_CHECK_REPLACEMENT=PASS
+GATHER_COPY_USES_CHECKED_INDEX=PASS
+GATHER_PREPARE_INT64_SUPPORT=PASS
+GATHER_EVAL_INT64_DISPATCH=PASS
+PATCH_FILE_WRITTEN=PASS
+GATHER_INT64_PATCH=PASS
+GATHER_INT32_PATH_PRESERVED=PASS
+RUNTIME_INDEX_BOUNDS_CHECK=PASS
+PATCH_RESULT=PASS
+
+========== VERIFY PATCHED SOURCE ==========
+83-    for (int outer = 0; outer < outer_size; ++outer) {
+84-      for (int coord = 0; coord < coord_size; ++coord) {
+85-        // Validate the actual index used by the Gather copy.
+86:        const CoordsT gather_index =
+87-            coords_data[batch * coord_size + coord];
+88:        if (gather_index < 0 ||
+89:            gather_index >= static_cast<CoordsT>(axis_size)) {
+90:          MicroPrintf("GATHER: index out of range for axis.");
+91-          return kTfLiteError;
+92-        }
+93-        std::memcpy(output_data +
+94-                        (((batch * outer_size) + outer) * coord_size + coord) *
+95-                            inner_size,
+96-                    input_data + (((batch * outer_size) + outer) * axis_size +
+97:                                  gather_index) *
+98-                                     inner_size,
+99-                    sizeof(InputT) * inner_size);
+100-      }
+--
+124-  // TFLite Gather positions may be INT32 or INT64.
+125-  switch (coords->type) {
+126-    case kTfLiteInt32:
+127:    case kTfLiteInt64:
+128-      break;
+129-    default:
+130-      MicroPrintf("Positions of type '%s' are not supported by gather.",
+--
+220-  }
+221-
+222-  // Add INT64 positions support for the TCN V6 model.
+223:  if (coords->type == kTfLiteInt64) {
+224-    switch (input->type) {
+225-      case kTfLiteFloat32:
+226:        return Gather<float, int64_t>(params, input, coords, output);
+227-      case kTfLiteInt8:
+228:        return Gather<int8_t, int64_t>(params, input, coords, output);
+229-      default:
+230-        MicroPrintf("Type '%s' is not supported by gather.",
+231-                    TfLiteTypeGetName(input->type));
+PATCHED_GATHER_SHA=d958245fa5c623e5414b74b3866d276c2abddfb1fa8a0f509a690747091d5adb
+GATHER_SOURCE_VERIFICATION=PASS
+
+========== WEST WORKSPACE ==========
+WEST_TOPDIR=/home/user/sdk-alif
+WEST_WORKSPACE_CHECK=PASS
+
+============================================================
+STARTING INCREMENTAL BUILD
+============================================================
+[1/7] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc.obj
+[2/7] Linking CXX static library modules/tflite-micro/libmodules__tflite-micro.a
+[3/7] Linking CXX executable zephyr/zephyr_pre0.elf
+[4/7] Generating linker.cmd
+[5/7] Generating isr_tables.c, isr_tables_vt.ld, isr_tables_swi.ld
+[6/7] Building C object zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+[7/7] Linking CXX executable zephyr/zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      281392 B      5632 KB      4.88%
+             RAM:       17040 B       256 KB      6.50%
+           SRAM0:       2624 KB         4 MB     64.06%
+ HOST_PERIPHERAL:          0 GB        16 MB      0.00%
+           SRAM1:          0 GB         4 MB      0.00%
+           OSPI1:    39586336 B        64 MB     58.99%
+        IDT_LIST:          0 GB        32 KB      0.00%
+Generating files from /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf for board: alif_e8_dk
+WEST_BUILD_RETURN_CODE=0
+
+========== BUILD VERIFICATION ==========
+GATHER_OBJECT=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc.obj
+GATHER_OBJECT_IN_LIBRARY=PASS
+GATHER_INT64_IMPLEMENTATION_LINKED=PASS
+
+FIRMWARE_SHA256=b0891321ba008385ff0557f5bbaea18248b47b5989c67443516915b2b891bf2d
+FIRMWARE_BYTES=281392
+ELF_SHA256=d10661b7095a4fec416e1e529b93ce885b8b086eec37cbbe5d543e69404b8f5e
+
+========== MODEL INTEGRITY ==========
+VELA_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+OSPI1_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+VELA_MODEL_UNCHANGED=PASS
+OSPI1_UNCHANGED=PASS
+KNOWN_GOOD_ROLLBACK=UNCHANGED
+
+========== FINAL BUILD SUMMARY ==========
+GATHER_INT64_PREPARE_SUPPORT=PASS
+GATHER_INT64_EVAL_SUPPORT=PASS
+GATHER_RUNTIME_INDEX_BOUNDS_CHECK=PASS
+GATHER_OBJECT_COMPILED=PASS
+GATHER_OBJECT_LINKED=PASS
+FIRMWARE_REBUILT=PASS
+BROADCAST_TO_REPAIR_PRESERVED=PASS
+VELA_MODEL_UNCHANGED=PASS
+OSPI1_UNCHANGED=PASS
+KNOWN_GOOD_ROLLBACK=UNCHANGED
+FLASH_OPERATION=NOT_PERFORMED
+
+FIRMWARE=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.bin
+FIRMWARE_SHA256=b0891321ba008385ff0557f5bbaea18248b47b5989c67443516915b2b891bf2d
+OSPI1=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/ospi1.bin
+OSPI1_SHA256=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+KERNEL_BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_kernel_backup_20261123_162251/gather.cc.original
+BUILD_BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_int64_retry_20261123_162251.log
+
+RESULT=GATHER_INT64_REPAIR_BUILD_PASS
+============================================================
+
+SCRIPT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_int64_retry_20261123_162251.log
+
+Press Enter to close this terminal...
