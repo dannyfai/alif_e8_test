@@ -1,0 +1,1289 @@
+==============================================================================
+TCN V6 - VELA ARTIFACT / FLATBUFFER AUDIT
+==============================================================================
+This is a read-only audit. It does not recompile or modify the model.
+It does not flash firmware or access the Alif board.
+
+==============================================================================
+ARTIFACT CHECKSUM VERIFICATION
+==============================================================================
+SOURCE_TFLITE: PASS
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.tflite
+  expected: 5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  actual:   5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  size:     39,612,056 bytes
+VELA_TFLITE: PASS
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+  expected: f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+  actual:   f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+  size:     39,586,336 bytes
+
+==============================================================================
+FLATBUFFER INSPECTION: SOURCE QDQ TFLITE
+==============================================================================
+File: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.tflite
+Size: 39,612,056 bytes
+SHA256: 5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795412723.915459  173395 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795412723.915702  173395 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795412724.690293  173395 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795412724.690483  173395 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TFLite schema model version: 3
+Subgraphs: 1
+Operator codes: 29
+
+Subgraph 0:
+  Tensors: 458
+  Operators: 284
+  Inputs: 5
+  Outputs: 1
+  Parsed operators: 284
+
+Operator counts:
+  ABS                                2
+  ADD                                23
+  BROADCAST_ARGS                     1
+  BROADCAST_TO                       1
+  CAST                               1
+  CONCATENATION                      2
+  CONV_2D                            27
+  DEPTHWISE_CONV_2D                  20
+  DEQUANTIZE                         21
+  DIV                                6
+  EXP                                2
+  FULLY_CONNECTED                    7
+  GATHER                             6
+  GREATER_EQUAL                      2
+  LOGICAL_NOT                        1
+  LOGICAL_OR                         2
+  MAXIMUM                            1
+  MEAN                               4
+  MIRROR_PAD                         5
+  MUL                                26
+  NEG                                4
+  QUANTIZE                           11
+  RELU                               21
+  RESHAPE                            65
+  SELECT_V2                          7
+  SQRT                               2
+  SUB                                8
+  SUM                                2
+  TRANSPOSE                          4
+
+Ethos-U custom operators: 0
+CPU operators: 284
+CPU CONV_2D / DEPTHWISE_CONV_2D: 47
+CPU TCN-labelled convolution operators: 42
+CPU convolution operators not classified as TCN by tensor name: 5
+
+CPU CONVOLUTION OPERATORS STILL IN VELA MODEL
+------------------------------------------------------------------------------
+[CONV_2D] operator=37 TCN-label=False
+    inputs: /cvf/cvf.0/Pad_output_0_4D_ [1, 902, 1, 6] FLOAT32 | model.cvf.0.weight [16, 3, 1, 6] FLOAT32 | model.cvf.0.bias [16] FLOAT32
+    outputs: /cvf/cvf.0/Conv_output_0_4D_ [1, 900, 1, 16] FLOAT32
+[CONV_2D] operator=41 TCN-label=False
+    inputs: /cvf/cvf.1/Pad_output_0_4D_ [1, 904, 1, 16] FLOAT32 | model.cvf.1.weight [32, 5, 1, 16] FLOAT32 | model.cvf.1.bias [32] FLOAT32
+    outputs: /cvf/cvf.1/Conv_output_0_4D_ [1, 900, 1, 32] FLOAT32
+[CONV_2D] operator=83 TCN-label=False
+    inputs: /cvf/cvf.4/Pad_output_0_4D_ [1, 906, 1, 32] FLOAT32 | model.cvf.4.weight [64, 7, 1, 32] FLOAT32 | model.cvf.4.bias [64] FLOAT32
+    outputs: /cvf/cvf.4/Conv_output_0_4D_ [1, 900, 1, 64] FLOAT32
+[CONV_2D] operator=87 TCN-label=False
+    inputs: /cvf/cvf.5/Pad_output_0_4D_ [1, 908, 1, 64] FLOAT32 | model.cvf.5.weight [128, 9, 1, 64] FLOAT32 | model.cvf.5.bias [128] FLOAT32
+    outputs: /cvf/cvf.5/Conv_output_0_4D_ [1, 900, 1, 128] FLOAT32
+[CONV_2D] operator=129 TCN-label=False
+    inputs: /cvf/cvf.8/Pad_output_0_4D_ [1, 910, 1, 128] FLOAT32 | model.cvf.8.weight [6, 11, 1, 128] FLOAT32 | model.cvf.8.bias [6] FLOAT32
+    outputs: /cvf/cvf.8/Conv_output_0_4D_ [1, 900, 1, 6] FLOAT32
+[CONV_2D] operator=137 TCN-label=True
+    inputs: /Transpose_2_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 16] INT8 | onnx::Conv_603_DequantizeLinear_Output [32, 1, 1, 16] INT8 | onnx::Conv_604 [32] INT32
+    outputs: /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=142 TCN-label=True
+    inputs: /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_ [32] INT32
+    outputs: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=143 TCN-label=True
+    inputs: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_606_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_607 [32] INT32
+    outputs: /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=147 TCN-label=True
+    inputs: /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_0 [32] INT32
+    outputs: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=148 TCN-label=True
+    inputs: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_609_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_610 [32] INT32
+    outputs: /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=156 TCN-label=True
+    inputs: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_1 [32] INT32
+    outputs: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=157 TCN-label=True
+    inputs: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_612_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_613 [32] INT32
+    outputs: /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=161 TCN-label=True
+    inputs: /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.1.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_2 [32] INT32
+    outputs: /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=162 TCN-label=True
+    inputs: /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_615_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_616 [32] INT32
+    outputs: /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=170 TCN-label=True
+    inputs: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_2_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_3 [32] INT32
+    outputs: /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=171 TCN-label=True
+    inputs: /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_618_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_619 [32] INT32
+    outputs: /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=175 TCN-label=True
+    inputs: /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.2.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_4 [32] INT32
+    outputs: /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=176 TCN-label=True
+    inputs: /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_621_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_622 [32] INT32
+    outputs: /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=184 TCN-label=True
+    inputs: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_3_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_5 [32] INT32
+    outputs: /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=185 TCN-label=True
+    inputs: /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_624_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_625 [32] INT32
+    outputs: /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=189 TCN-label=True
+    inputs: /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.3.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_6 [32] INT32
+    outputs: /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=190 TCN-label=True
+    inputs: /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_627_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_628 [32] INT32
+    outputs: /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=198 TCN-label=True
+    inputs: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_4_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_7 [32] INT32
+    outputs: /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=199 TCN-label=True
+    inputs: /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_630_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_631 [32] INT32
+    outputs: /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=203 TCN-label=True
+    inputs: /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.4.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_8 [32] INT32
+    outputs: /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=204 TCN-label=True
+    inputs: /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_633_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_634 [32] INT32
+    outputs: /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=212 TCN-label=True
+    inputs: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_5_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_9 [32] INT32
+    outputs: /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=213 TCN-label=True
+    inputs: /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_636_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_637 [32] INT32
+    outputs: /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=217 TCN-label=True
+    inputs: /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.5.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_10 [32] INT32
+    outputs: /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=218 TCN-label=True
+    inputs: /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_639_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_640 [32] INT32
+    outputs: /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=226 TCN-label=True
+    inputs: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_6_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_11 [32] INT32
+    outputs: /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=227 TCN-label=True
+    inputs: /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_642_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_643 [32] INT32
+    outputs: /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=231 TCN-label=True
+    inputs: /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.6.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_12 [32] INT32
+    outputs: /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=232 TCN-label=True
+    inputs: /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_645_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_646 [32] INT32
+    outputs: /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=240 TCN-label=True
+    inputs: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_7_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_13 [32] INT32
+    outputs: /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=241 TCN-label=True
+    inputs: /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_648_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_649 [32] INT32
+    outputs: /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=245 TCN-label=True
+    inputs: /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.7.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_14 [32] INT32
+    outputs: /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=246 TCN-label=True
+    inputs: /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_651_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_652 [32] INT32
+    outputs: /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=254 TCN-label=True
+    inputs: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_8_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_15 [32] INT32
+    outputs: /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=255 TCN-label=True
+    inputs: /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_654_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_655 [32] INT32
+    outputs: /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=259 TCN-label=True
+    inputs: /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.8.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_16 [32] INT32
+    outputs: /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=260 TCN-label=True
+    inputs: /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_657_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_658 [32] INT32
+    outputs: /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=268 TCN-label=True
+    inputs: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_9_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.9.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_17 [32] INT32
+    outputs: /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=269 TCN-label=True
+    inputs: /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_660_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_661 [32] INT32
+    outputs: /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[DEPTHWISE_CONV_2D] operator=273 TCN-label=True
+    inputs: /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.9.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_18 [32] INT32
+    outputs: /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=274 TCN-label=True
+    inputs: /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_663_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_664 [32] INT32
+    outputs: /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+[CONV_2D] operator=281 TCN-label=True
+    inputs: /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_out.weight_DequantizeLinear_Output [6, 1, 1, 32] INT8 | model.tcn_out.bias [6] INT32
+    outputs: /tcn_out/Conv_output_0_QuantizeLinear_Output_4D_ [1, 900, 1, 6] INT8
+
+==============================================================================
+FLATBUFFER INSPECTION: VELA-COMPILED TFLITE
+==============================================================================
+File: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+Size: 39,586,336 bytes
+SHA256: f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+TFLite schema model version: 3
+Subgraphs: 1
+Operator codes: 29
+
+Subgraph 0:
+  Tensors: 303
+  Operators: 198
+  Inputs: 5
+  Outputs: 1
+  Parsed operators: 198
+
+Operator counts:
+  ABS                                2
+  ADD                                23
+  BROADCAST_ARGS                     1
+  BROADCAST_TO                       1
+  CAST                               1
+  CONCATENATION                      2
+  CONV_2D                            5
+  CUSTOM                             11
+  DEQUANTIZE                         21
+  DIV                                6
+  EXP                                2
+  FULLY_CONNECTED                    7
+  GATHER                             6
+  GREATER_EQUAL                      2
+  LOGICAL_NOT                        1
+  LOGICAL_OR                         2
+  MAXIMUM                            1
+  MEAN                               4
+  MIRROR_PAD                         5
+  MUL                                26
+  NEG                                4
+  QUANTIZE                           11
+  RELU                               10
+  RESHAPE                            21
+  SELECT_V2                          7
+  SQRT                               2
+  SUB                                8
+  SUM                                2
+  TRANSPOSE                          4
+
+Custom operator codes:
+  'ethos-u': 11
+
+Ethos-U custom operators: 11
+CPU operators: 187
+CPU CONV_2D / DEPTHWISE_CONV_2D: 5
+CPU TCN-labelled convolution operators: 0
+CPU convolution operators not classified as TCN by tensor name: 5
+
+ETHOS-U CUSTOM OPERATOR PAYLOAD INVENTORY
+------------------------------------------------------------------------------
+[0] subgraph=0 operator=136 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[238] '_split_1_command_stream' shape=[1172] type=UINT8 buffer=42 buffer_bytes=1172
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[34] '/Transpose_2_output_0_DequantizeLinear_Output' shape=[1, 900, 16] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[32] '/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0' shape=[1, 900, 32] type=INT8
+      tensor[181] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[1] subgraph=0 operator=142 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[242] '_split_2_command_stream' shape=[784] type=UINT8 buffer=44 buffer_bytes=784
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[178] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[187] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[2] subgraph=0 operator=148 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[243] '_split_3_command_stream' shape=[772] type=UINT8 buffer=45 buffer_bytes=772
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[184] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[193] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[3] subgraph=0 operator=154 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[244] '_split_4_command_stream' shape=[784] type=UINT8 buffer=46 buffer_bytes=784
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[190] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[199] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[4] subgraph=0 operator=160 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[245] '_split_5_command_stream' shape=[772] type=UINT8 buffer=47 buffer_bytes=772
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[196] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[205] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[5] subgraph=0 operator=166 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[246] '_split_6_command_stream' shape=[784] type=UINT8 buffer=48 buffer_bytes=784
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[202] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[211] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[6] subgraph=0 operator=172 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[247] '_split_7_command_stream' shape=[772] type=UINT8 buffer=49 buffer_bytes=772
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[208] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[217] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[7] subgraph=0 operator=178 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[248] '_split_8_command_stream' shape=[784] type=UINT8 buffer=50 buffer_bytes=784
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[214] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[223] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[8] subgraph=0 operator=184 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[249] '_split_9_command_stream' shape=[772] type=UINT8 buffer=51 buffer_bytes=772
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[220] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[229] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[9] subgraph=0 operator=190 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[236] '_split_10_command_stream' shape=[784] type=UINT8 buffer=40 buffer_bytes=784
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[226] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[234] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8
+[10] subgraph=0 operator=196 payload=3 bytes
+    custom code: 'ethos-u'
+    payload SHA256: 8c976f1fa59e7dba031b8f4502a80d6a1ed100437c186ef93c15e6ca3ff40679
+    payload prefix: 010401
+    starts with COP1: False
+    payload byte length divisible by 4: False
+    inputs:
+      tensor[237] '_split_11_command_stream' shape=[328] type=UINT8 buffer=41 buffer_bytes=328
+      tensor[239] '_split_1_flash' shape=[69072] type=UINT8 buffer=43 buffer_bytes=69072
+      tensor[240] '_split_1_scratch' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[241] '_split_1_scratch_fast' shape=[2388608] type=UINT8 buffer=0 buffer_bytes=0
+      tensor[231] '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 buffer=0 buffer_bytes=0
+    outputs:
+      tensor[235] '/tcn_out/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8
+
+CPU CONVOLUTION OPERATORS STILL IN VELA MODEL
+------------------------------------------------------------------------------
+[CONV_2D] operator=17 TCN-label=False
+    inputs: /cvf/cvf.0/Pad_output_0_4D_ [1, 902, 1, 6] FLOAT32 | model.cvf.0.weight [16, 3, 1, 6] FLOAT32 | model.cvf.0.bias [16] FLOAT32
+    outputs: /cvf/cvf.0/Conv_output_0_4D_ [1, 900, 1, 16] FLOAT32
+[CONV_2D] operator=21 TCN-label=False
+    inputs: /cvf/cvf.1/Pad_output_0_4D_ [1, 904, 1, 16] FLOAT32 | model.cvf.1.weight [32, 5, 1, 16] FLOAT32 | model.cvf.1.bias [32] FLOAT32
+    outputs: /cvf/cvf.1/Conv_output_0_4D_ [1, 900, 1, 32] FLOAT32
+[CONV_2D] operator=63 TCN-label=False
+    inputs: /cvf/cvf.4/Pad_output_0_4D_ [1, 906, 1, 32] FLOAT32 | model.cvf.4.weight [64, 7, 1, 32] FLOAT32 | model.cvf.4.bias [64] FLOAT32
+    outputs: /cvf/cvf.4/Conv_output_0_4D_ [1, 900, 1, 64] FLOAT32
+[CONV_2D] operator=67 TCN-label=False
+    inputs: /cvf/cvf.5/Pad_output_0_4D_ [1, 908, 1, 64] FLOAT32 | model.cvf.5.weight [128, 9, 1, 64] FLOAT32 | model.cvf.5.bias [128] FLOAT32
+    outputs: /cvf/cvf.5/Conv_output_0_4D_ [1, 900, 1, 128] FLOAT32
+[CONV_2D] operator=109 TCN-label=False
+    inputs: /cvf/cvf.8/Pad_output_0_4D_ [1, 910, 1, 128] FLOAT32 | model.cvf.8.weight [6, 11, 1, 128] FLOAT32 | model.cvf.8.bias [6] FLOAT32
+    outputs: /cvf/cvf.8/Conv_output_0_4D_ [1, 900, 1, 6] FLOAT32
+
+==============================================================================
+TCN CONVOLUTION PLACEMENT CROSS-CHECK
+==============================================================================
+Source TFLite TCN-labelled Conv/DepthwiseConv operators: 42
+Vela model CPU TCN-labelled Conv/DepthwiseConv operators: 0
+Vela model CPU Conv/DepthwiseConv not labelled TCN: 5
+Vela model Ethos-U custom operators: 11
+
+==============================================================================
+SEARCHING FOR SAVED VELA COMPILER REPORTS
+==============================================================================
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_vela_artifact_audit_20261123_134523.log
+  It does not flash firmware or access the Alif board.
+  path: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+  I0000 00:00:1795412723.915702  173395 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  I0000 00:00:1795412724.690483  173395 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  Inputs: 5
+  CONV_2D                            27
+  DEPTHWISE_CONV_2D                  20
+  CPU operators: 284
+  CPU CONV_2D / DEPTHWISE_CONV_2D: 47
+  CPU TCN-labelled convolution operators: 42
+  CPU convolution operators not classified as TCN by tensor name: 5
+  CPU CONVOLUTION OPERATORS STILL IN VELA MODEL
+  [CONV_2D] operator=37 TCN-label=False
+  inputs: /cvf/cvf.0/Pad_output_0_4D_ [1, 902, 1, 6] FLOAT32 | model.cvf.0.weight [16, 3, 1, 6] FLOAT32 | model.cvf.0.bias [16] FLOAT32
+  [CONV_2D] operator=41 TCN-label=False
+  inputs: /cvf/cvf.1/Pad_output_0_4D_ [1, 904, 1, 16] FLOAT32 | model.cvf.1.weight [32, 5, 1, 16] FLOAT32 | model.cvf.1.bias [32] FLOAT32
+  [CONV_2D] operator=83 TCN-label=False
+  inputs: /cvf/cvf.4/Pad_output_0_4D_ [1, 906, 1, 32] FLOAT32 | model.cvf.4.weight [64, 7, 1, 32] FLOAT32 | model.cvf.4.bias [64] FLOAT32
+  [CONV_2D] operator=87 TCN-label=False
+  inputs: /cvf/cvf.5/Pad_output_0_4D_ [1, 908, 1, 64] FLOAT32 | model.cvf.5.weight [128, 9, 1, 64] FLOAT32 | model.cvf.5.bias [128] FLOAT32
+  [CONV_2D] operator=129 TCN-label=False
+  inputs: /cvf/cvf.8/Pad_output_0_4D_ [1, 910, 1, 128] FLOAT32 | model.cvf.8.weight [6, 11, 1, 128] FLOAT32 | model.cvf.8.bias [6] FLOAT32
+  [CONV_2D] operator=137 TCN-label=True
+  inputs: /Transpose_2_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 16] INT8 | onnx::Conv_603_DequantizeLinear_Output [32, 1, 1, 16] INT8 | onnx::Conv_604 [32] INT32
+  [DEPTHWISE_CONV_2D] operator=142 TCN-label=True
+  inputs: /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_ [32] INT32
+  outputs: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+  [CONV_2D] operator=143 TCN-label=True
+  inputs: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_606_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_607 [32] INT32
+  [DEPTHWISE_CONV_2D] operator=147 TCN-label=True
+  inputs: /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0 [1, 31, 1, 32] INT8 | quantized_conv2d_bias_0 [32] INT32
+  outputs: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8
+  [CONV_2D] operator=148 TCN-label=True
+  inputs: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ [1, 900, 1, 32] INT8 | onnx::Conv_609_DequantizeLinear_Output [32, 1, 1, 32] INT8 | onnx::Conv_610 [32] INT32
+  [DEPTHWISE_CONV_2D] operator=156 TCN-label=True
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_ruy_avx2_rounding_20261123_131127.log
+  CPU feature check:
+  [1/42] TFLite op #137 CONV_2D
+  [2/42] TFLite op #142 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer1/depthwise/Conv
+  [3/42] TFLite op #143 CONV_2D
+  [4/42] TFLite op #147 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer2/depthwise/Conv
+  [5/42] TFLite op #148 CONV_2D
+  [6/42] TFLite op #156 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer1/depthwise/Conv
+  [7/42] TFLite op #157 CONV_2D
+  [8/42] TFLite op #161 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer2/depthwise/Conv
+  [9/42] TFLite op #162 CONV_2D
+  [10/42] TFLite op #170 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer1/depthwise/Conv
+  [11/42] TFLite op #171 CONV_2D
+  [12/42] TFLite op #175 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer2/depthwise/Conv
+  [13/42] TFLite op #176 CONV_2D
+  [14/42] TFLite op #184 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer1/depthwise/Conv
+  [15/42] TFLite op #185 CONV_2D
+  [16/42] TFLite op #189 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer2/depthwise/Conv
+  [17/42] TFLite op #190 CONV_2D
+  [18/42] TFLite op #198 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer1/depthwise/Conv
+  [19/42] TFLite op #199 CONV_2D
+  [20/42] TFLite op #203 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer2/depthwise/Conv
+  [21/42] TFLite op #204 CONV_2D
+  [22/42] TFLite op #212 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer1/depthwise/Conv
+  [23/42] TFLite op #213 CONV_2D
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_tflite_fixedpoint_rounding_20261123_123217.log
+  [1/42] TFLite op #137 CONV_2D
+  [2/42] TFLite op #142 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer1/depthwise/Conv
+  [3/42] TFLite op #143 CONV_2D
+  [4/42] TFLite op #147 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.0/layer2/depthwise/Conv
+  [5/42] TFLite op #148 CONV_2D
+  [6/42] TFLite op #156 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer1/depthwise/Conv
+  [7/42] TFLite op #157 CONV_2D
+  [8/42] TFLite op #161 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.1/layer2/depthwise/Conv
+  [9/42] TFLite op #162 CONV_2D
+  [10/42] TFLite op #170 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer1/depthwise/Conv
+  [11/42] TFLite op #171 CONV_2D
+  [12/42] TFLite op #175 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.2/layer2/depthwise/Conv
+  [13/42] TFLite op #176 CONV_2D
+  [14/42] TFLite op #184 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer1/depthwise/Conv
+  [15/42] TFLite op #185 CONV_2D
+  [16/42] TFLite op #189 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.3/layer2/depthwise/Conv
+  [17/42] TFLite op #190 CONV_2D
+  [18/42] TFLite op #198 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer1/depthwise/Conv
+  [19/42] TFLite op #199 CONV_2D
+  [20/42] TFLite op #203 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.4/layer2/depthwise/Conv
+  [21/42] TFLite op #204 CONV_2D
+  [22/42] TFLite op #212 DEPTHWISE_CONV_2D
+  ONNX Conv: /tcn_blocks.5/layer1/depthwise/Conv
+  [23/42] TFLite op #213 CONV_2D
+  [24/42] TFLite op #217 DEPTHWISE_CONV_2D
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_conv_rounding_bias_20261123_122335.log
+  Source JSON: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_all_tcn_conv_same_input_20261123_121930/all_tcn_conv_same_input.json
+  depthwise:
+  JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_all_tcn_conv_same_input_20261123_121930/rounding_bias_analysis.json
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_all_tcn_conv_same_input_summaryfix_20261123_121930.log
+  SAMPLE 164 - ALL TCN CONV OPERATORS SAME-INPUT AUDIT
+  RUNNING SAME-INPUT CONVOLUTION TESTS
+  [1/42] TFLite operator #137 CONV_2D
+  Input: /Transpose_2_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 191 / 28800
+  [2/42] TFLite operator #142 DEPTHWISE_CONV_2D
+  Input: /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_
+  Output: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.0/layer1/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 30 / 28800
+  [3/42] TFLite operator #143 CONV_2D
+  Input: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 156 / 28800
+  [4/42] TFLite operator #147 DEPTHWISE_CONV_2D
+  Input: /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+  Output: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.0/layer2/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 15 / 28800
+  [5/42] TFLite operator #148 CONV_2D
+  Input: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 93 / 28800
+  [6/42] TFLite operator #156 DEPTHWISE_CONV_2D
+  Input: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_
+  Output: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.1/layer1/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 14 / 28800
+  [7/42] TFLite operator #157 CONV_2D
+  Input: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_all_tcn_conv_same_input_20261123_121339.log
+  SAMPLE 164 - ALL TCN CONV OPERATORS SAME-INPUT AUDIT
+  RUNNING SAME-INPUT CONVOLUTION TESTS
+  [1/42] TFLite operator #137 CONV_2D
+  Input: /Transpose_2_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 191 / 28800
+  [2/42] TFLite operator #142 DEPTHWISE_CONV_2D
+  Input: /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_
+  Output: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.0/layer1/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 30 / 28800
+  [3/42] TFLite operator #143 CONV_2D
+  Input: /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 156 / 28800
+  [4/42] TFLite operator #147 DEPTHWISE_CONV_2D
+  Input: /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+  Output: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.0/layer2/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 15 / 28800
+  [5/42] TFLite operator #148 CONV_2D
+  Input: /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 93 / 28800
+  [6/42] TFLite operator #156 DEPTHWISE_CONV_2D
+  Input: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_
+  Output: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  ONNX Conv: /tcn_blocks.1/layer1/depthwise/Conv
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+  Same-input mismatches: 14 / 28800
+  [7/42] TFLite operator #157 CONV_2D
+  Input: /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+  Status: PASS_SAME_INPUT_WITH_NUMERICAL_DIFFERENCES
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_pointwise_isolation_20261123_105503.log
+  [357] /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_: shape=[1, 900, 1, 32] dtype=<class 'numpy.int8'>
+  Inputs: ['/tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output', 'onnx::Conv_606_DequantizeLinear_Output', 'onnx::Conv_607']
+  Inputs: ['/tcn_blocks.0/layer1/pointwise/Conv_output_0', '/tcn_blocks.0/layer1/pointwise/Conv_output_0_scale', '/tcn_blocks.0/layer1/pointwise/Conv_output_0_zero_point']
+  TFLite input scale: 0.17871738970279694
+  TFLite input zero point: 0
+  Bias scale vs input_scale*weight_scale max error: 5.7066261438531996e-11
+  SAME-INPUT ONNX QUANTIZED OUTPUT VS TFLITE
+  FIRST SAME-INPUT OUTPUT MISMATCHES
+  Same-input output differences: 156
+  Exact same-input output: False
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_weight_layout_v3_20261123_105128.log
+  [23/42] TFLite[359] model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [24/42] TFLite[364] model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [25/42] TFLite[369] model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [26/42] TFLite[374] model.tcn_blocks.1.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [27/42] TFLite[379] model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [28/42] TFLite[384] model.tcn_blocks.2.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [29/42] TFLite[389] model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [30/42] TFLite[394] model.tcn_blocks.3.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [31/42] TFLite[399] model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [32/42] TFLite[404] model.tcn_blocks.4.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [33/42] TFLite[409] model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [34/42] TFLite[414] model.tcn_blocks.5.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [35/42] TFLite[419] model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [36/42] TFLite[424] model.tcn_blocks.6.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [37/42] TFLite[429] model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [38/42] TFLite[434] model.tcn_blocks.7.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [39/42] TFLite[439] model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [40/42] TFLite[444] model.tcn_blocks.8.layer2.depthwise.weight_DequantizeLinear_Output0
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_weight_layout_v3_20261123_105125.log
+  [23/42] TFLite[359] model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [24/42] TFLite[364] model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [25/42] TFLite[369] model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [26/42] TFLite[374] model.tcn_blocks.1.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [27/42] TFLite[379] model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [28/42] TFLite[384] model.tcn_blocks.2.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [29/42] TFLite[389] model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [30/42] TFLite[394] model.tcn_blocks.3.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [31/42] TFLite[399] model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [32/42] TFLite[404] model.tcn_blocks.4.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [33/42] TFLite[409] model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [34/42] TFLite[414] model.tcn_blocks.5.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [35/42] TFLite[419] model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [36/42] TFLite[424] model.tcn_blocks.6.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [37/42] TFLite[429] model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [38/42] TFLite[434] model.tcn_blocks.7.layer2.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [39/42] TFLite[439] model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output0
+  Layout: DEPTHWISE_ONNX_C1K_TO_TFLITE_1K1C
+  [40/42] TFLite[444] model.tcn_blocks.8.layer2.depthwise.weight_DequantizeLinear_Output0
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_weight_layout_v2_20261123_104801.log
+  [23/42] TFLite tensor 359: model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.0.layer1.depthwise.weight_quantized
+  [24/42] TFLite tensor 364: model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.0.layer2.depthwise.weight_quantized
+  [25/42] TFLite tensor 369: model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.1.layer1.depthwise.weight_quantized
+  [26/42] TFLite tensor 374: model.tcn_blocks.1.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.1.layer2.depthwise.weight_quantized
+  [27/42] TFLite tensor 379: model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.2.layer1.depthwise.weight_quantized
+  [28/42] TFLite tensor 384: model.tcn_blocks.2.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.2.layer2.depthwise.weight_quantized
+  [29/42] TFLite tensor 389: model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.3.layer1.depthwise.weight_quantized
+  [30/42] TFLite tensor 394: model.tcn_blocks.3.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.3.layer2.depthwise.weight_quantized
+  [31/42] TFLite tensor 399: model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.4.layer1.depthwise.weight_quantized
+  [32/42] TFLite tensor 404: model.tcn_blocks.4.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.4.layer2.depthwise.weight_quantized
+  [33/42] TFLite tensor 409: model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.5.layer1.depthwise.weight_quantized
+  [34/42] TFLite tensor 414: model.tcn_blocks.5.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.5.layer2.depthwise.weight_quantized
+  [35/42] TFLite tensor 419: model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.6.layer1.depthwise.weight_quantized
+  [36/42] TFLite tensor 424: model.tcn_blocks.6.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.6.layer2.depthwise.weight_quantized
+  [37/42] TFLite tensor 429: model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.7.layer1.depthwise.weight_quantized
+  [38/42] TFLite tensor 434: model.tcn_blocks.7.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.7.layer2.depthwise.weight_quantized
+  [39/42] TFLite tensor 439: model.tcn_blocks.8.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.8.layer1.depthwise.weight_quantized
+  [40/42] TFLite tensor 444: model.tcn_blocks.8.layer2.depthwise.weight_DequantizeLinear_Output0
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_nodelegate_20261123_100738.log
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: BUILTIN WITHOUT DEFAULT DELEGATES
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\PATCH_STATUS=PASS
+  I0000 00:00:1795399659.406607  167047 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795399660.282224  167047 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\NO-DELEGATE DIAGNOSTIC FINISHED
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_nodelegate_20261123_100738.log
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnosis_tcn_qdqpair_dup_sample164_nodelegate
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;start=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;boot
+  ]3008;end=95c3d62a-0e91-4f6d-bed2-c6b991735b0a;exit=success\]3008;start=87e894d0-f49a-4755-a152-11dfb4630ef0;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000166874;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  "input_names": [],
+  input_names = [x.name for x in graph.input]
+  for name in input_names + output_names + value_info_names:
+  "node_inputs": list(node.input),
+  "input_names": input_names,
+  print("ONNX graph inputs :", input_names)
+  "inputs": json_safe(op.get("inputs", [])),
+  "input_tensor_names": [
+  for x in np.asarray(op.get("inputs", [])).reshape(-1)
+  # Capture model input/output details
+  input_details = detail_summary(interpreter.get_input_details())
+  "input_details": input_details,
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_conv_constant_audit_20261123_104145.log
+  Generated depthwise biases: 20
+  [4/5] Checking generated depthwise biases...
+  GENERATED DEPTHWISE BIASES
+  TFLite[359] model.tcn_blocks.0.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.0.layer1.depthwise.weight_quantized
+  TFLite[364] model.tcn_blocks.0.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.0.layer2.depthwise.weight_quantized
+  TFLite[369] model.tcn_blocks.1.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.1.layer1.depthwise.weight_quantized
+  TFLite[374] model.tcn_blocks.1.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.1.layer2.depthwise.weight_quantized
+  TFLite[379] model.tcn_blocks.2.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.2.layer1.depthwise.weight_quantized
+  TFLite[384] model.tcn_blocks.2.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.2.layer2.depthwise.weight_quantized
+  TFLite[389] model.tcn_blocks.3.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.3.layer1.depthwise.weight_quantized
+  TFLite[394] model.tcn_blocks.3.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.3.layer2.depthwise.weight_quantized
+  TFLite[399] model.tcn_blocks.4.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.4.layer1.depthwise.weight_quantized
+  TFLite[404] model.tcn_blocks.4.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.4.layer2.depthwise.weight_quantized
+  TFLite[409] model.tcn_blocks.5.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.5.layer1.depthwise.weight_quantized
+  TFLite[414] model.tcn_blocks.5.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.5.layer2.depthwise.weight_quantized
+  TFLite[419] model.tcn_blocks.6.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.6.layer1.depthwise.weight_quantized
+  TFLite[424] model.tcn_blocks.6.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.6.layer2.depthwise.weight_quantized
+  TFLite[429] model.tcn_blocks.7.layer1.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.7.layer1.depthwise.weight_quantized
+  TFLite[434] model.tcn_blocks.7.layer2.depthwise.weight_DequantizeLinear_Output0
+  ONNX Q tensor: model.tcn_blocks.7.layer2.depthwise.weight_quantized
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_onnx_tflite_intermediate_compare_20261123_103515.log
+  ONNX input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  Graph inputs: 5
+  input_or_initializer                     5
+  ORT input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  ORT provider: ['CPUExecutionProvider']
+  [7/8] Preparing sample 164 inputs from the captured NPZ...
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_tensor_audit_20261123_101740.log
+  I0000 00:00:1795400261.187936  167659 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  I0000 00:00:1795400261.964130  167659 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  ONNX inputs       : ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  CONV_2D                             27
+  DEPTHWISE_CONV_2D                   20
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_tensor_audit_20261123_101400.log
+  I0000 00:00:1795400041.312903  167339 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  I0000 00:00:1795400042.111792  167339 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  ONNX graph inputs : ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_tensor_audit_20261123_100708.log
+  ]3008;start=6d5dfd3a-5dc3-4807-a5c9-d08cfe6b5363;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=6d5dfd3a-5dc3-4807-a5c9-d08cfe6b5363;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: TFLITE OPERATOR AND TENSOR AUDIT
+  ]3008;start=6d5dfd3a-5dc3-4807-a5c9-d08cfe6b5363;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_validator_source_20261123_095105.log
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: VALIDATOR SOURCE INSPECTION
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  384	        x, mark, worker, compact = exporter.make_sample_inputs(
+  401	            "x_values": sanitized.cpu().numpy().astype(np.float32),
+  402	            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+  403	            "x_mark": mark.cpu().numpy().astype(np.float32),
+  404	            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+  405	            "compact_values": compact.cpu().numpy().astype(np.float32),
+  418	        for key in INPUT_KEYS:
+  474	        "input_specs": {
+  479	            for key in INPUT_KEYS
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  }]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_validator_source_20261123_095105.log
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Source inspection complete.
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;end=7e867253-9112-43c3-b748-a126cc6811ce;exit=success\]3008;start=5305ec64-dd45-4f87-bbad-a5731da405f5;machineid=98c0083067a249a
+  print("\n===== SAMPLE 164: INPUT AUDIT =====")
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6: TARGETED SAMPLE 164 NUMERICAL DIAGNOSTIC
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\DIAGNOSTIC_PATCH=PASS
+  I0000 00:00:1795398834.928116  166109 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795398835.696386  166109 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_nodelegate_20261123_100205.log
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: BUILTIN WITHOUT DEFAULT DELEGATES
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\PATCH_STATUS=PASS
+  I0000 00:00:1795399326.596597  166596 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795399327.359106  166596 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\NO-DELEGATE DIAGNOSTIC FINISHED
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_nodelegate_20261123_100205.log
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnosis_tcn_qdqpair_dup_sample164_nodelegate
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;boot
+  ]3008;end=08dc7793-9421-4ac1-8a3e-9c4a79b74057;exit=success\]3008;start=5305ec64-dd45-4f87-bbad-a5731da405f5;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  audit_inputs = audit_interpreter.get_input_details()
+  for key in INPUT_KEYS:
+  d for d in audit_inputs
+  d for d in audit_inputs
+  "Could not uniquely map preserved interpreter input "
+  + repr([d["name"] for d in audit_inputs])
+  "inputs=", op.get("inputs", []).tolist()
+  if hasattr(op.get("inputs", []), "tolist")
+  else list(op.get("inputs", [])),
+  inputs = [
+  for x in op.get("inputs", [])
+  print("  INPUTS :", " | ".join(inputs))
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_detail_20261123_095353.log
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6: TARGETED SAMPLE 164 NUMERICAL DIAGNOSTIC
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\DIAGNOSTIC_PATCH=PASS
+  I0000 00:00:1795398834.928116  166109 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795398835.696386  166109 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\SAMPLE 164 DIAGNOSTIC FINISHED
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_detail_20261123_095353.log
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnosis_tcn_qdqpair_dup_sample164_20261123_0
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;start=c7805349-5b1c-49b6-b372-3d3b10c82e63;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;boot
+  ]3008;end=c7805349-5b1c-49b6-b372-3d3b10c82e63;exit=success\]3008;start=5305ec64-dd45-4f87-bbad-a5731da405f5;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  input_details = alt_interpreter.get_input_details()
+  for key in INPUT_KEYS:
+  d for d in input_details
+  d for d in input_details
+  f"{label}: cannot uniquely map input {key}; "
+  f"found {[d['name'] for d in input_details]}"
+  # any inputs. This tests repeated-invocation stability.
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: TFLITE EXECUTION-PATH COMPARISON
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\RUNTIME_DIAGNOSTIC_PATCH=PASS
+  I0000 00:00:1795399012.570069  166351 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_runtime_20261123_095651.log
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: TFLITE EXECUTION-PATH COMPARISON
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\RUNTIME_DIAGNOSTIC_PATCH=PASS
+  I0000 00:00:1795399012.570069  166351 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795399013.333244  166351 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\RUNTIME DIAGNOSTIC FINISHED
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_runtime_20261123_095651.log
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnosis_tcn_qdqpair_dup_sample164_runtime_20
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;start=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;boot
+  ]3008;end=08f193e0-dbf0-4b8b-b02c-e74d2638ce56;exit=success\]3008;start=5305ec64-dd45-4f87-bbad-a5731da405f5;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: BUILTIN WITHOUT DEFAULT DELEGATES
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=08dc7793-9421-4ac1-8a3e-9c4a79b74057;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\PATCH_STATUS=PASS
+  I0000 00:00:1795399326.596597  166596 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795399327.359106  166596 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ===== SAMPLE 164: INPUT AUDIT =====
+  "CONV_2D": 27,
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_jsonfix2_20261123_094756.log
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: JSON FIX 2 + ALL-449 VALIDATION
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  I0000 00:00:1795398477.686756  165680 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795398478.614685  165680 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  No Vela, firmware or flash operations performed.
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\===== VALIDATION OUTPUT FILES =====
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_jsonfix2_20261123_0947
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\FINAL_SCRIPT_STATUS=0
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_jsonfix2_20261123_094756.log
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_jsonf
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close this script...]3008;start=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SF
+  ]3008;end=4c26e87a-e6c5-4c70-b3fa-8598fd0ebf38;exit=success\]3008;start=5305ec64-dd45-4f87-bbad-a5731da405f5;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: VALIDATOR SOURCE INSPECTION
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+  384	        x, mark, worker, compact = exporter.make_sample_inputs(
+  401	            "x_values": sanitized.cpu().numpy().astype(np.float32),
+
+Report candidate: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_jsonfix2_20261123_094756/gemm_only_qdq_tflite_all449_report.json
+  "CONV_2D": 27,
+  "DEPTHWISE_CONV_2D": 20,
+  "input_specs": {
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_jsonfix_20261123_094518.log
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: JSON SERIALIZATION FIX + ALL-449 VALIDATION
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_groupidfix_20261123_094033.log
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: DATASET GROUP-ID FIX + ALL-449 VALIDATION
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\===== VERIFY DATASET ATTRIBUTE PATCH =====
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\373:    print("Dataset groups:", len(set(dataset.group_ids)))
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\===== RUN ALL-449 NUMERICAL VALIDATION =====
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\VALIDATOR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_qdqpair_dup_tflite_all449_groupidfix_202
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_group
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  I0000 00:00:1795398034.548332  165138 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795398035.322795  165138 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\VALIDATION_EXIT_CODE=1
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\VALIDATION_OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_a
+  ]3008;start=f5cce48a-b8a5-4327-af39-a05baba2050a;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_groupidfix_20261123_094033.log
+  ]3008;end=f5cce48a-b8a5-4327-af39-a05baba2050a;exit=success\]3008;start=81d676ed-3b9e-48d6-9061-cd0190d093bf;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=shell;cwd=/home/user/sdk-alif\[?2004h]0;user@user-Swift-SFL14-52M: ~/sdk-alifuser@user-Swift-SFL14-52M:~/sdk-alif$ [H[2J]0;u
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: JSON SERIALIZATION FIX + ALL-449 VALIDATION
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164875;type=command;cwd=/home/user/sdk-alif\]3008;start=067b83df-26f7-4845-9d72-6001b824fe6f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_astfix_20261123_093815.log
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: AST HASH PATCH + ALL-449 VALIDATION
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\ONNX_EXPECTED=4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\TFLITE_ACTUAL=5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\TFLITE_EXPECTED=5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\qdq_onnx:
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\===== RUN ALL-449 NUMERICAL VALIDATION =====
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\PATCHED_VALIDATOR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_qdqpair_dup_tflite_all449_astfix
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_astfi
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  I0000 00:00:1795397897.214245  164660 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795397897.977212  164660 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+  FP32 ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  QDQ ONNX inputs: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+  TFLite operator histogram: {'ABS': 2, 'ADD': 23, 'BROADCAST_ARGS': 1, 'BROADCAST_TO': 1, 'CAST': 1, 'CONCATENATION': 2, 'CONV_2D': 27, 'DELEGATE': 20, 'DEPTHWISE_CONV_2D': 20, 'DEQUANTIZE': 21, 'DIV': 6, 'EXP': 2, 'FULLY_CONNECTED': 7, 'GATHER': 6, 'GREATER_EQUAL': 2, 'LOGICAL_NOT': 1, 'LOGICAL_OR': 2, 'MAXIMUM': 1, 'MEAN': 4, 'MIRROR_PAD': 5, 'MUL': 26, 'NEG': 4, 'QUANTIZE': 11, 'RELU': 21, 'RESH
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\VALIDATION_EXIT_CODE=1
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\VALIDATION_OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_a
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_astfix_20261123_093815.log
+  ]3008;start=d8d0caec-86f3-41f5-a557-a9dffe3eb6fa;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000164372;type=command;cwd=/home/user/sdk-alif\logout
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_hashfixed_20261123_093430.log
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUP: HASH MANIFEST REPAIR + ALL-449 VALIDATION
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\===== ACTUAL MODEL SHA256 CHECK =====
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\  actual:   4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\  expected: 4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\TFLite:
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\  actual:   5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\  expected: 5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\===== PATCH VALIDATOR HASH MANIFEST =====
+  ]3008;start=f0c67a79-037d-47cc-9bde-01bafd235978;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000163802;type=command;cwd=/home/user/sdk-alif\Traceback (most recent call last):
+
+Report candidate: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_parity_20261122_224809.log
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUPLICATION: ALL-449 VALIDATION
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\============================================================
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\DATE: Sun Nov 22 10:48:09 PM HKT 2026
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_parity_20261122_224809.log
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_202611
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\===== PATCH ORIGINAL VALIDATOR =====
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\===== PYTHON SYNTAX CHECK =====
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\===== RUN ALL-449 VALIDATION =====
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\NEW_ONNX=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\NEW_TFLITE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstro
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\NEW_OUT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_20261122_22480
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+  I0000 00:00:1795358890.383718  160496 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+  I0000 00:00:1795358891.158575  160496 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\VALIDATION_EXIT_CODE=1
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\VALIDATION_EXECUTION=FAIL
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\VALIDATION_SCRIPT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validate_tcn_qdqpair_dup_tflite_all449_202611
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\VALIDATION_REPORT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/validation_tcn_qdqpair_dup_tflite_all449_
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\DIAGNOSTIC_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_qdqpair_dup_all449_parity_20261122_224809.log
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\Do not program the model yet.
+  ]3008;start=8e4d458b-4cb2-4900-9f8e-7976e836306d;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\Press Enter to close...]3008;end=8e4d458b-4cb2-4900-9f8e-7976e836306d;exit=success\]3008;start=08cf81ad-840a-443f-9663-60e183e74fa6;machineid=98c0083067a249a
+  ]3008;start=8341629d-2ebf-489d-9a72-6d5fd8abde4f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\]3008;start=8341629d-2ebf-489d-9a72-6d5fd8abde4f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-9
+  ]3008;start=8341629d-2ebf-489d-9a72-6d5fd8abde4f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\TCN V6 QDQ-PAIR DUPLICATION: ALL-449 VALIDATION
+  ]3008;start=8341629d-2ebf-489d-9a72-6d5fd8abde4f;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000160181;type=command;cwd=/home/user/sdk-alif\============================================================
+
+==============================================================================
+VELA TOOL VERSION
+==============================================================================
+5.0.0
+
+==============================================================================
+VELA CONFIGURATION FILE CHECK
+==============================================================================
+Config: /home/user/sdk-alif/modules/alif-mlek/scripts/vela/ensemble_vela.ini
+  1: [System_Config.RTSS_HP_SRAM_MRAM]
+  2: core_clock=400e6
+  5: Sram_clock_scale=0.762
+  9: OffChipFlash_clock_scale=0.121
+  14: [System_Config.RTSS_HP_SRAM_OSPI]
+  15: core_clock=400e6
+  18: Sram_clock_scale=0.762
+  22: OffChipFlash_clock_scale=0.052
+  27: [System_Config.RTSS_HE_SRAM_MRAM]
+  28: core_clock=160e6
+  31: Sram_clock_scale=1.0
+  35: OffChipFlash_clock_scale=0.303
+  40: [System_Config.RTSS_HP_SRAM_Only]
+  41: core_clock=400e6
+  44: Sram_clock_scale=1.0
+  48: OnChipFlash_clock_scale=1.0
+  53: [System_Config.RTSS_HE_SRAM_Only]
+  54: core_clock=160e6
+  57: Sram_clock_scale=1.0
+  61: OnChipFlash_clock_scale=1.0
+  66: [System_Config.RTSS_HP_DTCM_Only]
+  67: core_clock=400e6
+  70: Sram_clock_scale=0.889
+  74: OnChipFlash_clock_scale=0.889
+  79: [System_Config.RTSS_HE_DTCM_Only]
+  80: core_clock=160e6
+  83: Sram_clock_scale=0.889
+  87: OnChipFlash_clock_scale=0.889
+  92: [System_Config.RTSS_HP_DTCM_MRAM]
+  93: core_clock=400e6
+  96: Sram_clock_scale=0.889
+  100: OffChipFlash_clock_scale=0.118
+  105: [System_Config.RTSS_HP_DTCM_Modem]
+  106: core_clock=400e6
+  109: Sram_clock_scale=0.889
+  113: OffChipFlash_clock_scale=0.200
+  118: [System_Config.RTSS_HP_DTCM_SRAM]
+  119: core_clock=400e6
+  122: Sram_clock_scale=1.0
+  126: Dram_clock_scale=0.762
+  131: [System_Config.Ethos_U85_SRAM_Only]
+  132: core_clock=400e6
+  135: Sram_clock_scale=1.0
+  142: OnChipFlash_clock_scale=1.0
+  150: [System_Config.Ethos_U85_SRAM_MRAM]
+  151: core_clock=400e6
+  154: Sram_clock_scale=1.0
+  161: OffChipFlash_clock_scale=0.121
+  168: [System_Config.Ethos_U85_SRAM_OSPI]
+  169: core_clock=400e6
+  172: Sram_clock_scale=1.0
+  179: Dram_clock_scale=0.052
+  187: ; Memory Mode
+  189: [Memory_Mode.Sram_Only]
+  195: ; The non-SRAM memory is assumed to be read-only
+  197: [Memory_Mode.Shared_Sram]
+  204: [Memory_Mode.Dtcm_Cache]
+  209: [Memory_Mode.Dedicated_Sram]
+
+==============================================================================
+FINAL VELA ARTIFACT AUDIT SUMMARY
+==============================================================================
+Result: PASS_WITH_REVIEW
+Source SHA256: True
+Vela SHA256: True
+Ethos-U custom operators: 11
+Ethos-U custom payload bytes: 33
+CPU operators in Vela graph: 187
+CPU Conv/DepthwiseConv operators: 5
+CPU TCN-labelled Conv/DepthwiseConv: 0
+
+Errors:
+  None
+Warnings:
+  WARNING: 11 custom payload(s) have a byte length not divisible by four. Review payload format.
+
+JSON report: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_artifact_audit_20261123_134523/vela_artifact_audit_report.json
+Ethos-U CSV: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_artifact_audit_20261123_134523/ethosu_custom_operator_inventory.csv
+CPU operator CSV: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_artifact_audit_20261123_134523/cpu_operator_inventory.csv
+
+VELA_ARTIFACT_AUDIT_COMPLETE
