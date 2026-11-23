@@ -1,0 +1,500 @@
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\TCN V6 SAMPLE 164: VALIDATOR SOURCE INSPECTION
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\============================================================
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+===== SAMPLE LOOP AND NUMERICAL METRICS =====
+   300	
+   301	    for key, detail in resolved.items():
+   302	        shape = tuple(int(x) for x in detail["shape"])
+   303	        if shape != EXPECTED_SHAPES[key]:
+   304	            raise RuntimeError(
+   305	                f"{key} shape mismatch: {shape}"
+   306	            )
+   307	
+   308	        expected_dtype = (
+   309	            np.bool_ if key == "missing_mask" else np.float32
+   310	        )
+   311	        if np.dtype(detail["dtype"]) != np.dtype(expected_dtype):
+   312	            raise RuntimeError(
+   313	                f"{key} dtype mismatch: {detail['dtype']}"
+   314	            )
+   315	
+   316	        print(
+   317	            key,
+   318	            "shape=", shape,
+   319	            "dtype=", np.dtype(detail["dtype"]).name,
+   320	        )
+   321	
+   322	    tflite_output = output_details[0]
+   323	    print("Output:", tflite_output["name"])
+   324	    print("Output shape:", tflite_output["shape"].tolist())
+   325	    print("Output dtype:", np.dtype(tflite_output["dtype"]).name)
+   326	
+   327	    if tuple(tflite_output["shape"]) != (1, 900, 6):
+   328	        raise RuntimeError("Unexpected TFLite output shape.")
+   329	
+   330	    ops = interpreter._get_ops_details()
+   331	    op_counts = Counter(
+   332	        str(op.get("op_name", "UNKNOWN")) for op in ops
+   333	    )
+   334	    print("TFLite operator count:", len(ops))
+   335	    print("TFLite operator histogram:", dict(sorted(op_counts.items())))
+   336	
+   337	    custom_ops = [
+   338	        name for name in op_counts
+   339	        if name.upper() == "CUSTOM" or name.upper().startswith("FLEX")
+   340	    ]
+   341	    print("Custom/Flex operators:", custom_ops)
+   342	
+   343	    if custom_ops:
+   344	        raise RuntimeError(
+   345	            f"Unexpected custom/Flex operators: {custom_ops}"
+   346	        )
+   347	
+   348	    print("TFLITE_PREFLIGHT: PASS")
+   349	
+   350	    print("\n===== LOAD DETERMINISTIC 449-SAMPLE DATASET =====")
+   351	    exporter = import_module(
+   352	        EXPORTER,
+   353	        "tcn_fold2_v5_exporter_gemm_qdq_validation",
+   354	    )
+   355	    helper = exporter.import_helper(HELPER)
+   356	    project_run = helper.import_project(ROOT)
+   357	
+   358	    dataset = helper.ImputationDataset(
+   359	        project_run,
+   360	        DATA_DIR,
+   361	        "test",
+   362	        20261121,
+   363	        "worker_id",
+   364	    )
+   365	    dataset.set_epoch(0)
+   366	
+   367	    if len(dataset) != 449:
+   368	        raise RuntimeError(
+   369	            f"Expected 449 samples; found {len(dataset)}"
+   370	        )
+   371	
+   372	    print("Dataset samples:", len(dataset))
+   373	    print("Dataset groups:", len(set(dataset.group_ids)))
+   374	
+   375	    fp32_stats = new_stats()
+   376	    qdq_stats = new_stats()
+   377	    tflite_qdq_stats = new_stats()
+   378	
+   379	    missing_entries = 0
+   380	
+   381	    print("\n===== RUN ALL-449 COMPARISON =====")
+   382	
+   383	    for index in range(len(dataset)):
+   384	        x, mark, worker, compact = exporter.make_sample_inputs(
+   385	            dataset, index
+   386	        )
+   387	
+   388	        mask = (
+   389	            (x == -9997) |
+   390	            (x == -9998) |
+   391	            (x == -9999)
+   392	        )
+   393	
+   394	        sanitized = torch.where(
+   395	            mask,
+   396	            torch.zeros_like(x),
+   397	            x,
+   398	        )
+   399	
+   400	        feed = {
+   401	            "x_values": sanitized.cpu().numpy().astype(np.float32),
+   402	            "missing_mask": mask.cpu().numpy().astype(np.bool_),
+   403	            "x_mark": mark.cpu().numpy().astype(np.float32),
+   404	            "worker_features_18": worker.cpu().numpy().astype(np.float32),
+   405	            "compact_values": compact.cpu().numpy().astype(np.float32),
+   406	        }
+   407	
+   408	        missing_entries += int(feed["missing_mask"].sum())
+   409	
+   410	        fp32_output = fp32_session.run(
+   411	            [fp32_output_name], feed
+   412	        )[0]
+   413	
+   414	        qdq_output = qdq_session.run(
+   415	            [qdq_output_name], feed
+   416	        )[0]
+   417	
+   418	        for key in INPUT_KEYS:
+   419	            detail = resolved[key]
+   420	            interpreter.set_tensor(
+   421	                detail["index"],
+   422	                feed[key].astype(detail["dtype"], copy=False),
+   423	            )
+   424	
+   425	        interpreter.invoke()
+   426	
+   427	        tflite_result = interpreter.get_tensor(
+   428	            tflite_output["index"]
+   429	        )
+   430	
+   431	        update_stats(
+   432	            fp32_stats, fp32_output, tflite_result, index
+   433	        )
+   434	        update_stats(
+   435	            qdq_stats, fp32_output, qdq_output, index
+   436	        )
+   437	        update_stats(
+   438	            tflite_qdq_stats, qdq_output, tflite_result, index
+   439	        )
+   440	
+   441	        if index % 25 == 0 or index == 448:
+   442	            print(
+   443	                f"Progress {index + 1}/449 | "
+   444	                f"TFLite-vs-FP32 max="
+   445	                f"{fp32_stats['global_max_abs_error']:.8g} | "
+   446	                f"QDQ-vs-FP32 max="
+   447	                f"{qdq_stats['global_max_abs_error']:.8g} | "
+   448	                f"TFLite-vs-QDQ max="
+   449	                f"{tflite_qdq_stats['global_max_abs_error']:.8g}"
+   450	            )
+   451	
+   452	    results = {
+   453	        "tflite_vs_fp32_onnx": finalize_stats(fp32_stats),
+   454	        "qdq_onnx_vs_fp32_onnx": finalize_stats(qdq_stats),
+   455	        "tflite_vs_qdq_onnx": finalize_stats(tflite_qdq_stats),
+   456	    }
+   457	
+   458	    report = {
+   459	        "model": "Fold-2 TCN V6 Gemm-only QDQ TFLite",
+   460	        "dataset": "split_byid/test",
+   461	        "sample_count": 449,
+   462	        "group_column": "worker_id",
+   463	        "seed": 20261121,
+   464	        "missing_sensor_entries": missing_entries,
+   465	        "model_hashes": model_hashes,
+   466	        "models": {
+   467	            "fp32_reference": str(FP32_ONNX),
+   468	            "qdq_onnx": str(QDQ_ONNX),
+   469	            "candidate_tflite": str(TFLITE),
+   470	        },
+   471	        "tflite_operator_count": len(ops),
+   472	        "tflite_operator_histogram": dict(sorted(op_counts.items())),
+   473	        "custom_flex_operators": custom_ops,
+   474	        "input_specs": {
+   475	            key: {
+   476	                "shape": list(resolved[key]["shape"]),
+   477	                "dtype": np.dtype(resolved[key]["dtype"]).name,
+   478	            }
+   479	            for key in INPUT_KEYS
+   480	        },
+   481	        "comparisons": results,
+   482	        "note": (
+   483	            "No arbitrary INT8 pass/fail tolerance was imposed. "
+   484	            "The three comparisons separately measure quantization "
+   485	            "error and TFLite conversion fidelity."
+   486	        ),
+   487	    }
+   488	
+   489	    report_path = (
+   490	        OUTDIR / "gemm_only_qdq_tflite_all449_report.json"
+   491	    )
+   492	    report_path.write_text(
+   493	        json.dumps(report, indent=2, allow_nan=False, default=lambda obj: obj.tolist() if hasattr(obj, 'tolist') else obj.item() if hasattr(obj, 'item') else repr(obj))
+   494	    )
+   495	
+   496	    print("\n===== FINAL NUMERICAL SUMMARY =====")
+   497	    print(json.dumps(report, indent=2, allow_nan=False, default=lambda obj: obj.tolist() if hasattr(obj, 'tolist') else obj.item() if hasattr(obj, 'item') else repr(obj)))
+   498	    print("JSON report:", report_path)
+   499	
+   500	    print("\n===== FINITE OUTPUT CHECK =====")
+   501	    for name, value in results.items():
+   502	        print(
+   503	            name,
+   504	            "all_finite=",
+   505	            value["all_outputs_finite"],
+   506	            "nonfinite_samples=",
+   507	            value["nonfinite_samples"],
+   508	        )
+   509	
+   510	    if not all(x["all_outputs_finite"] for x in results.values()):
+
+===== RELEVANT VARIABLE REFERENCES =====
+104:        "global_max_abs_error": 0.0,
+108:        "sample_max_errors": [],
+139:    sample_max = float(delta.max())
+140:    stats["sample_max_errors"].append(sample_max)
+142:    stats["global_max_abs_error"] = max(
+143:        stats["global_max_abs_error"], sample_max
+166:    sample_errors = np.asarray(
+167:        stats["sample_max_errors"], dtype=np.float64
+174:            "max_abs_error": float(stats["per_channel_max"][c]),
+175:            "mean_abs_error": float(
+184:        "global_max_abs_error": float(stats["global_max_abs_error"]),
+185:        "global_mean_abs_error": float(stats["abs_sum"] / n),
+187:        "median_sample_max_abs_error": float(
+188:            np.median(sample_errors)
+190:        "p99_sample_max_abs_error": float(
+191:            np.percentile(sample_errors, 99)
+193:        "worst_sample_index": int(
+194:            np.argmax(sample_errors)
+196:        "sample_count": int(len(sample_errors)),
+201:        "per_channel_error": channels,
+276:    fp32_output_name = fp32_session.get_outputs()[0].name
+277:    qdq_output_name = qdq_session.get_outputs()[0].name
+279:    print("FP32 output:", fp32_output_name)
+280:    print("QDQ output:", qdq_output_name)
+322:    tflite_output = output_details[0]
+323:    print("Output:", tflite_output["name"])
+324:    print("Output shape:", tflite_output["shape"].tolist())
+325:    print("Output dtype:", np.dtype(tflite_output["dtype"]).name)
+327:    if tuple(tflite_output["shape"]) != (1, 900, 6):
+410:        fp32_output = fp32_session.run(
+411:            [fp32_output_name], feed
+414:        qdq_output = qdq_session.run(
+415:            [qdq_output_name], feed
+428:            tflite_output["index"]
+432:            fp32_stats, fp32_output, tflite_result, index
+435:            qdq_stats, fp32_output, qdq_output, index
+438:            tflite_qdq_stats, qdq_output, tflite_result, index
+445:                f"{fp32_stats['global_max_abs_error']:.8g} | "
+447:                f"{qdq_stats['global_max_abs_error']:.8g} | "
+449:                f"{tflite_qdq_stats['global_max_abs_error']:.8g}"
+452:    results = {
+458:    report = {
+481:        "comparisons": results,
+485:            "error and TFLite conversion fidelity."
+489:    report_path = (
+490:        OUTDIR / "gemm_only_qdq_tflite_all449_report.json"
+492:    report_path.write_text(
+493:        json.dumps(report, indent=2, allow_nan=False, default=lambda obj: obj.tolist() if hasattr(obj, 'tolist') else obj.item() if hasattr(obj, 'item') else repr(obj))
+497:    print(json.dumps(report, indent=2, allow_nan=False, default=lambda obj: obj.tolist() if hasattr(obj, 'tolist') else obj.item() if hasattr(obj, 'item') else repr(obj)))
+498:    print("JSON report:", report_path)
+501:    for name, value in results.items():
+510:    if not all(x["all_outputs_finite"] for x in results.values()):
+
+===== EXISTING NUMERICAL REPORT =====
+{
+  "model": "Fold-2 TCN V6 Gemm-only QDQ TFLite",
+  "dataset": "split_byid/test",
+  "sample_count": 449,
+  "group_column": "worker_id",
+  "seed": 20261121,
+  "missing_sensor_entries": 1179526,
+  "model_hashes": {
+    "fp32_onnx": "1679ccd65d37834014c22f9306241e72d57a6ee1e0996584747e8b30f8c0588a",
+    "qdq_onnx": "4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8",
+    "tflite": "5ac26bfe71f7d01c382736b0261cc1a41b6334daf54667dcab0882d4d0e719c0"
+  },
+  "models": {
+    "fp32_reference": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_fp32_fold2_manual_ln_no_erf_20261121_175710/heatstroke_tcn_reg_fold2_fp32_sanitized_mask_v6.onnx",
+    "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx",
+    "candidate_tflite": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.tflite"
+  },
+  "tflite_operator_count": 304,
+  "tflite_operator_histogram": {
+    "ABS": 2,
+    "ADD": 23,
+    "BROADCAST_ARGS": 1,
+    "BROADCAST_TO": 1,
+    "CAST": 1,
+    "CONCATENATION": 2,
+    "CONV_2D": 27,
+    "DELEGATE": 20,
+    "DEPTHWISE_CONV_2D": 20,
+    "DEQUANTIZE": 21,
+    "DIV": 6,
+    "EXP": 2,
+    "FULLY_CONNECTED": 7,
+    "GATHER": 6,
+    "GREATER_EQUAL": 2,
+    "LOGICAL_NOT": 1,
+    "LOGICAL_OR": 2,
+    "MAXIMUM": 1,
+    "MEAN": 4,
+    "MIRROR_PAD": 5,
+    "MUL": 26,
+    "NEG": 4,
+    "QUANTIZE": 11,
+    "RELU": 21,
+    "RESHAPE": 65,
+    "SELECT_V2": 7,
+    "SQRT": 2,
+    "SUB": 8,
+    "SUM": 2,
+    "TRANSPOSE": 4
+  },
+  "custom_flex_operators": [],
+  "input_specs": {
+    "x_values": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "float32"
+    },
+    "missing_mask": {
+      "shape": [
+        1,
+        900,
+        6
+      ],
+      "dtype": "bool"
+    },
+    "x_mark": {
+      "shape": [
+        1,
+        900,
+        3
+      ],
+      "dtype": "float32"
+    },
+    "worker_features_18": {
+      "shape": [
+        1,
+        18
+      ],
+      "dtype": "float32"
+    },
+    "compact_values": {
+      "shape": [
+        1,
+        1800,
+        6
+      ],
+      "dtype": "float32"
+    }
+  },
+  "comparisons": {
+    "tflite_vs_fp32_onnx": {
+      "global_max_abs_error": 1.3296232223510742,
+      "global_mean_abs_error": 0.20384463209125403,
+      "global_rmse": 0.2559658407858702,
+      "median_sample_max_abs_error": 1.0023069381713867,
+      "p99_sample_max_abs_error": 1.2534179401397705,
+      "worst_sample_index": 52,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 1.2041287422180176,
+          "mean_abs_error": 0.196733588366185,
+          "rmse": 0.2458205965499574
+        },
+        "1": {
+          "max_abs_error": 1.2160437107086182,
+          "mean_abs_error": 0.1926997340668663,
+          "rmse": 0.24296683160539914
+        },
+        "2": {
+          "max_abs_error": 1.2547118663787842,
+          "mean_abs_error": 0.21549230506012632,
+          "rmse": 0.270385190408962
+        },
+        "3": {
+          "max_abs_error": 1.2438056468963623,
+          "mean_abs_error": 0.1700484515695407,
+          "rmse": 0.2139013535218133
+        },
+        "4": {
+          "max_abs_error": 1.1903655529022217,
+          "mean_abs_error": 0.23264707574400975,
+          "rmse": 0.28430015439105905
+        },
+        "5": {
+          "max_abs_error": 1.3296232223510742,
+          "mean_abs_error": 0.21544663774079614,
+          "rmse": 0.2719593810278056
+        }
+      }
+    },
+    "qdq_onnx_vs_fp32_onnx": {
+      "global_max_abs_error": 1.3296232223510742,
+      "global_mean_abs_error": 0.20384378203479486,
+      "global_rmse": 0.2559610514322614,
+      "median_sample_max_abs_error": 1.0023069381713867,
+      "p99_sample_max_abs_error": 1.2534179401397705,
+      "worst_sample_index": 52,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 1.2041287422180176,
+          "mean_abs_error": 0.19672820778837877,
+          "rmse": 0.24580679863937419
+        },
+        "1": {
+          "max_abs_error": 1.2160437107086182,
+          "mean_abs_error": 0.1927031835588421,
+          "rmse": 0.24297741328090897
+        },
+        "2": {
+          "max_abs_error": 1.2547118663787842,
+          "mean_abs_error": 0.2154862522441351,
+          "rmse": 0.2703734399603969
+        },
+        "3": {
+          "max_abs_error": 1.2438056468963623,
+          "mean_abs_error": 0.1700634402274879,
+          "rmse": 0.2139139331692717
+        },
+        "4": {
+          "max_abs_error": 1.1903655529022217,
+          "mean_abs_error": 0.23265524105314306,
+          "rmse": 0.28430877830070067
+        },
+        "5": {
+          "max_abs_error": 1.3296232223510742,
+          "mean_abs_error": 0.21542636733678228,
+          "rmse": 0.27192812326243526
+        }
+      }
+    },
+    "tflite_vs_qdq_onnx": {
+      "global_max_abs_error": 0.6925055980682373,
+      "global_mean_abs_error": 0.0002277315009066072,
+      "global_rmse": 0.007146267694349322,
+      "median_sample_max_abs_error": 0.0,
+      "p99_sample_max_abs_error": 0.0,
+      "worst_sample_index": 164,
+      "sample_count": 449,
+      "nonfinite_samples": [],
+      "all_outputs_finite": true,
+      "per_channel_error": {
+        "0": {
+          "max_abs_error": 0.6925055980682373,
+          "mean_abs_error": 0.00020773835065370148,
+          "rmse": 0.006644096317613215
+        },
+        "1": {
+          "max_abs_error": 0.6155605316162109,
+          "mean_abs_error": 0.00022963561034680476,
+          "rmse": 0.007026698256386126
+        },
+        "2": {
+          "max_abs_error": 0.6925055980682373,
+          "mean_abs_error": 0.00025610273293238175,
+          "rmse": 0.007899328485099524
+        },
+        "3": {
+          "max_abs_error": 0.6925055980682373,
+          "mean_abs_error": 0.0002088808163768199,
+          "rmse": 0.006472073363236781
+        },
+        "4": {
+          "max_abs_error": 0.6925055980682373,
+          "mean_abs_error": 0.00019974109059187246,
+          "rmse": 0.0064607446772136775
+        },
+        "5": {
+          "max_abs_error": 0.6925055980682373,
+          "mean_abs_error": 0.0002642904045380628,
+          "rmse": 0.008177285709391273
+        }
+      }
+    }
+  },
+  "note": "No arbitrary INT8 pass/fail tolerance was imposed. The three comparisons separately measure quantization error and TFLite conversion fidelity."
+}]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_validator_source_20261123_095105.log
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Source inspection complete.
+]3008;start=7e867253-9112-43c3-b748-a126cc6811ce;machineid=98c0083067a249a3a7325750b1c85d6f;user=user;hostname=user-Swift-SFL14-52M;bootid=d68672a6-a3c8-42e4-97be-02c8d7da21f2;pid=00000000000000165492;type=command;cwd=/home/user/sdk-alif\Press Enter to close...
