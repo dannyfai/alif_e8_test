@@ -1,0 +1,130 @@
+============================================================
+TCN V6 SAMPLE164 VALIDATION POST-BUILD AUDIT
+============================================================
+Date: Mon Nov 23 03:12:16 PM HKT 2026
+Build: /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+
+[1] Build artifacts
+-rwxrwxr-x 1 user user 85M Nov 23 15:09 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf
+-rwxrwxr-x 1 user user 271K Nov 23 15:09 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.bin
+-rw-rw-r-- 1 user user 2.4M Nov 23 15:09 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.map
+-rwxrwxr-x 1 user user 38M Nov 23 15:09 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/ospi1.bin
+-rw-rw-r-- 1 user user 44K Nov 23 15:06 /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/.config
+
+[2] Model identity
+PASS: Source Vela model SHA
+PASS: OSPI1 payload equals Vela model
+
+[3] Linker model object
+PASS: Full-offload model linked
+PASS: Old GEMM-only model absent
+
+[4] Activation buffer
+PASS: 2.5 MiB activationBuf symbol
+
+[5] Sample164 arrays in ELF
+PASS: kXValues embedded
+PASS: kMissingMask embedded
+PASS: kXMark embedded
+PASS: kWorkerFeatures18 embedded
+PASS: kCompactValues embedded
+PASS: kReferenceTflite embedded
+PASS: kReferenceQdqOnnx embedded
+
+[6] Runtime instrumentation
+PASS: Runtime marker: TCN_V6_SAMPLE164_INPUTS
+PASS: Runtime marker: TCN_V6_SAMPLE164_TEST
+PASS: Runtime marker: TCN_V6_COMPARE_%s
+PASS: Runtime marker: QDQ_ONNX
+PASS: Runtime marker: CPU_TFLITE
+PASS: Runtime marker: TCN_V6_OUTPUT_POINT
+PASS: Runtime marker: TCN_V6_ARENA_FINAL
+PASS: Runtime marker: TCN_V6_INFERENCE
+PASS: Runtime marker: TCN_V6_ETHOSU_EXPECTED_PARTITIONS
+
+[7] Validation source patch
+FOUND: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/MainLoop.cc
+FOUND: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/sample164_tcn_v6_vectors.hpp
+FOUND: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/sample164_reference_report.json
+PASS: Sample164 input binding called
+PASS: Sample164 output comparison called
+PASS: Both reference outputs used
+PASS: Old zero-input function removed
+
+[8] Kconfig
+PASS: Activation buffer capacity 0x280000
+PASS: Activation buffer in SRAM0.activation_buf
+PASS: Model in external flash
+
+[9] OSPI1 payload
+OSPI1_BYTES=39586336
+PASS: OSPI1 payload fits 64 MiB
+
+[10] Known-good rollback
+PASS: Rollback firmware unchanged
+PASS: Rollback OSPI1 unchanged
+
+[11] Host reference metrics
+{
+  "sample_index": 164,
+  "npz": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101740/sample164_tflite_intermediates.npz",
+  "qdq_onnx": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx",
+  "qdq_output_name": "reconstructed_values",
+  "input_order": [
+    "x_values",
+    "missing_mask",
+    "x_mark",
+    "worker_features_18",
+    "compact_values"
+  ],
+  "input_shapes": {
+    "x_values": [
+      1,
+      900,
+      6
+    ],
+    "missing_mask": [
+      1,
+      900,
+      6
+    ],
+    "x_mark": [
+      1,
+      900,
+      3
+    ],
+    "worker_features_18": [
+      1,
+      18
+    ],
+    "compact_values": [
+      1,
+      1800,
+      6
+    ]
+  },
+  "host_tflite_vs_qdq_onnx": {
+    "rmse": 0.22715090619177056,
+    "mae": 0.1773298798225544,
+    "max_abs": 1.0002858638763428,
+    "count": 5400,
+    "count_abs_gt_1e_4": 4636
+  },
+  "header_path": "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652/src/sample164_tcn_v6_vectors.hpp",
+  "header_size_bytes": 399092,
+  "header_sha256": "f982ec1a51e38e1f7c4ccb33fd5820171424d349d82a6d28f22c907d54c4ee2f",
+  "reference_output_shape": [
+    1,
+    900,
+    6
+  ],
+  "reference_tflite_output_shape": [
+    1,
+    900,
+    6
+  ]
+}
+============================================================
+RESULT: SAMPLE164_VALIDATION_BUILD_READY
+FLASH_OPERATION: NOT_PERFORMED
+============================================================
