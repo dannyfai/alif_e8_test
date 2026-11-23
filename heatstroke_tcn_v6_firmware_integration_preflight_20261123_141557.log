@@ -1,0 +1,96 @@
+==============================================================================
+TCN V6 FIRMWARE INTEGRATION PREFLIGHT
+==============================================================================
+Read-only. No build, flash, source modification, or model replacement.
+
+1. VELA MODEL IDENTITY
+Model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_tcn_dw_qdqpair_dup_legacy_u55_128_size_20261122_223746/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup_vela.tflite
+Size: 39,586,336 bytes
+Expected SHA256: f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+Actual SHA256:   f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+Checksum: PASS
+
+2. AVAILABLE DISK SPACE
+Total: 131.02 GiB
+Used:  114.16 GiB
+Free:  10.13 GiB
+
+3. APPLICATION CONFIGURATION
+prj.conf: CONFIG_MODEL_IN_EXT_FLASH=y
+prj.conf: CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+prj.conf: CONFIG_ACTIVATION_BUF_SZ=0x280000
+alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf: CONFIG_SYSTEM_HEAP_SRAM0=y
+alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf: CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf: CONFIG_ACTIVATION_BUF_SZ=0x280000
+
+4. MODEL SOURCE FILE INVENTORY
+       5,826 bytes  src/TcnV6Model.cc
+         568 bytes  src/include/TcnV6Model.hpp
+
+5. EMBEDDED MODEL ARRAY CHECK
+
+6. CMAKE MODEL SOURCE REFERENCES
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:3: # Ensure the OSPI flash snippet is enabled for external model storage.
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:26: # This model was compiled for Ethos-U55-128 (Vela H128).
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:35: CACHE STRING "E8 OSPI and external model flash overlay" FORCE)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:55: set(POLYU_MODEL_PATH
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:56: "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:58: set(POLYU_MODEL_SHA256_EXPECTED
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:61: if(NOT EXISTS "${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:62: message(FATAL_ERROR "V6 Vela model not found: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:65: file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:66: if(NOT POLYU_MODEL_SHA256_ACTUAL STREQUAL POLYU_MODEL_SHA256_EXPECTED)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:68: "V6 Vela model SHA256 mismatch: ${POLYU_MODEL_SHA256_ACTUAL}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:71: message(STATUS "TCN V6 model: ${POLYU_MODEL_PATH}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:72: message(STATUS "TCN V6 model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:76: generate_model_code(
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:77: MODEL_PATH "${POLYU_MODEL_PATH}"
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:82: get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:83: set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:84: set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:95: target_sources(app PRIVATE
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:97: src/MainLoop.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:98: src/TcnV6Model.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/CMakeLists.txt:99: "${POLYU_MODEL_CPP}"
+
+7. RUNTIME ARENA INSTRUMENTATION
+arena_before_allocate: True
+arena_after_inference: True
+smoke_inference: True
+
+8. KNOWN-GOOD ROLLBACK BUILD
+ELF: PRESENT /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.elf
+BIN: PRESENT /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/zephyr.bin
+OSPI1: PRESENT /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_cmdalign16v2_20261122_175501/zephyr/ospi1.bin
+
+9. EXISTING ROLLBACK BUILD MODEL REFERENCE
+L8: app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L1380: .text          0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L1381: .data          0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L1382: .bss           0x0000000000000000        0x0 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L16955: 0x00000000800025dc        0x8 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L16958: 0x00000000800025e4        0x8 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22134: 0x00000000c0000000   0x956270 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22170: .comment       0x0000000000000020       0x21 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22353: 0x0000000000000208       0x28 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22653: .debug_info    0x00000000000ac6c9   0x956757 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22812: .debug_abbrev  0x00000000000026b4      0x14f app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L22971: .debug_line    0x00000000000032da      0x389 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L23129: .debug_frame   0x00000000000002f8       0x30 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L23343: .debug_str     0x000000000009f72a       0xf9 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L23813: .debug_ranges  0x0000000000000430       0x18 app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+L24001: 0x0000000000000174       0x3e app/libapp.a(heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_offline_meta_fix_v2_cmdalign16_v2_20261122_174356.tflite.cc.obj)
+
+==============================================================================
+PREFLIGHT SUMMARY
+==============================================================================
+Vela checksum: PASS
+Embedded arrays detected: 0
+Exact embedded-model matches: 0
+Runtime arena logging in source: True
+Available disk: 10.13 GiB
+Rollback ELF preserved: True
+RESULT: MODEL_EMBEDDING_NOT_VERIFIED
+JSON: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/firmware_integration_preflight_20261123_141557/firmware_integration_preflight.json
+No source or build files were modified.
+FIRMWARE_INTEGRATION_PREFLIGHT_COMPLETE
