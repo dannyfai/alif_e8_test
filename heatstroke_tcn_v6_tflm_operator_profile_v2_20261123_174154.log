@@ -1,0 +1,96 @@
+============================================================
+TCN V6 TFLM OPERATOR PROFILING V2
+============================================================
+2026-11-23T17:41:54+08:00
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+GRAPH=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_20261123_174154.log
+MODEL_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+CURRENT_FIRMWARE_SHA=1b687c1b47351a372098eb19cb48464e2254a7a2643e5d8be97cc1c600b05585
+GRAPH_SOURCE_SHA=af3486a8661daf2e62c0833fadb49e5f864d47066d47fe08446ce52dbc22903b
+PREFLIGHT=PASS
+af3486a8661daf2e62c0833fadb49e5f864d47066d47fe08446ce52dbc22903b  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154/micro_interpreter_graph.cc.original
+1b687c1b47351a372098eb19cb48464e2254a7a2643e5d8be97cc1c600b05585  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154/zephyr.bin.before_operator_profile
+0a25740bc6d660feec73b3c49917a7f0881ad3993a26b8b541308023c40c1537  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154/zephyr.elf.before_operator_profile
+BACKUP=PASS
+TFLM_OPERATOR_CYCLE_PROFILER_PATCH=PASS
+EXACT_INVOKE_DECLARATION_PATCH=PASS
+CPU_ETHOSU_CLASSIFICATION_PATCH=PASS
+TOP_EIGHT_OPERATOR_PATCH=PASS
+
+========== SOURCE PATCH VERIFICATION ==========
+335-                  (tcn_v6_ethosu_call_cycles * 10000ULL) /
+336-                  tcn_v6_operator_total_cycles);
+337-
+338:    printk("TCN_V6_OPERATOR_PROFILE_SUMMARY: "
+339-           "cpu_kernel_ops=%u ethosu_custom_ops=%u "
+340-           "cpu_cycles_hi=%u cpu_cycles_lo=%u "
+341-           "ethosu_call_cycles_hi=%u ethosu_call_cycles_lo=%u "
+342-           "operator_cycles_hi=%u operator_cycles_lo=%u "
+343-           "cpu_pct_x100=%u ethosu_call_pct_x100=%u "
+344-           "graph_elapsed_ms=%lld status=%d\n",
+345-           tcn_v6_cpu_kernel_count, tcn_v6_ethosu_call_count,
+346-           static_cast<uint32_t>(tcn_v6_cpu_kernel_cycles >> 32),
+347-           static_cast<uint32_t>(tcn_v6_cpu_kernel_cycles),
+348-           static_cast<uint32_t>(tcn_v6_ethosu_call_cycles >> 32),
+349-           static_cast<uint32_t>(tcn_v6_ethosu_call_cycles),
+350-           static_cast<uint32_t>(tcn_v6_operator_total_cycles >> 32),
+351-           static_cast<uint32_t>(tcn_v6_operator_total_cycles),
+352-           tcn_v6_cpu_pct_x100, tcn_v6_ethosu_pct_x100,
+374-      tcn_v6_printed[best] = true;
+375-
+376:      printk("TCN_V6_OPERATOR_PROFILE_TOP: rank=%u "
+377-             "op_index=%u class=%s cycles=%u name=%s\n",
+378-             static_cast<uint32_t>(rank + 1),
+379-             tcn_v6_top[best].operator_index,
+380-             tcn_v6_top[best].is_ethosu ? "ETHOSU_CALL" : "MCU_KERNEL",
+381-             tcn_v6_top[best].cycles,
+382-             tcn_v6_top[best].name);
+383-    }
+SOURCE_PATCH=PASS
+
+============================================================
+BUILDING TCN V6 OPERATOR PROFILER
+============================================================
+[1/7] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc.obj
+[2/7] Linking CXX static library modules/tflite-micro/libmodules__tflite-micro.a
+[3/7] Linking CXX executable zephyr/zephyr_pre0.elf
+[4/7] Generating linker.cmd
+[5/7] Generating isr_tables.c, isr_tables_vt.ld, isr_tables_swi.ld
+[6/7] Building C object zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+[7/7] Linking CXX executable zephyr/zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      284284 B      5632 KB      4.93%
+             RAM:       17280 B       256 KB      6.59%
+           SRAM0:       2624 KB         4 MB     64.06%
+ HOST_PERIPHERAL:          0 GB        16 MB      0.00%
+           SRAM1:          0 GB         4 MB      0.00%
+           OSPI1:    39586336 B        64 MB     58.99%
+        IDT_LIST:          0 GB        32 KB      0.00%
+Generating files from /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf for board: alif_e8_dk
+WEST_BUILD_RETURN_CODE=0
+MODEL_UNCHANGED=PASS
+PROFILE_STRINGS_LINKED=PASS
+
+========== MEMORY REPORT ==========
+
+========== FIRMWARE ==========
+fbc224833527c54f5413ec43de2f3c539779694c070fb02e5385f70599fa132f  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.bin
+86f5d959a951e7bbe8890545b826cd295e0f5c5deebc6a09101cda202437dfa3  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.elf
+FIRMWARE_BYTES=284284
+
+============================================================
+TFLM OPERATOR PROFILING BUILD COMPLETE
+============================================================
+TFLM_OPERATOR_PROFILE_BUILD=PASS
+FIRMWARE=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/zephyr.bin
+MODEL_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_20261123_174154.log
+BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154
+RESTORE_HELPER=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154/restore_graph_source.sh
+FLASH_ACTION=NOT_PERFORMED
+
+TFLM_OPERATOR_PROFILE_BUILD=PASS
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_20261123_174154.log
+BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_operator_profile_v2_backup_20261123_174154
+Press Enter to close this terminal...
