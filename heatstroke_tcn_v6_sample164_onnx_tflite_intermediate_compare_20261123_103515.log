@@ -1,0 +1,434 @@
+============================================================================
+TCN V6 SAMPLE 164
+QDQ ONNX vs TFLite INTERMEDIATE TENSOR COMPARISON
+============================================================================
+Python: 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+ONNX: 1.20.1
+ONNX Runtime: 1.24.4
+
+ONNX model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx
+Audit JSON: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101740/sample164_tflite_tensor_audit.json
+Intermediate NPZ: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101740/sample164_tflite_intermediates.npz
+Output directory: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_onnx_tflite_intermediate_compare_20261123_103515
+
+[1/8] Loading TFLite audit files...
+TFLite tensor records: 487
+TFLite operators: 284
+NPZ arrays: 487
+
+[2/8] Checking NPZ tensor coverage...
+Missing NPZ arrays: 0
+
+[3/8] Loading QDQ ONNX model...
+ONNX SHA256: 4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+ONNX node count: 555
+ONNX input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+ONNX output names: ['reconstructed_values']
+
+Node output tensor names: 555
+Graph inputs: 5
+Graph outputs: 1
+Initializers: 348
+
+[4/8] Mapping TFLite activation tensors to ONNX outputs...
+Mapped TFLite activation tensors: 309
+Skipped tensor counts:
+  input_or_initializer                     5
+  mapped_tensor_not_node_output            21
+  no_exact_onnx_producer                   82
+  weights_or_bias_constants                70
+
+First 20 mappings:
+  TFLite[51] -> ONNX[121] onnx::Conv_604
+  TFLite[52] -> ONNX[123] onnx::Conv_607
+  TFLite[53] -> ONNX[125] onnx::Conv_610
+  TFLite[54] -> ONNX[127] onnx::Conv_613
+  TFLite[55] -> ONNX[129] onnx::Conv_616
+  TFLite[56] -> ONNX[131] onnx::Conv_619
+  TFLite[57] -> ONNX[133] onnx::Conv_622
+  TFLite[58] -> ONNX[135] onnx::Conv_625
+  TFLite[59] -> ONNX[137] onnx::Conv_628
+  TFLite[60] -> ONNX[139] onnx::Conv_631
+  TFLite[61] -> ONNX[141] onnx::Conv_634
+  TFLite[62] -> ONNX[143] onnx::Conv_637
+  TFLite[63] -> ONNX[145] onnx::Conv_640
+  TFLite[64] -> ONNX[147] onnx::Conv_643
+  TFLite[65] -> ONNX[149] onnx::Conv_646
+  TFLite[66] -> ONNX[151] onnx::Conv_649
+  TFLite[67] -> ONNX[153] onnx::Conv_652
+  TFLite[68] -> ONNX[155] onnx::Conv_655
+  TFLite[69] -> ONNX[157] onnx::Conv_658
+  TFLite[70] -> ONNX[159] onnx::Conv_661
+
+[5/8] Adding intermediate outputs to ONNX model...
+ONNX shape inference: PASS
+Unique ONNX intermediate output names: 264
+Added ONNX intermediate outputs: 263
+Already-existing outputs: 1
+Could not add outputs: 0
+
+Saved instrumented ONNX model:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_onnx_tflite_intermediate_compare_20261123_103515/sample164_qdq_intermediate_outputs.onnx
+
+[6/8] Creating ONNX Runtime session...
+ORT input names: ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+ORT output count: 264
+ORT provider: ['CPUExecutionProvider']
+
+[7/8] Preparing sample 164 inputs from the captured NPZ...
+x_values                 shape=(1, 900, 6)          dtype=float32
+missing_mask             shape=(1, 900, 6)          dtype=bool
+x_mark                   shape=(1, 900, 3)          dtype=float32
+worker_features_18       shape=(1, 18)              dtype=float32
+compact_values           shape=(1, 1800, 6)         dtype=float32
+
+Running ONNX Runtime with intermediate outputs...
+Number of requested ONNX outputs: 264
+
+ONNX Runtime inference: PASS
+ONNX output arrays returned: 264
+
+[8/8] Comparing ONNX and TFLite intermediate arrays...
+
+============================================================================
+INTERMEDIATE TENSOR COMPARISON SUMMARY
+============================================================================
+Captured TFLite tensors: 487
+NPZ arrays: 487
+Mapped TFLite activations: 309
+Unique ONNX outputs requested: 264
+ONNX outputs added: 263
+Successfully compared tensors: 288
+Unmatched tensors: 21
+
+INTEGER TENSOR COMPARISONS
+  Compared: 115
+  Exact matches: 9
+  Mismatches: 106
+
+FLOAT TENSOR COMPARISONS
+  Compared: 168
+  Exact matches: 29
+  Mismatches: 139
+
+FIRST MISMATCH IN ONNX GRAPH ORDER
+  ONNX node index: 162
+  ONNX operation: Gemm
+  ONNX tensor: /non_seq_enc/Gemm_output_0
+  TFLite tensor index: 85
+  TFLite tensor: /non_seq_enc/Gemm_output_0
+  TFLite operator: FULLY_CONNECTED
+  ONNX shape: [1, 900]
+  TFLite shape: [1, 900]
+  Alignment: identity
+  Comparison type: float
+  Exact equal: False
+  Maximum absolute error: 1.4901161193847656e-08
+  Mean absolute error: 1.085120149784618e-09
+  RMSE: 2.040097092785595e-09
+  Different elements: 422
+  Total elements: 900
+  Difference fraction: 0.4688888888888889
+
+FIRST INT8 MISMATCH
+  ONNX node index: 326
+  ONNX operation: QuantizeLinear
+  ONNX tensor: /tcn_in/Conv_output_0_QuantizeLinear_Output
+  TFLite tensor index: 203
+  TFLite tensor: /tcn_in/Conv_output_0_DequantizeLinear_Output
+  TFLite operator: RESHAPE
+  ONNX shape: [1, 32, 900]
+  TFLite shape: [1, 900, 32]
+  Alignment: transpose_(0, 2, 1)
+  Comparison type: integer
+  Exact equal: False
+  Maximum absolute error: 1.0
+  Mean absolute error: 0.006631944444444445
+  RMSE: 0.0814367511903836
+  Different elements: 191
+  Total elements: 28800
+  Difference fraction: 0.006631944444444445
+
+FIRST SIGNIFICANT INT8 MISMATCH (>1 CODE)
+  ONNX node index: 330
+  ONNX operation: QuantizeLinear
+  ONNX tensor: /Relu_output_0_QuantizeLinear_Output_exclusive_for_tcn_dw_block_0
+  TFLite tensor index: 204
+  TFLite tensor: /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0
+  TFLite operator: RELU
+  ONNX shape: [1, 32, 900]
+  TFLite shape: [1, 900, 32]
+  Alignment: transpose_(0, 2, 1)
+  Comparison type: integer
+  Exact equal: False
+  Maximum absolute error: 2.0
+  Mean absolute error: 0.0043055555555555555
+  RMSE: 0.06871842709362767
+  Different elements: 118
+  Total elements: 28800
+  Difference fraction: 0.004097222222222223
+
+FIRST FLOAT MISMATCH
+  ONNX node index: 162
+  ONNX operation: Gemm
+  ONNX tensor: /non_seq_enc/Gemm_output_0
+  TFLite tensor index: 85
+  TFLite tensor: /non_seq_enc/Gemm_output_0
+  TFLite operator: FULLY_CONNECTED
+  ONNX shape: [1, 900]
+  TFLite shape: [1, 900]
+  Alignment: identity
+  Comparison type: float
+  Exact equal: False
+  Maximum absolute error: 1.4901161193847656e-08
+  Mean absolute error: 1.085120149784618e-09
+  RMSE: 2.040097092785595e-09
+  Different elements: 422
+  Total elements: 900
+  Difference fraction: 0.4688888888888889
+
+FIRST SIGNIFICANT FLOAT MISMATCH (>1e-5)
+  ONNX node index: 245
+  ONNX operation: Div
+  ONNX tensor: /cvf/cvf.2/Div_output_0
+  TFLite tensor index: 129
+  TFLite tensor: /cvf/cvf.2/Div_output_0
+  TFLite operator: DIV
+  ONNX shape: [1, 32, 900]
+  TFLite shape: [1, 900, 32]
+  Alignment: transpose_(0, 2, 1)
+  Comparison type: float
+  Exact equal: False
+  Maximum absolute error: 2.1457672119140625e-05
+  Mean absolute error: 2.7576356322040534e-06
+  RMSE: 3.7243528691088415e-06
+  Different elements: 27859
+  Total elements: 28800
+  Difference fraction: 0.9673263888888889
+
+============================================================================
+FIRST 50 TENSOR COMPARISONS IN ONNX GRAPH ORDER
+============================================================================
+ONNX#   ONNX OP        TFLITE#    TYPE         MAX ERROR    ONNX TENSOR
+------------------------------------------------------------------------------------------------------------------------
+0       Constant       73         integer      0            /Constant_output_0
+4       Constant       74         integer      0            /Constant_4_output_0
+6       Constant       75         integer      0            /Constant_6_output_0
+7       Constant       76         integer      0            /Constant_7_output_0
+8       Constant       77         integer      0            /Constant_8_output_0
+9       Constant       78         integer      0            /Constant_9_output_0
+16      Constant       79         float        0            /Constant_16_output_0
+17      Constant       80         float        0            /Constant_17_output_0
+19      Constant       81         float        0            /Constant_18_output_0
+95      Constant       82         float        0            /Constant_22_output_0
+96      Constant       83         float        0            /Constant_23_output_0
+97      Or             84         bool         0            /Or_output_0
+162     Gemm           85         float        1.49012e-08  /non_seq_enc/Gemm_output_0
+163     Gather         86         float        0            /Gather_output_0
+164     Gather         87         float        0            /Gather_1_output_0
+165     Gather         88         float        0            /Gather_2_output_0
+166     Gather         89         float        0            /Gather_3_output_0
+167     Gather         90         float        0            /Gather_4_output_0
+168     Gather         91         float        0            /Gather_5_output_0
+175     Or             92         bool         0            /Or_1_output_0
+176     Reshape        93         float        1.49012e-08  /Reshape_output_0
+177     Gemm           94         float        7.62939e-06  /svf.0/Gemm_output_0
+178     Gemm           95         float        3.8147e-06   /svf.1/Gemm_output_0
+179     Gemm           96         float        1.66893e-06  /svf.2/Gemm_output_0
+180     Gemm           97         float        0            /svf.3/Gemm_output_0
+181     Gemm           98         float        0            /svf.4/Gemm_output_0
+182     Gemm           99         float        0            /svf.5/Gemm_output_0
+189     Not            100        bool         0            /Not_output_0
+190     Where          101        float        0            /Where_5_output_0
+191     Unsqueeze      102        float        7.62939e-06  /Unsqueeze_output_0
+192     Unsqueeze      103        float        3.8147e-06   /Unsqueeze_1_output_0
+193     Unsqueeze      104        float        1.66893e-06  /Unsqueeze_2_output_0
+194     Unsqueeze      105        float        0            /Unsqueeze_3_output_0
+195     Unsqueeze      106        float        0            /Unsqueeze_4_output_0
+196     Unsqueeze      107        float        0            /Unsqueeze_5_output_0
+203     Where          108        float        0            /Where_1_output_0
+204     Cast           109        float        0            /Cast_output_0
+205     Concat         110        float        7.62939e-06  /Concat_output_0
+206     Where          111        integer      0            /Where_2_output_0
+212     ReduceSum      112        float        0            /ReduceSum_1_output_0
+213     ReduceSum      113        float        0            /ReduceSum_output_0
+214     Where          114        float        4.76837e-06  /Where_output_0
+220     Clip           115        float        0            /Clip_output_0
+226     Div            116        float        0            /Div_output_0
+232     Expand         117        float        0            /Expand_output_0
+233     Where          118        float        0            /Where_3_output_0
+235     Pad            119        float        0            /cvf/cvf.0/Pad_output_0
+235     Pad            292        float        0            /cvf/cvf.0/Pad_output_0
+236     Conv           120        float        1.78814e-07  /cvf/cvf.0/Conv_output_0
+236     Conv           293        float        1.78814e-07  /cvf/cvf.0/Conv_output_0
+
+============================================================================
+FIRST 30 DIVERGING TENSORS
+============================================================================
+
+ONNX#=162 TFLite#=85 OP=Gemm TYPE=float
+  Tensor: /non_seq_enc/Gemm_output_0
+  Max=1.49012e-08 MAE=1.08512e-09 RMSE=2.0401e-09 Different=422/900
+
+ONNX#=176 TFLite#=93 OP=Reshape TYPE=float
+  Tensor: /Reshape_output_0
+  Max=1.49012e-08 MAE=1.08512e-09 RMSE=2.0401e-09 Different=422/900
+
+ONNX#=177 TFLite#=94 OP=Gemm TYPE=float
+  Tensor: /svf.0/Gemm_output_0
+  Max=7.62939e-06 MAE=1.28322e-06 RMSE=1.67218e-06 Different=683/900
+
+ONNX#=178 TFLite#=95 OP=Gemm TYPE=float
+  Tensor: /svf.1/Gemm_output_0
+  Max=3.8147e-06 MAE=5.61085e-07 RMSE=8.25431e-07 Different=737/900
+
+ONNX#=179 TFLite#=96 OP=Gemm TYPE=float
+  Tensor: /svf.2/Gemm_output_0
+  Max=1.66893e-06 MAE=3.39349e-07 RMSE=4.48969e-07 Different=711/900
+
+ONNX#=191 TFLite#=102 OP=Unsqueeze TYPE=float
+  Tensor: /Unsqueeze_output_0
+  Max=7.62939e-06 MAE=1.28322e-06 RMSE=1.67218e-06 Different=683/900
+
+ONNX#=192 TFLite#=103 OP=Unsqueeze TYPE=float
+  Tensor: /Unsqueeze_1_output_0
+  Max=3.8147e-06 MAE=5.61085e-07 RMSE=8.25431e-07 Different=737/900
+
+ONNX#=193 TFLite#=104 OP=Unsqueeze TYPE=float
+  Tensor: /Unsqueeze_2_output_0
+  Max=1.66893e-06 MAE=3.39349e-07 RMSE=4.48969e-07 Different=711/900
+
+ONNX#=205 TFLite#=110 OP=Concat TYPE=float
+  Tensor: /Concat_output_0
+  Max=7.62939e-06 MAE=3.63943e-07 RMSE=7.8306e-07 Different=2131/5400
+
+ONNX#=214 TFLite#=114 OP=Where TYPE=float
+  Tensor: /Where_output_0
+  Max=4.76837e-06 MAE=1.15607e-07 RMSE=4.39322e-07 Different=674/5400
+
+ONNX#=236 TFLite#=120 OP=Conv TYPE=float
+  Tensor: /cvf/cvf.0/Conv_output_0
+  Max=1.78814e-07 MAE=2.39123e-08 RMSE=3.51182e-08 Different=9591/14400
+
+ONNX#=236 TFLite#=293 OP=Conv TYPE=float
+  Tensor: /cvf/cvf.0/Conv_output_0
+  Max=1.78814e-07 MAE=2.39123e-08 RMSE=3.51182e-08 Different=9591/14400
+
+ONNX#=237 TFLite#=121 OP=Pad TYPE=float
+  Tensor: /cvf/cvf.1/Pad_output_0
+  Max=1.78814e-07 MAE=2.39102e-08 RMSE=3.51088e-08 Different=9633/14464
+
+ONNX#=237 TFLite#=295 OP=Pad TYPE=float
+  Tensor: /cvf/cvf.1/Pad_output_0
+  Max=1.78814e-07 MAE=2.39102e-08 RMSE=3.51088e-08 Different=9633/14464
+
+ONNX#=238 TFLite#=122 OP=Conv TYPE=float
+  Tensor: /cvf/cvf.1/Conv_output_0
+  Max=2.98023e-07 MAE=4.05025e-08 RMSE=5.41369e-08 Different=25421/28800
+
+ONNX#=238 TFLite#=296 OP=Conv TYPE=float
+  Tensor: /cvf/cvf.1/Conv_output_0
+  Max=2.98023e-07 MAE=4.05025e-08 RMSE=5.41369e-08 Different=25421/28800
+
+ONNX#=239 TFLite#=123 OP=ReduceMean TYPE=float
+  Tensor: /cvf/cvf.2/ReduceMean_output_0
+  Max=5.96046e-08 MAE=1.70257e-08 RMSE=2.15899e-08 Different=28/32
+
+ONNX#=240 TFLite#=124 OP=Sub TYPE=float
+  Tensor: /cvf/cvf.2/Sub_output_0
+  Max=2.98023e-07 MAE=4.32783e-08 RMSE=5.77904e-08 Different=26102/28800
+
+ONNX#=241 TFLite#=125 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.2/Mul_output_0
+  Max=3.35276e-08 MAE=1.1063e-09 RMSE=2.06018e-09 Different=26102/28800
+
+ONNX#=242 TFLite#=126 OP=ReduceMean TYPE=float
+  Tensor: /cvf/cvf.2/ReduceMean_1_output_0
+  Max=3.49246e-10 MAE=6.41194e-11 RMSE=9.34437e-11 Different=27/32
+
+ONNX#=243 TFLite#=127 OP=Add TYPE=float
+  Tensor: /cvf/cvf.2/Add_output_0
+  Max=3.49246e-10 MAE=6.32099e-11 RMSE=9.33551e-11 Different=25/32
+
+ONNX#=244 TFLite#=128 OP=Sqrt TYPE=float
+  Tensor: /cvf/cvf.2/Sqrt_output_0
+  Max=5.58794e-09 MAE=1.4843e-09 RMSE=2.06288e-09 Different=21/32
+
+ONNX#=245 TFLite#=129 OP=Div TYPE=float
+  Tensor: /cvf/cvf.2/Div_output_0
+  Max=2.14577e-05 MAE=2.75764e-06 RMSE=3.72435e-06 Different=27859/28800
+
+ONNX#=246 TFLite#=130 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.2/Mul_1_output_0
+  Max=1.4782e-05 MAE=1.91697e-06 RMSE=2.58947e-06 Different=27743/28800
+
+ONNX#=247 TFLite#=131 OP=Add TYPE=float
+  Tensor: /cvf/cvf.2/Add_1_output_0
+  Max=1.4782e-05 MAE=1.91699e-06 RMSE=2.58947e-06 Different=27709/28800
+
+ONNX#=248 TFLite#=132 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.3/Mul_output_0
+  Max=1.04904e-05 MAE=1.35549e-06 RMSE=1.83107e-06 Different=27618/28800
+
+ONNX#=250 TFLite#=134 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.3/Mul_10_output_0
+  Max=7.39098e-06 MAE=9.58493e-07 RMSE=1.29474e-06 Different=27709/28800
+
+ONNX#=251 TFLite#=135 OP=Abs TYPE=float
+  Tensor: /cvf/cvf.3/Abs_output_0
+  Max=1.04904e-05 MAE=1.35549e-06 RMSE=1.83107e-06 Different=27618/28800
+
+ONNX#=252 TFLite#=136 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.3/Mul_1_output_0
+  Max=3.42727e-06 MAE=4.44101e-07 RMSE=5.99918e-07 Different=27527/28800
+
+ONNX#=253 TFLite#=137 OP=Mul TYPE=float
+  Tensor: /cvf/cvf.3/Mul_8_output_0
+  Max=2.37226e-05 MAE=9.83823e-07 RMSE=1.74159e-06 Different=27618/28800
+
+============================================================================
+UNMATCHED TENSOR SUMMARY
+============================================================================
+incompatible dtypes                      21
+  TFLite[51] onnx::Conv_604 -> incompatible dtypes
+  TFLite[52] onnx::Conv_607 -> incompatible dtypes
+  TFLite[53] onnx::Conv_610 -> incompatible dtypes
+  TFLite[54] onnx::Conv_613 -> incompatible dtypes
+  TFLite[55] onnx::Conv_616 -> incompatible dtypes
+  TFLite[56] onnx::Conv_619 -> incompatible dtypes
+  TFLite[57] onnx::Conv_622 -> incompatible dtypes
+  TFLite[58] onnx::Conv_625 -> incompatible dtypes
+  TFLite[59] onnx::Conv_628 -> incompatible dtypes
+  TFLite[60] onnx::Conv_631 -> incompatible dtypes
+  TFLite[61] onnx::Conv_634 -> incompatible dtypes
+  TFLite[62] onnx::Conv_637 -> incompatible dtypes
+  TFLite[63] onnx::Conv_640 -> incompatible dtypes
+  TFLite[64] onnx::Conv_643 -> incompatible dtypes
+  TFLite[65] onnx::Conv_646 -> incompatible dtypes
+  TFLite[66] onnx::Conv_649 -> incompatible dtypes
+  TFLite[67] onnx::Conv_652 -> incompatible dtypes
+  TFLite[68] onnx::Conv_655 -> incompatible dtypes
+  TFLite[69] onnx::Conv_658 -> incompatible dtypes
+  TFLite[70] onnx::Conv_661 -> incompatible dtypes
+
+============================================================================
+FINAL STATUS
+============================================================================
+ONNX SHA256: 4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+Compared tensors: 288
+Integer exact matches: 9 / 115
+Float exact matches: 29 / 168
+First significant integer mismatch:
+  /Relu_output_0_QuantizeLinear_Output_exclusive_for_tcn_dw_block_0
+
+JSON report:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_onnx_tflite_intermediate_compare_20261123_103515/sample164_onnx_tflite_comparison.json
+
+CSV report:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_onnx_tflite_intermediate_compare_20261123_103515/sample164_onnx_tflite_comparison.csv
+
+Instrumented ONNX model:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_onnx_tflite_intermediate_compare_20261123_103515/sample164_qdq_intermediate_outputs.onnx
+
+============================================================================
+INTERMEDIATE_COMPARISON_COMPLETE
