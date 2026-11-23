@@ -1,0 +1,38 @@
+========== DEVICE TREE / KCONFIG ==========
+		ethosu0: ethosu55@400e1000 {
+			compatible = "arm,ethos-u";
+			reg = < 0x400e1000 0x1000 >;
+			interrupts = < 0x37 0x0 >;
+			interrupt-parent = < &nvic >;
+			secure-enable;
+			privilege-enable;
+			status = "okay";
+		};
+		ethosu1: ethosu85@49042000 {
+			compatible = "arm,ethos-u";
+			reg = < 0x49042000 0x1000 >;
+			interrupts = < 0x16e 0x3 >;
+			interrupt-parent = < &nvic >;
+			secure-enable;
+			privilege-enable;
+			clocks = < &clockctrl 0x1f8a1 >;
+			status = "disabled";
+U55_ENABLED_U85_DISABLED=PASS
+
+========== FINAL ELF SYMBOLS ==========
+80004a39 T ethosu_mutex_create
+80004a61 T ethosu_mutex_lock
+80015c67 T ethosu_mutex_unlock
+80004a8d T ethosu_semaphore_create
+80004ab9 T ethosu_semaphore_take
+80015c71 T ethosu_semaphore_give
+800127f1 T ethosu_init
+80012c6d T ethosu_reserve_driver
+80015c4b T ethosu_zephyr_irq_handler
+800049b1 t ethosu_zephyr_init
+ERROR: ethosu_zephyr_init has unexpected symbol type: t
+
+RESULT=FAILED
+EXIT_CODE=1
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_final_check_20261123_165920.log
+Press Enter to close this terminal...
