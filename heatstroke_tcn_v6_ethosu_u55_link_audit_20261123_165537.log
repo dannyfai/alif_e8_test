@@ -1,0 +1,66 @@
+============================================================
+TCN V6 ETHOS-U55 POST-LINK AUDIT
+============================================================
+2026-11-23T16:55:37+08:00
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_u55_link_audit_20261123_165537.log
+
+========== DEVICE TREE ==========
+		ethosu0: ethosu55@400e1000 {
+			compatible = "arm,ethos-u";
+			reg = < 0x400e1000 0x1000 >;
+			interrupts = < 0x37 0x0 >;
+			interrupt-parent = < &nvic >;
+			secure-enable;
+			privilege-enable;
+			status = "okay";
+		};
+		ethosu1: ethosu85@49042000 {
+			compatible = "arm,ethos-u";
+			reg = < 0x49042000 0x1000 >;
+			interrupts = < 0x16e 0x3 >;
+			interrupt-parent = < &nvic >;
+			secure-enable;
+			privilege-enable;
+			clocks = < &clockctrl 0x1f8a1 >;
+			status = "disabled";
+		};
+U55_DEVICE_TREE=PASS
+U85_REMAINS_DISABLED=PASS
+ETHOS_U_KCONFIG=PASS
+
+========== MODEL INTEGRITY ==========
+MODEL_SHA=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+MODEL_UNCHANGED=PASS
+
+========== ZEPHYR DRIVER OBJECT ==========
+OBJECT=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/drivers/misc/ethos_u/CMakeFiles/drivers__misc__ethos_u.dir/ethos_u.c.obj
+9b1d59c62482b2f52e727401b31ebcdc50fe2c61faf8883a525114a5461e0989  /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/drivers/misc/ethos_u/CMakeFiles/drivers__misc__ethos_u.dir/ethos_u.c.obj
+OBJECT_SYMBOL=ethosu_mutex_create TYPE=T
+OBJECT_SYMBOL=ethosu_mutex_lock TYPE=T
+OBJECT_SYMBOL=ethosu_mutex_unlock TYPE=T
+OBJECT_SYMBOL=ethosu_mutex_destroy TYPE=T
+OBJECT_SYMBOL=ethosu_semaphore_create TYPE=T
+OBJECT_SYMBOL=ethosu_semaphore_take TYPE=T
+OBJECT_SYMBOL=ethosu_semaphore_give TYPE=T
+OBJECT_SYMBOL=ethosu_semaphore_destroy TYPE=T
+OBJECT_SYMBOL=ethosu_zephyr_irq_handler TYPE=T
+ZEPHYR_DRIVER_OBJECT_SYMBOLS=PASS
+
+========== FINAL ELF: REQUIRED RUNTIME SYMBOLS ==========
+ELF_SYMBOL=ethosu_mutex_create TYPE=T
+ELF_SYMBOL=ethosu_mutex_lock TYPE=T
+ELF_SYMBOL=ethosu_mutex_unlock TYPE=T
+ELF_SYMBOL=ethosu_semaphore_create TYPE=T
+ELF_SYMBOL=ethosu_semaphore_take TYPE=T
+ELF_SYMBOL=ethosu_semaphore_give TYPE=T
+ELF_SYMBOL=ethosu_zephyr_irq_handler TYPE=T
+ELF_SYMBOL=ethosu_init TYPE=T
+ELF_SYMBOL=ethosu_reserve_driver TYPE=T
+ELF_SYMBOL=ethosu_irq_handler TYPE=W
+ERROR: Required strong runtime symbol missing: ethosu_irq_handler
+
+RESULT=FAILED
+EXIT_CODE=1
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_u55_link_audit_20261123_165537.log
+Press Enter to close this terminal...
