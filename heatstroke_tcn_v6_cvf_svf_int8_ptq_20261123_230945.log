@@ -1,0 +1,141 @@
+============================================================
+TCN V6 CVF + SVF SELECTIVE INT8 PTQ
+============================================================
+START=2026-11-23T23:09:45+08:00
+SOURCE_ONNX=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx
+CALIBRATION_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/int8_calibration
+EVALUATION_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/split_byid
+OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_int8_ptq_20261123_230945.log
+PYTHON=/home/user/onnx2tflite_env/bin/python
+ONNX2TFLITE=/home/user/onnx2tflite_env/bin/onnx2tflite
+VELA=/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela
+VELA_CONFIG=/home/user/sdk-alif/alif/samples/modules/executorch/ensemble_vela.ini
+
+============================================================
+START SELECTIVE CVF/SVF INT8 PTQ
+TIME=2026-11-23T23:09:47
+============================================================
+SOURCE_ONNX_SHA256=4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+TCN_QDQ_BASELINE_HASH=PASS
+make_sample_inputs signature=(dataset: 'Any', index: 'int')
+Subject-level split column: worker_id
+[test] loaded samples=394, skipped_incomplete=0
+[test] distinct subject groups=25
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+CALIBRATION_DATASET_SAMPLES=394
+EVALUATION_DATASET_SAMPLES=449
+CALIBRATION_WORKER_COUNT=25
+EVALUATION_WORKER_COUNT=3
+WORKER_OVERLAP_COUNT=0
+WORKER_LEVEL_INDEPENDENCE=PASS
+CALIBRATION_METHOD=DETERMINISTIC_ROUND_ROBIN_BY_WORKER
+CALIBRATION_SAMPLE_COUNT=256
+CALIBRATION_SAMPLES_PER_WORKER={"1": 4, "10": 10, "12": 14, "14": 15, "15": 10, "16": 5, "18": 4, "19": 11, "23": 14, "24": 14, "25": 7, "26": 9, "28": 15, "29": 9, "30": 15, "32": 11, "33": 12, "35": 7, "4": 14, "40": 4, "42": 4, "44": 14, "45": 14, "47": 5, "7": 15}
+[0;93m2026-11-23 23:09:50.787766362 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-23 23:09:50.787784041 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-23 23:09:50.787802343 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+
+SOURCE ONNX INPUTS:
+  x_values shape=[1, 900, 6] type=tensor(float)
+  missing_mask shape=[1, 900, 6] type=tensor(bool)
+  x_mark shape=[1, 900, 3] type=tensor(float)
+  worker_features_18 shape=[1, 18] type=tensor(float)
+  compact_values shape=[1, 1800, 6] type=tensor(float)
+SOURCE ONNX OUTPUTS:
+  reconstructed_values shape=[1, 900, 6] type=tensor(float)
+CALIBRATION FIRST SAMPLE INPUTS:
+  x_values shape=(1, 900, 6) dtype=float32 min=-9999.0 max=3.9398269653320312
+  missing_mask shape=(1, 900, 6) dtype=bool min=0.0 max=1.0
+  x_mark shape=(1, 900, 3) dtype=float32 min=-0.5 max=0.5
+  worker_features_18 shape=(1, 18) dtype=float32 min=0.0 max=1.0
+  compact_values shape=(1, 1800, 6) dtype=float32 min=-0.3348049819469452 max=3.9398269653320312
+CALIBRATION prepared 50/256
+CALIBRATION prepared 100/256
+CALIBRATION prepared 150/256
+CALIBRATION prepared 200/256
+CALIBRATION prepared 250/256
+CALIBRATION prepared 256/256
+EVALUATION FIRST SAMPLE INPUTS:
+  x_values shape=(1, 900, 6) dtype=float32 min=-9998.0 max=1.5288456678390503
+  missing_mask shape=(1, 900, 6) dtype=bool min=0.0 max=1.0
+  x_mark shape=(1, 900, 3) dtype=float32 min=-0.5 max=0.5
+  worker_features_18 shape=(1, 18) dtype=float32 min=-0.4135877192020416 max=1.6946759223937988
+  compact_values shape=(1, 1800, 6) dtype=float32 min=-1.840368390083313 max=1.5288456678390503
+EVALUATION prepared 50/449
+EVALUATION prepared 100/449
+EVALUATION prepared 150/449
+EVALUATION prepared 200/449
+EVALUATION prepared 250/449
+EVALUATION prepared 300/449
+EVALUATION prepared 350/449
+EVALUATION prepared 400/449
+EVALUATION prepared 449/449
+
+SELECTED CVF/SVF TARGET NODES:
+  ('cvf', 0) node=/cvf/cvf.0/Conv op=Conv weight_initializer=model.cvf.0.weight
+  ('cvf', 1) node=/cvf/cvf.1/Conv op=Conv weight_initializer=model.cvf.1.weight
+  ('cvf', 4) node=/cvf/cvf.4/Conv op=Conv weight_initializer=model.cvf.4.weight
+  ('cvf', 5) node=/cvf/cvf.5/Conv op=Conv weight_initializer=model.cvf.5.weight
+  ('cvf', 8) node=/cvf/cvf.8/Conv op=Conv weight_initializer=model.cvf.8.weight
+  ('svf', 0) node=/svf.0/Gemm op=Gemm weight_initializer=model.svf.0.weight
+  ('svf', 1) node=/svf.1/Gemm op=Gemm weight_initializer=model.svf.1.weight
+  ('svf', 2) node=/svf.2/Gemm op=Gemm weight_initializer=model.svf.2.weight
+  ('svf', 3) node=/svf.3/Gemm op=Gemm weight_initializer=model.svf.3.weight
+  ('svf', 4) node=/svf.4/Gemm op=Gemm weight_initializer=model.svf.4.weight
+  ('svf', 5) node=/svf.5/Gemm op=Gemm weight_initializer=model.svf.5.weight
+
+START SELECTIVE QDQ PTQ
+Calibration samples=256
+Activation type=QInt8
+Weight type=QInt8
+Per-channel weights=True
+Calibration method=MinMax
+Selected nodes only=11
+TCN existing QDQ branch is not selected for quantization.
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+[0;93m2026-11-23 23:09:52.800054705 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-23 23:09:52.800076500 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-23 23:09:52.800098044 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+HYBRID_ONNX_SIZE_BYTES=10290701
+HYBRID_ONNX_SHA256=4ad1fdbd7a5b79b6891e7658a26e5131987d44075a22c5d585dc7599ae1a276b
+
+ORIGINAL TCN / NON-TARGET GRAPH PRESERVATION AUDIT
+Original non-target node signatures=544
+Missing/changed non-target node signatures=0
+Original non-target initializers=337
+Missing/changed non-target initializers=11
+MISSING_OR_CHANGED_NON_TARGET_INITIALIZERS:
+  model.svf.0.bias [missing]
+  model.svf.1.bias [missing]
+  model.svf.2.bias [missing]
+  model.svf.3.bias [missing]
+  model.svf.4.bias [missing]
+  model.svf.5.bias [missing]
+  model.cvf.0.bias [missing]
+  model.cvf.1.bias [missing]
+  model.cvf.4.bias [missing]
+  model.cvf.5.bias [missing]
+  model.cvf.8.bias [missing]
+
+============================================================================
+CVF_SVF_INT8_EXPERIMENT=FAILED
+ERROR=RuntimeError('Quantization changed or removed part of the original non-target graph. Stopping before TFLite conversion to protect the existing TCN QDQ branch.')
+============================================================================
+Traceback (most recent call last):
+  File "<stdin>", line 1568, in <module>
+  File "<stdin>", line 1328, in main
+  File "<stdin>", line 490, in verify_original_graph_preserved
+RuntimeError: Quantization changed or removed part of the original non-target graph. Stopping before TFLite conversion to protect the existing TCN QDQ branch.
+
+============================================================
+CVF_SVF_INT8_EXPERIMENT=FAILED
+EXIT_CODE=1
+OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_int8_ptq_20261123_230945.log
+FLASH_ACTION=NOT_PERFORMED
+OSPI_ACTION=NOT_PERFORMED
+============================================================
