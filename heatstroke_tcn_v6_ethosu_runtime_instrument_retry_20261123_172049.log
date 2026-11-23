@@ -1,0 +1,126 @@
+============================================================
+TCN V6 ETHOS-U RUNTIME INSTRUMENTATION
+============================================================
+2026-11-23T17:20:49+08:00
+SDK=/home/user/sdk-alif
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_instrument_retry_20261123_172049.log
+BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049
+MODEL_SHA_BEFORE=f86bfd3db21cb85ebd31feaf1edf1c949ec1a3b05a7bcad39af4bf622c21a90a
+TFLM_SRC=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+ZEPHYR_SRC=/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+PREFLIGHT=PASS
+d4df23ddab651ea3f653a75d296d03f98a63eda1d0261d2edca5891499f47e67  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049/ethosu.cc.original
+475cc89cc7e926d77b755679702d3d988734928c3be16062f4ea3b59aea4d3c5  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049/ethos_u.c.original
+57fe8df6e2d3061bbba5377bd79dd12904e3cb5d0f3c91107fd56e8120396d59  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049/zephyr.bin.before_instrumentation
+008743406220f7786d41e6a2dc4493728540ed07df8a166cf6b21f48bb66ae34  /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049/zephyr.elf.before_instrumentation
+SOURCE_AND_FIRMWARE_BACKUP=PASS
+TFLM_INVOKE_TIMING_PATCH=PASS
+ZEPHYR_IRQ_COUNTER_PATCH=PASS
+C_PROFILE_NEWLINE=PASS
+TFLM_SOURCE=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+ZEPHYR_SOURCE=/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+
+========== PATCH VERIFICATION ==========
+175-  ethosu_release_driver(drv);
+176-  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+177-  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+178-  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+179:  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+180-         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+181-         "invoke_ms=%u release_ms=%u irq_before=%u "
+182-         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+183-         "cumulative_irq_delta=%u
+184-",
+185-         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+186-         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+187-         tcn_v6_invoke_ms, tcn_v6_release_ms,
+188-         tcn_v6_irq_before, tcn_v6_irq_after,
+189-         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+190-         tcn_v6_npu_cumulative_irq_delta);
+191-
+192-  if (-1 == result) {
+193-    return kTfLiteError;
+194-  } else {
+195-    return kTfLiteOk;
+196-  }
+197-}
+132-	struct ethosu_driver drv;
+133-};
+134-
+135-
+136-/* TCN V6 diagnostic counter: actual Ethos-U IRQ handler entries. */
+137:static volatile uint32_t tcn_v6_ethosu_irq_count = 0;
+138-
+139:uint32_t tcn_v6_ethosu_irq_count_get(void)
+140-{
+141:    return __atomic_load_n(&tcn_v6_ethosu_irq_count, __ATOMIC_RELAXED);
+142-}
+143-
+144-void ethosu_zephyr_irq_handler(const struct device *dev)
+145-{
+146-	struct ethosu_data *data = dev->data;
+147-	struct ethosu_driver *drv = &data->drv;
+148-
+149:	__atomic_add_fetch(&tcn_v6_ethosu_irq_count, 1u, __ATOMIC_RELAXED);
+150-	ethosu_irq_handler(drv);
+151-}
+152-
+153-static int ethosu_zephyr_init(const struct device *dev)
+154-{
+155-	const struct ethosu_dts_info *config = dev->config;
+156-	struct ethosu_data *data = dev->data;
+157-	struct ethosu_driver *drv = &data->drv;
+158-	struct ethosu_driver_version version;
+159-
+160-	LOG_DBG("Ethos-U DTS info. base_address=0x%p, secure_enable=%u, privilege_enable=%u",
+161-		config->base_addr, config->secure_enable, config->privilege_enable);
+162-
+163-	if (config->clk_dev != NULL) {
+164-		if (!device_is_ready(config->clk_dev)) {
+165-			LOG_ERR("Clock device not ready");
+SOURCE_PATCHES=PASS
+
+============================================================
+STARTING INCREMENTAL BUILD
+============================================================
+[1/9] Building C object zephyr/drivers/misc/ethos_u/CMakeFiles/drivers__misc__ethos_u.dir/ethos_u.c.obj
+[2/9] Linking C static library zephyr/drivers/misc/ethos_u/libdrivers__misc__ethos_u.a
+[3/9] Building CXX object modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj
+FAILED: [code=1] modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj 
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++17 -Wno-register -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/heatstroke_tcn_v6_sample164_validation_source_20261123_150652=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -MD -MT modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj -MF modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj.d -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:183:10: warning: missing terminating " character
+  183 |          "cumulative_irq_delta=%u
+      |          ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:183:10: error: missing terminating " character
+  183 |          "cumulative_irq_delta=%u
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:184:1: warning: missing terminating " character
+  184 | ",
+      | ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:184:1: error: missing terminating " character
+  184 | ",
+      | ^~
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc: In function 'TfLiteStatus tflite::{anonymous}::Eval(TfLiteContext*, TfLiteNode*)':
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:182:62: error: expected ')' before 'tcn_v6_call_index'
+  182 |          "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+      |                                                              ^
+      |                                                              )
+......
+  185 |          tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+      |          ~~~~~~~~~~~~~~~~~                                    
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:179:9: note: to match this '('
+  179 |   printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+      |         ^
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:161:18: warning: unused variable 'tcn_v6_call_index' [-Wunused-variable]
+  161 |   const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+      |                  ^~~~~~~~~~~~~~~~~
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake --build /home/user/sdk-alif/build_heatstroke_tcn_v6_e8_u55_128_sample164_validation_20261123_150652
+
+============================================================
+RUNTIME_INSTRUMENTATION_BUILD=FAILED
+EXIT_CODE=1
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_instrument_retry_20261123_172049.log
+BACKUP=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_runtime_backup_20261123_172049
+Press Enter to close this terminal...
