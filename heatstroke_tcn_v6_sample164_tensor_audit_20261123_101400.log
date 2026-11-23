@@ -1,0 +1,65 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795400041.312723  167339 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795400041.312903  167339 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795400042.111602  167339 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795400042.111792  167339 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101400/run_sample164_tensor_audit.py", line 626, in <module>
+    runpy.run_path(str(SRC), run_name="__main__")
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnose_tcn_qdqpair_dup_sample164_nodelegate_20261123_100738.py", line 39, in <module>
+    OUTDIR = Path(sys.argv[1]).resolve()
+                  ~~~~~~~~^^^
+IndexError: list index out of range
+========================================================================
+TCN V6 SAMPLE 164: TFLITE OPERATOR AND TENSOR AUDIT
+========================================================================
+Python             : 3.12.15 (main, Oct  1 2026, 15:41:07) [GCC 15.2.0]
+Project root       : /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+Source diagnostic  : /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnose_tcn_qdqpair_dup_sample164_nodelegate_20261123_100738.py
+QDQ ONNX model     : /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx
+Audit output       : /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101400
+
+[1/5] Importing TensorFlow...
+TensorFlow version : 2.21.0
+TFLite Interpreter : <class 'tensorflow.lite.python.interpreter.Interpreter'>
+No-delegate enum   : OpResolverType.BUILTIN_WITHOUT_DEFAULT_DELEGATES
+
+[2/5] Inspecting QDQ ONNX graph...
+ONNX graph nodes  : 555
+ONNX graph inputs : ['x_values', 'missing_mask', 'x_mark', 'worker_features_18', 'compact_values']
+ONNX graph outputs: ['reconstructed_values']
+ONNX tensor names : 560
+
+[3/5] Running existing sample-164 diagnostic...
+The existing script is:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/diagnose_tcn_qdqpair_dup_sample164_nodelegate_20261123_100738.py
+
+Only the no-default-delegates interpreter will be instrumented.
+The default interpreter path is not intentionally modified.
+
+
+ERROR: Existing sample-164 diagnostic raised an exception.
+
+========================================================================
+SAMPLE 164 TENSOR AUDIT FINAL STATUS
+========================================================================
+Source diagnostic exit code : 1
+No-delegate interpreter seen : False
+Tensor capture completed     : False
+Capture count                : 0
+
+WARNING: No BUILTIN_WITHOUT_DEFAULT_DELEGATES interpreter
+was intercepted.
+Please inspect the constructor call information below.
+
+WARNING: No tensor capture was completed.
+
+Interpreter constructor calls:
+
+Audit output directory:
+/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample164_tensor_audit_20261123_101400
+========================================================================
