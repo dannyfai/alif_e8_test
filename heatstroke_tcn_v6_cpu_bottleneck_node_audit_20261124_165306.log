@@ -1,0 +1,383 @@
+============================================================
+HEATSTROKE TCN V6 - TFLITE PROFILE NODE AUDIT
+============================================================
+Date: Tue Nov 24 04:53:06 PM HKT 2026
+Model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+
+0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+MODEL_SIZE_BYTES=9684208
+
+PYTHON=/home/user/onnx2tflite_env/bin/python
+Python 3.12.16
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795510389.146332   22611 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795510389.146515   22611 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795510389.174335   22611 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795510389.987463   22611 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795510389.987738   22611 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL_SHA256: 0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MODEL_BYTES: 9684208
+SUBGRAPH_COUNT: 1
+PRIMARY_SUBGRAPH_OPERATOR_COUNT: 197
+PRIMARY_SUBGRAPH_TENSOR_COUNT: 304
+EXPECTED_OPERATOR_COUNT_FROM_UART: 197
+OPERATOR_COUNT_MATCH: YES
+
+============================================================
+PROFILED CPU BOTTLENECK NODES
+============================================================
+
+################################################################
+NODE INDEX: 75
+MEASURED CYCLES: 68,125,634
+SHARE OF PROFILED OPERATOR CYCLES: 10.67%
+OPERATOR: MEAN
+OPTIONS: options_decode_error=AttributeError
+
+INPUT TENSORS:
+   tensor[123] /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_ dtype=FLOAT32 shape=[1, 128, 900] constant_bytes=0
+      PRODUCER: node[74] TRANSPOSE
+   tensor[124] axes8 dtype=INT32 shape=[1] constant_bytes=4
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[125] /cvf/cvf.6/ReduceMean_output_00 dtype=FLOAT32 shape=[1, 128, 1] constant_bytes=0
+      CONSUMER: node[76] RESHAPE
+
+################################################################
+NODE INDEX: 80
+MEASURED CYCLES: 68,123,755
+SHARE OF PROFILED OPERATOR CYCLES: 10.67%
+OPERATOR: MEAN
+OPTIONS: options_decode_error=AttributeError
+
+INPUT TENSORS:
+   tensor[131] /cvf/cvf.6/Mul_output_0_transposed_ dtype=FLOAT32 shape=[1, 128, 900] constant_bytes=0
+      PRODUCER: node[79] TRANSPOSE
+   tensor[132] axes10 dtype=INT32 shape=[1] constant_bytes=4
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[133] /cvf/cvf.6/ReduceMean_1_output_00 dtype=FLOAT32 shape=[1, 128, 1] constant_bytes=0
+      CONSUMER: node[81] RESHAPE
+
+################################################################
+NODE INDEX: 112
+MEASURED CYCLES: 65,444,208
+SHARE OF PROFILED OPERATOR CYCLES: 10.25%
+OPERATOR: MIRROR_PAD
+OPTIONS: mode=REFLECT
+
+INPUT TENSORS:
+   tensor[181] /cvf/cvf.7/Mul_11_output_0 dtype=FLOAT32 shape=[1, 900, 128] constant_bytes=0
+      PRODUCER: node[111] MUL
+   tensor[182] paddings_3 dtype=INT32 shape=[3, 2] constant_bytes=24
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[183] /cvf/cvf.8/Pad_output_0 dtype=FLOAT32 shape=[1, 910, 128] constant_bytes=0
+      CONSUMER: node[113] QUANTIZE
+
+################################################################
+NODE INDEX: 94
+MEASURED CYCLES: 23,325,418
+SHARE OF PROFILED OPERATOR CYCLES: 3.65%
+OPERATOR: DIV
+OPTIONS: (not decoded)
+
+INPUT TENSORS:
+   tensor[154] one0 dtype=FLOAT32 shape=[1] constant_bytes=4
+      PRODUCER: graph input or constant
+   tensor[153] /cvf/cvf.7/Add_output_0 dtype=FLOAT32 shape=[1, 900, 128] constant_bytes=0
+      PRODUCER: node[93] ADD
+
+OUTPUT TENSORS:
+   tensor[155] /cvf/cvf.7/Mul_2_output_0 dtype=FLOAT32 shape=[1, 900, 128] constant_bytes=0
+      CONSUMER: node[95] MUL
+      CONSUMER: node[97] MUL
+      CONSUMER: node[99] MUL
+      CONSUMER: node[101] MUL
+      CONSUMER: node[103] MUL
+
+################################################################
+NODE INDEX: 107
+MEASURED CYCLES: 17,822,385
+SHARE OF PROFILED OPERATOR CYCLES: 2.79%
+OPERATOR: GREATER_EQUAL
+OPTIONS: (not decoded)
+
+INPUT TENSORS:
+   tensor[143] /cvf/cvf.6/Add_1_output_0 dtype=FLOAT32 shape=[1, 900, 128] constant_bytes=0
+      PRODUCER: node[86] ADD
+   tensor[174] /cvf/cvf.7/Constant_10_output_00 dtype=FLOAT32 shape=[1, 1, 1] constant_bytes=4
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[175] /cvf/cvf.7/GreaterOrEqual_output_0 dtype=BOOL shape=[1, 900, 128] constant_bytes=0
+      CONSUMER: node[108] SELECT_V2
+
+################################################################
+NODE INDEX: 38
+MEASURED CYCLES: 17,052,811
+SHARE OF PROFILED OPERATOR CYCLES: 2.67%
+OPERATOR: MEAN
+OPTIONS: options_decode_error=AttributeError
+
+INPUT TENSORS:
+   tensor[65] /cvf/cvf.2/Mul_output_0_transposed_ dtype=FLOAT32 shape=[1, 32, 900] constant_bytes=0
+      PRODUCER: node[37] TRANSPOSE
+   tensor[66] axes6 dtype=INT32 shape=[1] constant_bytes=4
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[67] /cvf/cvf.2/ReduceMean_1_output_00 dtype=FLOAT32 shape=[1, 32, 1] constant_bytes=0
+      CONSUMER: node[39] RESHAPE
+
+################################################################
+NODE INDEX: 33
+MEASURED CYCLES: 17,051,275
+SHARE OF PROFILED OPERATOR CYCLES: 2.67%
+OPERATOR: MEAN
+OPTIONS: options_decode_error=AttributeError
+
+INPUT TENSORS:
+   tensor[57] /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_ dtype=FLOAT32 shape=[1, 32, 900] constant_bytes=0
+      PRODUCER: node[32] TRANSPOSE
+   tensor[58] axes4 dtype=INT32 shape=[1] constant_bytes=4
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[59] /cvf/cvf.2/ReduceMean_output_00 dtype=FLOAT32 shape=[1, 32, 1] constant_bytes=0
+      CONSUMER: node[34] RESHAPE
+
+################################################################
+NODE INDEX: 70
+MEASURED CYCLES: 16,298,262
+SHARE OF PROFILED OPERATOR CYCLES: 2.55%
+OPERATOR: MIRROR_PAD
+OPTIONS: mode=REFLECT
+
+INPUT TENSORS:
+   tensor[115] /cvf/cvf.3/Mul_11_output_0 dtype=FLOAT32 shape=[1, 900, 32] constant_bytes=0
+      PRODUCER: node[69] MUL
+   tensor[116] paddings_1 dtype=INT32 shape=[3, 2] constant_bytes=24
+      PRODUCER: graph input or constant
+
+OUTPUT TENSORS:
+   tensor[117] /cvf/cvf.4/Pad_output_0 dtype=FLOAT32 shape=[1, 906, 32] constant_bytes=0
+      CONSUMER: node[71] QUANTIZE
+
+============================================================
+OPERATOR INVENTORY
+============================================================
+  0: FULLY_CONNECTED
+  1: RESHAPE
+  2: CAST
+  3: SUB
+  4: MUL
+  5: MUL
+  6: BROADCAST_ARGS
+  7: SUM
+  8: SUB
+  9: MAXIMUM
+ 10: MUL
+ 11: SUM
+ 12: DIV
+ 13: BROADCAST_TO
+ 14: MUL
+ 15: ADD
+ 16: MIRROR_PAD
+ 17: QUANTIZE
+ 18: GATHER
+ 19: QUANTIZE
+ 20: GATHER
+ 21: QUANTIZE
+ 22: GATHER
+ 23: QUANTIZE
+ 24: GATHER
+ 25: QUANTIZE
+ 26: GATHER
+ 27: QUANTIZE
+ 28: GATHER
+ 29: QUANTIZE
+ 30: ethos-u
+ 31: DEQUANTIZE
+ 32: TRANSPOSE
+ 33: MEAN <== PROFILED
+ 34: RESHAPE
+ 35: SUB
+ 36: MUL
+ 37: TRANSPOSE
+ 38: MEAN <== PROFILED
+ 39: RESHAPE
+ 40: ADD
+ 41: SQRT
+ 42: DIV
+ 43: MUL
+ 44: ADD
+ 45: MUL
+ 46: ABS
+ 47: MUL
+ 48: NEG
+ 49: EXP
+ 50: MUL
+ 51: ADD
+ 52: DIV
+ 53: MUL
+ 54: SUB
+ 55: MUL
+ 56: ADD
+ 57: MUL
+ 58: SUB
+ 59: MUL
+ 60: ADD
+ 61: MUL
+ 62: MUL
+ 63: SUB
+ 64: NEG
+ 65: GREATER_EQUAL
+ 66: SELECT_V2
+ 67: ADD
+ 68: MUL
+ 69: MUL
+ 70: MIRROR_PAD <== PROFILED
+ 71: QUANTIZE
+ 72: ethos-u
+ 73: DEQUANTIZE
+ 74: TRANSPOSE
+ 75: MEAN <== PROFILED
+ 76: RESHAPE
+ 77: SUB
+ 78: MUL
+ 79: TRANSPOSE
+ 80: MEAN <== PROFILED
+ 81: RESHAPE
+ 82: ADD
+ 83: SQRT
+ 84: DIV
+ 85: MUL
+ 86: ADD
+ 87: MUL
+ 88: ABS
+ 89: MUL
+ 90: NEG
+ 91: EXP
+ 92: MUL
+ 93: ADD
+ 94: DIV <== PROFILED
+ 95: MUL
+ 96: SUB
+ 97: MUL
+ 98: ADD
+ 99: MUL
+100: SUB
+101: MUL
+102: ADD
+103: MUL
+104: MUL
+105: SUB
+106: NEG
+107: GREATER_EQUAL <== PROFILED
+108: SELECT_V2
+109: ADD
+110: MUL
+111: MUL
+112: MIRROR_PAD <== PROFILED
+113: QUANTIZE
+114: ethos-u
+115: DEQUANTIZE
+116: MUL
+117: DEQUANTIZE
+118: RESHAPE
+119: DEQUANTIZE
+120: RESHAPE
+121: DEQUANTIZE
+122: RESHAPE
+123: DEQUANTIZE
+124: RESHAPE
+125: DEQUANTIZE
+126: RESHAPE
+127: DEQUANTIZE
+128: RESHAPE
+129: CONCATENATION
+130: MUL
+131: ADD
+132: DIV
+133: CONCATENATION
+134: QUANTIZE
+135: ethos-u
+136: DEQUANTIZE
+137: RELU
+138: DEQUANTIZE
+139: ADD
+140: QUANTIZE
+141: ethos-u
+142: DEQUANTIZE
+143: RELU
+144: DEQUANTIZE
+145: ADD
+146: QUANTIZE
+147: ethos-u
+148: DEQUANTIZE
+149: RELU
+150: DEQUANTIZE
+151: ADD
+152: QUANTIZE
+153: ethos-u
+154: DEQUANTIZE
+155: RELU
+156: DEQUANTIZE
+157: ADD
+158: QUANTIZE
+159: ethos-u
+160: DEQUANTIZE
+161: RELU
+162: DEQUANTIZE
+163: ADD
+164: QUANTIZE
+165: ethos-u
+166: DEQUANTIZE
+167: RELU
+168: DEQUANTIZE
+169: ADD
+170: QUANTIZE
+171: ethos-u
+172: DEQUANTIZE
+173: RELU
+174: DEQUANTIZE
+175: ADD
+176: QUANTIZE
+177: ethos-u
+178: DEQUANTIZE
+179: RELU
+180: DEQUANTIZE
+181: ADD
+182: QUANTIZE
+183: ethos-u
+184: DEQUANTIZE
+185: RELU
+186: DEQUANTIZE
+187: ADD
+188: QUANTIZE
+189: ethos-u
+190: DEQUANTIZE
+191: RELU
+192: DEQUANTIZE
+193: ADD
+194: QUANTIZE
+195: ethos-u
+196: DEQUANTIZE
+
+CSV_REPORT: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cpu_bottleneck_node_audit_20261124_165306.csv
+AUDIT_STATUS: COMPLETE
+
+============================================================
+AUDIT COMPLETE
+LOG: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cpu_bottleneck_node_audit_20261124_165306.log
+CSV: /home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cpu_bottleneck_node_audit_20261124_165306.csv
+============================================================
+
+Press ENTER to close this terminal...
