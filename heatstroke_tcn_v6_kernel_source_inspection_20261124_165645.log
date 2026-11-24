@@ -1,0 +1,455 @@
+======================================================
+TCN V6 - TFLM KERNEL SOURCE INSPECTION
+======================================================
+Tue Nov 24 04:56:45 PM HKT 2026
+
+========== SOURCE ROOTS ==========
+FOUND: /home/user/sdk-alif/optional/modules/lib/tflite-micro
+/home/user/sdk-alif/optional/modules/lib/tflite-micro
+FOUND: /home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro
+/home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro
+NOT FOUND: /home/user/sdk-alif/modules/lib/tflite-micro
+
+========== KERNEL SOURCE FILES ==========
+
+----- /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/xtensa/reduce.cc -----
+     1	/* Copyright 2019 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include "tensorflow/lite/kernels/internal/reference/reduce.h"
+    17	
+    18	#include "tensorflow/lite/c/builtin_op_data.h"
+    19	#include "tensorflow/lite/c/common.h"
+    20	#include "tensorflow/lite/kernels/internal/quantization_util.h"
+    21	#include "tensorflow/lite/kernels/internal/reference/integer_ops/mean.h"
+    22	#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
+    23	#include "tensorflow/lite/kernels/internal/types.h"
+    24	#include "tensorflow/lite/kernels/kernel_util.h"
+    25	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    26	#include "tensorflow/lite/micro/kernels/xtensa/xtensa.h"
+    27	#include "tensorflow/lite/micro/kernels/xtensa/xtensa_reduce.h"
+    28	#include "tensorflow/lite/micro/micro_utils.h"
+    29	
+    30	namespace tflite {
+    31	
+    32	void* XtensaInitReduce(TfLiteContext* context, const char* buffer,
+    33	                       size_t length) {
+    34	  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+    35	  void* data =
+    36	      context->AllocatePersistentBuffer(context, sizeof(XtensaReduceOpData));
+    37	
+    38	#if defined(VISION_P6)
+    39	  if (InitXtensaContext() != 0) {
+    40	    return nullptr;
+    41	  }
+    42	#endif
+    43	  return data;
+    44	}
+    45	
+    46	TfLiteStatus XtensaPrepareMax(TfLiteContext* context, TfLiteNode* node) {
+    47	  OpDataReduce* op_data =
+    48	      &(static_cast<XtensaReduceOpData*>(node->user_data)->reference_op_data);
+    49	  TF_LITE_ENSURE_OK(context, PrepareMaxHelper(context, node, op_data));
+    50	#if defined(VISION_P6)
+    51	  TF_LITE_ENSURE_OK(context, ReducePrepareVision(context, node));
+    52	#endif  // VISION_P6
+    53	  return kTfLiteOk;
+    54	}
+    55	
+    56	TfLiteStatus XtensaPrepareMeanOrSum(TfLiteContext* context, TfLiteNode* node) {
+    57	  OpDataReduce* op_data =
+    58	      &(static_cast<XtensaReduceOpData*>(node->user_data)->reference_op_data);
+    59	  return PrepareMeanOrSumHelper(context, node, op_data);
+    60	}
+    61	
+    62	TfLiteStatus XtensaEvalMean(TfLiteContext* context, TfLiteNode* node) {
+    63	  OpDataReduce* op_data =
+    64	      &(static_cast<XtensaReduceOpData*>(node->user_data)->reference_op_data);
+    65	  return EvalMeanHelper(context, node, op_data);
+    66	}
+    67	
+    68	TfLiteStatus XtensaEvalMax(TfLiteContext* context, TfLiteNode* node) {
+    69	  XtensaReduceOpData* op_data_xtensa =
+    70	      static_cast<XtensaReduceOpData*>(node->user_data);
+    71	  OpDataReduce* op_data = &(op_data_xtensa->reference_op_data);
+    72	
+    73	#if defined(VISION_P6)
+    74	  const TfLiteEvalTensor* input = tflite::micro::GetEvalInput(context, node, 0);
+    75	  TfLiteEvalTensor* output = tflite::micro::GetEvalOutput(context, node, 0);
+    76	  TF_LITE_ENSURE_TYPES_EQ(context, input->type, output->type);
+    77	
+    78	  switch (input->type) {
+    79	    case kTfLiteInt8: {
+    80	      TF_LITE_ENSURE_EQ(context, static_cast<double>(op_data->input_scale),
+    81	                        static_cast<double>(op_data->output_scale));
+    82	      TF_LITE_ENSURE_EQ(context, op_data->input_zp, op_data->output_zp);
+    83	      ReduceEvalVision(*op_data_xtensa, input, output);
+    84	      break;
+    85	    }
+    86	    default: {
+    87	      // Use the reference EvalMax for all other cases.
+    88	      return EvalMaxHelper(context, node, op_data);
+    89	    }
+    90	  }
+    91	  return kTfLiteOk;
+    92	#else
+    93	  return EvalMaxHelper(context, node, op_data);
+    94	#endif
+    95	}
+    96	
+    97	TfLiteStatus XtensaEvalSum(TfLiteContext* context, TfLiteNode* node) {
+    98	  OpDataReduce* op_data =
+    99	      &(static_cast<XtensaReduceOpData*>(node->user_data)->reference_op_data);
+   100	  return EvalSumHelper(context, node, op_data);
+   101	}
+   102	
+   103	TFLMRegistration Register_MEAN() {
+   104	  return tflite::micro::RegisterOp(XtensaInitReduce, XtensaPrepareMeanOrSum,
+   105	                                   XtensaEvalMean);
+   106	}
+   107	
+   108	TFLMRegistration Register_REDUCE_MAX() {
+   109	  return tflite::micro::RegisterOp(XtensaInitReduce, XtensaPrepareMax,
+   110	                                   XtensaEvalMax);
+   111	}
+   112	
+   113	TFLMRegistration Register_SUM() {
+   114	  return tflite::micro::RegisterOp(XtensaInitReduce, XtensaPrepareMeanOrSum,
+   115	                                   XtensaEvalSum);
+   116	}
+   117	
+   118	}  // namespace tflite
+
+----- /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc -----
+     1	/* Copyright 2021 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include "tensorflow/lite/c/builtin_op_data.h"
+    17	#include "tensorflow/lite/c/common.h"
+    18	#include "tensorflow/lite/kernels/kernel_util.h"
+    19	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    20	
+    21	namespace tflite {
+    22	namespace {
+    23	
+    24	struct OpDataMirrorPad {
+    25	  int input_dims;
+    26	  int output_size;
+    27	  int offset;
+    28	  int output_dims_num_elements_buffer_index;
+    29	  int input_dims_num_elements_buffer_index;
+    30	};
+    31	
+    32	// Helper method that fills the left and right pads.
+    33	template <typename T>
+    34	inline void GetPadding(const T* data, int offset, int64_t* left_pad,
+    35	                       int64_t* right_pad) {
+    36	  *left_pad = static_cast<int64_t>(*(data + offset * 2));
+    37	  *right_pad = static_cast<int64_t>(*(data + offset * 2 + 1));
+    38	}
+    39	
+    40	// Given dimension index and the left/right padding.
+    41	// Returns the corresponding dimension in the input array.
+    42	inline int GetInputDimension(int padded_dimension, int left_pad, int right_pad,
+    43	                             int input_dim_size, int offset) {
+    44	  if (padded_dimension < left_pad) {
+    45	    const int original_ind = left_pad + offset - 1;
+    46	    return original_ind - (std::min(padded_dimension, original_ind - offset));
+    47	  }
+    48	  padded_dimension -= left_pad;
+    49	  if (padded_dimension >= input_dim_size) {
+    50	    padded_dimension -= input_dim_size;
+    51	    const int original_ind = input_dim_size - (1 + offset);
+    52	    return original_ind - std::min(padded_dimension, original_ind);
+    53	  }
+    54	  return padded_dimension;
+    55	}
+    56	
+    57	// Given and index in output array, returns the index of the value
+    58	// in input array.
+    59	int GetFlatIndex(int index, int num_dims,
+    60	                 const TfLiteEvalTensor* padding_matrix,
+    61	                 const TfLiteIntArray* input_dims,
+    62	                 int* output_dims_num_elements, int* input_dims_num_elements,
+    63	                 const int offset) {
+    64	  int flat_index = 0;
+    65	  int64_t left_pad = 0, right_pad = 0, dimension_index, index_in_input;
+    66	
+    67	  for (int i = 0; i < num_dims; ++i) {
+    68	    switch (padding_matrix->type) {
+    69	      case kTfLiteInt32:
+    70	        GetPadding(padding_matrix->data.i32, i, &left_pad, &right_pad);
+    71	        break;
+    72	      case kTfLiteInt64:
+    73	        GetPadding(padding_matrix->data.i64, i, &left_pad, &right_pad);
+    74	        break;
+    75	      default:
+    76	        break;
+    77	    }
+    78	    dimension_index = index / output_dims_num_elements[i];
+    79	
+    80	    index_in_input = GetInputDimension(dimension_index, left_pad, right_pad,
+    81	                                       input_dims->data[i], offset);
+    82	
+    83	    flat_index += index_in_input * (input_dims_num_elements)[i];
+    84	    index %= output_dims_num_elements[i];
+    85	  }
+    86	
+    87	  return flat_index;
+    88	}
+    89	
+    90	template <typename T>
+    91	void MirrorPad(const TfLiteEvalTensor* padding_matrix,
+    92	               const TfLiteIntArray* input_dims, int* output_dims_num_elements,
+    93	               int* input_dims_num_elements, const T* input_data,
+    94	               T* output_data, const int offset, const int num_dims,
+    95	               const int output_size) {
+    96	  for (int i = 0; i < output_size; ++i) {
+    97	    output_data[i] = input_data[GetFlatIndex(
+    98	        i, num_dims, padding_matrix, input_dims, output_dims_num_elements,
+    99	        input_dims_num_elements, offset)];
+   100	  }
+   101	}
+   102	
+   103	TfLiteStatus MirrorPadEval(TfLiteContext* context, TfLiteNode* node) {
+   104	  TFLITE_DCHECK(node->user_data != nullptr);
+   105	  TfLiteStatus status = kTfLiteOk;
+   106	  const OpDataMirrorPad* data =
+   107	      static_cast<const OpDataMirrorPad*>(node->user_data);
+   108	
+   109	  const TfLiteEvalTensor* input_tensor =
+   110	      tflite::micro::GetEvalInput(context, node, 0);
+   111	  const TfLiteEvalTensor* padding_matrix =
+   112	      tflite::micro::GetEvalInput(context, node, 1);
+   113	
+   114	  TfLiteEvalTensor* output_tensor =
+   115	      tflite::micro::GetEvalOutput(context, node, 0);
+   116	  const int input_dims = data->input_dims;
+   117	  const int output_size = data->output_size;
+   118	
+   119	  int* input_dims_num_elements = (int*)context->GetScratchBuffer(
+   120	      context, data->input_dims_num_elements_buffer_index);
+   121	  int* output_dims_num_elements = (int*)context->GetScratchBuffer(
+   122	      context, data->output_dims_num_elements_buffer_index);
+   123	
+   124	  for (int i = 0; i < input_dims; i++) {
+   125	    output_dims_num_elements[i] = 1;
+   126	    input_dims_num_elements[i] = 1;
+   127	  }
+   128	
+   129	  for (int i = input_dims - 2; i >= 0; i--) {
+   130	    output_dims_num_elements[i] =
+   131	        output_dims_num_elements[i + 1] * output_tensor->dims->data[i + 1];
+   132	
+   133	    input_dims_num_elements[i] =
+   134	        input_dims_num_elements[i + 1] * input_tensor->dims->data[i + 1];
+   135	  }
+   136	
+   137	  switch (output_tensor->type) {
+   138	    case kTfLiteFloat32: {
+   139	      MirrorPad(padding_matrix, input_tensor->dims, output_dims_num_elements,
+   140	                input_dims_num_elements,
+   141	                tflite::micro::GetTensorData<float>(input_tensor),
+   142	                tflite::micro::GetTensorData<float>(output_tensor),
+   143	                data->offset, input_dims, output_size);
+   144	      break;
+   145	    }
+   146	    case kTfLiteInt8: {
+   147	      MirrorPad(padding_matrix, input_tensor->dims, output_dims_num_elements,
+   148	                input_dims_num_elements,
+   149	                tflite::micro::GetTensorData<int8_t>(input_tensor),
+   150	                tflite::micro::GetTensorData<int8_t>(output_tensor),
+   151	                data->offset, input_dims, output_size);
+   152	      break;
+   153	    }
+   154	    default:
+   155	      status = kTfLiteError;
+   156	      break;
+   157	  }
+   158	
+   159	#undef TF_LITE_MIRROR_PAD
+   160	
+   161	  return status;
+   162	}
+   163	
+   164	void* MirrorPadInit(TfLiteContext* context, const char* buffer, size_t length) {
+   165	  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+   166	  return context->AllocatePersistentBuffer(context, sizeof(OpDataMirrorPad));
+   167	}
+   168	
+   169	TfLiteStatus MirrorPadPrepare(TfLiteContext* context, TfLiteNode* node) {
+   170	  MicroContext* micro_context = GetMicroContext(context);
+   171	
+   172	  TFLITE_DCHECK(node->user_data != nullptr);
+   173	  OpDataMirrorPad* data = static_cast<OpDataMirrorPad*>(node->user_data);
+   174	
+   175	  TfLiteTensor* input_tensor = micro_context->AllocateTempInputTensor(node, 0);
+   176	  TfLiteTensor* padding_matrix =
+   177	      micro_context->AllocateTempInputTensor(node, 1);
+   178	  TfLiteTensor* output_tensor =
+   179	      micro_context->AllocateTempOutputTensor(node, 0);
+   180	
+   181	  TF_LITE_ENSURE_EQ(context, NumDimensions(padding_matrix), 2);
+   182	  TF_LITE_ENSURE_EQ(context, SizeOfDimension(padding_matrix, 0),
+   183	                    NumDimensions(input_tensor));
+   184	  auto* params =
+   185	      reinterpret_cast<TfLiteMirrorPaddingParams*>(node->builtin_data);
+   186	  if (params == nullptr) {
+   187	    return kTfLiteError;
+   188	  }
+   189	
+   190	  data->offset =
+   191	      params->mode != TfLiteMirrorPaddingMode::kTfLiteMirrorPaddingReflect ? 0
+   192	                                                                           : 1;
+   193	  data->input_dims = NumDimensions(input_tensor);
+   194	  data->output_size = NumElements(output_tensor);
+   195	
+   196	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+   197	      context, data->input_dims * sizeof(int),
+   198	      &data->output_dims_num_elements_buffer_index));
+   199	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+   200	      context, data->input_dims * sizeof(int),
+   201	      &data->input_dims_num_elements_buffer_index));
+   202	
+   203	  micro_context->DeallocateTempTfLiteTensor(input_tensor);
+   204	  micro_context->DeallocateTempTfLiteTensor(padding_matrix);
+   205	  micro_context->DeallocateTempTfLiteTensor(output_tensor);
+   206	  return kTfLiteOk;
+   207	}
+   208	
+   209	}  // namespace
+   210	
+   211	TFLMRegistration Register_MIRROR_PAD() {
+   212	  return tflite::micro::RegisterOp(MirrorPadInit, MirrorPadPrepare,
+   213	                                   MirrorPadEval);
+   214	}
+   215	
+   216	}  // namespace tflite
+
+----- /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc -----
+     1	/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include "tensorflow/lite/kernels/internal/reference/reduce.h"
+    17	
+    18	#include "tensorflow/lite/c/builtin_op_data.h"
+    19	#include "tensorflow/lite/c/common.h"
+    20	#include "tensorflow/lite/kernels/internal/quantization_util.h"
+    21	#include "tensorflow/lite/kernels/internal/reference/integer_ops/mean.h"
+    22	#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
+    23	#include "tensorflow/lite/kernels/internal/types.h"
+    24	#include "tensorflow/lite/kernels/kernel_util.h"
+    25	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    26	#include "tensorflow/lite/micro/kernels/reduce.h"
+    27	#include "tensorflow/lite/micro/micro_utils.h"
+    28	
+    29	namespace tflite {
+    30	
+    31	void* InitReduce(TfLiteContext* context, const char* buffer, size_t length) {
+    32	  void* op_data =
+    33	      context->AllocatePersistentBuffer(context, sizeof(OpDataReduce));
+    34	  return new (op_data) OpDataReduce();
+    35	}
+    36	
+    37	TfLiteStatus PrepareMax(TfLiteContext* context, TfLiteNode* node) {
+    38	  return PrepareMaxHelper(context, node,
+    39	                          static_cast<OpDataReduce*>(node->user_data));
+    40	}
+    41	
+    42	TfLiteStatus PrepareMeanOrSum(TfLiteContext* context, TfLiteNode* node) {
+    43	  return PrepareMeanOrSumHelper(context, node,
+    44	                                static_cast<OpDataReduce*>(node->user_data));
+    45	}
+    46	
+    47	TfLiteStatus EvalMean(TfLiteContext* context, TfLiteNode* node) {
+    48	  return EvalMeanHelper(context, node,
+    49	                        static_cast<OpDataReduce*>(node->user_data));
+    50	}
+    51	
+    52	TfLiteStatus EvalMax(TfLiteContext* context, TfLiteNode* node) {
+    53	  OpDataReduce* op_data = static_cast<OpDataReduce*>(node->user_data);
+    54	  return EvalMaxHelper(context, node, op_data);
+    55	}
+    56	
+    57	TfLiteStatus EvalSum(TfLiteContext* context, TfLiteNode* node) {
+    58	  return EvalSumHelper(context, node,
+    59	                       static_cast<OpDataReduce*>(node->user_data));
+    60	}
+    61	
+    62	TFLMRegistration Register_MEAN() {
+    63	  return tflite::micro::RegisterOp(InitReduce, PrepareMeanOrSum, EvalMean);
+    64	}
+    65	
+    66	TFLMRegistration Register_REDUCE_MAX() {
+    67	  return tflite::micro::RegisterOp(InitReduce, PrepareMax, EvalMax);
+    68	}
+    69	
+    70	TFLMRegistration Register_SUM() {
+    71	  return tflite::micro::RegisterOp(InitReduce, PrepareMeanOrSum, EvalSum);
+    72	}
+    73	
+    74	}  // namespace tflite
+
+========== BUILD REFERENCES ==========
+9868:build modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj: CXX_COMPILER__modules__tflite-micro_unscanned_Release /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc || cmake_object_order_depends_target_modules__tflite-micro
+9870:  DEP_FILE = modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj.d
+9972:build modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc.obj: CXX_COMPILER__modules__tflite-micro_unscanned_Release /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc || cmake_object_order_depends_target_modules__tflite-micro
+9974:  DEP_FILE = modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc.obj.d
+10236:build modules/tflite-micro/libmodules__tflite-micro.a: CXX_STATIC_LIBRARY_LINKER__modules__tflite-micro_Release modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/python_ops_resolver.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/fft_flexbuffers_generated_data.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/rfft.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window_flexbuffers_generated_data.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_float.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int16.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int32.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/window.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_float.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int16.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int32.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/core/api/error_reporter.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/schema/schema_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/debug_log.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helper_custom_ops.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_time.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_profiler.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/flatbuffer_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/mock_micro_graph.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_log.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_op_resolver.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/system_setup.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/micro_error_reporter.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/quantization_util.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/portable_tensor_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_ctypes.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/comparisons.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/portable_tensor_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/kernel_util.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/flatbuffer_conversions.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/tensor_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/arg_min_max.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/assign_variable.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_matmul.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_to_space_nd.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_args.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_to.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/call_once.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ceil.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/comparisons.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/topk_int8.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depth_to_space.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/div.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elementwise.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elu.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/embedding_lookup.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/exp.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/expand_dims.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fill.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_div.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_mod.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/if.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2norm.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2_pool_2d.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/log_softmax.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/maximum_minimum.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/micro_tensor_utils.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/neg.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pack.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pad.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/read_variable.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_bilinear.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_nearest_neighbor.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/round.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/select.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/shape.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/slice.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_batch_nd.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_depth.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split_v.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squared_difference.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squeeze.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/tanh.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unpack.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/var_handle.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/while.cc.obj modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/zeros_like.cc.obj || modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a zephyr/device_api_ld_target zephyr/driver_validation_h_target zephyr/kobj_types_h_target zephyr/syscall_list_h_target zephyr/zephyr_generated_headers
+
+Relevant compile command entries:
+1276:  "command": "/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++17 -Wno-register -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc",
+1277:  "file": "/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc",
+1278:  "output": "modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj"
+1354:  "command": "/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++17 -Wno-register -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc",
+1355:  "file": "/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc",
+1356:  "output": "modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc.obj"
+
+========== CMSIS DSP MEAN IMPLEMENTATIONS ==========
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f16.c
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q31.c
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f64.c
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f32.c
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q7.c
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q15.c
+
+========== SOURCE INSPECTION COMPLETE ==========
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_kernel_source_inspection_20261124_165645.log
+
+Press ENTER to close this terminal...
