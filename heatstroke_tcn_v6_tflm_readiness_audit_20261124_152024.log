@@ -1,0 +1,506 @@
+============================================================
+TCN V6 TFLM INTEGRATION-READINESS AUDIT
+============================================================
+DATE=2026-11-24T15:20:24+08:00
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_readiness_audit_20261124_152024.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MODEL_HASH_CHECK=PASS
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795504824.748692   15940 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795504824.748873   15940 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795504824.777736   15940 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795504825.502443   15940 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795504825.502708   15940 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+============================================================
+1. MODEL GRAPH AND OPERATOR AUDIT
+============================================================
+MODEL_BYTES=9684208
+SUBGRAPH_COUNT=1
+OPCODE_TABLE_COUNT=26
+
+SUBGRAPH 0
+GRAPH INPUTS:
+  x_values: FLOAT32 shape=(1, 900, 6)
+  missing_mask: INT8 shape=(1, 900, 6)
+  x_mark: FLOAT32 shape=(1, 900, 3)
+  worker_features_18: FLOAT32 shape=(1, 18)
+  compact_values: FLOAT32 shape=(1, 1800, 6)
+GRAPH OUTPUTS:
+  reconstructed_values: FLOAT32 shape=(1, 900, 6)
+  CAST op=2: missing_mask INT8 -> missing_mask_cast_float32 FLOAT32
+  GATHER op=18 version=1 indices=/Constant_9_output_0_int32_gather_op7 type=INT32
+  GATHER op=20 version=1 indices=/Constant_8_output_0_int32_gather_op6 type=INT32
+  GATHER op=22 version=1 indices=/Constant_7_output_0_int32_gather_op5 type=INT32
+  GATHER op=24 version=1 indices=/Constant_6_output_0_int32_gather_op4 type=INT32
+  GATHER op=26 version=1 indices=/Constant_4_output_0_int32_gather_op3 type=INT32
+  GATHER op=28 version=1 indices=/Constant_output_0_int32_gather_op2 type=INT32
+GATHER_COUNT=6
+GATHER_NON_INT32_COUNT=0
+CAST_COUNT=1
+
+OPERATOR INVENTORY:
+  ABS                          count=2    max_version=1
+  ADD                          count=24   max_version=1
+  BROADCAST_ARGS               count=1    max_version=1
+  BROADCAST_TO                 count=1    max_version=2
+  CAST                         count=1    max_version=1
+  CONCATENATION                count=2    max_version=1
+  CUSTOM                       count=14   max_version=1
+  DEQUANTIZE                   count=30   max_version=1
+  DIV                          count=6    max_version=1
+  EXP                          count=2    max_version=1
+  FULLY_CONNECTED              count=1    max_version=1
+  GATHER                       count=6    max_version=1
+  GREATER_EQUAL                count=2    max_version=1
+  MAXIMUM                      count=1    max_version=1
+  MEAN                         count=4    max_version=1
+  MIRROR_PAD                   count=3    max_version=1
+  MUL                          count=32   max_version=1
+  NEG                          count=4    max_version=1
+  QUANTIZE                     count=20   max_version=1
+  RELU                         count=10   max_version=1
+  RESHAPE                      count=11   max_version=1
+  SELECT_V2                    count=2    max_version=1
+  SQRT                         count=2    max_version=1
+  SUB                          count=10   max_version=1
+  SUM                          count=2    max_version=1
+  TRANSPOSE                    count=4    max_version=1
+
+MODEL_GATHER_INDEX_AUDIT=PASS
+
+============================================================
+2. TFLM SOURCE AND RESOLVER API AUDIT
+============================================================
+
+TFLM_ROOT=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+TFLM_GIT_REVISION=8d404de7
+RESOLVER_HEADER=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h
+RESOLVER_METHOD_COUNT=116
+AddCast_API=PRESENT
+AddGather_API=PRESENT
+AddGatherNd_API=PRESENT
+  ABS                          AddAbs                       API_PRESENT
+  ADD                          AddAdd                       API_PRESENT
+  BROADCAST_ARGS               AddBroadcastArgs             API_PRESENT
+  BROADCAST_TO                 AddBroadcastTo               API_PRESENT
+  CAST                         AddCast                      API_PRESENT
+  CONCATENATION                AddConcatenation             API_PRESENT
+  CUSTOM                       AddCustom                    API_PRESENT
+  DEQUANTIZE                   AddDequantize                API_PRESENT
+  DIV                          AddDiv                       API_PRESENT
+  EXP                          AddExp                       API_PRESENT
+  FULLY_CONNECTED              AddFullyConnected            API_PRESENT
+  GATHER                       AddGather                    API_PRESENT
+  GREATER_EQUAL                AddGreaterEqual              API_PRESENT
+  MAXIMUM                      AddMaximum                   API_PRESENT
+  MEAN                         AddMean                      API_PRESENT
+  MIRROR_PAD                   AddMirrorPad                 API_PRESENT
+  MUL                          AddMul                       API_PRESENT
+  NEG                          AddNeg                       API_PRESENT
+  QUANTIZE                     AddQuantize                  API_PRESENT
+  RELU                         AddRelu                      API_PRESENT
+  RESHAPE                      AddReshape                   API_PRESENT
+  SELECT_V2                    AddSelectV2                  API_PRESENT
+  SQRT                         AddSqrt                      API_PRESENT
+  SUB                          AddSub                       API_PRESENT
+  SUM                          AddSum                       API_PRESENT
+  TRANSPOSE                    AddTranspose                 API_PRESENT
+KERNEL_cast.cc=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc
+  Register function present=YES
+  kTfLiteInt8=REFERENCED
+  kTfLiteFloat32=REFERENCED
+  kTfLiteInt32=REFERENCED
+KERNEL_gather.cc=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+  Register function present=YES
+  kTfLiteInt8=REFERENCED
+  kTfLiteFloat32=REFERENCED
+  kTfLiteInt32=REFERENCED
+  kTfLiteInt64=REFERENCED
+KERNEL_gather_nd.cc=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc
+  Register function present=YES
+  kTfLiteInt8=REFERENCED
+  kTfLiteFloat32=REFERENCED
+  kTfLiteInt32=REFERENCED
+
+TFLM_ROOT=/home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro
+TFLM_GIT_REVISION=not available
+RESOLVER_HEADER=NOT_FOUND
+TFLM_ROOT_NOT_FOUND=/home/user/sdk-alif/modules/tflite-micro
+
+============================================================
+3. APPLICATION RESOLVER / ARENA SOURCE SEARCH
+============================================================
+APPLICATION_SOURCE_FILES_SCANNED=9005
+FILES_WITH_RESOLVER_OR_ARENA_REFERENCES=20
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/include/PolyUModel1.hpp
+  47: tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32/src/MainLoop.cc
+  235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32/src/TcnV6Model.cc
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32/src/include/TcnV6Model.hpp
+  18: tflite::MicroMutableOpResolver<29> m_resolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_work_demand_tflm_probe_20261119_125012/src/WorkDemandModel.hpp
+  16: tflite::MicroMutableOpResolver<12> m_opResolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/alif_asr/include/PolyUModel1.hpp
+  47: tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke_work_demand_combo_20261120_170620/src/use_case/work_demand/include/WorkDemandModel.hpp
+  16: tflite::MicroMutableOpResolver<12> m_opResolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2/src/MainLoop.cc
+  235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2/src/TcnV6Model.cc
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2/src/include/TcnV6Model.hpp
+  18: tflite::MicroMutableOpResolver<29> m_resolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke_bak1/src/use_case/alif_asr/include/PolyUModel1.hpp
+  40: tflite::MicroMutableOpResolver<ms_maxOpCnt> m_opResolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke_bak1/src/use_case/alif_asr/src/PolyUModel1.cc
+  49: this->m_opResolver.AddGather();
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix/src/MainLoop.cc
+  235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix/src/TcnV6Model.cc
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix/src/include/TcnV6Model.hpp
+  18: tflite::MicroMutableOpResolver<29> m_resolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/MainLoop.cc
+  235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/TcnV6Model.cc
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/include/TcnV6Model.hpp
+  18: tflite::MicroMutableOpResolver<29> m_resolver;
+
+SOURCE_FILE=/home/user/sdk-alif/beeinventor/tflm_ethosu/src/main.cpp
+  106: /* TensorArena allocation using TENSOR_ARENA_SIZE from model header
+  107: * Note: TENSOR_ARENA_SIZE macro is defined in model headers (e.g., model_u85_256.h)
+  119: uint8_t inferenceProcessTensorArena[NUM_INFERENCE_TASKS][TENSOR_ARENA_SIZE];
+
+SOURCE_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/main.cpp
+  77: #define ET_METHOD_POOL_ATTR __attribute__((section(".alif_sram0.tensor_arena"), aligned(16)))
+
+============================================================
+4. BUILD ARTIFACT AND LINKED SYMBOL SEARCH
+============================================================
+BUILD_ARTIFACT_COUNT=22
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/build.ninja bytes=2236743
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/CMakeCache.txt bytes=25071
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/compile_commands.json bytes=956693
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.map bytes=1834333
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_final.map bytes=1834333
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.elf bytes=6249344
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_pre0.elf bytes=6250980
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_pre0.map bytes=1835068
+BUILD_ARTIFACT=/home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro/libmodules__tflite-micro.a bytes=24007866
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/deployment/heatstroke_tcn_v6_e8_u55_128_20261121_220242/diagnostics/zephyr.map bytes=2513287
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/deployment/heatstroke_tcn_v6_e8_u55_128_20261121_220242/diagnostics/zephyr.elf bytes=29195348
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_build_backup_fcfix_20261123_153726/zephyr.map bytes=2508366
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_build_backup_fcfix_20261123_153726/zephyr.elf bytes=89011732
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251/zephyr/zephyr.elf bytes=89081124
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251/modules/tflite-micro/libmodules__tflite-micro.a bytes=23279482
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_u55_backup_20261123_164834/zephyr/zephyr.elf bytes=89088364
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_pre_fc_rebuild_20261123_153945/zephyr.map bytes=2508366
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_pre_fc_rebuild_20261123_153945/zephyr.elf bytes=89011732
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_to_build_backup_20261123_161034/zephyr.map bytes=2509939
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_to_build_backup_20261123_161034/zephyr.elf bytes=89082132
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162002/zephyr/zephyr.elf bytes=89081124
+BUILD_ARTIFACT=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162002/modules/tflite-micro/libmodules__tflite-micro.a bytes=23279482
+NM_TOOL=/usr/bin/arm-none-eabi-nm
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr.elf
+  8001069e W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  8001069c W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  8001069c W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  800106ac W tflite::MicroMutableOpResolver<1u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80010706 W tflite::MicroMutableOpResolver<1u>::FindOp(tflite::BuiltinOperator) const
+  800106cc W tflite::MicroMutableOpResolver<1u>::FindOp(char const*) const
+  8002802c V vtable for tflite::MicroMutableOpResolver<1u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/build_tflm_ethosu/zephyr/zephyr_pre0.elf
+  8001069e W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  8001069c W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  8001069c W tflite::MicroMutableOpResolver<1u>::~MicroMutableOpResolver()
+  800106ac W tflite::MicroMutableOpResolver<1u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80010706 W tflite::MicroMutableOpResolver<1u>::FindOp(tflite::BuiltinOperator) const
+  800106cc W tflite::MicroMutableOpResolver<1u>::FindOp(char const*) const
+  8002802c V vtable for tflite::MicroMutableOpResolver<1u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro/libmodules__tflite-micro.a
+           U tflite::Register_CAST()
+           U tflite::Register_GATHER()
+           U tflite::Register_GATHER_ND()
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**)) [clone .isra.0]
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddCustom(char const*, TFLMRegistration const*) [clone .isra.0]
+  00000000 W tflite::MicroMutableOpResolver<200u>::GetOpDataParser(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(char const*) const
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddIf()
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddCustom(char const*, TFLMRegistration const*)
+  00000000 T tflite::testing::GetTestingOpResolver(tflite::MicroMutableOpResolver<10u>&)
+  00000000 T tflite::Register_CAST()
+  00000000 T tflite::Register_GATHER()
+  00000000 T tflite::Register_GATHER_ND()
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/deployment/heatstroke_tcn_v6_e8_u55_128_20261121_220242/diagnostics/zephyr.elf
+  80009404 T tflite::Register_CAST()
+  8000ccd0 T tflite::Register_GATHER()
+  80001fb4 W tflite::MicroMutableOpResolver<29u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  80001f3c W tflite::MicroMutableOpResolver<29u>::AddEthosU()
+  80014074 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  8001400e W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  8001400e W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80014010 W tflite::MicroMutableOpResolver<29u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80014084 W tflite::MicroMutableOpResolver<29u>::FindOp(tflite::BuiltinOperator) const
+  8001403a W tflite::MicroMutableOpResolver<29u>::FindOp(char const*) const
+  8001eed8 V vtable for tflite::MicroMutableOpResolver<29u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_build_backup_fcfix_20261123_153726/zephyr.elf
+  80009480 T tflite::Register_CAST()
+  8000cd4c T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<29u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<29u>::AddEthosU()
+  80013fd8 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f72 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f72 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f74 W tflite::MicroMutableOpResolver<29u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80013fe8 W tflite::MicroMutableOpResolver<29u>::FindOp(tflite::BuiltinOperator) const
+  80013f9e W tflite::MicroMutableOpResolver<29u>::FindOp(char const*) const
+  8003d270 V vtable for tflite::MicroMutableOpResolver<29u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251/zephyr/zephyr.elf
+  8000956c T tflite::Register_CAST()
+  8000d66c T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<30u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<30u>::AddEthosU()
+  800148f8 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014892 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014892 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014894 W tflite::MicroMutableOpResolver<30u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80014908 W tflite::MicroMutableOpResolver<30u>::FindOp(tflite::BuiltinOperator) const
+  800148be W tflite::MicroMutableOpResolver<30u>::FindOp(char const*) const
+  8003dcc0 V vtable for tflite::MicroMutableOpResolver<30u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162251/modules/tflite-micro/libmodules__tflite-micro.a
+           U tflite::Register_CAST()
+           U tflite::Register_GATHER()
+           U tflite::Register_GATHER_ND()
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**)) [clone .isra.0]
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddCustom(char const*, TFLMRegistration const*) [clone .isra.0]
+  00000000 W tflite::MicroMutableOpResolver<200u>::GetOpDataParser(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(char const*) const
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddIf()
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddCustom(char const*, TFLMRegistration const*)
+  00000000 T tflite::testing::GetTestingOpResolver(tflite::MicroMutableOpResolver<10u>&)
+  00000000 T tflite::Register_CAST()
+  00000000 T tflite::Register_GATHER()
+  00000000 T tflite::Register_GATHER_ND()
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_u55_backup_20261123_164834/zephyr/zephyr.elf
+  8000956c T tflite::Register_CAST()
+  8000d9c8 T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<30u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<30u>::AddEthosU()
+  80014c54 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014bee W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014bee W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014bf0 W tflite::MicroMutableOpResolver<30u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80014c64 W tflite::MicroMutableOpResolver<30u>::FindOp(tflite::BuiltinOperator) const
+  80014c1a W tflite::MicroMutableOpResolver<30u>::FindOp(char const*) const
+  8003e010 V vtable for tflite::MicroMutableOpResolver<30u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample164_pre_fc_rebuild_20261123_153945/zephyr.elf
+  80009480 T tflite::Register_CAST()
+  8000cd4c T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<29u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<29u>::AddEthosU()
+  80013fd8 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f72 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f72 W tflite::MicroMutableOpResolver<29u>::~MicroMutableOpResolver()
+  80013f74 W tflite::MicroMutableOpResolver<29u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80013fe8 W tflite::MicroMutableOpResolver<29u>::FindOp(tflite::BuiltinOperator) const
+  80013f9e W tflite::MicroMutableOpResolver<29u>::FindOp(char const*) const
+  8003d270 V vtable for tflite::MicroMutableOpResolver<29u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_broadcast_to_build_backup_20261123_161034/zephyr.elf
+  80009584 T tflite::Register_CAST()
+  8000d684 T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<30u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<30u>::AddEthosU()
+  80014910 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  800148aa W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  800148aa W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  800148ac W tflite::MicroMutableOpResolver<30u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80014920 W tflite::MicroMutableOpResolver<30u>::FindOp(tflite::BuiltinOperator) const
+  800148d6 W tflite::MicroMutableOpResolver<30u>::FindOp(char const*) const
+  8003dce0 V vtable for tflite::MicroMutableOpResolver<30u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162002/zephyr/zephyr.elf
+  8000956c T tflite::Register_CAST()
+  8000d66c T tflite::Register_GATHER()
+  80002174 W tflite::MicroMutableOpResolver<30u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**))
+  800020fc W tflite::MicroMutableOpResolver<30u>::AddEthosU()
+  800148f8 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014892 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014892 W tflite::MicroMutableOpResolver<30u>::~MicroMutableOpResolver()
+  80014894 W tflite::MicroMutableOpResolver<30u>::GetOpDataParser(tflite::BuiltinOperator) const
+  80014908 W tflite::MicroMutableOpResolver<30u>::FindOp(tflite::BuiltinOperator) const
+  800148be W tflite::MicroMutableOpResolver<30u>::FindOp(char const*) const
+  8003dcc0 V vtable for tflite::MicroMutableOpResolver<30u>
+
+LINK_SYMBOL_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_gather_build_backup_20261123_162002/modules/tflite-micro/libmodules__tflite-micro.a
+           U tflite::Register_CAST()
+           U tflite::Register_GATHER()
+           U tflite::Register_GATHER_ND()
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddBuiltin(tflite::BuiltinOperator, TFLMRegistration const&, TfLiteStatus (*)(tflite::Operator const*, tflite::ErrorReporter*, tflite::BuiltinDataAllocator*, void**)) [clone .isra.0]
+  00000000 t tflite::MicroMutableOpResolver<200u>::AddCustom(char const*, TFLMRegistration const*) [clone .isra.0]
+  00000000 W tflite::MicroMutableOpResolver<200u>::GetOpDataParser(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(tflite::BuiltinOperator) const
+  00000000 W tflite::MicroMutableOpResolver<200u>::FindOp(char const*) const
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddIf()
+  00000000 W tflite::MicroMutableOpResolver<10u>::AddCustom(char const*, TFLMRegistration const*)
+  00000000 T tflite::testing::GetTestingOpResolver(tflite::MicroMutableOpResolver<10u>&)
+  00000000 T tflite::Register_CAST()
+  00000000 T tflite::Register_GATHER()
+  00000000 T tflite::Register_GATHER_ND()
+
+============================================================
+5. EXISTING ARENA MEASUREMENT LOG SEARCH
+============================================================
+
+ARENA_LOG=heatstroke_tcn_v6_tflm_readiness_audit_20261124_152024.log
+  147: 235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  148: 262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  167: 235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  168: 262: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  184: 235: static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+ARENA_LOG=heatstroke_tcn_v6_cvf_svf_vela_regor_performance_20261124_140400_12708.log
+  4213: arena_cache_size = 4294967296 from Default
+  8418: arena_cache_size = 4294967296 from Default
+
+ARENA_LOG=heatstroke_tcn_v6_ethosu_zephyr_init_audit_20261123_163659.log
+  309: 79:CONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=-1
+
+ARENA_LOG=heatstroke_tcn_v6_sample164_validation_build_20261123_150652.log
+  914: TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes
+
+ARENA_LOG=heatstroke_tcn_v6_full_offload_activation_buffer_audit_20261123_145950.log
+  93: 80016d86 00000008 T tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  97: 80016d8e 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  124: 80016d72 00000014 T tflite::SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const
+  192: 80007044 00000058 T tflite::SingleArenaBufferAllocator::ResizeBuffer(unsigned char*, unsigned int, unsigned int)
+  572: arena_used_bytes
+
+ARENA_LOG=heatstroke_tcn_v6_arena_symbol_audit_20261123_140605.log
+  87: 234:     printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+  88: 235:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  100: 261:     printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+  101: 262:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  203: 56: static size_t get_cache_arena_size()
+
+ARENA_LOG=heatstroke_tcn_v6_tflm_scratch_linker_20261123_135744.log
+  447: 692:       bytes, MicroArenaBufferAlignment());
+  450: 695: TfLiteStatus MicroAllocator::RequestScratchBufferInArena(size_t bytes,
+  627: 247:   TfLiteStatus RequestScratchBufferInArena(size_t bytes, int subgraph_idx,
+  636: 256:   // Returns the arena usage in bytes, only available after
+  879: 34:          AlignSizeUp<RecordingSingleArenaBufferAllocator>() -
+
+ARENA_LOG=heatstroke_tcn_v6_rtss_he_memory_audit_20261123_135252.log
+  160: L62: static RecordingMicroAllocator* Create(uint8_t* tensor_arena,
+  184: L66: TfLiteStatus MicroCodegenContext::RequestScratchBufferInArena(size_t, int*) {
+  187: L42: TfLiteStatus RequestScratchBufferInArena(size_t bytes,
+  191: L41: TfLiteStatus RequestScratchBufferInArena(size_t bytes,
+  195: L45: RecordingMicroAllocator* RecordingMicroAllocator::Create(uint8_t* tensor_arena,
+
+ARENA_LOG=heatstroke_tcn_v6_qdqpair_dup_vela_legacy_20261122_223746.log
+  48: arena_cache_size = 4294967296 from Default
+
+ARENA_LOG=heatstroke_tcn_v6_qdqpair_dup_vela_20261122_222511.log
+  785: arena_cache_size = 4294967296 from Default
+
+ARENA_LOG=heatstroke_tcn_v6_uart_tcn_only_diagnostic_20261122_181256.log
+  260: 234	    printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+  261: 235	           static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  287: 261	    printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+  288: 262	           static_cast<unsigned int>(interpreter->arena_used_bytes()),
+
+ARENA_LOG=heatstroke_tcn_v6_e8_cpp17_rebuild_20261121_213955.log
+  1348: 80017012 00000008 T tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  1351: 8001701a 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  1362: 80016ffe 00000014 T tflite::SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const
+  1391: 80007188 00000058 T tflite::SingleArenaBufferAllocator::ResizeBuffer(unsigned char*, unsigned int, unsigned int)
+
+ARENA_LOG=heatstroke_tcn_v6_e8_postlink_memory_audit_20261121_214615.log
+  205: 80017012 00000008 T tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  208: 8001701a 00000008 T non-virtual thunk to tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+  219: 80016ffe 00000014 T tflite::SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const
+  248: 80007188 00000058 T tflite::SingleArenaBufferAllocator::ResizeBuffer(unsigned char*, unsigned int, unsigned int)
+
+ARENA_LOG=heatstroke_tcn_v6_build_integration_inspection_20261121_212132.log
+  4230: 27	# (--arena-cache-size 560000), see readme.
+  6057: 88	        if (!arena_shape || !scratch_shape || arena_shape->size() < 1 ||
+  6058: 89	            scratch_shape->size() < 1 || arena_shape->Get(0) < 1) {
+  6143: 174	    /* Allocate memory from the tensor_arena for the model's tensors. */
+  6240: 271	    info("Activation buffer (a.k.a tensor arena) size used: %zu\n",
+
+============================================================
+6. AUDIT SUMMARY
+============================================================
+MODEL_OPERATOR_TYPES=26
+MODEL_TOTAL_OPERATORS=197
+TFLM_ROOTS_FOUND=2
+APPLICATION_SOURCE_FILES_SCANNED=9005
+APPLICATION_RESOLVER_FILES_FOUND=20
+BUILD_ARTIFACTS_FOUND=22
+
+RESOLVER_API_SUMMARY_ROOT=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+MISSING_RESOLVER_API_METHODS=NONE
+
+ARENA_MEASURED_FROM_EXISTING_LOGS=YES
+NO_FIRMWARE_BUILD=YES
+NO_FLASH=YES
+MODEL_MODIFIED=NO
+AUDIT_SCRIPT_COMPLETE=YES
+
+============================================================
+TFLM READINESS AUDIT FINISHED
+PYTHON_AUDIT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_tflm_readiness_audit_20261124_152024.log
+MODEL_MODIFIED=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
