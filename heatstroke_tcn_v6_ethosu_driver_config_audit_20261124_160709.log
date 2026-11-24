@@ -1,0 +1,281 @@
+============================================================
+TCN V6 ETHOS-U DRIVER CONFIGURATION AUDIT
+============================================================
+Tue Nov 24 04:07:09 PM HKT 2026
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_driver_config_audit_20261124_160709.log
+
+============================================================
+[1] ETHOS-U KCONFIG VALUES
+============================================================
+330:CONFIG_ARM_ETHOS_U=y
+335:# CONFIG_ARM_ETHOS_U55_64 is not set
+336:CONFIG_ARM_ETHOS_U55_128=y
+337:# CONFIG_ARM_ETHOS_U55_256 is not set
+338:# CONFIG_ARM_ETHOS_U65_128 is not set
+339:# CONFIG_ARM_ETHOS_U65_256 is not set
+340:# CONFIG_ARM_ETHOS_U65_512 is not set
+341:# CONFIG_ARM_ETHOS_U85_128 is not set
+342:# CONFIG_ARM_ETHOS_U85_256 is not set
+343:# CONFIG_ARM_ETHOS_U85_512 is not set
+344:# CONFIG_ARM_ETHOS_U85_1024 is not set
+345:# CONFIG_ARM_ETHOS_U85_2048 is not set
+348:CONFIG_ARM_ETHOS_U_NPU_NAME="ethos-u55-128"
+349:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_NONE is not set
+350:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_ERR is not set
+351:CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN=y
+352:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_INF is not set
+353:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DBG is not set
+354:# CONFIG_ARM_ETHOS_U_LOG_LEVEL_DEFAULT is not set
+355:CONFIG_ARM_ETHOS_U_LOG_LEVEL=2
+
+--- Application configuration ---
+24:# Ethos-U; selected specifically as U55-128 by the build command
+25:CONFIG_ARM_ETHOS_U=y
+
+--- Generated autoconf definitions ---
+137:#define CONFIG_ARM_ETHOS_U 1
+138:#define CONFIG_ARM_ETHOS_U55_128 1
+139:#define CONFIG_ARM_ETHOS_U_NPU_NAME "ethos-u55-128"
+140:#define CONFIG_ARM_ETHOS_U_LOG_LEVEL_WRN 1
+141:#define CONFIG_ARM_ETHOS_U_LOG_LEVEL 2
+
+============================================================
+[2] ZEPHYR DRIVER CMAKE GATING
+============================================================
+1-# SPDX-License-Identifier: Apache-2.0
+2-
+3:add_subdirectory_ifdef(CONFIG_ARM_ETHOS_U ethos_u)
+4-add_subdirectory_ifdef(CONFIG_FT800 ft8xx)
+5-add_subdirectory_ifdef(CONFIG_GROVE_LCD_RGB grove_lcd_rgb)
+6-add_subdirectory_ifdef(CONFIG_PIO_RPI_PICO pio_rpi_pico)
+# Copyright 2022 Arm Limited and/or its affiliates <open-source-office@arm.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Compile driver only if there are enabled Ethos-U devices in the device tree
+# Zephyr auto-generates CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED when device tree has
+# a node with compatible="arm,ethos-u" and status="okay"
+if(CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED)
+  zephyr_library()
+  zephyr_library_sources(ethos_u.c)
+  # Expose the Ethos-U core driver's private headers (src/) to this library
+  # only, so device-layer APIs such as ethosu_dev_set_clock_and_power() can be
+  # used for power management.
+  zephyr_library_include_directories(${ZEPHYR_HAL_ETHOS_U_MODULE_DIR}/src)
+endif()
+
+============================================================
+[3] ETHOS-U DEVICETREE NODE
+============================================================
+34-			#address-cells = < 0x1 >;
+35-			compatible = "arm,v8.1m-nvic";
+36-			reg = < 0xe000e100 0xc00 >;
+37-			interrupt-controller;
+38-			#interrupt-cells = < 0x2 >;
+39-			arm,num-irq-priority-bits = < 0x8 >;
+40-			phandle = < 0x1 >;
+41-		};
+42-		systick: timer@e000e010 {
+43-			compatible = "arm,armv8.1m-systick";
+44-			reg = < 0xe000e010 0x10 >;
+45-		};
+46:		ethosu0: ethosu55@400e1000 {
+47:			compatible = "arm,ethos-u";
+48-			reg = < 0x400e1000 0x1000 >;
+49-			interrupts = < 0x37 0x0 >;
+50-			interrupt-parent = < &nvic >;
+51-			secure-enable;
+52-			privilege-enable;
+53-			status = "disabled";
+54-		};
+55-		clockctrl: clock-controller@1a602000 {
+56-			compatible = "alif,clockctrl";
+57-			reg = < 0x1a602000 0x2c 0x4903f000 0xb0 0x4902f000 0xbc 0x1a604000 0x44 0x1a609000 0x14 0x43007000 0x2c 0x400f0000 0x14 >;
+58-			reg-names = "cgu", "clkctl_per_mst", "clkctl_per_slv", "aon", "vbat", "m55he_cfg", "m55hp_cfg";
+59-			#clock-cells = < 0x1 >;
+--
+2746-					reg = < 0x0 0x8000000 >;
+2747-					erase-block-size = < 0x1000 >;
+2748-					write-block-size = < 0x2 >;
+2749-				};
+2750-			};
+2751-		};
+2752-		sram1: sram@2400000 {
+2753-			compatible = "zephyr,memory-region", "mmio-sram";
+2754-			reg = < 0x2400000 0x400000 >;
+2755-			zephyr,memory-region = "SRAM1";
+2756-			zephyr,memory-attr = < 0x100000 >;
+2757-		};
+2758:		ethosu1: ethosu85@49042000 {
+2759:			compatible = "arm,ethos-u";
+2760-			reg = < 0x49042000 0x1000 >;
+2761-			interrupts = < 0x16e 0x3 >;
+2762-			interrupt-parent = < &nvic >;
+2763-			secure-enable;
+2764-			privilege-enable;
+2765-			clocks = < &clockctrl 0x1f8a1 >;
+2766-			status = "disabled";
+2767-		};
+2768-		gpio16: gpio@4300a000 {
+2769-			compatible = "snps,designware-gpio";
+2770-			reg = < 0x4300a000 0x1000 >;
+2771-			ngpios = < 0x8 >;
+
+--- Generated DT instance macros ---
+14729:#define DT_N_INST_0_arm_ethos_u DT_N_S_soc_S_ethosu55_400e1000
+14748:#define DT_N_S_soc_S_ethosu55_400e1000_COMPAT_MATCHES_arm_ethos_u 1
+14793:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_STRING_TOKEN arm_ethos_u
+14794:#define DT_N_S_soc_S_ethosu55_400e1000_P_compatible_IDX_0_STRING_UPPER_TOKEN ARM_ETHOS_U
+14881:#define DT_N_INST_1_arm_ethos_u DT_N_S_soc_S_ethosu85_49042000
+14900:#define DT_N_S_soc_S_ethosu85_49042000_COMPAT_MATCHES_arm_ethos_u 1
+14955:#define DT_N_S_soc_S_ethosu85_49042000_P_compatible_IDX_0_STRING_TOKEN arm_ethos_u
+14956:#define DT_N_S_soc_S_ethosu85_49042000_P_compatible_IDX_0_STRING_UPPER_TOKEN ARM_ETHOS_U
+
+============================================================
+[4] IRQ COUNTER IMPLEMENTATION
+============================================================
+130-
+131-struct ethosu_data {
+132-	struct ethosu_driver drv;
+133-};
+134-
+135-
+136-/* TCN V6 diagnostic counter: actual Ethos-U IRQ handler entries. */
+137:static volatile uint32_t tcn_v6_ethosu_irq_count = 0;
+138-
+139:uint32_t tcn_v6_ethosu_irq_count_get(void)
+140-{
+141:    return __atomic_load_n(&tcn_v6_ethosu_irq_count, __ATOMIC_RELAXED);
+142-}
+143-
+144:void ethosu_zephyr_irq_handler(const struct device *dev)
+145-{
+146-	struct ethosu_data *data = dev->data;
+147-	struct ethosu_driver *drv = &data->drv;
+148-
+149:	__atomic_add_fetch(&tcn_v6_ethosu_irq_count, 1u, __ATOMIC_RELAXED);
+150-	ethosu_irq_handler(drv);
+151-}
+152-
+153-static int ethosu_zephyr_init(const struct device *dev)
+154-{
+155-	const struct ethosu_dts_info *config = dev->config;
+156-	struct ethosu_data *data = dev->data;
+--
+262-#endif /* CONFIG_PM_DEVICE */
+263-
+264-#define ETHOSU_DEVICE_INIT(n)                                                                      \
+265-	static struct ethosu_data ethosu_data_##n;                                                 \
+266-                                                                                                   \
+267-	static void ethosu_zephyr_irq_config_##n(void)                                             \
+268-	{                                                                                          \
+269:		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority), ethosu_zephyr_irq_handler,  \
+270-			    DEVICE_DT_INST_GET(n), 0);                                             \
+271-		irq_enable(DT_INST_IRQN(n));                                                       \
+272-	}                                                                                          \
+273-                                                                                                   \
+274-	static const struct ethosu_dts_info ethosu_dts_info_##n = {                                \
+275-		.base_addr = (void *)DT_INST_REG_ADDR(n),                                          \
+276-		.secure_enable = DT_INST_PROP(n, secure_enable),                                   \
+
+============================================================
+[5] IS THE DRIVER SOURCE INCLUDED IN THE BUILD?
+============================================================
+NINJA_DRIVER_REFERENCE=NOT_FOUND
+
+--- Actual compiled driver objects ---
+/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a (15370 bytes)
+
+--- Ninja targets ---
+zephyr/drivers/misc/ethos_u/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+zephyr/drivers/misc/ethos_u/edit_cache: phony
+zephyr/drivers/misc/ethos_u/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+zephyr/drivers/misc/ethos_u/rebuild_cache: phony
+zephyr/drivers/misc/ethos_u/list_install_components: phony
+zephyr/drivers/misc/ethos_u/CMakeFiles/install.util: CUSTOM_COMMAND
+zephyr/drivers/misc/ethos_u/install: phony
+zephyr/drivers/misc/ethos_u/CMakeFiles/install/local.util: CUSTOM_COMMAND
+zephyr/drivers/misc/ethos_u/install/local: phony
+zephyr/drivers/misc/ethos_u/CMakeFiles/install/strip.util: CUSTOM_COMMAND
+zephyr/drivers/misc/ethos_u/install/strip: phony
+modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj: CXX_COMPILER__modules__tflite-micro_unscanned_Release
+cmake_object_order_depends_target_..__modules__hal__alif__drivers__ethos_u: phony
+modules/alif/drivers/ethos_u/CMakeFiles/..__modules__hal__alif__drivers__ethos_u.dir/src/ethosu_callback.c.obj: C_COMPILER__.2e.2e__modules__hal__alif__drivers__ethos_u_unscanned_Release
+modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a: C_STATIC_LIBRARY_LINKER__.2e.2e__modules__hal__alif__drivers__ethos_u_Release
+modules/alif/drivers/ethos_u/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+modules/alif/drivers/ethos_u/edit_cache: phony
+modules/alif/drivers/ethos_u/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+modules/alif/drivers/ethos_u/rebuild_cache: phony
+modules/alif/drivers/ethos_u/list_install_components: phony
+modules/alif/drivers/ethos_u/CMakeFiles/install.util: CUSTOM_COMMAND
+modules/alif/drivers/ethos_u/install: phony
+modules/alif/drivers/ethos_u/CMakeFiles/install/local.util: CUSTOM_COMMAND
+modules/alif/drivers/ethos_u/install/local: phony
+modules/alif/drivers/ethos_u/CMakeFiles/install/strip.util: CUSTOM_COMMAND
+modules/alif/drivers/ethos_u/install/strip: phony
+modules/hal_ethos_u/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+modules/hal_ethos_u/edit_cache: phony
+modules/hal_ethos_u/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+modules/hal_ethos_u/rebuild_cache: phony
+modules/hal_ethos_u/list_install_components: phony
+modules/hal_ethos_u/CMakeFiles/install.util: CUSTOM_COMMAND
+modules/hal_ethos_u/install: phony
+modules/hal_ethos_u/CMakeFiles/install/local.util: CUSTOM_COMMAND
+modules/hal_ethos_u/install/local: phony
+modules/hal_ethos_u/CMakeFiles/install/strip.util: CUSTOM_COMMAND
+modules/hal_ethos_u/install/strip: phony
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj: C_COMPILER__ethosu_core_driver_unscanned_Release
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj: C_COMPILER__ethosu_core_driver_unscanned_Release
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj: C_COMPILER__ethosu_core_driver_unscanned_Release
+modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a: C_STATIC_LIBRARY_LINKER__ethosu_core_driver_Release
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+modules/hal_ethos_u/ethos-u-core-driver/edit_cache: phony
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+modules/hal_ethos_u/ethos-u-core-driver/rebuild_cache: phony
+modules/hal_ethos_u/ethos-u-core-driver/list_install_components: phony
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/install.util: CUSTOM_COMMAND
+modules/hal_ethos_u/ethos-u-core-driver/install: phony
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/install/local.util: CUSTOM_COMMAND
+modules/hal_ethos_u/ethos-u-core-driver/install/local: phony
+modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/install/strip.util: CUSTOM_COMMAND
+modules/hal_ethos_u/ethos-u-core-driver/install/strip: phony
+..__modules__hal__alif__drivers__ethos_u: phony
+lib..__modules__hal__alif__drivers__ethos_u.a: phony
+modules/alif/drivers/ethos_u/all: phony
+modules/hal_ethos_u/all: phony
+modules/hal_ethos_u/ethos-u-core-driver/all: phony
+zephyr/drivers/misc/ethos_u/all: phony
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/CMakeLists.txt: phony
+/home/user/sdk-alif/modules/hal/ethos_u/CMakeLists.txt: phony
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt: phony
+/home/user/sdk-alif/zephyr/modules/hal_ethos_u/CMakeLists.txt: phony
+/home/user/sdk-alif/zephyr/modules/hal_ethos_u/Kconfig: phony
+
+============================================================
+[6] RELATED ETHOS-U DRIVER CONFIG REFERENCES
+============================================================
+/home/user/sdk-alif/zephyr/drivers/misc/CMakeLists.txt:3:add_subdirectory_ifdef(CONFIG_ARM_ETHOS_U ethos_u)
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt:6:# Zephyr auto-generates CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED when device tree has
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/CMakeLists.txt:8:if(CONFIG_DT_HAS_ARM_ETHOS_U_ENABLED)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/CMakeLists.txt:29:set(CONFIG_ARM_ETHOS_U55_128 y
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/prj.conf:25:CONFIG_ARM_ETHOS_U=y
+
+============================================================
+AUDIT SUMMARY
+============================================================
+CONFIG_ARM_ETHOS_U=YES
+ETHOS_U_DRIVER_IN_BUILD_GRAPH=NO
+SOURCE_FILES_MODIFIED=NO
+BUILD_EXECUTED=NO
+FLASH_ACTION=NOT_PERFORMED
+AUDIT_COMPLETE=YES
+
+============================================================
+ETHOS-U DRIVER CONFIG AUDIT FINISHED
+EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_driver_config_audit_20261124_160709.log
+============================================================
+
+Press ENTER to close this terminal...
