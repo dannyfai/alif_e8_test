@@ -1,0 +1,308 @@
+====================================================
+TCN V6 - MIRROR_PAD RESOLVER API INSPECTION
+====================================================
+Tue Nov 24 04:58:57 PM HKT 2026
+APP=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+TFLM=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+
+========== APPLICATION RESOLVER REFERENCES ==========
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:55:    TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+
+========== RESOLVER HEADER ==========
+
+========== AddBuiltin and AddMirrorPad declarations ==========
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h
+   122	    registrations_len_ += 1;
+   123	
+   124	    *new_registration = *registration;
+   125	    new_registration->builtin_code = BuiltinOperator_CUSTOM;
+   126	    new_registration->custom_name = name;
+   127	    return kTfLiteOk;
+   128	  }
+   129	
+   130	  // The Add* functions below add the various Builtin operators to the
+   131	  // MicroMutableOpResolver object.
+   132	
+   133	  TfLiteStatus AddAbs() {
+   134	    return AddBuiltin(BuiltinOperator_ABS, Register_ABS(), ParseAbs);
+   135	  }
+   136	
+   137	  TfLiteStatus AddAdd(const TFLMRegistration& registration = Register_ADD()) {
+   138	    return AddBuiltin(BuiltinOperator_ADD, registration, ParseAdd);
+   139	  }
+   140	
+   141	  TfLiteStatus AddAddN() {
+   142	    return AddBuiltin(BuiltinOperator_ADD_N, tflite::Register_ADD_N(),
+   143	                      ParseAddN);
+   144	  }
+   145	
+   146	  TfLiteStatus AddArgMax() {
+   147	    return AddBuiltin(BuiltinOperator_ARG_MAX, Register_ARG_MAX(), ParseArgMax);
+   148	  }
+   149	
+   150	  TfLiteStatus AddArgMin() {
+   151	    return AddBuiltin(BuiltinOperator_ARG_MIN, Register_ARG_MIN(), ParseArgMin);
+   152	  }
+   153	
+   154	  TfLiteStatus AddAssignVariable() {
+   155	    return AddBuiltin(BuiltinOperator_ASSIGN_VARIABLE,
+   156	                      tflite::Register_ASSIGN_VARIABLE(), ParseAssignVariable);
+   157	  }
+   158	
+   159	  TfLiteStatus AddAveragePool2D(
+   160	      const TFLMRegistration& registration = Register_AVERAGE_POOL_2D()) {
+   161	    return AddBuiltin(BuiltinOperator_AVERAGE_POOL_2D, registration, ParsePool);
+   162	  }
+   163	
+   164	  TfLiteStatus AddBatchMatMul(
+   165	      const TFLMRegistration& registration = Register_BATCH_MATMUL()) {
+   166	    return AddBuiltin(BuiltinOperator_BATCH_MATMUL, registration,
+   167	                      ParseBatchMatMul);
+   168	  }
+   169	
+   170	  TfLiteStatus AddBatchToSpaceNd() {
+   171	    return AddBuiltin(BuiltinOperator_BATCH_TO_SPACE_ND,
+   172	                      Register_BATCH_TO_SPACE_ND(), ParseBatchToSpaceNd);
+   173	  }
+   174	
+   175	  TfLiteStatus AddBroadcastArgs() {
+   176	    return AddBuiltin(BuiltinOperator_BROADCAST_ARGS, Register_BROADCAST_ARGS(),
+   177	                      ParseBroadcastArgs);
+   178	  }
+   179	
+
+========== RESOLVER IMPLEMENTATION ==========
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:134:    return AddBuiltin(BuiltinOperator_ABS, Register_ABS(), ParseAbs);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:138:    return AddBuiltin(BuiltinOperator_ADD, registration, ParseAdd);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:142:    return AddBuiltin(BuiltinOperator_ADD_N, tflite::Register_ADD_N(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:147:    return AddBuiltin(BuiltinOperator_ARG_MAX, Register_ARG_MAX(), ParseArgMax);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:151:    return AddBuiltin(BuiltinOperator_ARG_MIN, Register_ARG_MIN(), ParseArgMin);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:155:    return AddBuiltin(BuiltinOperator_ASSIGN_VARIABLE,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:161:    return AddBuiltin(BuiltinOperator_AVERAGE_POOL_2D, registration, ParsePool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:166:    return AddBuiltin(BuiltinOperator_BATCH_MATMUL, registration,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:171:    return AddBuiltin(BuiltinOperator_BATCH_TO_SPACE_ND,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:176:    return AddBuiltin(BuiltinOperator_BROADCAST_ARGS, Register_BROADCAST_ARGS(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:181:    return AddBuiltin(BuiltinOperator_BROADCAST_TO, Register_BROADCAST_TO(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:186:    return AddBuiltin(BuiltinOperator_CALL_ONCE, Register_CALL_ONCE(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:191:    return AddBuiltin(BuiltinOperator_CAST, Register_CAST(), ParseCast);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:195:    return AddBuiltin(BuiltinOperator_CEIL, Register_CEIL(), ParseCeil);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:203:    return AddBuiltin(BuiltinOperator_CONCATENATION, Register_CONCATENATION(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:209:    return AddBuiltin(BuiltinOperator_CONV_2D, registration, ParseConv2D);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:213:    return AddBuiltin(BuiltinOperator_COS, tflite::Register_COS(), ParseCos);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:217:    return AddBuiltin(BuiltinOperator_CUMSUM, tflite::Register_CUMSUM(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:222:    return AddBuiltin(BuiltinOperator_TOPK_V2,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:232:    return AddBuiltin(BuiltinOperator_DEPTH_TO_SPACE,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:238:    return AddBuiltin(BuiltinOperator_DEPTHWISE_CONV_2D, registration,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:243:    return AddBuiltin(BuiltinOperator_DEQUANTIZE, tflite::Register_DEQUANTIZE(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:253:    return AddBuiltin(BuiltinOperator_DIV, tflite::Register_DIV(), ParseDiv);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:257:    return AddBuiltin(BuiltinOperator_EMBEDDING_LOOKUP,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:267:    return AddBuiltin(BuiltinOperator_ELU, tflite::Register_ELU(), ParseElu);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:271:    return AddBuiltin(BuiltinOperator_EQUAL, Register_EQUAL(), ParseEqual);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:283:    return AddBuiltin(BuiltinOperator_EXP, Register_EXP(), ParseExp);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:287:    return AddBuiltin(BuiltinOperator_EXPAND_DIMS, Register_EXPAND_DIMS(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:298:    return AddBuiltin(BuiltinOperator_FILL, tflite::Register_FILL(), ParseFill);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:327:    return AddBuiltin(BuiltinOperator_FLOOR, Register_FLOOR(), ParseFloor);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:331:    return AddBuiltin(BuiltinOperator_FLOOR_DIV, tflite::Register_FLOOR_DIV(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:336:    return AddBuiltin(BuiltinOperator_FLOOR_MOD, tflite::Register_FLOOR_MOD(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:347:    return AddBuiltin(BuiltinOperator_FULLY_CONNECTED, registration,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:352:    return AddBuiltin(BuiltinOperator_GATHER, tflite::Register_GATHER(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:357:    return AddBuiltin(BuiltinOperator_GATHER_ND, tflite::Register_GATHER_ND(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:362:    return AddBuiltin(BuiltinOperator_GREATER, Register_GREATER(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:367:    return AddBuiltin(BuiltinOperator_GREATER_EQUAL, Register_GREATER_EQUAL(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:372:    return AddBuiltin(BuiltinOperator_HARD_SWISH, tflite::Register_HARD_SWISH(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:377:    return AddBuiltin(BuiltinOperator_IF, tflite::Register_IF(), ParseIf);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:387:    return AddBuiltin(BuiltinOperator_L2_NORMALIZATION,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:392:    return AddBuiltin(BuiltinOperator_L2_POOL_2D, tflite::Register_L2_POOL_2D(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:397:    return AddBuiltin(BuiltinOperator_LEAKY_RELU, tflite::Register_LEAKY_RELU(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:402:    return AddBuiltin(BuiltinOperator_LESS, Register_LESS(), ParseLess);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:406:    return AddBuiltin(BuiltinOperator_LESS_EQUAL, Register_LESS_EQUAL(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:411:    return AddBuiltin(BuiltinOperator_LOG, Register_LOG(), ParseLog);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:415:    return AddBuiltin(BuiltinOperator_LOGICAL_AND,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:420:    return AddBuiltin(BuiltinOperator_LOGICAL_NOT, Register_LOGICAL_NOT(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:425:    return AddBuiltin(BuiltinOperator_LOGICAL_OR, tflite::Register_LOGICAL_OR(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:430:    return AddBuiltin(BuiltinOperator_LOGISTIC, tflite::Register_LOGISTIC(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:435:    return AddBuiltin(BuiltinOperator_LOG_SOFTMAX,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:441:    return AddBuiltin(BuiltinOperator_MAXIMUM, registration, ParseMaximum);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:446:    return AddBuiltin(BuiltinOperator_MAX_POOL_2D, registration, ParsePool);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:449:  TfLiteStatus AddMirrorPad() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:450:    return AddBuiltin(BuiltinOperator_MIRROR_PAD, tflite::Register_MIRROR_PAD(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:455:    return AddBuiltin(BuiltinOperator_MEAN, Register_MEAN(), ParseReducer);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:460:    return AddBuiltin(BuiltinOperator_MINIMUM, registration, ParseMinimum);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:464:    return AddBuiltin(BuiltinOperator_MUL, registration, ParseMul);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:468:    return AddBuiltin(BuiltinOperator_NEG, Register_NEG(), ParseNeg);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:472:    return AddBuiltin(BuiltinOperator_NOT_EQUAL, Register_NOT_EQUAL(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:484:    return AddBuiltin(BuiltinOperator_PACK, Register_PACK(), ParsePack);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:488:    return AddBuiltin(BuiltinOperator_PAD, registration, ParsePad);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:492:    return AddBuiltin(BuiltinOperator_PADV2, Register_PADV2(), ParsePadV2);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:501:    return AddBuiltin(BuiltinOperator_PRELU, tflite::Register_PRELU(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:506:    return AddBuiltin(BuiltinOperator_QUANTIZE, Register_QUANTIZE(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:511:    return AddBuiltin(BuiltinOperator_READ_VARIABLE,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:516:    return AddBuiltin(BuiltinOperator_REDUCE_MAX, Register_REDUCE_MAX(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:521:    return AddBuiltin(BuiltinOperator_RELU, tflite::Register_RELU(), ParseRelu);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:525:    return AddBuiltin(BuiltinOperator_RELU6, tflite::Register_RELU6(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:530:    return AddBuiltin(BuiltinOperator_RESHAPE, Register_RESHAPE(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:535:    return AddBuiltin(BuiltinOperator_RESIZE_BILINEAR,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:540:    return AddBuiltin(BuiltinOperator_RESIZE_NEAREST_NEIGHBOR,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:552:    return AddBuiltin(BuiltinOperator_ROUND, Register_ROUND(), ParseRound);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:556:    return AddBuiltin(BuiltinOperator_RSQRT, Register_RSQRT(), ParseRsqrt);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:560:    return AddBuiltin(BuiltinOperator_SELECT_V2, Register_SELECT_V2(),
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:565:    return AddBuiltin(BuiltinOperator_SHAPE, Register_SHAPE(), ParseShape);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:569:    return AddBuiltin(BuiltinOperator_SIN, Register_SIN(), ParseSin);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:573:    return AddBuiltin(BuiltinOperator_SLICE, Register_SLICE(), ParseSlice);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:578:    return AddBuiltin(BuiltinOperator_SOFTMAX, registration, ParseSoftmax);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:582:    return AddBuiltin(BuiltinOperator_SPACE_TO_BATCH_ND,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:587:    return AddBuiltin(BuiltinOperator_SPACE_TO_DEPTH, Register_SPACE_TO_DEPTH(),
+
+========== MIRROR PAD REGISTRATION DECLARATIONS ==========
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad_test.cc
+
+========== MIRROR PADDING PARAMETER DEFINITION ==========
+
+========== TfLiteMirrorPaddingParams ==========
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/c/builtin_op_data.h
+PATTERN NOT FOUND: TfLiteMirrorPaddingParams|TfLiteMirrorPaddingMode
+
+========== BUILTIN OPERATOR ENUM ==========
+
+========== MIRROR_PAD enum in /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/schema/schema_generated.h ==========
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/schema/schema_generated.h
+  1121	  BuiltinOperator_UNPACK = 88,
+  1122	  BuiltinOperator_REDUCE_MIN = 89,
+  1123	  BuiltinOperator_FLOOR_DIV = 90,
+  1124	  BuiltinOperator_REDUCE_ANY = 91,
+  1125	  BuiltinOperator_SQUARE = 92,
+  1126	  BuiltinOperator_ZEROS_LIKE = 93,
+  1127	  BuiltinOperator_FILL = 94,
+  1128	  BuiltinOperator_FLOOR_MOD = 95,
+  1129	  BuiltinOperator_RANGE = 96,
+  1130	  BuiltinOperator_RESIZE_NEAREST_NEIGHBOR = 97,
+  1131	  BuiltinOperator_LEAKY_RELU = 98,
+  1132	  BuiltinOperator_SQUARED_DIFFERENCE = 99,
+  1133	  BuiltinOperator_MIRROR_PAD = 100,
+  1134	  BuiltinOperator_ABS = 101,
+  1135	  BuiltinOperator_SPLIT_V = 102,
+  1136	  BuiltinOperator_UNIQUE = 103,
+  1137	  BuiltinOperator_CEIL = 104,
+  1138	  BuiltinOperator_REVERSE_V2 = 105,
+  1139	  BuiltinOperator_ADD_N = 106,
+  1140	  BuiltinOperator_GATHER_ND = 107,
+  1141	  BuiltinOperator_COS = 108,
+  1142	  BuiltinOperator_WHERE = 109,
+  1143	  BuiltinOperator_RANK = 110,
+  1144	  BuiltinOperator_ELU = 111,
+  1145	  BuiltinOperator_REVERSE_SEQUENCE = 112,
+  1146	  BuiltinOperator_MATRIX_DIAG = 113,
+  1147	  BuiltinOperator_QUANTIZE = 114,
+  1148	  BuiltinOperator_MATRIX_SET_DIAG = 115,
+  1149	  BuiltinOperator_ROUND = 116,
+  1150	  BuiltinOperator_HARD_SWISH = 117,
+  1151	  BuiltinOperator_IF = 118,
+  1152	  BuiltinOperator_WHILE = 119,
+  1153	  BuiltinOperator_NON_MAX_SUPPRESSION_V4 = 120,
+  1154	  BuiltinOperator_NON_MAX_SUPPRESSION_V5 = 121,
+  1155	  BuiltinOperator_SCATTER_ND = 122,
+  1156	  BuiltinOperator_SELECT_V2 = 123,
+  1157	  BuiltinOperator_DENSIFY = 124,
+  1158	  BuiltinOperator_SEGMENT_SUM = 125,
+  1159	  BuiltinOperator_BATCH_MATMUL = 126,
+  1160	  BuiltinOperator_PLACEHOLDER_FOR_GREATER_OP_CODES = 127,
+  1161	  BuiltinOperator_CUMSUM = 128,
+  1162	  BuiltinOperator_CALL_ONCE = 129,
+  1163	  BuiltinOperator_BROADCAST_TO = 130,
+  1164	  BuiltinOperator_RFFT2D = 131,
+  1165	  BuiltinOperator_CONV_3D = 132,
+  1166	  BuiltinOperator_IMAG = 133,
+  1167	  BuiltinOperator_REAL = 134,
+  1168	  BuiltinOperator_COMPLEX_ABS = 135,
+  1169	  BuiltinOperator_HASHTABLE = 136,
+  1170	  BuiltinOperator_HASHTABLE_FIND = 137,
+  1171	  BuiltinOperator_HASHTABLE_IMPORT = 138,
+  1172	  BuiltinOperator_HASHTABLE_SIZE = 139,
+  1173	  BuiltinOperator_REDUCE_ALL = 140,
+  1174	  BuiltinOperator_CONV_3D_TRANSPOSE = 141,
+  1175	  BuiltinOperator_VAR_HANDLE = 142,
+  1176	  BuiltinOperator_READ_VARIABLE = 143,
+  1177	  BuiltinOperator_ASSIGN_VARIABLE = 144,
+  1178	  BuiltinOperator_BROADCAST_ARGS = 145,
+
+========== MIRROR_PAD enum in /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/builtin_op_data.h ==========
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/builtin_op_data.h
+PATTERN NOT FOUND: MIRROR_PAD
+
+========== EVAL TENSOR ACCESS HELPERS ==========
+
+========== Kernel utility declarations ==========
+FILE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.h
+    26	#include "tensorflow/lite/micro/micro_context.h"
+    27	
+    28	#ifdef USE_TFLM_COMPRESSION
+    29	
+    30	#include "tensorflow/lite/micro/micro_arena_constants.h"
+    31	#include "tensorflow/lite/micro/micro_utils.h"
+    32	
+    33	#endif  // USE_TFLM_COMPRESSION
+    34	
+    35	namespace tflite {
+    36	namespace micro {
+    37	
+    38	TFLMRegistration RegisterOp(
+    39	    void* (*init)(TfLiteContext* context, const char* buffer, size_t length),
+    40	    TfLiteStatus (*prepare)(TfLiteContext* context, TfLiteNode* node),
+    41	    TfLiteStatus (*invoke)(TfLiteContext* context, TfLiteNode* node),
+    42	    void (*free)(TfLiteContext* context, void* buffer) = nullptr,
+    43	    void (*reset)(TfLiteContext* context, void* buffer) = nullptr);
+    44	
+    45	TFLMInferenceRegistration RegisterOp(
+    46	    TfLiteStatus (*invoke)(TfLiteContext* context, TfLiteNode* node),
+    47	    void (*reset)(TfLiteContext* context, void* buffer) = nullptr);
+    48	
+    49	// Prints out n bytes in a int8_t buffer as hex
+    50	void PrintNBytes(const int8_t* tensor_data, int n_bytes,
+    51	                 const char* prefix = nullptr);
+    52	
+    53	// Prints out the n bytes in a TfLiteEvalTensor as hex
+    54	void PrintNBytes(const TfLiteEvalTensor* tensor, int n_bytes,
+    55	                 const char* prefix = nullptr);
+    56	
+    57	// Prints out n bytes in a TfLiteTensor as hex
+    58	void PrintNBytes(const TfLiteTensor* tensor, int n_bytes,
+    59	                 const char* prefix = nullptr);
+    60	
+    61	// Returns a mutable tensor for a given input index. is_variable must be checked
+    62	// during prepare when the full TfLiteTensor is available.
+    63	TfLiteEvalTensor* GetMutableEvalInput(const TfLiteContext* context,
+    64	                                      const TfLiteNode* node, int index);
+    65	
+    66	// Returns the TfLiteEvalTensor struct for a given input index in a node.
+    67	const TfLiteEvalTensor* GetEvalInput(const TfLiteContext* context,
+    68	                                     const TfLiteNode* node, int index);
+    69	
+    70	// Returns the TfLiteEvalTensor struct for a given output index in a node.
+    71	TfLiteEvalTensor* GetEvalOutput(const TfLiteContext* context,
+    72	                                const TfLiteNode* node, int index);
+    73	
+    74	// Returns data for a TfLiteEvalTensor struct that are expected to exist.
+    75	template <typename T>
+    76	T* GetTensorData(TfLiteEvalTensor* tensor) {
+    77	  TFLITE_DCHECK(tensor != nullptr);
+    78	  return reinterpret_cast<T*>(tensor->data.raw);
+    79	}
+    80	
+    81	// Returns const data for a TfLiteEvalTensor struct that are expected to exist.
+    82	template <typename T>
+    83	const T* GetTensorData(const TfLiteEvalTensor* tensor) {
+
+========== APPLICATION BUILD SOURCE CONFIGURATION ==========
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/CMakeLists.txt
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/boards/alif_e8_common.overlay
+
+========== CURRENT BUILD KERNEL OBJECT ==========
+9868:build modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj: CXX_COMPILER__modules__tflite-micro_unscanned_Release /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc || cmake_object_order_depends_target_modules__tflite-micro
+9870:  DEP_FILE = modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc.obj.d
+
+========== INSPECTION COMPLETE ==========
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_mirror_pad_resolver_api_20261124_165857.log
+NO_SOURCE_FILES_MODIFIED=YES
+
+Press ENTER to close this terminal...
