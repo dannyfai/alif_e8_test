@@ -1,0 +1,335 @@
+============================================================
+TCN V6 E8 POST-BUILD MEMORY AND ELF AUDIT
+============================================================
+Tue Nov 24 04:14:57 PM HKT 2026
+BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230
+ELF=/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/zephyr.elf
+MAP=/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/zephyr.map
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_postbuild_memory_audit_20261124_161457.log
+
+[1/6] Artifact verification...
+ELF_SIZE_BYTES=28847368
+MODEL_SIZE_BYTES=9684208
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+ELF_SHA256=95a4f107a8b3c2b754e783b47cf62148e6412f8dec359a01e6322c9641690be4
+
+[2/6] IRQ and Ethos-U symbols...
+80004760 T ethosu_zephyr_irq_handler
+800048c0 T tcn_v6_ethosu_irq_count_get
+20001634 b guard variable for tflite::Register_ETHOSU()::r
+80002574 T arm::app::polyu_heatstroke::GetModelLen()
+8000256c T arm::app::polyu_heatstroke::GetModelPointer()
+8000abd0 T tflite::Register_ETHOSU()
+20001638 b tflite::Register_ETHOSU()::r
+IRQ_COUNTER_DEFINED=YES
+800048c0 T tcn_v6_ethosu_irq_count_get
+
+[3/6] Linker map section inspection...
+5-                              (--whole-archive)
+6-app/libapp.a(TcnV6Model.cc.obj)
+7-                              (--whole-archive)
+8:app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+9-                              (--whole-archive)
+10-zephyr/libzephyr.a(cpp_dtors.c.obj)
+11-                              (--whole-archive)
+--
+1377-                0x0000000000000000       0x14 app/libapp.a(TcnV6Model.cc.obj)
+1378- .text._ZN17heatstroke_tcn_v610TcnV6ModelD0Ev
+1379-                0x0000000000000000       0x16 app/libapp.a(TcnV6Model.cc.obj)
+1380: .text          0x0000000000000000        0x0 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+1381: .data          0x0000000000000000        0x0 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+1382: .bss           0x0000000000000000        0x0 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+1383- .text          0x0000000000000000        0x0 zephyr/libzephyr.a(cpp_dtors.c.obj)
+1384- .data          0x0000000000000000        0x0 zephyr/libzephyr.a(cpp_dtors.c.obj)
+1385- .bss           0x0000000000000000        0x0 zephyr/libzephyr.a(cpp_dtors.c.obj)
+--
+16835-SRAM0            0x0000000002000000 0x0000000000400000 rw
+16836-HOST_PERIPHERAL  0x000000001a000000 0x0000000001000000 rw
+16837-SRAM1            0x0000000002400000 0x0000000000400000 rw
+16838:OSPI1            0x00000000c0000000 0x0000000004000000 rw
+16839-IDT_LIST         0x00000000ffff7fff 0x0000000000008000 xw
+16840-*default*        0x0000000000000000 0xffffffffffffffff
+16841-
+--
+17047-                0x0000000080002060      0x50c app/libapp.a(TcnV6Model.cc.obj)
+17048-                0x0000000080002060                heatstroke_tcn_v6::TcnV6Model::EnlistOperations()
+17049- .text._ZN3arm3app16polyu_heatstroke15GetModelPointerEv
+17050:                0x000000008000256c        0x8 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+17051-                0x000000008000256c                arm::app::polyu_heatstroke::GetModelPointer()
+17052- .text._ZN3arm3app16polyu_heatstroke11GetModelLenEv
+17053:                0x0000000080002574        0x8 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+17054-                0x0000000080002574                arm::app::polyu_heatstroke::GetModelLen()
+17055- .text.cbvprintf_package
+17056-                0x000000008000257c      0x3a4 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+22147- *(SORT_BY_ALIGNMENT(.gcc_except_table) SORT_BY_ALIGNMENT(.gcc_except_table.*))
+22148-                0x000000002000029c                __data_region_end = .
+22149-
+22150:ospi1           0x00000000c0000000   0x93c4f0
+22151: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1))
+22152: .alif_extflash_OSPI1
+22153:                0x00000000c0000000   0x93c4f0 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22154: *(SORT_BY_ALIGNMENT(.alif_extflash_OSPI1.*))
+22155-
+22156-/DISCARD/
+22157- *(SORT_BY_ALIGNMENT(.irq_info*))
+--
+22186- .comment       0x0000000000000020       0x21 app/libapp.a(Main.cc.obj)
+22187- .comment       0x0000000000000020       0x21 app/libapp.a(MainLoop.cc.obj)
+22188- .comment       0x0000000000000020       0x21 app/libapp.a(TcnV6Model.cc.obj)
+22189: .comment       0x0000000000000020       0x21 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22190- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(cpp_dtors.c.obj)
+22191- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(heap.c.obj)
+22192- .comment       0x0000000000000020       0x21 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+22365- .debug_aranges
+22366-                0x0000000000000198       0x68 app/libapp.a(TcnV6Model.cc.obj)
+22367- .debug_aranges
+22368:                0x0000000000000200       0x28 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22369- .debug_aranges
+22370-                0x0000000000000228       0x20 zephyr/libzephyr.a(cpp_dtors.c.obj)
+22371- .debug_aranges
+--
+22657- .debug_info    0x0000000000000276      0x1eb app/libapp.a(Main.cc.obj)
+22658- .debug_info    0x0000000000000461    0x5592e app/libapp.a(MainLoop.cc.obj)
+22659- .debug_info    0x0000000000055d8f    0x56630 app/libapp.a(TcnV6Model.cc.obj)
+22660: .debug_info    0x00000000000ac3bf   0x93c9d7 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22661- .debug_info    0x00000000009e8d96       0x9d zephyr/libzephyr.a(cpp_dtors.c.obj)
+22662- .debug_info    0x00000000009e8e33     0x3022 zephyr/libzephyr.a(heap.c.obj)
+22663- .debug_info    0x00000000009ebe55     0x2004 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+22812- .debug_abbrev  0x000000000000017a      0x141 app/libapp.a(Main.cc.obj)
+22813- .debug_abbrev  0x00000000000002bb     0x12c7 app/libapp.a(MainLoop.cc.obj)
+22814- .debug_abbrev  0x0000000000001582     0x111f app/libapp.a(TcnV6Model.cc.obj)
+22815: .debug_abbrev  0x00000000000026a1      0x14f app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22816- .debug_abbrev  0x00000000000027f0       0xa6 zephyr/libzephyr.a(cpp_dtors.c.obj)
+22817- .debug_abbrev  0x0000000000002896      0x434 zephyr/libzephyr.a(heap.c.obj)
+22818- .debug_abbrev  0x0000000000002cca      0x54e zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+22967- .debug_line    0x000000000000029a      0x293 app/libapp.a(Main.cc.obj)
+22968- .debug_line    0x000000000000052d     0x16d3 app/libapp.a(MainLoop.cc.obj)
+22969- .debug_line    0x0000000000001c00     0x16b6 app/libapp.a(TcnV6Model.cc.obj)
+22970: .debug_line    0x00000000000032b6      0x319 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+22971- .debug_line    0x00000000000035cf       0x6f zephyr/libzephyr.a(cpp_dtors.c.obj)
+22972- .debug_line    0x000000000000363e     0x112e zephyr/libzephyr.a(heap.c.obj)
+22973- .debug_line    0x000000000000476c     0x1542 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+23121- .debug_frame   0x0000000000000020       0x2c app/libapp.a(Main.cc.obj)
+23122- .debug_frame   0x000000000000004c      0x174 app/libapp.a(MainLoop.cc.obj)
+23123- .debug_frame   0x00000000000001c0      0x124 app/libapp.a(TcnV6Model.cc.obj)
+23124: .debug_frame   0x00000000000002e4       0x30 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+23125- .debug_frame   0x0000000000000314       0x20 zephyr/libzephyr.a(cpp_dtors.c.obj)
+23126- .debug_frame   0x0000000000000334      0x1d4 zephyr/libzephyr.a(heap.c.obj)
+23127- .debug_frame   0x0000000000000508       0xf4 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+23331-                                      0x9fd86 (size before relaxing)
+23332- .debug_str     0x000000000009e583      0xfdd app/libapp.a(TcnV6Model.cc.obj)
+23333-                                      0xa036a (size before relaxing)
+23334: .debug_str     0x000000000009f560       0x89 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+23335-                                        0x681 (size before relaxing)
+23336- .debug_str     0x000000000009f5e9       0x52 zephyr/libzephyr.a(cpp_dtors.c.obj)
+23337-                                        0x22e (size before relaxing)
+--
+23789- .debug_ranges  0x0000000000000030       0x28 app/libapp.a(Main.cc.obj)
+23790- .debug_ranges  0x0000000000000058      0x248 app/libapp.a(MainLoop.cc.obj)
+23791- .debug_ranges  0x00000000000002a0      0x1a0 app/libapp.a(TcnV6Model.cc.obj)
+23792: .debug_ranges  0x0000000000000440       0x18 app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+23793- .debug_ranges  0x0000000000000458       0x10 zephyr/libzephyr.a(cpp_dtors.c.obj)
+23794- .debug_ranges  0x0000000000000468      0x4f8 zephyr/libzephyr.a(heap.c.obj)
+23795- .debug_ranges  0x0000000000000960      0x338 zephyr/libzephyr.a(cbprintf_packaged.c.obj)
+--
+23973- .ARM.attributes
+23974-                0x0000000000000136       0x3e app/libapp.a(TcnV6Model.cc.obj)
+23975- .ARM.attributes
+23976:                0x0000000000000174       0x3e app/libapp.a(symmetric394_int8mask_cast_vela.tflite.cc.obj)
+23977- .ARM.attributes
+23978-                0x00000000000001b2       0x3e zephyr/libzephyr.a(cpp_dtors.c.obj)
+23979- .ARM.attributes
+--
+25304-                0x0000000002010000                __SRAM0_start = .
+25305- *(SORT_BY_ALIGNMENT(SRAM0))
+25306- *(SORT_BY_ALIGNMENT(SRAM0.*))
+25307: SRAM0.activation_buf
+25308-                0x0000000002010000   0x280000 app/libapp.a(MainLoop.cc.obj)
+25309-                0x0000000002290000                __SRAM0_end = .
+25310-                0x0000000000280000                __SRAM0_size = (__SRAM0_end - __SRAM0_start)
+--
+25327-                0x0000000000000000                __SRAM1_size = (__SRAM1_end - __SRAM1_start)
+25328-                0x0000000002400000                __SRAM1_load_start = LOADADDR (SRAM1)
+25329-
+25330:OSPI1           0x00000000c093c4f0        0x0
+25331:                0x00000000c093c4f0                __OSPI1_start = .
+25332: *(SORT_BY_ALIGNMENT(OSPI1))
+25333: *(SORT_BY_ALIGNMENT(OSPI1.*))
+25334:                0x00000000c093c4f0                __OSPI1_end = .
+25335:                0x0000000000000000                __OSPI1_size = (__OSPI1_end - __OSPI1_start)
+25336:                0x00000000c093c4f0                __OSPI1_load_start = LOADADDR (OSPI1)
+25337-
+25338-.last_section   0x00000000800246e8        0x4
+25339-                0x00000000800246e8        0x4 LONG 0xe015e015
+
+--- ELF section table ---
+  [ 3] text              PROGBITS        800007c0 0008f8 01bd6c 00  AX  0   0  8
+  [16] tbss              NOBITS          8001daf0 01dc28 000008 00 WAT  0   0  4
+  [17] rodata            PROGBITS        8001daf0 01dc28 00695c 00   A  0   0  8
+  [19] datas             PROGBITS        20000000 024584 0001d8 00  WA  0   0  4
+  [26] ospi1             PROGBITS        c0000000 024830 93c4f0 00   A  0   0 16
+  [39] bss               NOBITS          200002a0 000140 001476 00  WA  0   0 32
+
+--- ELF program headers / memory segments ---
+
+Elf file type is EXEC (Executable file)
+Entry point 0x80003e61
+There are 8 program headers, starting at offset 52
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  EXIDX          0x01c794 0x8001c65c 0x8001c65c 0x00228 0x00228 R   0x4
+  LOAD           0x000000 0x02000000 0x02000000 0x00000 0x290000 RW  0x10
+  LOAD           0x000000 0x200002a0 0x200002a0 0x00000 0x040b8 RW  0x20
+  LOAD           0x000138 0x80000000 0x80000000 0x2444c 0x2444c RWE 0x8
+  LOAD           0x024584 0x20000000 0x8002444c 0x0029c 0x0029c RW  0x4
+  LOAD           0x024820 0x800246e8 0x800246e8 0x00004 0x00004 R   0x1
+  LOAD           0x024830 0xc0000000 0xc0000000 0x93c4f0 0x93c4f0 R   0x10
+  TLS            0x01dc28 0x8001daf0 0x8001daf0 0x00000 0x00008 R   0x4
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .ARM.exidx 
+   01     .alif_sram0 SRAM0 
+   02     bss noinit 
+   03     rom_start text .ARM.extab .ARM.exidx initlevel device_area sw_isr_table gpio_driver_api_area clock_control_driver_api_area uart_driver_api_area ctors init_array log_const_area log_backend_area rodata 
+   04     datas device_states log_mpsc_pbuf_area log_msg_ptr_area k_heap_area k_mutex_area k_sem_area 
+   05     .last_section 
+   06     ospi1 
+   07     tbss 
+
+[4/6] Activation buffer symbols...
+00000001 A CONFIG_ACTIVATION_BUF_SECTION
+00280000 A CONFIG_ACTIVATION_BUF_SZ
+ffffffff A CONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE
+800135aa T heatstroke_tcn_v6::TcnV6Model::GetOpResolver()
+800135ae T heatstroke_tcn_v6::TcnV6Model::PrepareResolver()
+80002060 T heatstroke_tcn_v6::TcnV6Model::EnlistOperations()
+80013594 W heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+80001f28 W heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+80001f28 W heatstroke_tcn_v6::TcnV6Model::~TcnV6Model()
+80007274 T tflite::MicroAllocator::RequestScratchBufferInArena(unsigned int, int, int*)
+80007174 T tflite::MicroAllocator::Create(tflite::SingleArenaBufferAllocator*, tflite::MicroMemoryPlanner*)
+80015c4a T tflite::MicroInterpreterContext::RequestScratchBufferInArena(unsigned int, int*)
+80007404 T tflite::SingleArenaBufferAllocator::AllocateTemp(unsigned int, unsigned int)
+800073ac T tflite::SingleArenaBufferAllocator::ResizeBuffer(unsigned char*, unsigned int, unsigned int)
+8001645e T tflite::SingleArenaBufferAllocator::DeallocateTemp(unsigned char*)
+80007440 T tflite::SingleArenaBufferAllocator::IsAllTempDeallocated()
+80007464 T tflite::SingleArenaBufferAllocator::ResetTempAllocations()
+800164aa T tflite::SingleArenaBufferAllocator::AllocateResizableBuffer(unsigned int, unsigned int)
+80007488 T tflite::SingleArenaBufferAllocator::AllocatePersistentBuffer(unsigned int, unsigned int)
+8001644c T tflite::SingleArenaBufferAllocator::DeallocateResizableBuffer(unsigned char*)
+800164da T tflite::SingleArenaBufferAllocator::ReserveNonPersistentOverlayMemory(unsigned int, unsigned int)
+800074d8 T tflite::SingleArenaBufferAllocator::Create(unsigned char*, unsigned int)
+80016526 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned int)
+800074b8 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned char*)
+80016526 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned int)
+800074b8 T tflite::SingleArenaBufferAllocator::SingleArenaBufferAllocator(unsigned char*, unsigned char*)
+80016494 T tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+8001644a T tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+8001644a T tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+80015ada W tflite::MicroContextRequestScratchBufferInArena(TfLiteContext*, unsigned int, int*)
+8001b210 T arm::app::fwk::tflm::TflmModel::GetComputeBuffer() const
+80016508 T tflite::SingleArenaBufferAllocator::GetAvailableMemory(unsigned int) const
+80016484 T tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+8001646c T tflite::SingleArenaBufferAllocator::GetOverlayMemoryAddress() const
+80016470 T tflite::SingleArenaBufferAllocator::GetNonPersistentUsedBytes() const
+80016500 T non-virtual thunk to tflite::SingleArenaBufferAllocator::AllocatePersistentBuffer(unsigned int, unsigned int)
+800164a2 T non-virtual thunk to tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+80016522 T non-virtual thunk to tflite::SingleArenaBufferAllocator::~SingleArenaBufferAllocator()
+8001648c T non-virtual thunk to tflite::SingleArenaBufferAllocator::GetPersistentUsedBytes() const
+8001de54 R vtable for heatstroke_tcn_v6::TcnV6Model
+8001e67c R vtable for tflite::SingleArenaBufferAllocator
+
+--- Source section declaration ---
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc:21:static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc:179:    printk("TCN_V6: activation_buf=%p capacity=%u bytes\n",
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/BufAttributes.hpp:8:#define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/BufAttributes.hpp:18:#define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+
+[5/6] ELF section size report...
+/home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/zephyr.elf  :
+section                             size         addr
+.alif_sram0                        65536     33554432
+rom_start                           1984   2147483648
+text                              114028   2147485632
+.ARM.extab                           304   2147599660
+.ARM.exidx                           552   2147599964
+initlevel                            208   2147600516
+device_area                          380   2147600724
+sw_isr_table                        3840   2147601104
+gpio_driver_api_area                  36   2147604944
+clock_control_driver_api_area         28   2147604980
+uart_driver_api_area                  76   2147605008
+ctors                                 12   2147605084
+init_array                             8   2147605096
+log_const_area                       112   2147605104
+log_backend_area                      16   2147605216
+tbss                                   8   2147605232
+rodata                             26972   2147605232
+.ramfunc                               0    536870912
+datas                                472    536870912
+device_states                         38    536871384
+log_mpsc_pbuf_area                    60    536871424
+log_msg_ptr_area                       4    536871484
+k_heap_area                           24    536871488
+k_mutex_area                          20    536871512
+k_sem_area                            48    536871532
+ospi1                            9684208   3221225472
+.comment                              32            0
+.debug_aranges                     16192            0
+.debug_info                     15865917            0
+.debug_abbrev                     239665            0
+.debug_line                       584247            0
+.debug_frame                       64604            0
+.debug_str                       1169449            0
+.debug_loc                        773756            0
+.debug_ranges                     134320            0
+.ARM.attributes                       64            0
+SRAM0                            2621440     33619968
+.last_section                          4   2147632872
+bss                                 5238    536871584
+noinit                             11328    536876824
+Total                           31385230
+
+
+
+--- Build memory-region summary from saved build logs ---
+[618/619] Building C object zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+[619/619] Linking CXX executable zephyr/zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      149228 B      5632 KB      2.59%
+             RAM:       17240 B       256 KB      6.58%
+           SRAM0:       2624 KB         4 MB     64.06%
+ HOST_PERIPHERAL:          0 GB        16 MB      0.00%
+           SRAM1:          0 GB         4 MB      0.00%
+           OSPI1:     9684208 B        64 MB     14.43%
+        IDT_LIST:          0 GB        32 KB      0.00%
+Generating files from /home/user/sdk-alif/build_heatstroke_tcn_v6_int8mask_fc_20261124_154230/zephyr/zephyr.elf for board: alif_e8_dk
+WEST_BUILD_EXIT_CODE=0
+BUILD_STATUS=PASS
+
+[6/6] Final audit status...
+ELF_EXISTS=YES
+LINKER_MAP_EXISTS=YES
+IRQ_COUNTER_DEFINED=YES
+BUILD_EXECUTED=NO
+FLASH_ACTION=NOT_PERFORMED
+MODEL_MODIFIED=NO
+SOURCE_FILES_MODIFIED=NO
+AUDIT_COMPLETE=YES
+
+============================================================
+POST-BUILD MEMORY AUDIT FINISHED
+EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_postbuild_memory_audit_20261124_161457.log
+============================================================
+
+Press ENTER to close this terminal...
