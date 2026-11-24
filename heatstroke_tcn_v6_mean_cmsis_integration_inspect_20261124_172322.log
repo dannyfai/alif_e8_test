@@ -1,0 +1,221 @@
+======================================================
+TCN V6 - TFLM MEAN / CMSIS MVE INTEGRATION INSPECTION
+======================================================
+Tue Nov 24 05:23:22 PM HKT 2026
+
+========== 1. SOURCE FILES ==========
+-rw-rw-r-- 1 user user  1922 Sep 24 10:49 /home/user/sdk-alif/modules/lib/cmsis-dsp/Include/arm_math.h
+-rw-rw-r-- 1 user user  5001 Sep 24 10:49 /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f32.c
+-rw-rw-r-- 1 user user 15008 Oct 30 16:34 /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+
+========== 2. TFLM MEAN HELPER LOCATIONS ==========
+178:TfLiteStatus EvalMeanHelper(TfLiteContext* context, TfLiteNode* node,
+191:    case kTfLiteFloat32: {
+205:        reference_ops::Mean(op_params, tflite::micro::GetTensorShape(input),
+212:            reference_ops::Mean(
+255:    case kTfLiteFloat32:
+308:    case kTfLiteFloat32: {
+
+========== 3. TFLM REDUCTION IMPLEMENTATION ==========
+                 tflite::MeanParams* op_params) {
+  int i = 0;
+  for (; i < axis_count; ++i) {
+    op_params->axis[i] = static_cast<int16_t>(axis_data[i]);
+  }
+  for (; i < 4; ++i) {
+    op_params->axis[i] = 1;
+  }
+  op_params->axis_count = axis_count;
+}
+
+template <typename T>
+TfLiteStatus QuantizedMeanOrSum(TfLiteContext* context, TfLiteNode* node,
+                                int* temp_index, int* resolved_axis,
+                                int32_t* temp_sum, OpDataReduce* op_data,
+                                bool compute_sum) {
+  const TfLiteEvalTensor* input = tflite::micro::GetEvalInput(context, node, 0);
+  const TfLiteEvalTensor* axis = tflite::micro::GetEvalInput(context, node, 1);
+  TfLiteEvalTensor* output = tflite::micro::GetEvalOutput(context, node, 0);
+  TfLiteReducerParams* params =
+      static_cast<TfLiteReducerParams*>(node->builtin_data);
+
+  bool result = reference_ops::QuantizedMeanOrSumExtraArgs<T, int32_t>(
+      tflite::micro::GetTensorData<T>(input), op_data->input_zp,
+      op_data->input_scale, &input->dims->data[0], input->dims->size,
+      tflite::micro::GetTensorData<T>(output), op_data->output_scale,
+      op_data->multiplier, op_data->shift, op_data->output_zp,
+      &output->dims->data[0], output->dims->size,
+      tflite::micro::GetTensorData<int>(axis), op_data->num_axis,
+      params->keep_dims, temp_index, resolved_axis, temp_sum, compute_sum);
+  TF_LITE_ENSURE(context, result);
+
+  return kTfLiteOk;
+}
+
+template <typename integer_type>
+TfLiteStatus EvalIntegerMean(TfLiteContext* context, TfLiteNode* node,
+                             int num_axis, OpDataReduce* op_data,
+                             int* temp_index, int* resolved_axis) {
+  int32_t* temp_sum = static_cast<int32_t*>(
+      context->GetScratchBuffer(context, op_data->temp_buffer_idx));
+
+  QuantizedMeanOrSum<integer_type>(context, node, temp_index, resolved_axis,
+                                   temp_sum, op_data, /*compute_sum=*/false);
+
+  return kTfLiteOk;
+}
+
+TfLiteStatus EvalMeanHelper(TfLiteContext* context, TfLiteNode* node,
+                            OpDataReduce* op_data) {
+  const TfLiteEvalTensor* input = tflite::micro::GetEvalInput(context, node, 0);
+  const TfLiteEvalTensor* axis = tflite::micro::GetEvalInput(context, node, 1);
+  TfLiteEvalTensor* output = tflite::micro::GetEvalOutput(context, node, 0);
+  TfLiteReducerParams* params =
+      reinterpret_cast<TfLiteReducerParams*>(node->builtin_data);
+
+  int num_axis = static_cast<int>(ElementCount(*axis->dims));
+  int temp_index[kMaxNumberOfAxis];
+  int resolved_axis[kMaxNumberOfReducedAxis];
+
+  switch (input->type) {
+    case kTfLiteFloat32: {
+      tflite::MeanParams op_params;
+      ResolveAxis(tflite::micro::GetTensorData<int>(axis), num_axis,
+                  &op_params);
+
+      // Special case mean implementation exists for 4D mean across axes 1
+      // and 2.
+      bool special_case_4d_axes_1_and_2 =
+          input->dims->size == 4 && op_params.axis_count == 2 &&
+          ((op_params.axis[0] == 1 && op_params.axis[1] == 2) ||
+           (op_params.axis[0] == 2 && op_params.axis[1] == 1));
+
+      // Defer to specialized implementation for 4D Mean across axes 1 & 2.
+      if (params->keep_dims && special_case_4d_axes_1_and_2) {
+        reference_ops::Mean(op_params, tflite::micro::GetTensorShape(input),
+                            tflite::micro::GetTensorData<float>(input),
+                            tflite::micro::GetTensorShape(output),
+                            tflite::micro::GetTensorData<float>(output));
+      } else {
+        TF_LITE_ENSURE(
+            context,
+            reference_ops::Mean(
+                tflite::micro::GetTensorData<float>(input), input->dims->data,
+                input->dims->size, tflite::micro::GetTensorData<float>(output),
+                output->dims->data, output->dims->size,
+                tflite::micro::GetTensorData<int>(axis), num_axis,
+                params->keep_dims, temp_index, resolved_axis,
+                tflite::micro::GetTensorData<float>(output)));
+      }
+    } break;
+    case kTfLiteInt8: {
+      TF_LITE_ENSURE_OK(
+          context, EvalIntegerMean<int8_t>(context, node, num_axis, op_data,
+                                           temp_index, resolved_axis));
+    } break;
+    case kTfLiteInt16: {
+      TF_LITE_ENSURE_OK(
+          context, EvalIntegerMean<int16_t>(context, node, num_axis, op_data,
+                                            temp_index, resolved_axis));
+    } break;
+    default:
+      TF_LITE_ENSURE_MSG(context, false,
+                         "Currently, only float32, int8 or int16 input type "
+                         "is supported.");
+  }
+  return kTfLiteOk;
+}
+
+TfLiteStatus EvalMaxHelper(TfLiteContext* context, TfLiteNode* node,
+                           OpDataReduce* op_data) {
+  const TfLiteEvalTensor* input = tflite::micro::GetEvalInput(context, node, 0);
+  const TfLiteEvalTensor* axis = tflite::micro::GetEvalInput(context, node, 1);
+  TfLiteEvalTensor* output = tflite::micro::GetEvalOutput(context, node, 0);
+  TF_LITE_ENSURE_TYPES_EQ(context, input->type, output->type);
+  TfLiteReducerParams* params =
+      static_cast<TfLiteReducerParams*>(node->builtin_data);
+
+  // Interpret an axis tensor with null dimensions as a scalar
+  int num_axis = static_cast<int>(ElementCount(*axis->dims));
+  int* temp_buffer = static_cast<int*>(
+
+========== 4. EXISTING CMSIS API DECLARATION ==========
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Include/dsp/statistics_functions.h:251:  void arm_mean_f32(
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Include/dsp/statistics_functions.h:251:  void arm_mean_f32(
+
+========== 5. MEAN SOURCE IMPLEMENTATION ==========
+3: * Title:        arm_mean_f32.c
+47:#if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
+51:ARM_DSP_ATTRIBUTE void arm_mean_f32(
+72:    sum = vecAddAcrossF32Mve(sumVec);
+91:#if defined(ARM_MATH_NEON_EXPERIMENTAL) && !defined(ARM_MATH_AUTOVECTORIZE)
+92:ARM_DSP_ATTRIBUTE void arm_mean_f32(
+141:ARM_DSP_ATTRIBUTE void arm_mean_f32(
+149:#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+193:#endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
+
+========== 6. REDUCE_COMMON ORIGINAL COMPILE COMMAND ==========
+
+MATCH 1
+DIRECTORY: /home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+COMPILER: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++
+CMSIS / TFLM INCLUDE AND DEFINE FLAGS:
+  -DAXI_LIMIT0_MAX_BEATS_BYTES=1
+  -DAXI_LIMIT0_MEM_TYPE=2
+  -DAXI_LIMIT1_MAX_BEATS_BYTES=1
+  -DAXI_LIMIT1_MEM_TYPE=2
+  -DAXI_LIMIT2_MAX_BEATS_BYTES=1
+  -DAXI_LIMIT2_MEM_TYPE=2
+  -DAXI_LIMIT3_MAX_BEATS_BYTES=1
+  -DAXI_LIMIT3_MEM_TYPE=2
+  -DETHOSU
+  -DETHOSU55
+  -DETHOSU_ARCH=u55
+  -DETHOSU_MACS=128
+  -DKERNEL
+  -DK_HEAP_MEM_POOL_SIZE=65536
+  -DPICOLIBC_DOUBLE_PRINTF_SCANF
+  -D__LINUX_ERRNO_EXTENSIONS__
+  -D__PROGRAM_START
+  -D__ZEPHYR__=1
+  -I/home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231/zephyr/include/generated/zephyr
+  -I/home/user/sdk-alif/zephyr/include
+  -I/home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231/zephyr/include/generated
+  -I/home/user/sdk-alif/zephyr/soc/alif/ensemble
+  -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/.
+  -I/home/user/sdk-alif/zephyr/soc/alif/common/.
+  -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common
+  -I/home/user/sdk-alif/alif/subsys/.
+  -I/home/user/sdk-alif/alif/subsys/modules/ethosu/.
+  -I/home/user/sdk-alif/alif/subsys/modules/testcommands/.
+  -I/home/user/sdk-alif/alif/include
+  -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include
+  -I/home/user/sdk-alif/zephyr/modules/cmsis/.
+  -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/.
+  -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp
+  -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include
+  -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy
+  -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft
+  -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include
+  -I/home/user/sdk-alif/modules/hal/alif/common/include
+  -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include
+  -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include
+  -I/home/user/sdk-alif/modules/hal/alif/se_services/include
+  -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include
+  -I/home/user/sdk-alif/modules/hal/ethos_u/include
+  -isystem
+  -DNDEBUG
+FULL COMMAND:
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -I/home/user/sdk-alif/modules/hal/ethos_u/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -fno-strict-aliasing -Os -fcheck-new -std=c++17 -Wno-register -fno-exceptions -fno-rtti -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_mirrorpad_fast_20261124_170231/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -o modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc.obj -c /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+
+========== 7. CMSIS INCLUDE PATH CHECK ==========
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Include/arm_math.h
+/home/user/sdk-alif/modules/lib/cmsis-dsp/Include/dsp/statistics_functions.h
+
+========== 8. INTEGRATION SAFETY ==========
+TFLite model is not modified.
+No firmware source is modified by this inspection.
+No flash operation is performed.
+
+INSPECTION COMPLETE
