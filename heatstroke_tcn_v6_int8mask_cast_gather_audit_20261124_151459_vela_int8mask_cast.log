@@ -1,0 +1,2599 @@
+TfLiteReader: Built-in options type 'CastOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'BroadcastToOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+
+[ Before Graph Optimisation ]
+0     FullyConnected       /non_seq_enc/Gemm_output_0    
+1     Reshape              /Reshape_output_0             
+2     Cast                 missing_mask_cast_float32     
+3     Sub                  missing_mask_inverse_float32  
+4     Mul                  /Where_5_output_0             
+5     Mul                  select_43_false_part          
+6     None                 broadcasted_shape             
+7     ReduceSum            /ReduceSum_output_0           
+8     Sub                  valid_observation_count_before_minimum
+9     Maximum              /Clip_output_0                
+10    Mul                  /Where_1_output_0             
+11    ReduceSum            /ReduceSum_1_output_0         
+12    Div                  /Div_output_0                 
+13    None                 /Expand_output_0              
+14    Mul                  select_43_true_part           
+15    Add                  /Where_3_output_0             
+16    MirrorPad            /cvf/cvf.0/Pad_output_0       
+17    Quantize             /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+18    Reshape              /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_
+19    Conv2D               /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_
+20    Reshape              /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output
+21    MirrorPad            /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+22    Reshape              /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_
+23    Conv2D               /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_
+24    Reshape              /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+25    Dequantize           /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+26    Transpose            /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+27    Mean                 /cvf/cvf.2/ReduceMean_output_00
+28    Reshape              /cvf/cvf.2/ReduceMean_output_0
+29    Sub                  /cvf/cvf.2/Sub_output_0       
+30    Mul                  /cvf/cvf.2/Mul_output_0       
+31    Transpose            /cvf/cvf.2/Mul_output_0_transposed_
+32    Mean                 /cvf/cvf.2/ReduceMean_1_output_00
+33    Reshape              /cvf/cvf.2/ReduceMean_1_output_0
+34    Add                  /cvf/cvf.2/Add_output_0       
+35    Sqrt                 /cvf/cvf.2/Sqrt_output_0      
+36    Div                  /cvf/cvf.2/Div_output_0       
+37    Mul                  /cvf/cvf.2/Mul_1_output_0     
+38    Add                  /cvf/cvf.2/Add_1_output_0     
+39    Mul                  /cvf/cvf.3/Mul_output_0       
+40    Abs                  /cvf/cvf.3/Abs_output_0       
+41    Mul                  /cvf/cvf.3/Mul_8_output_0     
+42    Neg                  /cvf/cvf.3/Neg_output_0       
+43    Exp                  /cvf/cvf.3/Exp_output_0       
+44    Mul                  /cvf/cvf.3/Mul_1_output_0     
+45    Add                  /cvf/cvf.3/Add_output_0       
+46    Div                  /cvf/cvf.3/Mul_2_output_0     
+47    Mul                  /cvf/cvf.3/Mul_3_output_0     
+48    Sub                  /cvf/cvf.3/Sub_output_0       
+49    Mul                  /cvf/cvf.3/Mul_4_output_0     
+50    Add                  /cvf/cvf.3/Add_1_output_0     
+51    Mul                  /cvf/cvf.3/Mul_5_output_0     
+52    Sub                  /cvf/cvf.3/Sub_1_output_0     
+53    Mul                  /cvf/cvf.3/Mul_6_output_0     
+54    Add                  /cvf/cvf.3/Add_2_output_0     
+55    Mul                  /cvf/cvf.3/Mul_7_output_0     
+56    Mul                  /cvf/cvf.3/Mul_9_output_0     
+57    Sub                  /cvf/cvf.3/Sub_2_output_0     
+58    Neg                  /cvf/cvf.3/Neg_1_output_0     
+59    GreaterEqual         /cvf/cvf.3/GreaterOrEqual_output_0
+60    SelectV2             /cvf/cvf.3/Where_output_0     
+61    Add                  /cvf/cvf.3/Add_3_output_0     
+62    Mul                  /cvf/cvf.3/Mul_10_output_0    
+63    Mul                  /cvf/cvf.3/Mul_11_output_0    
+64    MirrorPad            /cvf/cvf.4/Pad_output_0       
+65    Quantize             /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+66    Reshape              /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output_4D_
+67    Conv2D               /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_
+68    Reshape              /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output
+69    MirrorPad            /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+70    Reshape              /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_4D_
+71    Conv2D               /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output_4D_
+72    Reshape              /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output
+73    Dequantize           /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+74    Transpose            /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+75    Mean                 /cvf/cvf.6/ReduceMean_output_00
+76    Reshape              /cvf/cvf.6/ReduceMean_output_0
+77    Sub                  /cvf/cvf.6/Sub_output_0       
+78    Mul                  /cvf/cvf.6/Mul_output_0       
+79    Transpose            /cvf/cvf.6/Mul_output_0_transposed_
+80    Mean                 /cvf/cvf.6/ReduceMean_1_output_00
+81    Reshape              /cvf/cvf.6/ReduceMean_1_output_0
+82    Add                  /cvf/cvf.6/Add_output_0       
+83    Sqrt                 /cvf/cvf.6/Sqrt_output_0      
+84    Div                  /cvf/cvf.6/Div_output_0       
+85    Mul                  /cvf/cvf.6/Mul_1_output_0     
+86    Add                  /cvf/cvf.6/Add_1_output_0     
+87    Mul                  /cvf/cvf.7/Mul_output_0       
+88    Abs                  /cvf/cvf.7/Abs_output_0       
+89    Mul                  /cvf/cvf.7/Mul_8_output_0     
+90    Neg                  /cvf/cvf.7/Neg_output_0       
+91    Exp                  /cvf/cvf.7/Exp_output_0       
+92    Mul                  /cvf/cvf.7/Mul_1_output_0     
+93    Add                  /cvf/cvf.7/Add_output_0       
+94    Div                  /cvf/cvf.7/Mul_2_output_0     
+95    Mul                  /cvf/cvf.7/Mul_3_output_0     
+96    Sub                  /cvf/cvf.7/Sub_output_0       
+97    Mul                  /cvf/cvf.7/Mul_4_output_0     
+98    Add                  /cvf/cvf.7/Add_1_output_0     
+99    Mul                  /cvf/cvf.7/Mul_5_output_0     
+100   Sub                  /cvf/cvf.7/Sub_1_output_0     
+101   Mul                  /cvf/cvf.7/Mul_6_output_0     
+102   Add                  /cvf/cvf.7/Add_2_output_0     
+103   Mul                  /cvf/cvf.7/Mul_7_output_0     
+104   Mul                  /cvf/cvf.7/Mul_9_output_0     
+105   Sub                  /cvf/cvf.7/Sub_2_output_0     
+106   Neg                  /cvf/cvf.7/Neg_1_output_0     
+107   GreaterEqual         /cvf/cvf.7/GreaterOrEqual_output_0
+108   SelectV2             /cvf/cvf.7/Where_output_0     
+109   Add                  /cvf/cvf.7/Add_3_output_0     
+110   Mul                  /cvf/cvf.7/Mul_10_output_0    
+111   Mul                  /cvf/cvf.7/Mul_11_output_0    
+112   MirrorPad            /cvf/cvf.8/Pad_output_0       
+113   Quantize             /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+114   Reshape              /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output_4D_
+115   Conv2D               /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output_4D_
+116   Reshape              /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output
+117   Dequantize           /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+118   Mul                  /Where_4_output_0             
+119   GatherV2             /Gather_5_output_0            
+120   Quantize             /Gather_5_output_0_DequantizeLinear_Output
+121   FullyConnected       /svf.5/Gemm_output_0_QuantizeLinear_Output
+122   Dequantize           /svf.5/Gemm_output_0_DequantizeLinear_Output
+123   Reshape              /Unsqueeze_5_output_0         
+124   GatherV2             /Gather_4_output_0            
+125   Quantize             /Gather_4_output_0_DequantizeLinear_Output
+126   FullyConnected       /svf.4/Gemm_output_0_QuantizeLinear_Output
+127   Dequantize           /svf.4/Gemm_output_0_DequantizeLinear_Output
+128   Reshape              /Unsqueeze_4_output_0         
+129   GatherV2             /Gather_3_output_0            
+130   Quantize             /Gather_3_output_0_DequantizeLinear_Output
+131   FullyConnected       /svf.3/Gemm_output_0_QuantizeLinear_Output
+132   Dequantize           /svf.3/Gemm_output_0_DequantizeLinear_Output
+133   Reshape              /Unsqueeze_3_output_0         
+134   GatherV2             /Gather_2_output_0            
+135   Quantize             /Gather_2_output_0_DequantizeLinear_Output
+136   FullyConnected       /svf.2/Gemm_output_0_QuantizeLinear_Output
+137   Dequantize           /svf.2/Gemm_output_0_DequantizeLinear_Output
+138   Reshape              /Unsqueeze_2_output_0         
+139   GatherV2             /Gather_1_output_0            
+140   Quantize             /Gather_1_output_0_DequantizeLinear_Output
+141   FullyConnected       /svf.1/Gemm_output_0_QuantizeLinear_Output
+142   Dequantize           /svf.1/Gemm_output_0_DequantizeLinear_Output
+143   Reshape              /Unsqueeze_1_output_0         
+144   GatherV2             /Gather_output_0              
+145   Quantize             /Gather_output_0_DequantizeLinear_Output
+146   FullyConnected       /svf.0/Gemm_output_0_QuantizeLinear_Output
+147   Dequantize           /svf.0/Gemm_output_0_DequantizeLinear_Output
+148   Reshape              /Unsqueeze_output_0           
+149   Concat               /Concat_output_0              
+150   Mul                  /Where_output_0               
+151   Add                  /Add_output_0                 
+152   Div                  /Div_1_output_0               
+153   Concat               /Concat_1_output_0            
+154   Quantize             /Transpose_2_output_0_DequantizeLinear_Output
+155   Reshape              /Transpose_2_output_0_DequantizeLinear_Output_4D_
+156   Conv2D               /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_
+157   Reshape              /tcn_in/Conv_output_0_DequantizeLinear_Output
+158   Relu                 /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0
+159   Reshape              /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_
+160   DepthwiseConv2D      /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+161   Conv2D               /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+162   Reshape              /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+163   Relu                 /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output
+164   Reshape              /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+165   DepthwiseConv2D      /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+166   Conv2D               /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+167   Reshape              /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+168   Dequantize           /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+169   Relu                 /tcn_blocks.0/layer2/Relu_output_0
+170   Dequantize           /Relu_output_0_DequantizeLinear_Output
+171   Add                  /tcn_blocks.0/Relu_output_0   
+172   Relu                 /tcn_blocks.0/Relu_output_0   
+173   Quantize             /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+174   Reshape              /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_
+175   DepthwiseConv2D      /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+176   Conv2D               /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+177   Reshape              /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+178   Relu                 /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output
+179   Reshape              /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+180   DepthwiseConv2D      /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+181   Conv2D               /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+182   Reshape              /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+183   Dequantize           /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+184   Relu                 /tcn_blocks.1/layer2/Relu_output_0
+185   Dequantize           /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+186   Add                  /tcn_blocks.1/Relu_output_0   
+187   Relu                 /tcn_blocks.1/Relu_output_0   
+188   Quantize             /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+189   Reshape              /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_2_4D_
+190   DepthwiseConv2D      /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+191   Conv2D               /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+192   Reshape              /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+193   Relu                 /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output
+194   Reshape              /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+195   DepthwiseConv2D      /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+196   Conv2D               /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+197   Reshape              /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+198   Dequantize           /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+199   Relu                 /tcn_blocks.2/layer2/Relu_output_0
+200   Dequantize           /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+201   Add                  /tcn_blocks.2/Relu_output_0   
+202   Relu                 /tcn_blocks.2/Relu_output_0   
+203   Quantize             /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+204   Reshape              /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_3_4D_
+205   DepthwiseConv2D      /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+206   Conv2D               /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+207   Reshape              /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+208   Relu                 /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output
+209   Reshape              /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+210   DepthwiseConv2D      /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+211   Conv2D               /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+212   Reshape              /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+213   Dequantize           /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+214   Relu                 /tcn_blocks.3/layer2/Relu_output_0
+215   Dequantize           /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+216   Add                  /tcn_blocks.3/Relu_output_0   
+217   Relu                 /tcn_blocks.3/Relu_output_0   
+218   Quantize             /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+219   Reshape              /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_4_4D_
+220   DepthwiseConv2D      /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+221   Conv2D               /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+222   Reshape              /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+223   Relu                 /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output
+224   Reshape              /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+225   DepthwiseConv2D      /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+226   Conv2D               /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+227   Reshape              /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+228   Dequantize           /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+229   Relu                 /tcn_blocks.4/layer2/Relu_output_0
+230   Dequantize           /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+231   Add                  /tcn_blocks.4/Relu_output_0   
+232   Relu                 /tcn_blocks.4/Relu_output_0   
+233   Quantize             /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+234   Reshape              /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_5_4D_
+235   DepthwiseConv2D      /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+236   Conv2D               /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+237   Reshape              /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+238   Relu                 /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output
+239   Reshape              /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+240   DepthwiseConv2D      /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+241   Conv2D               /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+242   Reshape              /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+243   Dequantize           /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+244   Relu                 /tcn_blocks.5/layer2/Relu_output_0
+245   Dequantize           /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+246   Add                  /tcn_blocks.5/Relu_output_0   
+247   Relu                 /tcn_blocks.5/Relu_output_0   
+248   Quantize             /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+249   Reshape              /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_6_4D_
+250   DepthwiseConv2D      /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+251   Conv2D               /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+252   Reshape              /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+253   Relu                 /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output
+254   Reshape              /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+255   DepthwiseConv2D      /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+256   Conv2D               /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+257   Reshape              /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+258   Dequantize           /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+259   Relu                 /tcn_blocks.6/layer2/Relu_output_0
+260   Dequantize           /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+261   Add                  /tcn_blocks.6/Relu_output_0   
+262   Relu                 /tcn_blocks.6/Relu_output_0   
+263   Quantize             /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+264   Reshape              /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_7_4D_
+265   DepthwiseConv2D      /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+266   Conv2D               /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+267   Reshape              /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+268   Relu                 /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output
+269   Reshape              /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+270   DepthwiseConv2D      /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+271   Conv2D               /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+272   Reshape              /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+273   Dequantize           /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+274   Relu                 /tcn_blocks.7/layer2/Relu_output_0
+275   Dequantize           /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+276   Add                  /tcn_blocks.7/Relu_output_0   
+277   Relu                 /tcn_blocks.7/Relu_output_0   
+278   Quantize             /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+279   Reshape              /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_8_4D_
+280   DepthwiseConv2D      /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+281   Conv2D               /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+282   Reshape              /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+283   Relu                 /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output
+284   Reshape              /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+285   DepthwiseConv2D      /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+286   Conv2D               /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+287   Reshape              /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+288   Dequantize           /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+289   Relu                 /tcn_blocks.8/layer2/Relu_output_0
+290   Dequantize           /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+291   Add                  /tcn_blocks.8/Relu_output_0   
+292   Relu                 /tcn_blocks.8/Relu_output_0   
+293   Quantize             /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+294   Reshape              /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_9_4D_
+295   DepthwiseConv2D      /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+296   Conv2D               /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+297   Reshape              /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+298   Relu                 /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output
+299   Reshape              /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+300   DepthwiseConv2D      /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+301   Conv2D               /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+302   Reshape              /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+303   Dequantize           /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+304   Relu                 /tcn_blocks.9/layer2/Relu_output_0
+305   Dequantize           /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+306   Add                  /tcn_blocks.9/Relu_output_0   
+307   Relu                 /tcn_blocks.9/Relu_output_0   
+308   Quantize             /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+309   Reshape              /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output_4D_
+310   Conv2D               /tcn_out/Conv_output_0_QuantizeLinear_Output_4D_
+311   Reshape              /tcn_out/Conv_output_0_QuantizeLinear_Output
+312   Dequantize           reconstructed_values          
+
+
+Warning (supported operators) operator:DEQUANTIZE ofm:reconstructed_values
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.9/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.8/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.7/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.6/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.5/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.4/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.3/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.2/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.1/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.0/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Transpose_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Reshape_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:FULLY_CONNECTED ofm:/non_seq_enc/Gemm_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/Where_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:missing_mask_inverse_float32
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CAST ofm:missing_mask_cast_float32
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/Where_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.8/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.7/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.7/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.7/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.6/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.6/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.6/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.6/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.4/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.3/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.3/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.3/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.2/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.2/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.2/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.2/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.0/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/Where_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:select_43_false_part
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:select_43_true_part
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:None ofm:/Expand_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:broadcasted_shape
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MAXIMUM ofm:/Clip_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:valid_observation_count_before_minimum
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/Where_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.3/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.3/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.7/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.7/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/Where_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.5/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_5_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.4/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_4_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.3/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_3_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.2/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.1/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_1_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.0/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+[ After Graph Optimization ]
+0     Passthrough          /non_seq_enc/Gemm_output_0    
+1     Passthrough          /Reshape_output_0             
+2     Passthrough          missing_mask_cast_float32     
+3     Passthrough          missing_mask_inverse_float32  
+4     Passthrough          /Where_5_output_0             
+5     Passthrough          select_43_false_part          
+6     Passthrough          broadcasted_shape             
+7     Passthrough          /ReduceSum_output_0           
+8     Passthrough          valid_observation_count_before_minimum
+9     Passthrough          /Clip_output_0                
+10    Passthrough          /Where_1_output_0             
+11    Passthrough          /ReduceSum_1_output_0         
+12    Passthrough          /Div_output_0                 
+13    Passthrough          /Expand_output_0              
+14    Passthrough          select_43_true_part           
+15    Passthrough          /Where_3_output_0             
+16    Passthrough          /cvf/cvf.0/Pad_output_0       
+17    Passthrough          /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+18    Reshape              /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_
+19    Conv2D               /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_
+20    Reshape              /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output
+21    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+22    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+23    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+24    Reshape              /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_
+25    Conv2D               /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_
+26    Reshape              /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+27    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+28    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+29    Passthrough          /cvf/cvf.2/ReduceMean_output_00
+30    Passthrough          /cvf/cvf.2/ReduceMean_output_0
+31    Passthrough          /cvf/cvf.2/Sub_output_0       
+32    Passthrough          /cvf/cvf.2/Mul_output_0       
+33    Passthrough          /cvf/cvf.2/Mul_output_0_transposed_
+34    Passthrough          /cvf/cvf.2/ReduceMean_1_output_00
+35    Passthrough          /cvf/cvf.2/ReduceMean_1_output_0
+36    Passthrough          /cvf/cvf.2/Add_output_0       
+37    Passthrough          /cvf/cvf.2/Sqrt_output_0      
+38    Passthrough          /cvf/cvf.2/Div_output_0       
+39    Passthrough          /cvf/cvf.2/Mul_1_output_0     
+40    Passthrough          /cvf/cvf.2/Add_1_output_0     
+41    Passthrough          /cvf/cvf.3/Mul_output_0       
+42    Passthrough          /cvf/cvf.3/Abs_output_0       
+43    Passthrough          /cvf/cvf.3/Mul_8_output_0     
+44    Passthrough          /cvf/cvf.3/Neg_output_0       
+45    Passthrough          /cvf/cvf.3/Exp_output_0       
+46    Passthrough          /cvf/cvf.3/Mul_1_output_0     
+47    Passthrough          /cvf/cvf.3/Add_output_0       
+48    Passthrough          /cvf/cvf.3/Mul_2_output_0     
+49    Passthrough          /cvf/cvf.3/Mul_3_output_0     
+50    Passthrough          /cvf/cvf.3/Sub_output_0       
+51    Passthrough          /cvf/cvf.3/Mul_4_output_0     
+52    Passthrough          /cvf/cvf.3/Add_1_output_0     
+53    Passthrough          /cvf/cvf.3/Mul_5_output_0     
+54    Passthrough          /cvf/cvf.3/Sub_1_output_0     
+55    Passthrough          /cvf/cvf.3/Mul_6_output_0     
+56    Passthrough          /cvf/cvf.3/Add_2_output_0     
+57    Passthrough          /cvf/cvf.3/Mul_7_output_0     
+58    Passthrough          /cvf/cvf.3/Mul_9_output_0     
+59    Passthrough          /cvf/cvf.3/Sub_2_output_0     
+60    Passthrough          /cvf/cvf.3/Neg_1_output_0     
+61    Passthrough          /cvf/cvf.3/GreaterOrEqual_output_0
+62    Passthrough          /cvf/cvf.3/Where_output_0     
+63    Passthrough          /cvf/cvf.3/Add_3_output_0     
+64    Passthrough          /cvf/cvf.3/Mul_10_output_0    
+65    Passthrough          /cvf/cvf.3/Mul_11_output_0    
+66    Passthrough          /cvf/cvf.4/Pad_output_0       
+67    Passthrough          /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+68    Reshape              /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output_4D_
+69    Conv2D               /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_
+70    Reshape              /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output
+71    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+72    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+73    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+74    Reshape              /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_4D_
+75    Conv2D               /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output_4D_
+76    Reshape              /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output
+77    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+78    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+79    Passthrough          /cvf/cvf.6/ReduceMean_output_00
+80    Passthrough          /cvf/cvf.6/ReduceMean_output_0
+81    Passthrough          /cvf/cvf.6/Sub_output_0       
+82    Passthrough          /cvf/cvf.6/Mul_output_0       
+83    Passthrough          /cvf/cvf.6/Mul_output_0_transposed_
+84    Passthrough          /cvf/cvf.6/ReduceMean_1_output_00
+85    Passthrough          /cvf/cvf.6/ReduceMean_1_output_0
+86    Passthrough          /cvf/cvf.6/Add_output_0       
+87    Passthrough          /cvf/cvf.6/Sqrt_output_0      
+88    Passthrough          /cvf/cvf.6/Div_output_0       
+89    Passthrough          /cvf/cvf.6/Mul_1_output_0     
+90    Passthrough          /cvf/cvf.6/Add_1_output_0     
+91    Passthrough          /cvf/cvf.7/Mul_output_0       
+92    Passthrough          /cvf/cvf.7/Abs_output_0       
+93    Passthrough          /cvf/cvf.7/Mul_8_output_0     
+94    Passthrough          /cvf/cvf.7/Neg_output_0       
+95    Passthrough          /cvf/cvf.7/Exp_output_0       
+96    Passthrough          /cvf/cvf.7/Mul_1_output_0     
+97    Passthrough          /cvf/cvf.7/Add_output_0       
+98    Passthrough          /cvf/cvf.7/Mul_2_output_0     
+99    Passthrough          /cvf/cvf.7/Mul_3_output_0     
+100   Passthrough          /cvf/cvf.7/Sub_output_0       
+101   Passthrough          /cvf/cvf.7/Mul_4_output_0     
+102   Passthrough          /cvf/cvf.7/Add_1_output_0     
+103   Passthrough          /cvf/cvf.7/Mul_5_output_0     
+104   Passthrough          /cvf/cvf.7/Sub_1_output_0     
+105   Passthrough          /cvf/cvf.7/Mul_6_output_0     
+106   Passthrough          /cvf/cvf.7/Add_2_output_0     
+107   Passthrough          /cvf/cvf.7/Mul_7_output_0     
+108   Passthrough          /cvf/cvf.7/Mul_9_output_0     
+109   Passthrough          /cvf/cvf.7/Sub_2_output_0     
+110   Passthrough          /cvf/cvf.7/Neg_1_output_0     
+111   Passthrough          /cvf/cvf.7/GreaterOrEqual_output_0
+112   Passthrough          /cvf/cvf.7/Where_output_0     
+113   Passthrough          /cvf/cvf.7/Add_3_output_0     
+114   Passthrough          /cvf/cvf.7/Mul_10_output_0    
+115   Passthrough          /cvf/cvf.7/Mul_11_output_0    
+116   Passthrough          /cvf/cvf.8/Pad_output_0       
+117   Passthrough          /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+118   Reshape              /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output_4D_
+119   Conv2D               /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output_4D_
+120   Reshape              /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output
+121   Passthrough          /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+122   Passthrough          /Where_4_output_0             
+123   Passthrough          /Gather_5_output_0            
+124   Passthrough          /Gather_5_output_0_DequantizeLinear_Output
+125   FullyConnected       /svf.5/Gemm_output_0_QuantizeLinear_Output
+126   Passthrough          /svf.5/Gemm_output_0_DequantizeLinear_Output
+127   Passthrough          /Unsqueeze_5_output_0         
+128   Passthrough          /Gather_4_output_0            
+129   Passthrough          /Gather_4_output_0_DequantizeLinear_Output
+130   FullyConnected       /svf.4/Gemm_output_0_QuantizeLinear_Output
+131   Passthrough          /svf.4/Gemm_output_0_DequantizeLinear_Output
+132   Passthrough          /Unsqueeze_4_output_0         
+133   Passthrough          /Gather_3_output_0            
+134   Passthrough          /Gather_3_output_0_DequantizeLinear_Output
+135   FullyConnected       /svf.3/Gemm_output_0_QuantizeLinear_Output
+136   Passthrough          /svf.3/Gemm_output_0_DequantizeLinear_Output
+137   Passthrough          /Unsqueeze_3_output_0         
+138   Passthrough          /Gather_2_output_0            
+139   Passthrough          /Gather_2_output_0_DequantizeLinear_Output
+140   FullyConnected       /svf.2/Gemm_output_0_QuantizeLinear_Output
+141   Passthrough          /svf.2/Gemm_output_0_DequantizeLinear_Output
+142   Passthrough          /Unsqueeze_2_output_0         
+143   Passthrough          /Gather_1_output_0            
+144   Passthrough          /Gather_1_output_0_DequantizeLinear_Output
+145   FullyConnected       /svf.1/Gemm_output_0_QuantizeLinear_Output
+146   Passthrough          /svf.1/Gemm_output_0_DequantizeLinear_Output
+147   Passthrough          /Unsqueeze_1_output_0         
+148   Passthrough          /Gather_output_0              
+149   Passthrough          /Gather_output_0_DequantizeLinear_Output
+150   FullyConnected       /svf.0/Gemm_output_0_QuantizeLinear_Output
+151   Passthrough          /svf.0/Gemm_output_0_DequantizeLinear_Output
+152   Passthrough          /Unsqueeze_output_0           
+153   Passthrough          /Concat_output_0              
+154   Passthrough          /Where_output_0               
+155   Passthrough          /Add_output_0                 
+156   Passthrough          /Div_1_output_0               
+157   Passthrough          /Concat_1_output_0            
+158   Passthrough          /Transpose_2_output_0_DequantizeLinear_Output
+159   Reshape              /Transpose_2_output_0_DequantizeLinear_Output_4D_
+160   Conv2D               /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_
+161   Reshape              /tcn_in/Conv_output_0_DequantizeLinear_Output
+162   Relu                 /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0
+163   Reshape              /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_
+164   DepthwiseConv2D      /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+165   Conv2D               /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+166   Reshape              /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+167   Relu                 /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output
+168   Reshape              /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+169   DepthwiseConv2D      /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+170   Conv2D               /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+171   Reshape              /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+172   Passthrough          /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+173   Passthrough          /tcn_blocks.0/layer2/Relu_output_0
+174   Passthrough          /Relu_output_0_DequantizeLinear_Output
+175   Passthrough          /tcn_blocks.0/Relu_output_0   
+176   Passthrough          /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+177   Reshape              /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_
+178   DepthwiseConv2D      /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+179   Conv2D               /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+180   Reshape              /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+181   Relu                 /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output
+182   Reshape              /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+183   DepthwiseConv2D      /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+184   Conv2D               /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+185   Reshape              /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+186   Passthrough          /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+187   Passthrough          /tcn_blocks.1/layer2/Relu_output_0
+188   Passthrough          /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+189   Passthrough          /tcn_blocks.1/Relu_output_0   
+190   Passthrough          /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+191   Reshape              /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_2_4D_
+192   DepthwiseConv2D      /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+193   Conv2D               /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+194   Reshape              /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+195   Relu                 /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output
+196   Reshape              /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+197   DepthwiseConv2D      /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+198   Conv2D               /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+199   Reshape              /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+200   Passthrough          /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+201   Passthrough          /tcn_blocks.2/layer2/Relu_output_0
+202   Passthrough          /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+203   Passthrough          /tcn_blocks.2/Relu_output_0   
+204   Passthrough          /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+205   Reshape              /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_3_4D_
+206   DepthwiseConv2D      /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+207   Conv2D               /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+208   Reshape              /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+209   Relu                 /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output
+210   Reshape              /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+211   DepthwiseConv2D      /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+212   Conv2D               /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+213   Reshape              /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+214   Passthrough          /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+215   Passthrough          /tcn_blocks.3/layer2/Relu_output_0
+216   Passthrough          /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+217   Passthrough          /tcn_blocks.3/Relu_output_0   
+218   Passthrough          /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+219   Reshape              /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_4_4D_
+220   DepthwiseConv2D      /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+221   Conv2D               /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+222   Reshape              /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+223   Relu                 /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output
+224   Reshape              /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+225   DepthwiseConv2D      /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+226   Conv2D               /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+227   Reshape              /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+228   Passthrough          /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+229   Passthrough          /tcn_blocks.4/layer2/Relu_output_0
+230   Passthrough          /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+231   Passthrough          /tcn_blocks.4/Relu_output_0   
+232   Passthrough          /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+233   Reshape              /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_5_4D_
+234   DepthwiseConv2D      /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+235   Conv2D               /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+236   Reshape              /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+237   Relu                 /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output
+238   Reshape              /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+239   DepthwiseConv2D      /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+240   Conv2D               /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+241   Reshape              /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+242   Passthrough          /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+243   Passthrough          /tcn_blocks.5/layer2/Relu_output_0
+244   Passthrough          /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+245   Passthrough          /tcn_blocks.5/Relu_output_0   
+246   Passthrough          /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+247   Reshape              /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_6_4D_
+248   DepthwiseConv2D      /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+249   Conv2D               /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+250   Reshape              /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+251   Relu                 /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output
+252   Reshape              /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+253   DepthwiseConv2D      /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+254   Conv2D               /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+255   Reshape              /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+256   Passthrough          /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+257   Passthrough          /tcn_blocks.6/layer2/Relu_output_0
+258   Passthrough          /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+259   Passthrough          /tcn_blocks.6/Relu_output_0   
+260   Passthrough          /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+261   Reshape              /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_7_4D_
+262   DepthwiseConv2D      /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+263   Conv2D               /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+264   Reshape              /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+265   Relu                 /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output
+266   Reshape              /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+267   DepthwiseConv2D      /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+268   Conv2D               /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+269   Reshape              /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+270   Passthrough          /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+271   Passthrough          /tcn_blocks.7/layer2/Relu_output_0
+272   Passthrough          /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+273   Passthrough          /tcn_blocks.7/Relu_output_0   
+274   Passthrough          /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+275   Reshape              /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_8_4D_
+276   DepthwiseConv2D      /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+277   Conv2D               /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+278   Reshape              /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+279   Relu                 /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output
+280   Reshape              /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+281   DepthwiseConv2D      /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+282   Conv2D               /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+283   Reshape              /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+284   Passthrough          /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+285   Passthrough          /tcn_blocks.8/layer2/Relu_output_0
+286   Passthrough          /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+287   Passthrough          /tcn_blocks.8/Relu_output_0   
+288   Passthrough          /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+289   Reshape              /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_9_4D_
+290   DepthwiseConv2D      /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+291   Conv2D               /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+292   Reshape              /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+293   Relu                 /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output
+294   Reshape              /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+295   DepthwiseConv2D      /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+296   Conv2D               /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+297   Reshape              /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+298   Passthrough          /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+299   Passthrough          /tcn_blocks.9/layer2/Relu_output_0
+300   Passthrough          /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+301   Passthrough          /tcn_blocks.9/Relu_output_0   
+302   Passthrough          /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+303   Reshape              /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output_4D_
+304   Conv2D               /tcn_out/Conv_output_0_QuantizeLinear_Output_4D_
+305   Reshape              /tcn_out/Conv_output_0_QuantizeLinear_Output
+306   Passthrough          reconstructed_values          
+
+
+[ Before Graph Optimisation ]
+0     Passthrough          /non_seq_enc/Gemm_output_0    
+1     Passthrough          /Reshape_output_0             
+2     Passthrough          missing_mask_cast_float32     
+3     Passthrough          missing_mask_inverse_float32  
+4     Passthrough          /Where_5_output_0             
+5     Passthrough          select_43_false_part          
+6     Passthrough          broadcasted_shape             
+7     Passthrough          /ReduceSum_output_0           
+8     Passthrough          valid_observation_count_before_minimum
+9     Passthrough          /Clip_output_0                
+10    Passthrough          /Where_1_output_0             
+11    Passthrough          /ReduceSum_1_output_0         
+12    Passthrough          /Div_output_0                 
+13    Passthrough          /Expand_output_0              
+14    Passthrough          select_43_true_part           
+15    Passthrough          /Where_3_output_0             
+16    Passthrough          /cvf/cvf.0/Pad_output_0       
+17    Passthrough          /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+18    Reshape              /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_
+19    Conv2D               /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_
+20    Reshape              /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output
+21    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+22    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+23    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+24    Reshape              /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_
+25    Conv2D               /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_
+26    Reshape              /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+27    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+28    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+29    Passthrough          /cvf/cvf.2/ReduceMean_output_00
+30    Passthrough          /cvf/cvf.2/ReduceMean_output_0
+31    Passthrough          /cvf/cvf.2/Sub_output_0       
+32    Passthrough          /cvf/cvf.2/Mul_output_0       
+33    Passthrough          /cvf/cvf.2/Mul_output_0_transposed_
+34    Passthrough          /cvf/cvf.2/ReduceMean_1_output_00
+35    Passthrough          /cvf/cvf.2/ReduceMean_1_output_0
+36    Passthrough          /cvf/cvf.2/Add_output_0       
+37    Passthrough          /cvf/cvf.2/Sqrt_output_0      
+38    Passthrough          /cvf/cvf.2/Div_output_0       
+39    Passthrough          /cvf/cvf.2/Mul_1_output_0     
+40    Passthrough          /cvf/cvf.2/Add_1_output_0     
+41    Passthrough          /cvf/cvf.3/Mul_output_0       
+42    Passthrough          /cvf/cvf.3/Abs_output_0       
+43    Passthrough          /cvf/cvf.3/Mul_8_output_0     
+44    Passthrough          /cvf/cvf.3/Neg_output_0       
+45    Passthrough          /cvf/cvf.3/Exp_output_0       
+46    Passthrough          /cvf/cvf.3/Mul_1_output_0     
+47    Passthrough          /cvf/cvf.3/Add_output_0       
+48    Passthrough          /cvf/cvf.3/Mul_2_output_0     
+49    Passthrough          /cvf/cvf.3/Mul_3_output_0     
+50    Passthrough          /cvf/cvf.3/Sub_output_0       
+51    Passthrough          /cvf/cvf.3/Mul_4_output_0     
+52    Passthrough          /cvf/cvf.3/Add_1_output_0     
+53    Passthrough          /cvf/cvf.3/Mul_5_output_0     
+54    Passthrough          /cvf/cvf.3/Sub_1_output_0     
+55    Passthrough          /cvf/cvf.3/Mul_6_output_0     
+56    Passthrough          /cvf/cvf.3/Add_2_output_0     
+57    Passthrough          /cvf/cvf.3/Mul_7_output_0     
+58    Passthrough          /cvf/cvf.3/Mul_9_output_0     
+59    Passthrough          /cvf/cvf.3/Sub_2_output_0     
+60    Passthrough          /cvf/cvf.3/Neg_1_output_0     
+61    Passthrough          /cvf/cvf.3/GreaterOrEqual_output_0
+62    Passthrough          /cvf/cvf.3/Where_output_0     
+63    Passthrough          /cvf/cvf.3/Add_3_output_0     
+64    Passthrough          /cvf/cvf.3/Mul_10_output_0    
+65    Passthrough          /cvf/cvf.3/Mul_11_output_0    
+66    Passthrough          /cvf/cvf.4/Pad_output_0       
+67    Passthrough          /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+68    Reshape              /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output_4D_
+69    Conv2D               /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_
+70    Reshape              /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output
+71    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+72    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+73    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+74    Reshape              /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_4D_
+75    Conv2D               /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output_4D_
+76    Reshape              /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output
+77    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+78    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+79    Passthrough          /cvf/cvf.6/ReduceMean_output_00
+80    Passthrough          /cvf/cvf.6/ReduceMean_output_0
+81    Passthrough          /cvf/cvf.6/Sub_output_0       
+82    Passthrough          /cvf/cvf.6/Mul_output_0       
+83    Passthrough          /cvf/cvf.6/Mul_output_0_transposed_
+84    Passthrough          /cvf/cvf.6/ReduceMean_1_output_00
+85    Passthrough          /cvf/cvf.6/ReduceMean_1_output_0
+86    Passthrough          /cvf/cvf.6/Add_output_0       
+87    Passthrough          /cvf/cvf.6/Sqrt_output_0      
+88    Passthrough          /cvf/cvf.6/Div_output_0       
+89    Passthrough          /cvf/cvf.6/Mul_1_output_0     
+90    Passthrough          /cvf/cvf.6/Add_1_output_0     
+91    Passthrough          /cvf/cvf.7/Mul_output_0       
+92    Passthrough          /cvf/cvf.7/Abs_output_0       
+93    Passthrough          /cvf/cvf.7/Mul_8_output_0     
+94    Passthrough          /cvf/cvf.7/Neg_output_0       
+95    Passthrough          /cvf/cvf.7/Exp_output_0       
+96    Passthrough          /cvf/cvf.7/Mul_1_output_0     
+97    Passthrough          /cvf/cvf.7/Add_output_0       
+98    Passthrough          /cvf/cvf.7/Mul_2_output_0     
+99    Passthrough          /cvf/cvf.7/Mul_3_output_0     
+100   Passthrough          /cvf/cvf.7/Sub_output_0       
+101   Passthrough          /cvf/cvf.7/Mul_4_output_0     
+102   Passthrough          /cvf/cvf.7/Add_1_output_0     
+103   Passthrough          /cvf/cvf.7/Mul_5_output_0     
+104   Passthrough          /cvf/cvf.7/Sub_1_output_0     
+105   Passthrough          /cvf/cvf.7/Mul_6_output_0     
+106   Passthrough          /cvf/cvf.7/Add_2_output_0     
+107   Passthrough          /cvf/cvf.7/Mul_7_output_0     
+108   Passthrough          /cvf/cvf.7/Mul_9_output_0     
+109   Passthrough          /cvf/cvf.7/Sub_2_output_0     
+110   Passthrough          /cvf/cvf.7/Neg_1_output_0     
+111   Passthrough          /cvf/cvf.7/GreaterOrEqual_output_0
+112   Passthrough          /cvf/cvf.7/Where_output_0     
+113   Passthrough          /cvf/cvf.7/Add_3_output_0     
+114   Passthrough          /cvf/cvf.7/Mul_10_output_0    
+115   Passthrough          /cvf/cvf.7/Mul_11_output_0    
+116   Passthrough          /cvf/cvf.8/Pad_output_0       
+117   Passthrough          /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+118   Reshape              /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output_4D_
+119   Conv2D               /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output_4D_
+120   Reshape              /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output
+121   Passthrough          /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+122   Passthrough          /Where_4_output_0             
+123   Passthrough          /Gather_5_output_0            
+124   Passthrough          /Gather_5_output_0_DequantizeLinear_Output
+125   FullyConnected       /svf.5/Gemm_output_0_QuantizeLinear_Output
+126   Passthrough          /svf.5/Gemm_output_0_DequantizeLinear_Output
+127   Passthrough          /Unsqueeze_5_output_0         
+128   Passthrough          /Gather_4_output_0            
+129   Passthrough          /Gather_4_output_0_DequantizeLinear_Output
+130   FullyConnected       /svf.4/Gemm_output_0_QuantizeLinear_Output
+131   Passthrough          /svf.4/Gemm_output_0_DequantizeLinear_Output
+132   Passthrough          /Unsqueeze_4_output_0         
+133   Passthrough          /Gather_3_output_0            
+134   Passthrough          /Gather_3_output_0_DequantizeLinear_Output
+135   FullyConnected       /svf.3/Gemm_output_0_QuantizeLinear_Output
+136   Passthrough          /svf.3/Gemm_output_0_DequantizeLinear_Output
+137   Passthrough          /Unsqueeze_3_output_0         
+138   Passthrough          /Gather_2_output_0            
+139   Passthrough          /Gather_2_output_0_DequantizeLinear_Output
+140   FullyConnected       /svf.2/Gemm_output_0_QuantizeLinear_Output
+141   Passthrough          /svf.2/Gemm_output_0_DequantizeLinear_Output
+142   Passthrough          /Unsqueeze_2_output_0         
+143   Passthrough          /Gather_1_output_0            
+144   Passthrough          /Gather_1_output_0_DequantizeLinear_Output
+145   FullyConnected       /svf.1/Gemm_output_0_QuantizeLinear_Output
+146   Passthrough          /svf.1/Gemm_output_0_DequantizeLinear_Output
+147   Passthrough          /Unsqueeze_1_output_0         
+148   Passthrough          /Gather_output_0              
+149   Passthrough          /Gather_output_0_DequantizeLinear_Output
+150   FullyConnected       /svf.0/Gemm_output_0_QuantizeLinear_Output
+151   Passthrough          /svf.0/Gemm_output_0_DequantizeLinear_Output
+152   Passthrough          /Unsqueeze_output_0           
+153   Passthrough          /Concat_output_0              
+154   Passthrough          /Where_output_0               
+155   Passthrough          /Add_output_0                 
+156   Passthrough          /Div_1_output_0               
+157   Passthrough          /Concat_1_output_0            
+158   Passthrough          /Transpose_2_output_0_DequantizeLinear_Output
+159   Reshape              /Transpose_2_output_0_DequantizeLinear_Output_4D_
+160   Conv2D               /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_
+161   Reshape              /tcn_in/Conv_output_0_DequantizeLinear_Output
+162   Relu                 /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0
+163   Reshape              /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_
+164   DepthwiseConv2D      /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+165   Conv2D               /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+166   Reshape              /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+167   Relu                 /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output
+168   Reshape              /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+169   DepthwiseConv2D      /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+170   Conv2D               /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+171   Reshape              /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+172   Passthrough          /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+173   Passthrough          /tcn_blocks.0/layer2/Relu_output_0
+174   Passthrough          /Relu_output_0_DequantizeLinear_Output
+175   Passthrough          /tcn_blocks.0/Relu_output_0   
+176   Passthrough          /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+177   Reshape              /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_
+178   DepthwiseConv2D      /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+179   Conv2D               /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+180   Reshape              /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+181   Relu                 /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output
+182   Reshape              /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+183   DepthwiseConv2D      /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+184   Conv2D               /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+185   Reshape              /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+186   Passthrough          /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+187   Passthrough          /tcn_blocks.1/layer2/Relu_output_0
+188   Passthrough          /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+189   Passthrough          /tcn_blocks.1/Relu_output_0   
+190   Passthrough          /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+191   Reshape              /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_2_4D_
+192   DepthwiseConv2D      /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+193   Conv2D               /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+194   Reshape              /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+195   Relu                 /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output
+196   Reshape              /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+197   DepthwiseConv2D      /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+198   Conv2D               /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+199   Reshape              /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+200   Passthrough          /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+201   Passthrough          /tcn_blocks.2/layer2/Relu_output_0
+202   Passthrough          /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+203   Passthrough          /tcn_blocks.2/Relu_output_0   
+204   Passthrough          /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+205   Reshape              /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_3_4D_
+206   DepthwiseConv2D      /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+207   Conv2D               /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+208   Reshape              /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+209   Relu                 /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output
+210   Reshape              /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+211   DepthwiseConv2D      /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+212   Conv2D               /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+213   Reshape              /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+214   Passthrough          /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+215   Passthrough          /tcn_blocks.3/layer2/Relu_output_0
+216   Passthrough          /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+217   Passthrough          /tcn_blocks.3/Relu_output_0   
+218   Passthrough          /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+219   Reshape              /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_4_4D_
+220   DepthwiseConv2D      /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+221   Conv2D               /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+222   Reshape              /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+223   Relu                 /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output
+224   Reshape              /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+225   DepthwiseConv2D      /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+226   Conv2D               /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+227   Reshape              /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+228   Passthrough          /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+229   Passthrough          /tcn_blocks.4/layer2/Relu_output_0
+230   Passthrough          /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+231   Passthrough          /tcn_blocks.4/Relu_output_0   
+232   Passthrough          /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+233   Reshape              /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_5_4D_
+234   DepthwiseConv2D      /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+235   Conv2D               /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+236   Reshape              /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+237   Relu                 /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output
+238   Reshape              /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+239   DepthwiseConv2D      /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+240   Conv2D               /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+241   Reshape              /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+242   Passthrough          /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+243   Passthrough          /tcn_blocks.5/layer2/Relu_output_0
+244   Passthrough          /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+245   Passthrough          /tcn_blocks.5/Relu_output_0   
+246   Passthrough          /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+247   Reshape              /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_6_4D_
+248   DepthwiseConv2D      /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+249   Conv2D               /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+250   Reshape              /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+251   Relu                 /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output
+252   Reshape              /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+253   DepthwiseConv2D      /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+254   Conv2D               /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+255   Reshape              /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+256   Passthrough          /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+257   Passthrough          /tcn_blocks.6/layer2/Relu_output_0
+258   Passthrough          /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+259   Passthrough          /tcn_blocks.6/Relu_output_0   
+260   Passthrough          /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+261   Reshape              /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_7_4D_
+262   DepthwiseConv2D      /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+263   Conv2D               /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+264   Reshape              /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+265   Relu                 /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output
+266   Reshape              /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+267   DepthwiseConv2D      /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+268   Conv2D               /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+269   Reshape              /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+270   Passthrough          /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+271   Passthrough          /tcn_blocks.7/layer2/Relu_output_0
+272   Passthrough          /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+273   Passthrough          /tcn_blocks.7/Relu_output_0   
+274   Passthrough          /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+275   Reshape              /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_8_4D_
+276   DepthwiseConv2D      /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+277   Conv2D               /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+278   Reshape              /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+279   Relu                 /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output
+280   Reshape              /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+281   DepthwiseConv2D      /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+282   Conv2D               /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+283   Reshape              /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+284   Passthrough          /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+285   Passthrough          /tcn_blocks.8/layer2/Relu_output_0
+286   Passthrough          /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+287   Passthrough          /tcn_blocks.8/Relu_output_0   
+288   Passthrough          /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+289   Reshape              /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_9_4D_
+290   DepthwiseConv2D      /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+291   Conv2D               /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+292   Reshape              /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output
+293   Relu                 /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output
+294   Reshape              /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output_4D_
+295   DepthwiseConv2D      /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+296   Conv2D               /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_
+297   Reshape              /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+298   Passthrough          /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+299   Passthrough          /tcn_blocks.9/layer2/Relu_output_0
+300   Passthrough          /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+301   Passthrough          /tcn_blocks.9/Relu_output_0   
+302   Passthrough          /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+303   Reshape              /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output_4D_
+304   Conv2D               /tcn_out/Conv_output_0_QuantizeLinear_Output_4D_
+305   Reshape              /tcn_out/Conv_output_0_QuantizeLinear_Output
+306   Passthrough          reconstructed_values          
+
+
+[ After Graph Optimization ]
+0     Passthrough          /non_seq_enc/Gemm_output_0    
+1     Passthrough          /Reshape_output_0             
+2     Passthrough          missing_mask_cast_float32     
+3     Passthrough          missing_mask_inverse_float32  
+4     Passthrough          /Where_5_output_0             
+5     MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+6     MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+7     MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+8     MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+9     Passthrough          select_43_false_part          
+10    Passthrough          broadcasted_shape             
+11    Passthrough          /ReduceSum_output_0           
+12    Passthrough          valid_observation_count_before_minimum
+13    Passthrough          /Clip_output_0                
+14    Passthrough          /Where_1_output_0             
+15    Passthrough          /ReduceSum_1_output_0         
+16    Passthrough          /Div_output_0                 
+17    Passthrough          /Expand_output_0              
+18    Passthrough          select_43_true_part           
+19    Passthrough          /Where_3_output_0             
+20    Passthrough          /cvf/cvf.0/Pad_output_0       
+21    Passthrough          /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+22    Conv2D               /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_
+23    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+24    MemoryCopy           /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_copy
+25    Conv2D               /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+26    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+27    Passthrough          /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+28    Passthrough          /cvf/cvf.2/ReduceMean_output_00
+29    Passthrough          /cvf/cvf.2/ReduceMean_output_0
+30    Passthrough          /cvf/cvf.2/Sub_output_0       
+31    Passthrough          /cvf/cvf.2/Mul_output_0       
+32    Passthrough          /cvf/cvf.2/Mul_output_0_transposed_
+33    Passthrough          /cvf/cvf.2/ReduceMean_1_output_00
+34    Passthrough          /cvf/cvf.2/ReduceMean_1_output_0
+35    Passthrough          /cvf/cvf.2/Add_output_0       
+36    Passthrough          /cvf/cvf.2/Sqrt_output_0      
+37    Passthrough          /cvf/cvf.2/Div_output_0       
+38    Passthrough          /cvf/cvf.2/Mul_1_output_0     
+39    Passthrough          /cvf/cvf.2/Add_1_output_0     
+40    Passthrough          /cvf/cvf.3/Mul_output_0       
+41    Passthrough          /cvf/cvf.3/Abs_output_0       
+42    Passthrough          /cvf/cvf.3/Mul_8_output_0     
+43    Passthrough          /cvf/cvf.3/Neg_output_0       
+44    Passthrough          /cvf/cvf.3/Exp_output_0       
+45    Passthrough          /cvf/cvf.3/Mul_1_output_0     
+46    Passthrough          /cvf/cvf.3/Add_output_0       
+47    Passthrough          /cvf/cvf.3/Mul_2_output_0     
+48    Passthrough          /cvf/cvf.3/Mul_3_output_0     
+49    Passthrough          /cvf/cvf.3/Sub_output_0       
+50    Passthrough          /cvf/cvf.3/Mul_4_output_0     
+51    Passthrough          /cvf/cvf.3/Add_1_output_0     
+52    Passthrough          /cvf/cvf.3/Mul_5_output_0     
+53    Passthrough          /cvf/cvf.3/Sub_1_output_0     
+54    Passthrough          /cvf/cvf.3/Mul_6_output_0     
+55    Passthrough          /cvf/cvf.3/Add_2_output_0     
+56    Passthrough          /cvf/cvf.3/Mul_7_output_0     
+57    Passthrough          /cvf/cvf.3/Mul_9_output_0     
+58    Passthrough          /cvf/cvf.3/Sub_2_output_0     
+59    Passthrough          /cvf/cvf.3/Neg_1_output_0     
+60    Passthrough          /cvf/cvf.3/GreaterOrEqual_output_0
+61    Passthrough          /cvf/cvf.3/Where_output_0     
+62    Passthrough          /cvf/cvf.3/Add_3_output_0     
+63    Passthrough          /cvf/cvf.3/Mul_10_output_0    
+64    Passthrough          /cvf/cvf.3/Mul_11_output_0    
+65    Passthrough          /cvf/cvf.4/Pad_output_0       
+66    Passthrough          /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+67    Conv2D               /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_
+68    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+69    MemoryCopy           /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_copy
+70    Conv2D               /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output
+71    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+72    Passthrough          /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+73    Passthrough          /cvf/cvf.6/ReduceMean_output_00
+74    Passthrough          /cvf/cvf.6/ReduceMean_output_0
+75    Passthrough          /cvf/cvf.6/Sub_output_0       
+76    Passthrough          /cvf/cvf.6/Mul_output_0       
+77    Passthrough          /cvf/cvf.6/Mul_output_0_transposed_
+78    Passthrough          /cvf/cvf.6/ReduceMean_1_output_00
+79    Passthrough          /cvf/cvf.6/ReduceMean_1_output_0
+80    Passthrough          /cvf/cvf.6/Add_output_0       
+81    Passthrough          /cvf/cvf.6/Sqrt_output_0      
+82    Passthrough          /cvf/cvf.6/Div_output_0       
+83    Passthrough          /cvf/cvf.6/Mul_1_output_0     
+84    Passthrough          /cvf/cvf.6/Add_1_output_0     
+85    Passthrough          /cvf/cvf.7/Mul_output_0       
+86    Passthrough          /cvf/cvf.7/Abs_output_0       
+87    Passthrough          /cvf/cvf.7/Mul_8_output_0     
+88    Passthrough          /cvf/cvf.7/Neg_output_0       
+89    Passthrough          /cvf/cvf.7/Exp_output_0       
+90    Passthrough          /cvf/cvf.7/Mul_1_output_0     
+91    Passthrough          /cvf/cvf.7/Add_output_0       
+92    Passthrough          /cvf/cvf.7/Mul_2_output_0     
+93    Passthrough          /cvf/cvf.7/Mul_3_output_0     
+94    Passthrough          /cvf/cvf.7/Sub_output_0       
+95    Passthrough          /cvf/cvf.7/Mul_4_output_0     
+96    Passthrough          /cvf/cvf.7/Add_1_output_0     
+97    Passthrough          /cvf/cvf.7/Mul_5_output_0     
+98    Passthrough          /cvf/cvf.7/Sub_1_output_0     
+99    Passthrough          /cvf/cvf.7/Mul_6_output_0     
+100   Passthrough          /cvf/cvf.7/Add_2_output_0     
+101   Passthrough          /cvf/cvf.7/Mul_7_output_0     
+102   Passthrough          /cvf/cvf.7/Mul_9_output_0     
+103   Passthrough          /cvf/cvf.7/Sub_2_output_0     
+104   Passthrough          /cvf/cvf.7/Neg_1_output_0     
+105   Passthrough          /cvf/cvf.7/GreaterOrEqual_output_0
+106   Passthrough          /cvf/cvf.7/Where_output_0     
+107   Passthrough          /cvf/cvf.7/Add_3_output_0     
+108   Passthrough          /cvf/cvf.7/Mul_10_output_0    
+109   Passthrough          /cvf/cvf.7/Mul_11_output_0    
+110   Passthrough          /cvf/cvf.8/Pad_output_0       
+111   Passthrough          /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+112   Conv2D               /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output
+113   Passthrough          /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+114   Passthrough          /Where_4_output_0             
+115   Passthrough          /Gather_5_output_0            
+116   Passthrough          /Gather_5_output_0_DequantizeLinear_Output
+117   FullyConnected       /svf.5/Gemm_output_0_QuantizeLinear_Output
+118   Passthrough          /svf.5/Gemm_output_0_DequantizeLinear_Output
+119   Passthrough          /Unsqueeze_5_output_0         
+120   Passthrough          /Gather_4_output_0            
+121   Passthrough          /Gather_4_output_0_DequantizeLinear_Output
+122   FullyConnected       /svf.4/Gemm_output_0_QuantizeLinear_Output
+123   Passthrough          /svf.4/Gemm_output_0_DequantizeLinear_Output
+124   Passthrough          /Unsqueeze_4_output_0         
+125   Passthrough          /Gather_3_output_0            
+126   Passthrough          /Gather_3_output_0_DequantizeLinear_Output
+127   FullyConnected       /svf.3/Gemm_output_0_QuantizeLinear_Output
+128   Passthrough          /svf.3/Gemm_output_0_DequantizeLinear_Output
+129   Passthrough          /Unsqueeze_3_output_0         
+130   Passthrough          /Gather_2_output_0            
+131   Passthrough          /Gather_2_output_0_DequantizeLinear_Output
+132   FullyConnected       /svf.2/Gemm_output_0_QuantizeLinear_Output
+133   Passthrough          /svf.2/Gemm_output_0_DequantizeLinear_Output
+134   Passthrough          /Unsqueeze_2_output_0         
+135   Passthrough          /Gather_1_output_0            
+136   Passthrough          /Gather_1_output_0_DequantizeLinear_Output
+137   FullyConnected       /svf.1/Gemm_output_0_QuantizeLinear_Output
+138   Passthrough          /svf.1/Gemm_output_0_DequantizeLinear_Output
+139   Passthrough          /Unsqueeze_1_output_0         
+140   Passthrough          /Gather_output_0              
+141   Passthrough          /Gather_output_0_DequantizeLinear_Output
+142   FullyConnected       /svf.0/Gemm_output_0_QuantizeLinear_Output
+143   Passthrough          /svf.0/Gemm_output_0_DequantizeLinear_Output
+144   Passthrough          /Unsqueeze_output_0           
+145   Passthrough          /Concat_output_0              
+146   Passthrough          /Where_output_0               
+147   Passthrough          /Add_output_0                 
+148   Passthrough          /Div_1_output_0               
+149   Passthrough          /Concat_1_output_0            
+150   Passthrough          /Transpose_2_output_0_DequantizeLinear_Output
+151   Conv2D               /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_
+152   Relu                 /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0
+153   MemoryCopy           /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_copy
+154   DepthwiseConv2D      /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+155   Conv2D               /tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+156   Relu                 /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output
+157   DepthwiseConv2D      /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+158   Conv2D               /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+159   Passthrough          /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+160   Passthrough          /tcn_blocks.0/layer2/Relu_output_0
+161   Passthrough          /Relu_output_0_DequantizeLinear_Output
+162   Passthrough          /tcn_blocks.0/Relu_output_0   
+163   Passthrough          /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+164   MemoryCopy           /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output_copy
+165   DepthwiseConv2D      /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+166   Conv2D               /tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+167   Relu                 /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output
+168   DepthwiseConv2D      /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+169   Conv2D               /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+170   Passthrough          /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+171   Passthrough          /tcn_blocks.1/layer2/Relu_output_0
+172   Passthrough          /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+173   Passthrough          /tcn_blocks.1/Relu_output_0   
+174   Passthrough          /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+175   MemoryCopy           /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output_copy
+176   DepthwiseConv2D      /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+177   Conv2D               /tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+178   Relu                 /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output
+179   DepthwiseConv2D      /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+180   Conv2D               /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+181   Passthrough          /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+182   Passthrough          /tcn_blocks.2/layer2/Relu_output_0
+183   Passthrough          /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+184   Passthrough          /tcn_blocks.2/Relu_output_0   
+185   Passthrough          /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+186   MemoryCopy           /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output_copy
+187   DepthwiseConv2D      /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+188   Conv2D               /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+189   Relu                 /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output
+190   DepthwiseConv2D      /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+191   Conv2D               /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+192   Passthrough          /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+193   Passthrough          /tcn_blocks.3/layer2/Relu_output_0
+194   Passthrough          /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+195   Passthrough          /tcn_blocks.3/Relu_output_0   
+196   Passthrough          /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+197   MemoryCopy           /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output_copy
+198   DepthwiseConv2D      /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+199   Conv2D               /tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+200   Relu                 /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output
+201   DepthwiseConv2D      /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+202   Conv2D               /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+203   Passthrough          /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+204   Passthrough          /tcn_blocks.4/layer2/Relu_output_0
+205   Passthrough          /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+206   Passthrough          /tcn_blocks.4/Relu_output_0   
+207   Passthrough          /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+208   MemoryCopy           /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output_copy
+209   DepthwiseConv2D      /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+210   Conv2D               /tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+211   Relu                 /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output
+212   DepthwiseConv2D      /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+213   Conv2D               /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+214   Passthrough          /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+215   Passthrough          /tcn_blocks.5/layer2/Relu_output_0
+216   Passthrough          /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+217   Passthrough          /tcn_blocks.5/Relu_output_0   
+218   Passthrough          /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+219   MemoryCopy           /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output_copy
+220   DepthwiseConv2D      /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+221   Conv2D               /tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+222   Relu                 /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output
+223   DepthwiseConv2D      /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+224   Conv2D               /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+225   Passthrough          /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+226   Passthrough          /tcn_blocks.6/layer2/Relu_output_0
+227   Passthrough          /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+228   Passthrough          /tcn_blocks.6/Relu_output_0   
+229   Passthrough          /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+230   MemoryCopy           /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output_copy
+231   DepthwiseConv2D      /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+232   Conv2D               /tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+233   Relu                 /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output
+234   DepthwiseConv2D      /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+235   Conv2D               /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+236   Passthrough          /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+237   Passthrough          /tcn_blocks.7/layer2/Relu_output_0
+238   Passthrough          /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+239   Passthrough          /tcn_blocks.7/Relu_output_0   
+240   Passthrough          /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+241   MemoryCopy           /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output_copy
+242   DepthwiseConv2D      /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+243   Conv2D               /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+244   Relu                 /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output
+245   DepthwiseConv2D      /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+246   Conv2D               /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+247   Passthrough          /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+248   Passthrough          /tcn_blocks.8/layer2/Relu_output_0
+249   Passthrough          /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+250   Passthrough          /tcn_blocks.8/Relu_output_0   
+251   Passthrough          /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+252   MemoryCopy           /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output_copy
+253   DepthwiseConv2D      /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+254   Conv2D               /tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_
+255   Relu                 /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output
+256   DepthwiseConv2D      /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_
+257   Conv2D               /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output
+258   Passthrough          /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+259   Passthrough          /tcn_blocks.9/layer2/Relu_output_0
+260   Passthrough          /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+261   Passthrough          /tcn_blocks.9/Relu_output_0   
+262   Passthrough          /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+263   Conv2D               /tcn_out/Conv_output_0_QuantizeLinear_Output
+264   Passthrough          reconstructed_values          
+
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+CPU performance estimation for "Passthrough" not implemented
+
+Network summary for symmetric394_int8mask_cast
+Accelerator configuration               Ethos_U55_128
+System configuration                RTSS_HE_SRAM_MRAM
+Memory mode                               Shared_Sram
+Accelerator clock                                 160 MHz
+Design peak SRAM bandwidth                       1.19 GB/s
+Design peak Off-chip Flash bandwidth             0.36 GB/s
+
+Total SRAM used                               2316.84 KiB
+Total Off-chip Flash used                     9303.30 KiB
+
+CPU operators = 183 (69.1%)
+   CPU: Passthrough = /non_seq_enc/Gemm_output_0 (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Reshape_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = missing_mask_cast_float32 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = missing_mask_inverse_float32 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Where_5_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = select_43_false_part (outputs [1, 900, 1, 6])
+   CPU: Passthrough = broadcasted_shape (outputs [1, 1, 1, 3])
+   CPU: Passthrough = /ReduceSum_output_0 (outputs [1, 1, 1, 6])
+   CPU: Passthrough = valid_observation_count_before_minimum (outputs [1, 1, 1, 6])
+   CPU: Passthrough = /Clip_output_0 (outputs [1, 1, 1, 6])
+   CPU: Passthrough = /Where_1_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /ReduceSum_1_output_0 (outputs [1, 1, 1, 6])
+   CPU: Passthrough = /Div_output_0 (outputs [1, 1, 1, 6])
+   CPU: Passthrough = /Expand_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = select_43_true_part (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Where_3_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /cvf/cvf.0/Pad_output_0 (outputs [1, 902, 1, 6])
+   CPU: Passthrough = /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output (outputs [1, 902, 1, 6])
+   CPU: Passthrough = /Gather_5_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_5_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_4_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_4_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_3_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_3_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_2_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_2_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_1_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_1_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_output_0 (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /Gather_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 1800])
+   CPU: Passthrough = /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_ (outputs [1, 32, 1, 900])
+   CPU: Passthrough = /cvf/cvf.2/ReduceMean_output_00 (outputs [1, 32, 1, 1])
+   CPU: Passthrough = /cvf/cvf.2/ReduceMean_output_0 (outputs [1, 1, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Sub_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Mul_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Mul_output_0_transposed_ (outputs [1, 32, 1, 900])
+   CPU: Passthrough = /cvf/cvf.2/ReduceMean_1_output_00 (outputs [1, 32, 1, 1])
+   CPU: Passthrough = /cvf/cvf.2/ReduceMean_1_output_0 (outputs [1, 1, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Add_output_0 (outputs [1, 1, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Sqrt_output_0 (outputs [1, 1, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Div_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Mul_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.2/Add_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Abs_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_8_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Neg_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Exp_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Add_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_2_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_3_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Sub_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_4_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Add_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_5_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Sub_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_6_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Add_2_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_7_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_9_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Sub_2_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Neg_1_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/GreaterOrEqual_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Where_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Add_3_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_10_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.3/Mul_11_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /cvf/cvf.4/Pad_output_0 (outputs [1, 906, 1, 32])
+   CPU: Passthrough = /cvf/cvf.4/Pad_output_0_DequantizeLinear_Output (outputs [1, 906, 1, 32])
+   CPU: Passthrough = /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_ (outputs [1, 128, 1, 900])
+   CPU: Passthrough = /cvf/cvf.6/ReduceMean_output_00 (outputs [1, 128, 1, 1])
+   CPU: Passthrough = /cvf/cvf.6/ReduceMean_output_0 (outputs [1, 1, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Sub_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Mul_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Mul_output_0_transposed_ (outputs [1, 128, 1, 900])
+   CPU: Passthrough = /cvf/cvf.6/ReduceMean_1_output_00 (outputs [1, 128, 1, 1])
+   CPU: Passthrough = /cvf/cvf.6/ReduceMean_1_output_0 (outputs [1, 1, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Add_output_0 (outputs [1, 1, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Sqrt_output_0 (outputs [1, 1, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Div_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Mul_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.6/Add_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Abs_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_8_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Neg_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Exp_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Add_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_2_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_3_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Sub_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_4_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Add_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_5_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Sub_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_6_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Add_2_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_7_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_9_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Sub_2_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Neg_1_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/GreaterOrEqual_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Where_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Add_3_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_10_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.7/Mul_11_output_0 (outputs [1, 900, 1, 128])
+   CPU: Passthrough = /cvf/cvf.8/Pad_output_0 (outputs [1, 910, 1, 128])
+   CPU: Passthrough = /cvf/cvf.8/Pad_output_0_DequantizeLinear_Output (outputs [1, 910, 1, 128])
+   CPU: Passthrough = /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Where_4_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /svf.5/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_5_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /svf.4/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_4_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /svf.3/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_3_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /svf.2/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_2_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /svf.1/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_1_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /svf.0/Gemm_output_0_DequantizeLinear_Output (outputs [1, 1, 1, 900])
+   CPU: Passthrough = /Unsqueeze_output_0 (outputs [1, 900, 1, 1])
+   CPU: Passthrough = /Concat_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Where_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Add_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Div_1_output_0 (outputs [1, 900, 1, 6])
+   CPU: Passthrough = /Concat_1_output_0 (outputs [1, 900, 1, 16])
+   CPU: Passthrough = /Transpose_2_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 16])
+   CPU: Passthrough = /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.0/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.0/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.1/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.1/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.2/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.3/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.3/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.4/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.4/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.5/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.5/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.6/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.6/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.7/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.7/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.8/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.8/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.9/layer2/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.9/Relu_output_0 (outputs [1, 900, 1, 32])
+   CPU: Passthrough = /tcn_blocks.9/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   CPU: Passthrough = reconstructed_values (outputs [1, 900, 1, 6])
+NPU operators = 82 (30.9%)
+   NPU: MemoryCopy = /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output (outputs [1, 908, 1, 64])
+   NPU: MemoryCopy = /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output (outputs [1, 908, 1, 64])
+   NPU: MemoryCopy = /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output (outputs [1, 904, 1, 16])
+   NPU: MemoryCopy = /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output (outputs [1, 904, 1, 16])
+   NPU: Conv2D = /cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 16])
+   NPU: MemoryCopy = /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output (outputs [1, 904, 1, 16])
+   NPU: MemoryCopy = /cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_copy (outputs [1, 1, 904, 16])
+   NPU: Conv2D = /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 64])
+   NPU: MemoryCopy = /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output (outputs [1, 908, 1, 64])
+   NPU: MemoryCopy = /cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_copy (outputs [1, 1, 908, 64])
+   NPU: Conv2D = /cvf/cvf.5/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 128])
+   NPU: Conv2D = /cvf/cvf.8/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 6])
+   NPU: FullyConnected = /svf.5/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: FullyConnected = /svf.4/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: FullyConnected = /svf.3/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: FullyConnected = /svf.2/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: FullyConnected = /svf.1/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: FullyConnected = /svf.0/Gemm_output_0_QuantizeLinear_Output (outputs [1, 1, 1, 900])
+   NPU: Conv2D = /tcn_in/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Relu = /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0 (outputs [1, 900, 1, 32])
+   NPU: MemoryCopy = /Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.0/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.0/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.0/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.1/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.1/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.1/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.2/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.2/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.2/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.3/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.3/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.3/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.4/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.4/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.4/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.5/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.5/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.5/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.6/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.6/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.6/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.7/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.7/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.7/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.8/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.8/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: MemoryCopy = /tcn_blocks.8/Relu_output_0_QuantizeLinear_Output_copy (outputs [1, 1, 900, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.9/layer1/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Relu = /tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output (outputs [1, 900, 1, 32])
+   NPU: DepthwiseConv2D = /tcn_blocks.9/layer2/depthwise/Conv_output_0_DequantizeLinear_Output_4D_ (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 32])
+   NPU: Conv2D = /tcn_out/Conv_output_0_QuantizeLinear_Output (outputs [1, 1, 900, 6])
+
+Average SRAM bandwidth                           0.28 GB/s
+Input   SRAM bandwidth                           4.95 MB/batch
+Weight  SRAM bandwidth                           4.62 MB/batch
+Output  SRAM bandwidth                           1.84 MB/batch
+Total   SRAM bandwidth                          11.86 MB/batch
+Total   SRAM bandwidth            per input     11.86 MB/inference (batch size 1)
+
+Average Off-chip Flash bandwidth                 0.22 GB/s
+Input   Off-chip Flash bandwidth                 0.00 MB/batch
+Weight  Off-chip Flash bandwidth                 9.03 MB/batch
+Output  Off-chip Flash bandwidth                 0.00 MB/batch
+Total   Off-chip Flash bandwidth                 9.09 MB/batch
+Total   Off-chip Flash bandwidth  per input      9.09 MB/inference (batch size 1)
+
+Neural network macs                         136585152 MACs/batch
+
+Info: The numbers below are internal compiler estimates.
+For performance numbers the compiled network should be run on an FVP Model or FPGA.
+
+Network Tops/s                                   0.01 Tops/s
+
+NPU cycles                                    6108658 cycles/batch
+SRAM Access cycles                             739638 cycles/batch
+DRAM Access cycles                                  0 cycles/batch
+On-chip Flash Access cycles                         0 cycles/batch
+Off-chip Flash Access cycles                  2032762 cycles/batch
+Total cycles                                  6760110 cycles/batch
+
+Batch Inference time                42.25 ms,   23.67 inferences/s (batch size 1)
+

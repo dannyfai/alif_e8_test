@@ -1,0 +1,237 @@
+============================================================
+TCN V6 INT8 MASK + CAST / GATHER INDEX AUDIT
+============================================================
+DATE=2026-11-24T15:14:59+08:00
+PROJECT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514
+BASE_TFLITE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_floatmask_arithmetic_regor_20261124_144126/tflite_patched/symmetric394_floatmask.tflite
+EXISTING_VELA=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_floatmask_sameinput_regor_20261124_144341/vela/symmetric394/symmetric394_floatmask_vela.tflite
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_int8mask_cast_gather_audit_20261124_151459.log
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795504499.983064   15784 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795504499.983253   15784 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795504500.011934   15784 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795504500.704115   15784 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795504500.704327   15784 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+
+SOURCE MODEL SHA256:
+d251d7b907c3779fd42c00ad581eb32f08d99354369061f082e9fb9c18c036ca
+
+--- EXISTING VELA BASELINE AUDIT ---
+
+--- GRAPH INPUT AUDIT: existing symmetric394 Vela output ---
+subgraph=0 tensor=9 name=x_values type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=7 name=missing_mask type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=217 name=x_mark type=FLOAT32 shape=(1, 900, 3)
+subgraph=0 tensor=0 name=worker_features_18 type=FLOAT32 shape=(1, 18)
+subgraph=0 tensor=31 name=compact_values type=FLOAT32 shape=(1, 1800, 6)
+
+--- GATHER AUDIT: existing symmetric394 Vela output ---
+GATHER subgraph=0 op=17: indices_tensor=32 name=/Constant_9_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=19: indices_tensor=35 name=/Constant_8_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=21: indices_tensor=38 name=/Constant_7_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=23: indices_tensor=41 name=/Constant_6_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=25: indices_tensor=44 name=/Constant_4_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=27: indices_tensor=47 name=/Constant_output_0 type=INT64 shape=() constant_bytes=8
+GATHER_OPERATOR_COUNT=6
+GATHER_NON_INT32_COUNT=6
+EXISTING_VELA_BYTES=9684048
+
+--- REFERENCE TFLITE AUDIT ---
+
+--- GRAPH INPUT AUDIT: known-good FLOAT32-mask input model ---
+subgraph=0 tensor=0 name=x_values type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=1 name=missing_mask type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=2 name=x_mark type=FLOAT32 shape=(1, 900, 3)
+subgraph=0 tensor=3 name=worker_features_18 type=FLOAT32 shape=(1, 18)
+subgraph=0 tensor=4 name=compact_values type=FLOAT32 shape=(1, 1800, 6)
+
+--- GATHER AUDIT: known-good FLOAT32-mask input model ---
+GATHER subgraph=0 op=2: indices_tensor=73 name=/Constant_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=3: indices_tensor=74 name=/Constant_4_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=4: indices_tensor=75 name=/Constant_6_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=5: indices_tensor=76 name=/Constant_7_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=6: indices_tensor=77 name=/Constant_8_output_0 type=INT64 shape=() constant_bytes=8
+GATHER subgraph=0 op=7: indices_tensor=78 name=/Constant_9_output_0 type=INT64 shape=() constant_bytes=8
+GATHER_OPERATOR_COUNT=6
+GATHER_NON_INT32_COUNT=6
+
+--- PATCHING INPUT MASK ---
+Original mask tensor index=1, shape=(1, 900, 6)
+New FLOAT32 tensor index=482
+Downstream input references rewired=5
+Graph input missing_mask: FLOAT32 -> INT8
+Inserted CAST: INT8 -> FLOAT32
+Converted constant Gather indices: op=2, tensor=73->483, min=0, max=0
+Converted constant Gather indices: op=3, tensor=74->484, min=1, max=1
+Converted constant Gather indices: op=4, tensor=75->485, min=2, max=2
+Converted constant Gather indices: op=5, tensor=76->486, min=3, max=3
+Converted constant Gather indices: op=6, tensor=77->487, min=4, max=4
+Converted constant Gather indices: op=7, tensor=78->488, min=5, max=5
+Gather constant index patches=6
+Gather dynamic index CASTs=0
+
+CANDIDATE_WRITTEN=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+CANDIDATE_BYTES=10317408
+CANDIDATE_SHA256=8f0560876be0deb8511cb200e5971eeefc57cab329534c457e742958cf45d048
+
+--- GRAPH INPUT AUDIT: new INT8-mask candidate ---
+subgraph=0 tensor=0 name=x_values type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=1 name=missing_mask type=INT8 shape=(1, 900, 6)
+subgraph=0 tensor=2 name=x_mark type=FLOAT32 shape=(1, 900, 3)
+subgraph=0 tensor=3 name=worker_features_18 type=FLOAT32 shape=(1, 18)
+subgraph=0 tensor=4 name=compact_values type=FLOAT32 shape=(1, 1800, 6)
+
+--- GATHER AUDIT: new INT8-mask candidate ---
+GATHER subgraph=0 op=3: indices_tensor=483 name=/Constant_output_0_int32_gather_op2 type=INT32 shape=()
+GATHER subgraph=0 op=4: indices_tensor=484 name=/Constant_4_output_0_int32_gather_op3 type=INT32 shape=()
+GATHER subgraph=0 op=5: indices_tensor=485 name=/Constant_6_output_0_int32_gather_op4 type=INT32 shape=()
+GATHER subgraph=0 op=6: indices_tensor=486 name=/Constant_7_output_0_int32_gather_op5 type=INT32 shape=()
+GATHER subgraph=0 op=7: indices_tensor=487 name=/Constant_8_output_0_int32_gather_op6 type=INT32 shape=()
+GATHER subgraph=0 op=8: indices_tensor=488 name=/Constant_9_output_0_int32_gather_op7 type=INT32 shape=()
+GATHER_OPERATOR_COUNT=6
+GATHER_NON_INT32_COUNT=0
+
+============================================================
+SAME-INPUT NUMERICAL EQUIVALENCE TEST
+Reference: FLOAT32 mask model
+Candidate: INT8 mask + CAST model
+============================================================
+
+INPUT DETAILS:
+compact_values: reference=float32 candidate=float32 shape=[   1 1800    6]
+missing_mask: reference=float32 candidate=int8 shape=[  1 900   6]
+worker_features_18: reference=float32 candidate=float32 shape=[ 1 18]
+x_mark: reference=float32 candidate=float32 shape=[  1 900   3]
+x_values: reference=float32 candidate=float32 shape=[  1 900   6]
+seed=317 pattern=all_valid output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=317 pattern=all_missing output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=317 pattern=alternating output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=317 pattern=random_20_percent output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=164 pattern=all_valid output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=164 pattern=all_missing output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=164 pattern=alternating output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+seed=164 pattern=random_20_percent output=reconstructed_values MAX_ABS=0 RMSE=0 ALLCLOSE=True
+
+NUMERICAL_TEST_CASES=8
+INT8_MASK_NUMERICAL_EQUIVALENCE=PASS
+
+============================================================
+LOCAL ALIF TFLM SOURCE / RESOLVER AUDIT
+============================================================
+
+TFLM_ROOT=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+RESOLVER_HEADER=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h
+  190: TfLiteStatus AddCast() {
+  351: TfLiteStatus AddGather() {
+  356: TfLiteStatus AddGatherNd() {
+KERNEL_SOURCE=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc
+  57: case kTfLiteInt8:
+  63: case kTfLiteInt32:
+  69: case kTfLiteFloat32:
+  89: case kTfLiteInt8:
+  94: case kTfLiteInt32:
+  101: case kTfLiteFloat32:
+  116: TFLMRegistration Register_CAST() {
+KERNEL_SOURCE=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+  126: case kTfLiteInt32:
+  127: case kTfLiteInt64:
+  130: MicroPrintf("Positions of type '%s' are not supported by gather.",
+  140: case kTfLiteFloat32:
+  141: case kTfLiteInt8:
+  209: if (coords->type == kTfLiteInt32) {
+  211: case kTfLiteFloat32:
+  213: case kTfLiteInt8:
+  223: if (coords->type == kTfLiteInt64) {
+  225: case kTfLiteFloat32:
+  227: case kTfLiteInt8:
+  236: MicroPrintf("Positions of type '%s' are not supported by gather.",
+  242: TFLMRegistration Register_GATHER() {
+KERNEL_SOURCE=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc
+  47: case kTfLiteFloat32:
+  48: case kTfLiteInt8:
+  57: case kTfLiteInt32:
+  60: MicroPrintf("Indices of type '%s' are not supported by gather_nd.",
+  171: case kTfLiteFloat32:
+  174: case kTfLiteInt8:
+  197: case kTfLiteInt32:
+  201: MicroPrintf("Indices of type '%s' are not supported by gather_nd.",
+  208: TFLMRegistration Register_GATHER_ND() {
+TFLM_GIT_REVISION=8d404de7
+
+TFLM_ROOT=/home/user/sdk-alif/build_tflm_ethosu/modules/tflite-micro
+
+============================================================
+VELA COMPILATION: INT8 MASK CANDIDATE
+============================================================
+VELA_COMMAND:
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela --accelerator-config ethos-u55-128 --system-config RTSS_HE_SRAM_MRAM --memory-mode Shared_Sram --optimise Performance --config /home/user/sdk-alif/alif/samples/modules/executorch/ensemble_vela.ini --output-dir /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela --show-cpu-operations --verbose-graph --verbose-cycle-estimate /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+VELA_EXIT_CODE=0
+VELA_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_int8mask_cast_gather_audit_20261124_151459_vela_int8mask_cast.log
+
+VELA_OUTPUT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+VELA_OUTPUT_BYTES=9684208
+VELA_OUTPUT_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+
+--- GRAPH INPUT AUDIT: new Vela-compiled INT8-mask model ---
+subgraph=0 tensor=10 name=x_values type=FLOAT32 shape=(1, 900, 6)
+subgraph=0 tensor=6 name=missing_mask type=INT8 shape=(1, 900, 6)
+subgraph=0 tensor=218 name=x_mark type=FLOAT32 shape=(1, 900, 3)
+subgraph=0 tensor=0 name=worker_features_18 type=FLOAT32 shape=(1, 18)
+subgraph=0 tensor=32 name=compact_values type=FLOAT32 shape=(1, 1800, 6)
+
+--- GATHER AUDIT: new Vela-compiled INT8-mask model ---
+GATHER subgraph=0 op=18: indices_tensor=33 name=/Constant_9_output_0_int32_gather_op7 type=INT32 shape=()
+GATHER subgraph=0 op=20: indices_tensor=36 name=/Constant_8_output_0_int32_gather_op6 type=INT32 shape=()
+GATHER subgraph=0 op=22: indices_tensor=39 name=/Constant_7_output_0_int32_gather_op5 type=INT32 shape=()
+GATHER subgraph=0 op=24: indices_tensor=42 name=/Constant_6_output_0_int32_gather_op4 type=INT32 shape=()
+GATHER subgraph=0 op=26: indices_tensor=45 name=/Constant_4_output_0_int32_gather_op3 type=INT32 shape=()
+GATHER subgraph=0 op=28: indices_tensor=48 name=/Constant_output_0_int32_gather_op2 type=INT32 shape=()
+GATHER_OPERATOR_COUNT=6
+GATHER_NON_INT32_COUNT=0
+CAST_OPERATOR_COUNT_AFTER_VELA=1
+VELA_METRIC: CPU operators = 183 (69.1%)
+VELA_METRIC: NPU operators = 82 (30.9%)
+VELA_METRIC: NPU cycles                                    6108658 cycles/batch
+VELA_METRIC: Total cycles                                  6760110 cycles/batch
+VELA_METRIC: Batch Inference time                42.25 ms,   23.67 inferences/s (batch size 1)
+VELA_METRIC: Neural network macs                         136585152 MACs/batch
+TFLM_GATHER_INDEX_AUDIT=PASS
+
+FINAL MODEL FILES:
+INT8_MASK_INPUT_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+VELA_COMPILED_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+VELA_DETAIL_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_int8mask_cast_gather_audit_20261124_151459_vela_int8mask_cast.log
+
+WEIGHTS_MODIFIED=NO
+ORIGINAL_MODELS_MODIFIED=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+INT8_MASK_CAST_EXPERIMENT=PASS
+
+PYTHON_EXPERIMENT_EXIT_CODE=0
+MAIN_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_int8mask_cast_gather_audit_20261124_151459.log
+OUTPUT_DIRECTORY=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+INT8 MASK / GATHER AUDIT FINISHED
+SCRIPT_EXIT_CODE=0
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_int8mask_cast_gather_audit_20261124_151459.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
