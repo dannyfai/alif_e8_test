@@ -1,0 +1,262 @@
+============================================================
+TCN V6 CVF/SVF LAYER-WISE QUANTIZATION SENSITIVITY AUDIT
+============================================================
+SOURCE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx
+HYBRID=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/heatstroke_tcn_v6_cvf_svf_hybrid_int8_qdq.onnx
+OUTPUT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_layer_sensitivity_20261124_105829.log
+
+SOURCE_SHA256=4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+HYBRID_SHA256=4ad1fdbd7a5b79b6891e7658a26e5131987d44075a22c5d585dc7599ae1a276b
+
+TARGET INTERMEDIATE TENSOR MAP
+cvf_0:
+  SOURCE INPUT=/cvf/cvf.0/Pad_output_0
+  SOURCE RAW=/cvf/cvf.0/Conv_output_0
+  HYBRID INPUT=/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+  HYBRID RAW=/cvf/cvf.0/Conv_output_0
+  HYBRID Q=/cvf/cvf.0/Conv_output_0_QuantizeLinear_Output
+  HYBRID DQ=/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output
+cvf_1:
+  SOURCE INPUT=/cvf/cvf.1/Pad_output_0
+  SOURCE RAW=/cvf/cvf.1/Conv_output_0
+  HYBRID INPUT=/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output
+  HYBRID RAW=/cvf/cvf.1/Conv_output_0
+  HYBRID Q=/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+  HYBRID DQ=/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+cvf_4:
+  SOURCE INPUT=/cvf/cvf.4/Pad_output_0
+  SOURCE RAW=/cvf/cvf.4/Conv_output_0
+  HYBRID INPUT=/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+  HYBRID RAW=/cvf/cvf.4/Conv_output_0
+  HYBRID Q=/cvf/cvf.4/Conv_output_0_QuantizeLinear_Output
+  HYBRID DQ=/cvf/cvf.4/Conv_output_0_DequantizeLinear_Output
+cvf_5:
+  SOURCE INPUT=/cvf/cvf.5/Pad_output_0
+  SOURCE RAW=/cvf/cvf.5/Conv_output_0
+  HYBRID INPUT=/cvf/cvf.5/Pad_output_0_DequantizeLinear_Output
+  HYBRID RAW=/cvf/cvf.5/Conv_output_0
+  HYBRID Q=/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output
+  HYBRID DQ=/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+cvf_8:
+  SOURCE INPUT=/cvf/cvf.8/Pad_output_0
+  SOURCE RAW=/cvf/cvf.8/Conv_output_0
+  HYBRID INPUT=/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+  HYBRID RAW=/cvf/cvf.8/Conv_output_0
+  HYBRID Q=/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output
+  HYBRID DQ=/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+svf_0:
+  SOURCE INPUT=/Gather_output_0
+  SOURCE RAW=/svf.0/Gemm_output_0
+  HYBRID INPUT=/Gather_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.0/Gemm_output_0
+  HYBRID Q=/svf.0/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.0/Gemm_output_0_DequantizeLinear_Output
+svf_1:
+  SOURCE INPUT=/Gather_1_output_0
+  SOURCE RAW=/svf.1/Gemm_output_0
+  HYBRID INPUT=/Gather_1_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.1/Gemm_output_0
+  HYBRID Q=/svf.1/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.1/Gemm_output_0_DequantizeLinear_Output
+svf_2:
+  SOURCE INPUT=/Gather_2_output_0
+  SOURCE RAW=/svf.2/Gemm_output_0
+  HYBRID INPUT=/Gather_2_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.2/Gemm_output_0
+  HYBRID Q=/svf.2/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.2/Gemm_output_0_DequantizeLinear_Output
+svf_3:
+  SOURCE INPUT=/Gather_3_output_0
+  SOURCE RAW=/svf.3/Gemm_output_0
+  HYBRID INPUT=/Gather_3_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.3/Gemm_output_0
+  HYBRID Q=/svf.3/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.3/Gemm_output_0_DequantizeLinear_Output
+svf_4:
+  SOURCE INPUT=/Gather_4_output_0
+  SOURCE RAW=/svf.4/Gemm_output_0
+  HYBRID INPUT=/Gather_4_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.4/Gemm_output_0
+  HYBRID Q=/svf.4/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.4/Gemm_output_0_DequantizeLinear_Output
+svf_5:
+  SOURCE INPUT=/Gather_5_output_0
+  SOURCE RAW=/svf.5/Gemm_output_0
+  HYBRID INPUT=/Gather_5_output_0_DequantizeLinear_Output
+  HYBRID RAW=/svf.5/Gemm_output_0
+  HYBRID Q=/svf.5/Gemm_output_0_QuantizeLinear_Output
+  HYBRID DQ=/svf.5/Gemm_output_0_DequantizeLinear_Output
+source_DEBUG_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/layer_sensitivity_debug/source_intermediate_outputs.onnx
+source_EXPOSED_TENSORS=22
+source_ADDED_GRAPH_OUTPUTS=22
+hybrid_DEBUG_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/layer_sensitivity_debug/hybrid_intermediate_outputs.onnx
+hybrid_EXPOSED_TENSORS=44
+hybrid_ADDED_GRAPH_OUTPUTS=44
+
+SOURCE_DEBUG_OUTPUT_COUNT=23
+HYBRID_DEBUG_OUTPUT_COUNT=45
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+
+STARTING INTERMEDIATE ACTIVATION COMPARISON
+Evaluation samples=449
+Completed 50/449 samples
+Completed 100/449 samples
+Completed 150/449 samples
+Completed 200/449 samples
+Completed 250/449 samples
+Completed 300/449 samples
+Completed 350/449 samples
+Completed 400/449 samples
+Completed 449/449 samples
+
+============================================================================
+LAYER-WISE QUANTIZATION SENSITIVITY RESULTS
+============================================================================
+
+TARGET LAYER cvf.0
+  input_boundary: RMSE=0.0092703848 MAE=0.0069055344 MAX=0.018888235 REL_RMSE=0.0119466
+    WORST_SAMPLE={"index": 315, "worker_id": "8", "sample_id": "315", "rmse": 0.012567449756849838}
+  raw_output_before_own_Q: RMSE=0.005330019 MAE=0.0040525171 MAX=0.038856149 REL_RMSE=0.0128259
+    WORST_SAMPLE={"index": 252, "worker_id": "8", "sample_id": "252", "rmse": 0.008303035754766748}
+  own_output_QDQ_error: RMSE=0.0065379331 MAE=0.0056459968 MAX=0.335958 REL_RMSE=0.0157326
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.008644602806068293}
+  post_output_DQ_cumulative_error: RMSE=0.0084355569 MAE=0.0068783452 MAX=0.34019542 REL_RMSE=0.020299
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.010885658079460427}
+  INT8_OUTPUT: min=-108 max=127 dtype=int8 saturation_percent=0.001191
+
+TARGET LAYER cvf.1
+  input_boundary: RMSE=0.0084356291 MAE=0.0068784233 MAX=0.34019542 REL_RMSE=0.0202981
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.010878906847824991}
+  raw_output_before_own_Q: RMSE=0.0048530646 MAE=0.0038467258 MAX=0.053196311 REL_RMSE=0.0185485
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.0063338837651065365}
+  own_output_QDQ_error: RMSE=0.0037392241 MAE=0.0032076425 MAX=0.31237793 REL_RMSE=0.0142914
+    WORST_SAMPLE={"index": 269, "worker_id": "8", "sample_id": "269", "rmse": 0.009073594268282428}
+  post_output_DQ_cumulative_error: RMSE=0.0061200128 MAE=0.004893763 MAX=0.30646229 REL_RMSE=0.0233908
+    WORST_SAMPLE={"index": 269, "worker_id": "8", "sample_id": "269", "rmse": 0.010238524104017752}
+  INT8_OUTPUT: min=-128 max=127 dtype=int8 saturation_percent=0.001763
+
+TARGET LAYER cvf.4
+  input_boundary: RMSE=0.10914099 MAE=0.055560107 MAX=2.9107854 REL_RMSE=0.255702
+    WORST_SAMPLE={"index": 229, "worker_id": "8", "sample_id": "229", "rmse": 0.3057468961838491}
+  raw_output_before_own_Q: RMSE=0.064929286 MAE=0.036852226 MAX=1.4189448 REL_RMSE=0.218401
+    WORST_SAMPLE={"index": 92, "worker_id": "9", "sample_id": "92", "rmse": 0.19431281292261432}
+  own_output_QDQ_error: RMSE=0.014471808 MAE=0.012346253 MAX=0.025498301 REL_RMSE=0.0486785
+    WORST_SAMPLE={"index": 192, "worker_id": "9", "sample_id": "192", "rmse": 0.0150361388008079}
+  post_output_DQ_cumulative_error: RMSE=0.066508734 MAE=0.039601818 MAX=1.4107904 REL_RMSE=0.223714
+    WORST_SAMPLE={"index": 92, "worker_id": "9", "sample_id": "92", "rmse": 0.194832677638022}
+  INT8_OUTPUT: min=-115 max=98 dtype=int8 saturation_percent=0.000000
+
+TARGET LAYER cvf.5
+  input_boundary: RMSE=0.066627064 MAE=0.039640713 MAX=1.4107904 REL_RMSE=0.223104
+    WORST_SAMPLE={"index": 92, "worker_id": "9", "sample_id": "92", "rmse": 0.19494899517655875}
+  raw_output_before_own_Q: RMSE=0.073537815 MAE=0.037943819 MAX=1.5569171 REL_RMSE=0.148371
+    WORST_SAMPLE={"index": 107, "worker_id": "9", "sample_id": "107", "rmse": 0.30760972980416784}
+  own_output_QDQ_error: RMSE=0.021612674 MAE=0.018391046 MAX=0.038157225 REL_RMSE=0.043606
+    WORST_SAMPLE={"index": 268, "worker_id": "8", "sample_id": "268", "rmse": 0.02321099076889263}
+  post_output_DQ_cumulative_error: RMSE=0.076636303 MAE=0.044184255 MAX=1.571521 REL_RMSE=0.154622
+    WORST_SAMPLE={"index": 107, "worker_id": "9", "sample_id": "107", "rmse": 0.3085222516647319}
+  INT8_OUTPUT: min=-86 max=104 dtype=int8 saturation_percent=0.000000
+
+TARGET LAYER cvf.8
+  input_boundary: RMSE=0.11062049 MAE=0.055871858 MAX=3.0948772 REL_RMSE=0.240628
+    WORST_SAMPLE={"index": 366, "worker_id": "8", "sample_id": "366", "rmse": 0.36936716860003416}
+  raw_output_before_own_Q: RMSE=0.58136767 MAE=0.1955244 MAX=14.97056 REL_RMSE=0.191291
+    WORST_SAMPLE={"index": 366, "worker_id": "8", "sample_id": "366", "rmse": 2.533494730860486}
+  own_output_QDQ_error: RMSE=0.098612031 MAE=0.082915861 MAX=4.6715202 REL_RMSE=0.032447
+    WORST_SAMPLE={"index": 97, "worker_id": "9", "sample_id": "97", "rmse": 0.14361199275559208}
+  post_output_DQ_cumulative_error: RMSE=0.58959976 MAE=0.22970909 MAX=14.978187 REL_RMSE=0.194
+    WORST_SAMPLE={"index": 366, "worker_id": "8", "sample_id": "366", "rmse": 2.534547075163703}
+  INT8_OUTPUT: min=-128 max=98 dtype=int8 saturation_percent=0.000289
+
+TARGET LAYER svf.0
+  input_boundary: RMSE=0.0063793284 MAE=0.0049276035 MAX=0.012446523 REL_RMSE=0.00757603
+    WORST_SAMPLE={"index": 314, "worker_id": "8", "sample_id": "314", "rmse": 0.009606233022799454}
+  raw_output_before_own_Q: RMSE=0.014695496 MAE=0.0097582921 MAX=0.07652092 REL_RMSE=0.00294394
+    WORST_SAMPLE={"index": 164, "worker_id": "8", "sample_id": "164", "rmse": 0.04724178209948109}
+  own_output_QDQ_error: RMSE=0.041957796 MAE=0.033167994 MAX=0.081936836 REL_RMSE=0.00840537
+    WORST_SAMPLE={"index": 203, "worker_id": "9", "sample_id": "203", "rmse": 0.05497153553291357}
+  post_output_DQ_cumulative_error: RMSE=0.044566083 MAE=0.034616972 MAX=0.14723587 REL_RMSE=0.00892788
+    WORST_SAMPLE={"index": 203, "worker_id": "9", "sample_id": "203", "rmse": 0.0736979873942248}
+  INT8_OUTPUT: min=-111 max=83 dtype=int8 saturation_percent=0.000000
+
+TARGET LAYER svf.1
+  input_boundary: RMSE=0.00934848 MAE=0.0073326814 MAX=0.01888752 REL_RMSE=0.0111499
+    WORST_SAMPLE={"index": 392, "worker_id": "8", "sample_id": "392", "rmse": 0.01795445271687676}
+  raw_output_before_own_Q: RMSE=0.017114691 MAE=0.0098235352 MAX=0.52228737 REL_RMSE=0.00473631
+    WORST_SAMPLE={"index": 392, "worker_id": "8", "sample_id": "392", "rmse": 0.07022266386163709}
+  own_output_QDQ_error: RMSE=0.29557115 MAE=0.22467152 MAX=0.58902615 REL_RMSE=0.0817962
+    WORST_SAMPLE={"index": 171, "worker_id": "5", "sample_id": "171", "rmse": 0.3936486883921318}
+  post_output_DQ_cumulative_error: RMSE=0.29601002 MAE=0.22489879 MAX=1.0107155 REL_RMSE=0.0819177
+    WORST_SAMPLE={"index": 171, "worker_id": "5", "sample_id": "171", "rmse": 0.3934476376954746}
+  INT8_OUTPUT: min=-127 max=47 dtype=int8 saturation_percent=0.000000
+
+TARGET LAYER svf.2
+  input_boundary: RMSE=0.0067124048 MAE=0.005109458 MAX=0.01322031 REL_RMSE=0.00930833
+    WORST_SAMPLE={"index": 412, "worker_id": "9", "sample_id": "412", "rmse": 0.009071259940268887}
+  raw_output_before_own_Q: RMSE=0.003616084 MAE=0.0022238331 MAX=0.048220634 REL_RMSE=0.001459
+    WORST_SAMPLE={"index": 412, "worker_id": "9", "sample_id": "412", "rmse": 0.01823996808354957}
+  own_output_QDQ_error: RMSE=0.030992893 MAE=0.02428281 MAX=0.43060684 REL_RMSE=0.0125048
+    WORST_SAMPLE={"index": 136, "worker_id": "9", "sample_id": "136", "rmse": 0.038709516809591164}
+  post_output_DQ_cumulative_error: RMSE=0.03120601 MAE=0.024393584 MAX=0.42207336 REL_RMSE=0.0125908
+    WORST_SAMPLE={"index": 412, "worker_id": "9", "sample_id": "412", "rmse": 0.03959125217938917}
+  INT8_OUTPUT: min=-128 max=86 dtype=int8 saturation_percent=0.000247
+
+TARGET LAYER svf.3
+  input_boundary: RMSE=0.014995128 MAE=0.00520965 MAX=0.70792818 REL_RMSE=0.0232473
+    WORST_SAMPLE={"index": 267, "worker_id": "8", "sample_id": "267", "rmse": 0.19662870278492425}
+  raw_output_before_own_Q: RMSE=0.023356419 MAE=0.0023485783 MAX=1.8322906 REL_RMSE=0.00688395
+    WORST_SAMPLE={"index": 267, "worker_id": "8", "sample_id": "267", "rmse": 0.3511424645813846}
+  own_output_QDQ_error: RMSE=0.10866586 MAE=0.071916926 MAX=13.630222 REL_RMSE=0.0320276
+    WORST_SAMPLE={"index": 298, "worker_id": "8", "sample_id": "298", "rmse": 0.7531015476087084}
+  post_output_DQ_cumulative_error: RMSE=0.11113485 MAE=0.072716565 MAX=13.629375 REL_RMSE=0.0327553
+    WORST_SAMPLE={"index": 298, "worker_id": "8", "sample_id": "298", "rmse": 0.7532734519567322}
+  INT8_OUTPUT: min=-76 max=127 dtype=int8 saturation_percent=0.004454
+
+TARGET LAYER svf.4
+  input_boundary: RMSE=0.0075118384 MAE=0.0046493898 MAX=0.55830121 REL_RMSE=0.0111583
+    WORST_SAMPLE={"index": 117, "worker_id": "9", "sample_id": "117", "rmse": 0.04400208585471426}
+  raw_output_before_own_Q: RMSE=0.0035137298 MAE=0.0012845545 MAX=0.18340969 REL_RMSE=0.00275439
+    WORST_SAMPLE={"index": 115, "worker_id": "9", "sample_id": "115", "rmse": 0.04170924621104788}
+  own_output_QDQ_error: RMSE=0.049490976 MAE=0.034859074 MAX=7.4085693 REL_RMSE=0.0387956
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.4110444595540214}
+  post_output_DQ_cumulative_error: RMSE=0.049611706 MAE=0.034918738 MAX=7.4100323 REL_RMSE=0.0388902
+    WORST_SAMPLE={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.41125428243932977}
+  INT8_OUTPUT: min=-125 max=127 dtype=int8 saturation_percent=0.001485
+
+TARGET LAYER svf.5
+  input_boundary: RMSE=0.026279696 MAE=0.006128979 MAX=0.78316832 REL_RMSE=0.0253146
+    WORST_SAMPLE={"index": 360, "worker_id": "9", "sample_id": "360", "rmse": 0.24453452520879876}
+  raw_output_before_own_Q: RMSE=0.032128751 MAE=0.0052709362 MAX=2.4017544 REL_RMSE=0.0148976
+    WORST_SAMPLE={"index": 155, "worker_id": "5", "sample_id": "155", "rmse": 0.435125194928697}
+  own_output_QDQ_error: RMSE=0.1250992 MAE=0.034515952 MAX=21.730877 REL_RMSE=0.0580065
+    WORST_SAMPLE={"index": 152, "worker_id": "5", "sample_id": "152", "rmse": 1.8613492352381256}
+  post_output_DQ_cumulative_error: RMSE=0.13407071 MAE=0.03696766 MAX=22.17625 REL_RMSE=0.0621664
+    WORST_SAMPLE={"index": 152, "worker_id": "5", "sample_id": "152", "rmse": 1.9269271217932737}
+  INT8_OUTPUT: min=-128 max=127 dtype=int8 saturation_percent=0.040584
+
+============================================================================
+RANKING: LAYERS WITH LARGEST CUMULATIVE OUTPUT ERROR
+============================================================================
+1. cvf.8 RMSE=0.58959976 relative=0.194 own_output_QDQ_RMSE=0.098612031
+2. svf.1 RMSE=0.29601002 relative=0.0819177 own_output_QDQ_RMSE=0.29557115
+3. svf.5 RMSE=0.13407071 relative=0.0621664 own_output_QDQ_RMSE=0.1250992
+4. svf.3 RMSE=0.11113485 relative=0.0327553 own_output_QDQ_RMSE=0.10866586
+5. cvf.5 RMSE=0.076636303 relative=0.154622 own_output_QDQ_RMSE=0.021612674
+6. cvf.4 RMSE=0.066508734 relative=0.223714 own_output_QDQ_RMSE=0.014471808
+7. svf.4 RMSE=0.049611706 relative=0.0388902 own_output_QDQ_RMSE=0.049490976
+8. svf.0 RMSE=0.044566083 relative=0.00892788 own_output_QDQ_RMSE=0.041957796
+9. svf.2 RMSE=0.03120601 relative=0.0125908 own_output_QDQ_RMSE=0.030992893
+10. cvf.0 RMSE=0.0084355569 relative=0.020299 own_output_QDQ_RMSE=0.0065379331
+11. cvf.1 RMSE=0.0061200128 relative=0.0233908 own_output_QDQ_RMSE=0.0037392241
+
+LAYER_WISE_REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/layer_wise_sensitivity_report.json
+LAYER_SENSITIVITY_AUDIT=PASS
+NO_QUANTIZATION_OR_FIRMWARE_ACTION_PERFORMED
+
+============================================================
+LAYER_SENSITIVITY_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_layer_sensitivity_20261124_105829.log
+============================================================
