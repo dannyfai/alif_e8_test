@@ -1,0 +1,299 @@
+--- base/MainLoop.cc
++++ sample317/MainLoop.cc
+@@ -1,5 +1,6 @@
+ #include "BufAttributes.hpp"
+ #include "TcnV6Model.hpp"
++#include "sample317_tcn_v6_vectors.hpp"
+ 
+ #include <zephyr/kernel.h>
+ #include <zephyr/sys/printk.h>
+@@ -41,24 +42,43 @@
+     kTfLiteFloat32
+ };
+ 
+-bool ValidateAndZeroInputs(tflite::MicroInterpreter* interpreter)
++bool ValidateAndPopulateInputs(tflite::MicroInterpreter* interpreter)
+ {
++    using namespace sample317_vectors;
++
+     if (interpreter == nullptr) {
+         printk("TCN_V6_ERROR: null interpreter\n");
+         return false;
+     }
+ 
++    const void* source_data[kInputCount] = {
++        kXValues,
++        kMissingMask,
++        kXMark,
++        kWorkerFeatures18,
++        kCompactValues
++    };
++
++    const size_t expected_bytes[kInputCount] = {
++        sizeof(kXValues),
++        sizeof(kMissingMask),
++        sizeof(kXMark),
++        sizeof(kWorkerFeatures18),
++        sizeof(kCompactValues)
++    };
++
+     for (size_t i = 0; i < kInputCount; ++i) {
+         TfLiteTensor* tensor = interpreter->input(i);
+ 
+-        if (tensor == nullptr || tensor->dims == nullptr) {
+-            printk("TCN_V6_ERROR: input %u missing metadata\n",
++        if (tensor == nullptr || tensor->dims == nullptr ||
++            tensor->data.raw == nullptr) {
++            printk("TCN_V6_ERROR: sample317 input %u missing tensor data\n",
+                    static_cast<unsigned int>(i));
+             return false;
+         }
+ 
+         if (tensor->type != kExpectedTypes[i]) {
+-            printk("TCN_V6_ERROR: input %u type=%d expected=%d\n",
++            printk("TCN_V6_ERROR: sample317 input %u type=%d expected=%d\n",
+                    static_cast<unsigned int>(i),
+                    static_cast<int>(tensor->type),
+                    static_cast<int>(kExpectedTypes[i]));
+@@ -66,45 +86,37 @@
+         }
+ 
+         if (tensor->dims->size != kExpectedRanks[i]) {
+-            printk("TCN_V6_ERROR: input %u rank=%d expected=%d\n",
+-                   static_cast<unsigned int>(i),
+-                   tensor->dims->size,
+-                   kExpectedRanks[i]);
++            printk("TCN_V6_ERROR: sample317 input %u rank mismatch\n",
++                   static_cast<unsigned int>(i));
+             return false;
+         }
+ 
+         for (int d = 0; d < kExpectedRanks[i]; ++d) {
+             if (tensor->dims->data[d] != kExpectedDimensions[i][d]) {
+-                printk("TCN_V6_ERROR: input %u dim%u=%d expected=%d\n",
++                printk("TCN_V6_ERROR: sample317 input %u dim%u mismatch\n",
+                        static_cast<unsigned int>(i),
+-                       static_cast<unsigned int>(d),
+-                       tensor->dims->data[d],
+-                       kExpectedDimensions[i][d]);
++                       static_cast<unsigned int>(d));
+                 return false;
+             }
+         }
+ 
+-        if (tensor->data.raw == nullptr || tensor->bytes == 0U) {
+-            printk("TCN_V6_ERROR: input %u has no data buffer\n",
+-                   static_cast<unsigned int>(i));
++        if (tensor->bytes != expected_bytes[i]) {
++            printk("TCN_V6_ERROR: sample317 input %u bytes=%u expected=%u\n",
++                   static_cast<unsigned int>(i),
++                   static_cast<unsigned int>(tensor->bytes),
++                   static_cast<unsigned int>(expected_bytes[i]));
+             return false;
+         }
+ 
+-        // This zero-fills the INT8 missing_mask input (0 = observed).
+-        std::memset(tensor->data.raw, 0, tensor->bytes);
+-
+-        printk("TCN_V6_INPUT_%u: type=%d bytes=%u rank=%d shape=",
++        std::memcpy(tensor->data.raw, source_data[i], expected_bytes[i]);
++
++        printk("TCN_V6_SAMPLE317_INPUT_%u: type=%d bytes=%u populated=1\n",
+                static_cast<unsigned int>(i),
+                static_cast<int>(tensor->type),
+-               static_cast<unsigned int>(tensor->bytes),
+-               tensor->dims->size);
+-
+-        for (int d = 0; d < tensor->dims->size; ++d) {
+-            printk("%s%d", (d == 0) ? "" : "x", tensor->dims->data[d]);
+-        }
+-        printk(" zero_filled=1\n");
+-    }
+-
++               static_cast<unsigned int>(tensor->bytes));
++    }
++
++    printk("TCN_V6_SAMPLE317_INPUTS: PASS (all five genuine tensors copied)\n");
+     return true;
+ }
+ 
+@@ -135,38 +147,132 @@
+ 
+ void ReportOutput(tflite::MicroInterpreter* interpreter)
+ {
++    using namespace sample317_vectors;
++
+     TfLiteTensor* output = interpreter->output(0);
+     const float* values = reinterpret_cast<const float*>(output->data.raw);
+-
+-    float minimum = values[0];
+-    float maximum = values[0];
+-    double sum = 0.0;
+-    size_t nonfinite = 0;
++    const float* reference = kReferenceOutput;
++
++    size_t finite_count = 0;
++    size_t nonfinite_count = 0;
++    size_t count_gt_1e6 = 0;
++    size_t count_gt_1e5 = 0;
++    size_t count_gt_1e4 = 0;
++    size_t count_gt_1e3 = 0;
++
++    double absolute_error_sum = 0.0;
++    double squared_error_sum = 0.0;
++    double maximum_absolute_error = 0.0;
++    size_t maximum_error_index = 0;
++
++    double output_sum = 0.0;
++    float minimum = 0.0f;
++    float maximum = 0.0f;
++    bool have_finite_output = false;
++
++    double channel_squared_error[6] = {};
++    double channel_maximum_absolute_error[6] = {};
++    size_t channel_count[6] = {};
+ 
+     for (size_t i = 0; i < kOutputElements; ++i) {
+-        const float value = values[i];
+-
+-        if (!std::isfinite(value)) {
+-            ++nonfinite;
++        const float actual = values[i];
++        const float expected = reference[i];
++
++        if (!std::isfinite(actual)) {
++            ++nonfinite_count;
+             continue;
+         }
+ 
+-        if (value < minimum) {
+-            minimum = value;
+-        }
+-        if (value > maximum) {
+-            maximum = value;
+-        }
+-        sum += static_cast<double>(value);
+-    }
+-
+-    printk("TCN_V6_OUTPUT_STATS: elements=%u nonfinite=%u "
++        if (!have_finite_output) {
++            minimum = actual;
++            maximum = actual;
++            have_finite_output = true;
++        } else {
++            if (actual < minimum) minimum = actual;
++            if (actual > maximum) maximum = actual;
++        }
++
++        output_sum += static_cast<double>(actual);
++
++        const double error =
++            static_cast<double>(actual) - static_cast<double>(expected);
++        const double absolute_error = std::fabs(error);
++        const size_t channel = i % 6U;
++
++        ++finite_count;
++        absolute_error_sum += absolute_error;
++        squared_error_sum += error * error;
++
++        channel_squared_error[channel] += error * error;
++        ++channel_count[channel];
++
++        if (absolute_error > maximum_absolute_error) {
++            maximum_absolute_error = absolute_error;
++            maximum_error_index = i;
++        }
++
++        if (absolute_error > channel_maximum_absolute_error[channel]) {
++            channel_maximum_absolute_error[channel] = absolute_error;
++        }
++
++        if (absolute_error > 1.0e-6) ++count_gt_1e6;
++        if (absolute_error > 1.0e-5) ++count_gt_1e5;
++        if (absolute_error > 1.0e-4) ++count_gt_1e4;
++        if (absolute_error > 1.0e-3) ++count_gt_1e3;
++    }
++
++    const double mae = finite_count
++        ? absolute_error_sum / static_cast<double>(finite_count) : 0.0;
++
++    const double rmse = finite_count
++        ? std::sqrt(squared_error_sum / static_cast<double>(finite_count)) : 0.0;
++
++    const double mean_output = finite_count
++        ? output_sum / static_cast<double>(finite_count) : 0.0;
++
++    printk("TCN_V6_OUTPUT_STATS: elements=%u finite=%u nonfinite=%u "
+            "min=%f max=%f mean=%f\n",
+            static_cast<unsigned int>(kOutputElements),
+-           static_cast<unsigned int>(nonfinite),
++           static_cast<unsigned int>(finite_count),
++           static_cast<unsigned int>(nonfinite_count),
+            static_cast<double>(minimum),
+            static_cast<double>(maximum),
+-           sum / static_cast<double>(kOutputElements));
++           mean_output);
++
++    printk("TCN_V6_SAMPLE317_COMPARE: count=%u finite=%u nonfinite=%u "
++           "MAE=%f RMSE=%f max_abs=%f max_index=%u\n",
++           static_cast<unsigned int>(kOutputElements),
++           static_cast<unsigned int>(finite_count),
++           static_cast<unsigned int>(nonfinite_count),
++           mae,
++           rmse,
++           maximum_absolute_error,
++           static_cast<unsigned int>(maximum_error_index));
++
++    printk("TCN_V6_SAMPLE317_ERROR_COUNTS: gt1e-6=%u gt1e-5=%u "
++           "gt1e-4=%u gt1e-3=%u\n",
++           static_cast<unsigned int>(count_gt_1e6),
++           static_cast<unsigned int>(count_gt_1e5),
++           static_cast<unsigned int>(count_gt_1e4),
++           static_cast<unsigned int>(count_gt_1e3));
++
++    for (size_t c = 0; c < 6U; ++c) {
++        const double channel_rmse = channel_count[c]
++            ? std::sqrt(channel_squared_error[c] /
++                        static_cast<double>(channel_count[c])) : 0.0;
++
++        printk("TCN_V6_SAMPLE317_CHANNEL: c=%u count=%u RMSE=%f max_abs=%f\n",
++               static_cast<unsigned int>(c),
++               static_cast<unsigned int>(channel_count[c]),
++               channel_rmse,
++               channel_maximum_absolute_error[c]);
++    }
++
++    if (finite_count == kOutputElements && nonfinite_count == 0U) {
++        printk("TCN_V6_SAMPLE317_OUTPUTS: ALL_FINITE\n");
++    } else {
++        printk("TCN_V6_SAMPLE317_OUTPUTS: NONFINITE_ERROR\n");
++    }
+ }
+ 
+ } // namespace
+@@ -222,7 +328,7 @@
+ 
+     auto* interpreter = model.GetBackendData().m_pInterpreter.get();
+ 
+-    if (!ValidateAndZeroInputs(interpreter) ||
++    if (!ValidateAndPopulateInputs(interpreter) ||
+         !ValidateOutput(interpreter)) {
+         printk("TCN_V6_ERROR: tensor interface validation failed\n");
+         return;
+@@ -235,7 +341,7 @@
+            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+            static_cast<unsigned int>(sizeof(activationBuf)));
+ 
+-    printk("TCN_V6: invoking zero-input smoke inference\n");
++    printk("TCN_V6: invoking sample317 real-input validation\n");
+ 
+     const uint64_t start_cycles = k_cycle_get_64();
+     const bool inference_ok = model.RunInference();
+@@ -262,5 +368,5 @@
+            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+            static_cast<unsigned int>(sizeof(activationBuf)));
+ 
+-    printk("TCN_V6_SMOKE_TEST: PASS (zero inputs; not an accuracy test)\n");
+-}
++    printk("TCN_V6_SAMPLE317_RUN: FINISHED (inspect numerical comparison metrics)\n");
++}
