@@ -1,0 +1,544 @@
+============================================================
+TCN V6 LOGICAL_NOT / VALID-COUNT BRANCH AUDIT
+============================================================
+DATE=2026-11-24T14:32:18+08:00
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+
+221ec8d94e88d7f6e13d9d5995e1c7a8523a75fe1a70a8cf695a2c2fdfdf8b01  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501938.612904   14160 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501938.613086   14160 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795501938.641752   14160 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501939.345517   14160 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501939.345763   14160 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL_OPERATORS = 300
+MODEL_TENSORS = 476
+
+MISSING_MASK = [1]
+NOT_OUTPUT = [100]
+CAST_OUTPUT = [103]
+
+MASK INPUT:
+#1 'missing_mask' type=6 shape=[1, 900, 6] producer=[] consumers=[(14, 0), (15, 0), (43, 0), (44, 0), (147, 0)]
+
+NOT OUTPUT:
+#100 '/Not_output_0' type=6 shape=[1, 900, 6] producer=[14] consumers=[(16, 0), (17, 0)]
+
+NOT_PRODUCERS = [14]
+NOT_CONSUMERS = [(16, 0), (17, 0)]
+
+OP #14: LOGICAL_NOT
+  INPUTS:
+    slot=0: #1 'missing_mask' type=6 shape=[1, 900, 6] producer=[] consumers=[(14, 0), (15, 0), (43, 0), (44, 0), (147, 0)]
+      CONSTANT_DATA: EMPTY_BUFFER
+  OUTPUTS:
+    #100 '/Not_output_0' type=6 shape=[1, 900, 6] producer=[14] consumers=[(16, 0), (17, 0)]
+  OPTIONS_TYPE = 63
+  OPTIONS = {}
+
+ALL DIRECT NOT CONSUMERS:
+CONSUMER_OPERATOR = 16 SELECT_V2 INPUT_SLOT = 0
+
+OP #16: SELECT_V2
+  INPUTS:
+    slot=0: #100 '/Not_output_0' type=6 shape=[1, 900, 6] producer=[14] consumers=[(16, 0), (17, 0)]
+    slot=1: #0 'x_values' type=0 shape=[1, 900, 6] producer=[] consumers=[(15, 2), (16, 1), (43, 2)]
+      CONSTANT_DATA: EMPTY_BUFFER
+    slot=2: #80 '/Constant_17_output_0' type=0 shape=[1, 900, 6] producer=[] consumers=[(16, 2)]
+      CONSTANT_DATA: FLOAT32 count=5400 values=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  OUTPUTS:
+    #102 '/Where_1_output_0' type=0 shape=[1, 900, 6] producer=[16] consumers=[(24, 0)]
+  OPTIONS_TYPE = 98
+  OPTIONS = {}
+CONSUMER_OPERATOR = 17 CAST INPUT_SLOT = 0
+
+OP #17: CAST
+  INPUTS:
+    slot=0: #100 '/Not_output_0' type=6 shape=[1, 900, 6] producer=[14] consumers=[(16, 0), (17, 0)]
+  OUTPUTS:
+    #103 '/Cast_output_0' type=0 shape=[1, 900, 6] producer=[17] consumers=[(25, 0)]
+  OPTIONS_TYPE = 37
+  OPTIONS = {'inDataType': 6, 'outDataType': 0}
+
+CAST OUTPUT:
+#103 '/Cast_output_0' type=0 shape=[1, 900, 6] producer=[17] consumers=[(25, 0)]
+
+FORWARD TRACE FROM CAST(NOT(mask)):
+
+TRACE_DEPTH=0 INPUT_TENSOR=103 INPUT_SLOT=0
+
+OP #25: SUM
+  INPUTS:
+    slot=0: #103 '/Cast_output_0' type=0 shape=[1, 900, 6] producer=[17] consumers=[(25, 0)]
+    slot=1: #306 'axes2' type=2 shape=[1] producer=[] consumers=[(25, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[1]
+  OUTPUTS:
+    #112 '/ReduceSum_output_0' type=0 shape=[1, 1, 6] producer=[25] consumers=[(26, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+TRACE_DEPTH=1 INPUT_TENSOR=112 INPUT_SLOT=0
+
+OP #26: MAXIMUM
+  INPUTS:
+    slot=0: #112 '/ReduceSum_output_0' type=0 shape=[1, 1, 6] producer=[25] consumers=[(26, 0)]
+    slot=1: #81 '/Constant_18_output_0' type=0 shape=[] producer=[] consumers=[(26, 1)]
+      CONSTANT_DATA: FLOAT32 count=1 values=[1.0]
+  OUTPUTS:
+    #113 '/Clip_output_0' type=0 shape=[1, 1, 6] producer=[26] consumers=[(33, 1)]
+  OPTIONS_TYPE = 39
+  OPTIONS = {}
+
+TRACE_DEPTH=2 INPUT_TENSOR=113 INPUT_SLOT=1
+
+OP #33: DIV
+  INPUTS:
+    slot=0: #111 '/ReduceSum_1_output_0' type=0 shape=[1, 1, 6] producer=[24] consumers=[(33, 0)]
+    slot=1: #113 '/Clip_output_0' type=0 shape=[1, 1, 6] producer=[26] consumers=[(33, 1)]
+  OUTPUTS:
+    #120 '/Div_output_0' type=0 shape=[1, 1, 6] producer=[33] consumers=[(41, 0)]
+  OPTIONS_TYPE = 29
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_DEPTH=3 INPUT_TENSOR=120 INPUT_SLOT=0
+
+OP #41: BROADCAST_TO
+  INPUTS:
+    slot=0: #120 '/Div_output_0' type=0 shape=[1, 1, 6] producer=[33] consumers=[(41, 0)]
+    slot=1: #308 'broadcasted_shape' type=4 shape=[3] producer=[40] consumers=[(41, 1)]
+  OUTPUTS:
+    #127 '/Expand_output_0' type=0 shape=[1, 900, 6] producer=[41] consumers=[(43, 1)]
+  OPTIONS_TYPE = 104
+  OPTIONS = {}
+
+TRACE_DEPTH=4 INPUT_TENSOR=127 INPUT_SLOT=1
+
+OP #43: SELECT_V2
+  INPUTS:
+    slot=0: #1 'missing_mask' type=6 shape=[1, 900, 6] producer=[] consumers=[(14, 0), (15, 0), (43, 0), (44, 0), (147, 0)]
+      CONSTANT_DATA: EMPTY_BUFFER
+    slot=1: #127 '/Expand_output_0' type=0 shape=[1, 900, 6] producer=[41] consumers=[(43, 1)]
+    slot=2: #0 'x_values' type=0 shape=[1, 900, 6] producer=[] consumers=[(15, 2), (16, 1), (43, 2)]
+      CONSTANT_DATA: EMPTY_BUFFER
+  OUTPUTS:
+    #129 '/Where_3_output_0' type=0 shape=[1, 900, 6] producer=[43] consumers=[(45, 0)]
+  OPTIONS_TYPE = 98
+  OPTIONS = {}
+
+TRACE_DEPTH=5 INPUT_TENSOR=129 INPUT_SLOT=0
+
+OP #45: MIRROR_PAD
+  INPUTS:
+    slot=0: #129 '/Where_3_output_0' type=0 shape=[1, 900, 6] producer=[43] consumers=[(45, 0)]
+    slot=1: #309 'paddings_' type=2 shape=[3, 2] producer=[] consumers=[(45, 1)]
+      CONSTANT_DATA: INT32 count=6 values=[0, 0, 1, 1, 0, 0]
+  OUTPUTS:
+    #131 '/cvf/cvf.0/Pad_output_0' type=0 shape=[1, 902, 6] producer=[45] consumers=[(46, 0)]
+  OPTIONS_TYPE = 77
+  OPTIONS = {'mode': 0}
+
+TRACE_DEPTH=6 INPUT_TENSOR=131 INPUT_SLOT=0
+
+OP #46: QUANTIZE
+  INPUTS:
+    slot=0: #131 '/cvf/cvf.0/Pad_output_0' type=0 shape=[1, 902, 6] producer=[45] consumers=[(46, 0)]
+  OUTPUTS:
+    #132 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 902, 6] producer=[46] consumers=[(47, 0)]
+  OPTIONS_TYPE = 89
+  OPTIONS = {}
+
+TRACE_DEPTH=7 INPUT_TENSOR=132 INPUT_SLOT=0
+
+OP #47: RESHAPE
+  INPUTS:
+    slot=0: #132 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 902, 6] producer=[46] consumers=[(47, 0)]
+  OUTPUTS:
+    #310 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 902, 1, 6] producer=[47] consumers=[(48, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 902,   1,   6], dtype=int32)}
+
+TRACE_DEPTH=8 INPUT_TENSOR=310 INPUT_SLOT=0
+
+OP #48: CONV_2D
+  INPUTS:
+    slot=0: #310 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 902, 1, 6] producer=[47] consumers=[(48, 0)]
+    slot=1: #57 'model.cvf.0.weight_DequantizeLinear_Output' type=9 shape=[16, 3, 1, 6] producer=[] consumers=[(48, 1)]
+      CONSTANT_DATA: raw_bytes=288 preview=[105, 84, 42, 246, 179, 163, 85, 57, 82, 247, 127, 15, 18, 170, 247, 221, 86, 188, 159, 251, 39, 169, 255, 142]
+    slot=2: #68 'model.cvf.0.bias' type=2 shape=[16] producer=[] consumers=[(48, 2)]
+      CONSTANT_DATA: INT32 count=16 values=[107, -28, -48, -37, -305, -180, -52, 203, -3, -100, -12, -104, 19, -156, -54, -29]
+  OUTPUTS:
+    #311 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 16] producer=[48] consumers=[(49, 0)]
+  OPTIONS_TYPE = 1
+  OPTIONS = {'padding': 1, 'strideW': 1, 'strideH': 1, 'fusedActivationFunction': 0, 'dilationWFactor': 1, 'dilationHFactor': 1, 'quantizedBiasType': 0}
+
+TRACE_DEPTH=9 INPUT_TENSOR=311 INPUT_SLOT=0
+
+OP #49: RESHAPE
+  INPUTS:
+    slot=0: #311 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 16] producer=[48] consumers=[(49, 0)]
+  OUTPUTS:
+    #133 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output' type=9 shape=[1, 900, 16] producer=[49] consumers=[(50, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 900,  16], dtype=int32)}
+
+TRACE_DEPTH=10 INPUT_TENSOR=133 INPUT_SLOT=0
+
+OP #50: MIRROR_PAD
+  INPUTS:
+    slot=0: #133 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output' type=9 shape=[1, 900, 16] producer=[49] consumers=[(50, 0)]
+    slot=1: #312 'paddings_0' type=2 shape=[3, 2] producer=[] consumers=[(50, 1)]
+      CONSTANT_DATA: INT32 count=6 values=[0, 0, 2, 2, 0, 0]
+  OUTPUTS:
+    #134 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 904, 16] producer=[50] consumers=[(51, 0)]
+  OPTIONS_TYPE = 77
+  OPTIONS = {'mode': 0}
+
+TRACE_DEPTH=11 INPUT_TENSOR=134 INPUT_SLOT=0
+
+OP #51: RESHAPE
+  INPUTS:
+    slot=0: #134 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 904, 16] producer=[50] consumers=[(51, 0)]
+  OUTPUTS:
+    #313 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 904, 1, 16] producer=[51] consumers=[(52, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 904,   1,  16], dtype=int32)}
+
+TRACE_DEPTH=12 INPUT_TENSOR=313 INPUT_SLOT=0
+
+OP #52: CONV_2D
+  INPUTS:
+    slot=0: #313 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 904, 1, 16] producer=[51] consumers=[(52, 0)]
+    slot=1: #58 'model.cvf.1.weight_DequantizeLinear_Output' type=9 shape=[32, 5, 1, 16] producer=[] consumers=[(52, 1)]
+      CONSTANT_DATA: raw_bytes=2560 preview=[164, 17, 203, 179, 81, 220, 41, 198, 233, 98, 105, 239, 99, 101, 247, 81, 5, 106, 98, 39, 76, 118, 163, 135]
+    slot=2: #69 'model.cvf.1.bias' type=2 shape=[32] producer=[] consumers=[(52, 2)]
+      CONSTANT_DATA: INT32 count=32 values=[-699, 322, -142, -244, -441, -235, -65, -193, -184, -204, -93, 3, 320, 126, -165, 39, 10, -293, -206, 248, -181, 308, -195, -2]
+  OUTPUTS:
+    #314 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 32] producer=[52] consumers=[(53, 0)]
+  OPTIONS_TYPE = 1
+  OPTIONS = {'padding': 1, 'strideW': 1, 'strideH': 1, 'fusedActivationFunction': 0, 'dilationWFactor': 1, 'dilationHFactor': 1, 'quantizedBiasType': 0}
+
+TRACE_DEPTH=13 INPUT_TENSOR=314 INPUT_SLOT=0
+
+OP #53: RESHAPE
+  INPUTS:
+    slot=0: #314 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 32] producer=[52] consumers=[(53, 0)]
+  OUTPUTS:
+    #135 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' type=9 shape=[1, 900, 32] producer=[53] consumers=[(54, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 900,  32], dtype=int32)}
+
+TRACE_DEPTH=14 INPUT_TENSOR=135 INPUT_SLOT=0
+
+OP #54: DEQUANTIZE
+  INPUTS:
+    slot=0: #135 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' type=9 shape=[1, 900, 32] producer=[53] consumers=[(54, 0)]
+  OUTPUTS:
+    #136 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' type=0 shape=[1, 900, 32] producer=[54] consumers=[(55, 0), (58, 0)]
+  OPTIONS_TYPE = 38
+  OPTIONS = {}
+
+TRACE_DEPTH=15 INPUT_TENSOR=136 INPUT_SLOT=0
+
+OP #55: TRANSPOSE
+  INPUTS:
+    slot=0: #136 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' type=0 shape=[1, 900, 32] producer=[54] consumers=[(55, 0), (58, 0)]
+    slot=1: #317 'perm' type=2 shape=[3] producer=[] consumers=[(55, 1)]
+      CONSTANT_DATA: INT32 count=3 values=[0, 2, 1]
+  OUTPUTS:
+    #316 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' type=0 shape=[1, 32, 900] producer=[55] consumers=[(56, 0)]
+  OPTIONS_TYPE = 26
+  OPTIONS = {}
+
+TRACE_DEPTH=15 INPUT_TENSOR=136 INPUT_SLOT=0
+
+OP #58: SUB
+  INPUTS:
+    slot=0: #136 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' type=0 shape=[1, 900, 32] producer=[54] consumers=[(55, 0), (58, 0)]
+    slot=1: #137 '/cvf/cvf.2/ReduceMean_output_0' type=0 shape=[1, 1, 32] producer=[57] consumers=[(58, 1)]
+  OUTPUTS:
+    #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+  OPTIONS_TYPE = 28
+  OPTIONS = {'fusedActivationFunction': 0, 'potScaleInt16': True}
+
+TRACE_DEPTH=16 INPUT_TENSOR=316 INPUT_SLOT=0
+
+OP #56: MEAN
+  INPUTS:
+    slot=0: #316 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' type=0 shape=[1, 32, 900] producer=[55] consumers=[(56, 0)]
+    slot=1: #315 'axes4' type=2 shape=[1] producer=[] consumers=[(56, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[-1]
+  OUTPUTS:
+    #318 '/cvf/cvf.2/ReduceMean_output_00' type=0 shape=[1, 32, 1] producer=[56] consumers=[(57, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+TRACE_DEPTH=16 INPUT_TENSOR=138 INPUT_SLOT=0
+
+OP #59: MUL
+  INPUTS:
+    slot=0: #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+    slot=1: #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+  OUTPUTS:
+    #139 '/cvf/cvf.2/Mul_output_0' type=0 shape=[1, 900, 32] producer=[59] consumers=[(60, 0)]
+  OPTIONS_TYPE = 21
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_DEPTH=16 INPUT_TENSOR=138 INPUT_SLOT=0
+
+OP #65: DIV
+  INPUTS:
+    slot=0: #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+    slot=1: #142 '/cvf/cvf.2/Sqrt_output_0' type=0 shape=[1, 1, 32] producer=[64] consumers=[(65, 1)]
+  OUTPUTS:
+    #143 '/cvf/cvf.2/Div_output_0' type=0 shape=[1, 900, 32] producer=[65] consumers=[(66, 0)]
+  OPTIONS_TYPE = 29
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_DEPTH=17 INPUT_TENSOR=318 INPUT_SLOT=0
+
+OP #57: RESHAPE
+  INPUTS:
+    slot=0: #318 '/cvf/cvf.2/ReduceMean_output_00' type=0 shape=[1, 32, 1] producer=[56] consumers=[(57, 0)]
+  OUTPUTS:
+    #137 '/cvf/cvf.2/ReduceMean_output_0' type=0 shape=[1, 1, 32] producer=[57] consumers=[(58, 1)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([ 1,  1, 32], dtype=int32)}
+
+TRACE_DEPTH=17 INPUT_TENSOR=139 INPUT_SLOT=0
+
+OP #60: TRANSPOSE
+  INPUTS:
+    slot=0: #139 '/cvf/cvf.2/Mul_output_0' type=0 shape=[1, 900, 32] producer=[59] consumers=[(60, 0)]
+    slot=1: #321 'perm1' type=2 shape=[3] producer=[] consumers=[(60, 1)]
+      CONSTANT_DATA: INT32 count=3 values=[0, 2, 1]
+  OUTPUTS:
+    #320 '/cvf/cvf.2/Mul_output_0_transposed_' type=0 shape=[1, 32, 900] producer=[60] consumers=[(61, 0)]
+  OPTIONS_TYPE = 26
+  OPTIONS = {}
+
+TRACE_DEPTH=17 INPUT_TENSOR=143 INPUT_SLOT=0
+
+OP #66: MUL
+  INPUTS:
+    slot=0: #143 '/cvf/cvf.2/Div_output_0' type=0 shape=[1, 900, 32] producer=[65] consumers=[(66, 0)]
+    slot=1: #324 'model.cvf.2.weight0' type=0 shape=[1, 900, 1] producer=[] consumers=[(66, 1)]
+      CONSTANT_DATA: FLOAT32 count=900 values=[0.6846862435340881, 0.6960100531578064, 0.6943713426589966, 0.6926895380020142, 0.6931815147399902, 0.6931775212287903, 0.6963003277778625, 0.6966712474822998, 0.6949808597564697, 0.6980704665184021, 0.7022024989128113, 0.6997056603431702, 0.7056868672370911, 0.7068831324577332, 0.7080894112586975, 0.7023261785507202, 0.708215057849884, 0.7108080387115479, 0.7058069109916687, 0.7127131819725037, 0.715811550617218, 0.714300811290741, 0.7135341763496399, 0.7132686376571655]
+  OUTPUTS:
+    #144 '/cvf/cvf.2/Mul_1_output_0' type=0 shape=[1, 900, 32] producer=[66] consumers=[(67, 0)]
+  OPTIONS_TYPE = 21
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_DEPTH=18 INPUT_TENSOR=320 INPUT_SLOT=0
+
+OP #61: MEAN
+  INPUTS:
+    slot=0: #320 '/cvf/cvf.2/Mul_output_0_transposed_' type=0 shape=[1, 32, 900] producer=[60] consumers=[(61, 0)]
+    slot=1: #319 'axes6' type=2 shape=[1] producer=[] consumers=[(61, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[-1]
+  OUTPUTS:
+    #322 '/cvf/cvf.2/ReduceMean_1_output_00' type=0 shape=[1, 32, 1] producer=[61] consumers=[(62, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+TRACE_DEPTH=18 INPUT_TENSOR=144 INPUT_SLOT=0
+
+OP #67: ADD
+  INPUTS:
+    slot=0: #144 '/cvf/cvf.2/Mul_1_output_0' type=0 shape=[1, 900, 32] producer=[66] consumers=[(67, 0)]
+    slot=1: #325 'model.cvf.2.bias0' type=0 shape=[1, 900, 1] producer=[] consumers=[(67, 1)]
+      CONSTANT_DATA: FLOAT32 count=900 values=[-0.0018773794872686267, -0.009103791788220406, 0.004423732403665781, 0.015424447134137154, 0.017970668151974678, 0.01758745312690735, 0.012957984581589699, 0.014741118997335434, 0.011795238591730595, 0.01029757596552372, 0.014820227399468422, 0.014635727740824223, 0.020713727921247482, 0.020568493753671646, 0.020458845421671867, 0.017071008682250977, 0.021018613129854202, 0.02111097052693367, 0.018029464408755302, 0.02229250967502594, 0.021912580356001854, 0.020840050652623177, 0.02072293311357498, 0.021686939522624016]
+  OUTPUTS:
+    #145 '/cvf/cvf.2/Add_1_output_0' type=0 shape=[1, 900, 32] producer=[67] consumers=[(68, 0), (69, 0), (70, 0)]
+  OPTIONS_TYPE = 11
+  OPTIONS = {'fusedActivationFunction': 0, 'potScaleInt16': True}
+
+TRACE_DEPTH=19 INPUT_TENSOR=322 INPUT_SLOT=0
+
+OP #62: RESHAPE
+  INPUTS:
+    slot=0: #322 '/cvf/cvf.2/ReduceMean_1_output_00' type=0 shape=[1, 32, 1] producer=[61] consumers=[(62, 0)]
+  OUTPUTS:
+    #140 '/cvf/cvf.2/ReduceMean_1_output_0' type=0 shape=[1, 1, 32] producer=[62] consumers=[(63, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([ 1,  1, 32], dtype=int32)}
+
+TRACE_DEPTH=19 INPUT_TENSOR=145 INPUT_SLOT=0
+
+OP #68: MUL
+  INPUTS:
+    slot=0: #145 '/cvf/cvf.2/Add_1_output_0' type=0 shape=[1, 900, 32] producer=[67] consumers=[(68, 0), (69, 0), (70, 0)]
+    slot=1: #326 '/cvf/cvf.3/Constant_output_00' type=0 shape=[1, 1, 1] producer=[] consumers=[(68, 1)]
+      CONSTANT_DATA: FLOAT32 count=1 values=[0.7071067690849304]
+  OUTPUTS:
+    #146 '/cvf/cvf.3/Mul_output_0' type=0 shape=[1, 900, 32] producer=[68] consumers=[(71, 0)]
+  OPTIONS_TYPE = 21
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_DEPTH=19 INPUT_TENSOR=145 INPUT_SLOT=0
+
+OP #69: GREATER_EQUAL
+  INPUTS:
+    slot=0: #145 '/cvf/cvf.2/Add_1_output_0' type=0 shape=[1, 900, 32] producer=[67] consumers=[(68, 0), (69, 0), (70, 0)]
+    slot=1: #327 '/cvf/cvf.3/Constant_10_output_00' type=0 shape=[1, 1, 1] producer=[] consumers=[(69, 1)]
+      CONSTANT_DATA: FLOAT32 count=1 values=[0.0]
+  OUTPUTS:
+    #147 '/cvf/cvf.3/GreaterOrEqual_output_0' type=6 shape=[1, 900, 32] producer=[69] consumers=[(90, 0)]
+  OPTIONS_TYPE = 45
+  OPTIONS = {}
+
+TRACE_DEPTH=19 INPUT_TENSOR=145 INPUT_SLOT=0
+
+OP #70: MUL
+  INPUTS:
+    slot=0: #145 '/cvf/cvf.2/Add_1_output_0' type=0 shape=[1, 900, 32] producer=[67] consumers=[(68, 0), (69, 0), (70, 0)]
+    slot=1: #328 '/cvf/cvf.3/Constant_11_output_00' type=0 shape=[1, 1, 1] producer=[] consumers=[(70, 1)]
+      CONSTANT_DATA: FLOAT32 count=1 values=[0.5]
+  OUTPUTS:
+    #148 '/cvf/cvf.3/Mul_10_output_0' type=0 shape=[1, 900, 32] producer=[70] consumers=[(92, 0)]
+  OPTIONS_TYPE = 21
+  OPTIONS = {'fusedActivationFunction': 0}
+
+TRACE_OPERATOR_COUNT = 29
+TRACE_TENSOR_COUNT = 30
+
+RELEVANT REDUCTION AND ARITHMETIC OPERATORS:
+
+OP #25: SUM
+  INPUTS:
+    slot=0: #103 '/Cast_output_0' type=0 shape=[1, 900, 6] producer=[17] consumers=[(25, 0)]
+    slot=1: #306 'axes2' type=2 shape=[1] producer=[] consumers=[(25, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[1]
+  OUTPUTS:
+    #112 '/ReduceSum_output_0' type=0 shape=[1, 1, 6] producer=[25] consumers=[(26, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+OP #26: MAXIMUM
+  INPUTS:
+    slot=0: #112 '/ReduceSum_output_0' type=0 shape=[1, 1, 6] producer=[25] consumers=[(26, 0)]
+    slot=1: #81 '/Constant_18_output_0' type=0 shape=[] producer=[] consumers=[(26, 1)]
+      CONSTANT_DATA: FLOAT32 count=1 values=[1.0]
+  OUTPUTS:
+    #113 '/Clip_output_0' type=0 shape=[1, 1, 6] producer=[26] consumers=[(33, 1)]
+  OPTIONS_TYPE = 39
+  OPTIONS = {}
+
+OP #33: DIV
+  INPUTS:
+    slot=0: #111 '/ReduceSum_1_output_0' type=0 shape=[1, 1, 6] producer=[24] consumers=[(33, 0)]
+    slot=1: #113 '/Clip_output_0' type=0 shape=[1, 1, 6] producer=[26] consumers=[(33, 1)]
+  OUTPUTS:
+    #120 '/Div_output_0' type=0 shape=[1, 1, 6] producer=[33] consumers=[(41, 0)]
+  OPTIONS_TYPE = 29
+  OPTIONS = {'fusedActivationFunction': 0}
+
+OP #47: RESHAPE
+  INPUTS:
+    slot=0: #132 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 902, 6] producer=[46] consumers=[(47, 0)]
+  OUTPUTS:
+    #310 '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 902, 1, 6] producer=[47] consumers=[(48, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 902,   1,   6], dtype=int32)}
+
+OP #49: RESHAPE
+  INPUTS:
+    slot=0: #311 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 16] producer=[48] consumers=[(49, 0)]
+  OUTPUTS:
+    #133 '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output' type=9 shape=[1, 900, 16] producer=[49] consumers=[(50, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 900,  16], dtype=int32)}
+
+OP #51: RESHAPE
+  INPUTS:
+    slot=0: #134 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output' type=9 shape=[1, 904, 16] producer=[50] consumers=[(51, 0)]
+  OUTPUTS:
+    #313 '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_' type=9 shape=[1, 904, 1, 16] producer=[51] consumers=[(52, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 904,   1,  16], dtype=int32)}
+
+OP #53: RESHAPE
+  INPUTS:
+    slot=0: #314 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_' type=9 shape=[1, 900, 1, 32] producer=[52] consumers=[(53, 0)]
+  OUTPUTS:
+    #135 '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' type=9 shape=[1, 900, 32] producer=[53] consumers=[(54, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([  1, 900,  32], dtype=int32)}
+
+OP #56: MEAN
+  INPUTS:
+    slot=0: #316 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' type=0 shape=[1, 32, 900] producer=[55] consumers=[(56, 0)]
+    slot=1: #315 'axes4' type=2 shape=[1] producer=[] consumers=[(56, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[-1]
+  OUTPUTS:
+    #318 '/cvf/cvf.2/ReduceMean_output_00' type=0 shape=[1, 32, 1] producer=[56] consumers=[(57, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+OP #57: RESHAPE
+  INPUTS:
+    slot=0: #318 '/cvf/cvf.2/ReduceMean_output_00' type=0 shape=[1, 32, 1] producer=[56] consumers=[(57, 0)]
+  OUTPUTS:
+    #137 '/cvf/cvf.2/ReduceMean_output_0' type=0 shape=[1, 1, 32] producer=[57] consumers=[(58, 1)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([ 1,  1, 32], dtype=int32)}
+
+OP #58: SUB
+  INPUTS:
+    slot=0: #136 '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' type=0 shape=[1, 900, 32] producer=[54] consumers=[(55, 0), (58, 0)]
+    slot=1: #137 '/cvf/cvf.2/ReduceMean_output_0' type=0 shape=[1, 1, 32] producer=[57] consumers=[(58, 1)]
+  OUTPUTS:
+    #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+  OPTIONS_TYPE = 28
+  OPTIONS = {'fusedActivationFunction': 0, 'potScaleInt16': True}
+
+OP #61: MEAN
+  INPUTS:
+    slot=0: #320 '/cvf/cvf.2/Mul_output_0_transposed_' type=0 shape=[1, 32, 900] producer=[60] consumers=[(61, 0)]
+    slot=1: #319 'axes6' type=2 shape=[1] producer=[] consumers=[(61, 1)]
+      CONSTANT_DATA: INT32 count=1 values=[-1]
+  OUTPUTS:
+    #322 '/cvf/cvf.2/ReduceMean_1_output_00' type=0 shape=[1, 32, 1] producer=[61] consumers=[(62, 0)]
+  OPTIONS_TYPE = 27
+  OPTIONS = {'keepDims': True}
+
+OP #62: RESHAPE
+  INPUTS:
+    slot=0: #322 '/cvf/cvf.2/ReduceMean_1_output_00' type=0 shape=[1, 32, 1] producer=[61] consumers=[(62, 0)]
+  OUTPUTS:
+    #140 '/cvf/cvf.2/ReduceMean_1_output_0' type=0 shape=[1, 1, 32] producer=[62] consumers=[(63, 0)]
+  OPTIONS_TYPE = 17
+  OPTIONS = {'newShape': array([ 1,  1, 32], dtype=int32)}
+
+OP #65: DIV
+  INPUTS:
+    slot=0: #138 '/cvf/cvf.2/Sub_output_0' type=0 shape=[1, 900, 32] producer=[58] consumers=[(59, 0), (59, 1), (65, 0)]
+    slot=1: #142 '/cvf/cvf.2/Sqrt_output_0' type=0 shape=[1, 1, 32] producer=[64] consumers=[(65, 1)]
+  OUTPUTS:
+    #143 '/cvf/cvf.2/Div_output_0' type=0 shape=[1, 900, 32] producer=[65] consumers=[(66, 0)]
+  OPTIONS_TYPE = 29
+  OPTIONS = {'fusedActivationFunction': 0}
+
+OP #67: ADD
+  INPUTS:
+    slot=0: #144 '/cvf/cvf.2/Mul_1_output_0' type=0 shape=[1, 900, 32] producer=[66] consumers=[(67, 0)]
+    slot=1: #325 'model.cvf.2.bias0' type=0 shape=[1, 900, 1] producer=[] consumers=[(67, 1)]
+      CONSTANT_DATA: FLOAT32 count=900 values=[-0.0018773794872686267, -0.009103791788220406, 0.004423732403665781, 0.015424447134137154, 0.017970668151974678, 0.01758745312690735, 0.012957984581589699, 0.014741118997335434, 0.011795238591730595, 0.01029757596552372, 0.014820227399468422, 0.014635727740824223, 0.020713727921247482, 0.020568493753671646, 0.020458845421671867, 0.017071008682250977, 0.021018613129854202, 0.02111097052693367, 0.018029464408755302, 0.02229250967502594, 0.021912580356001854, 0.020840050652623177, 0.02072293311357498, 0.021686939522624016]
+  OUTPUTS:
+    #145 '/cvf/cvf.2/Add_1_output_0' type=0 shape=[1, 900, 32] producer=[67] consumers=[(68, 0), (69, 0), (70, 0)]
+  OPTIONS_TYPE = 11
+  OPTIONS = {'fusedActivationFunction': 0, 'potScaleInt16': True}
+
+AUDIT_COMPLETE=PASS
+
+SOURCE_MODEL_HASH_AFTER_AUDIT:
+221ec8d94e88d7f6e13d9d5995e1c7a8523a75fe1a70a8cf695a2c2fdfdf8b01  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+
+AUDIT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_not_mask_branch_audit_20261124_143218.log
+MODEL_MODIFICATION=NOT_PERFORMED
+VELA_COMPILATION=NOT_PERFORMED
+
+Press ENTER to close this terminal...
