@@ -1,0 +1,381 @@
+============================================================
+TCN V6 EXACT APPLICATION RESOLVER AUDIT
+============================================================
+DATE=2026-11-24T15:31:37+08:00
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_exact_resolver_audit_20261124_153137.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795505497.770410   16166 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795505497.770598   16166 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795505497.799192   16166 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795505498.513838   16166 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795505498.514033   16166 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+============================================================
+1. EXACT MODEL OPERATOR / CUSTOM CODE INVENTORY
+============================================================
+TOTAL_OPERATORS=197
+UNIQUE_OPERATOR_CODES=26
+
+REQUIRED OPERATORS:
+  ABS                      count=2
+  ADD                      count=24
+  BROADCAST_ARGS           count=1
+  BROADCAST_TO             count=1
+  CAST                     count=1
+  CONCATENATION            count=2
+  CUSTOM                   count=14
+  DEQUANTIZE               count=30
+  DIV                      count=6
+  EXP                      count=2
+  FULLY_CONNECTED          count=1
+  GATHER                   count=6
+  GREATER_EQUAL            count=2
+  MAXIMUM                  count=1
+  MEAN                     count=4
+  MIRROR_PAD               count=3
+  MUL                      count=32
+  NEG                      count=4
+  QUANTIZE                 count=20
+  RELU                     count=10
+  RESHAPE                  count=11
+  SELECT_V2                count=2
+  SQRT                     count=2
+  SUB                      count=10
+  SUM                      count=2
+  TRANSPOSE                count=4
+
+CUSTOM OPERATOR CODES:
+  code='ethos-u' count=14 version=1
+
+============================================================
+2. TCN V6 APPLICATION RESOLVER SOURCES
+============================================================
+
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32
+APPLICATION_SOURCE_FILES=5
+RESOLVER_ADD_CALLS=AddAbs,AddAdd,AddBroadcastArgs,AddBroadcastTo,AddCast,AddConcatenation,AddConv2D,AddDepthwiseConv2D,AddDequantize,AddDiv,AddEthosU,AddExp,AddGather,AddGreaterEqual,AddLogicalNot,AddLogicalOr,AddMaximum,AddMean,AddMirrorPad,AddMul,AddNeg,AddQuantize,AddRelu,AddReshape,AddSelectV2,AddSqrt,AddSub,AddSum,AddTranspose
+RESOLVER_CAPACITIES=[29]
+
+RESOLVER_REGISTRATION_SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32/src/TcnV6Model.cc
+  30: #define TCN6_ADD_OP(label, expression)                                  \
+  41: TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+  42: TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+  43: TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+  44: TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  46: TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+  47: TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+  48: TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+  49: TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+  50: TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+  51: TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+  53: TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+  54: TCN6_ADD_OP("LogicalNot",      m_resolver.AddLogicalNot());
+  55: TCN6_ADD_OP("LogicalOr",       m_resolver.AddLogicalOr());
+  56: TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+  57: TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+  58: TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+  59: TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+  60: TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+  61: TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+  62: TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+  63: TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+  64: TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+  65: TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+  66: TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+  67: TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+  68: TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+  70: #undef TCN6_ADD_OP
+  72: // AddEthosU() in this SDK can return kTfLiteOk even when the
+  82: const TfLiteStatus status = m_resolver.AddEthosU();
+  84: printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+
+BUILTIN_RESOLVER_COMPARISON:
+  ABS                      AddAbs                       REGISTERED
+  ADD                      AddAdd                       REGISTERED
+  BROADCAST_ARGS           AddBroadcastArgs             REGISTERED
+  BROADCAST_TO             AddBroadcastTo               REGISTERED
+  CAST                     AddCast                      REGISTERED
+  CONCATENATION            AddConcatenation             REGISTERED
+  DEQUANTIZE               AddDequantize                REGISTERED
+  DIV                      AddDiv                       REGISTERED
+  EXP                      AddExp                       REGISTERED
+  FULLY_CONNECTED          AddFullyConnected            MISSING
+  GATHER                   AddGather                    REGISTERED
+  GREATER_EQUAL            AddGreaterEqual              REGISTERED
+  MAXIMUM                  AddMaximum                   REGISTERED
+  MEAN                     AddMean                      REGISTERED
+  MIRROR_PAD               AddMirrorPad                 REGISTERED
+  MUL                      AddMul                       REGISTERED
+  NEG                      AddNeg                       REGISTERED
+  QUANTIZE                 AddQuantize                  REGISTERED
+  RELU                     AddRelu                      REGISTERED
+  RESHAPE                  AddReshape                   REGISTERED
+  SELECT_V2                AddSelectV2                  REGISTERED
+  SQRT                     AddSqrt                      REGISTERED
+  SUB                      AddSub                       REGISTERED
+  SUM                      AddSum                       REGISTERED
+  TRANSPOSE                AddTranspose                 REGISTERED
+CUSTOM_CODE='ethos-u' -> AddEthosU REGISTERED
+MINIMUM_REQUIRED_REGISTRATION_SLOTS=26
+MAX_RESOLVER_CAPACITY=29
+RESOLVER_CAPACITY_CHECK=PASS
+BUILTIN_REGISTRATION_CHECK=FAIL
+CUSTOM_REGISTRATION_CHECK=PASS
+
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2
+APPLICATION_SOURCE_FILES=5
+RESOLVER_ADD_CALLS=AddAbs,AddAdd,AddBroadcastArgs,AddBroadcastTo,AddCast,AddConcatenation,AddConv2D,AddDepthwiseConv2D,AddDequantize,AddDiv,AddEthosU,AddExp,AddGather,AddGreaterEqual,AddLogicalNot,AddLogicalOr,AddMaximum,AddMean,AddMirrorPad,AddMul,AddNeg,AddQuantize,AddRelu,AddReshape,AddSelectV2,AddSqrt,AddSub,AddSum,AddTranspose
+RESOLVER_CAPACITIES=[29]
+
+RESOLVER_REGISTRATION_SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2/src/TcnV6Model.cc
+  30: #define TCN6_ADD_OP(label, expression)                                  \
+  41: TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+  42: TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+  43: TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+  44: TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  46: TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+  47: TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+  48: TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+  49: TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+  50: TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+  51: TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+  53: TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+  54: TCN6_ADD_OP("LogicalNot",      m_resolver.AddLogicalNot());
+  55: TCN6_ADD_OP("LogicalOr",       m_resolver.AddLogicalOr());
+  56: TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+  57: TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+  58: TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+  59: TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+  60: TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+  61: TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+  62: TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+  63: TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+  64: TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+  65: TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+  66: TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+  67: TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+  68: TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+  70: #undef TCN6_ADD_OP
+  72: // AddEthosU() in this SDK can return kTfLiteOk even when the
+  82: const TfLiteStatus status = m_resolver.AddEthosU();
+  84: printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+
+BUILTIN_RESOLVER_COMPARISON:
+  ABS                      AddAbs                       REGISTERED
+  ADD                      AddAdd                       REGISTERED
+  BROADCAST_ARGS           AddBroadcastArgs             REGISTERED
+  BROADCAST_TO             AddBroadcastTo               REGISTERED
+  CAST                     AddCast                      REGISTERED
+  CONCATENATION            AddConcatenation             REGISTERED
+  DEQUANTIZE               AddDequantize                REGISTERED
+  DIV                      AddDiv                       REGISTERED
+  EXP                      AddExp                       REGISTERED
+  FULLY_CONNECTED          AddFullyConnected            MISSING
+  GATHER                   AddGather                    REGISTERED
+  GREATER_EQUAL            AddGreaterEqual              REGISTERED
+  MAXIMUM                  AddMaximum                   REGISTERED
+  MEAN                     AddMean                      REGISTERED
+  MIRROR_PAD               AddMirrorPad                 REGISTERED
+  MUL                      AddMul                       REGISTERED
+  NEG                      AddNeg                       REGISTERED
+  QUANTIZE                 AddQuantize                  REGISTERED
+  RELU                     AddRelu                      REGISTERED
+  RESHAPE                  AddReshape                   REGISTERED
+  SELECT_V2                AddSelectV2                  REGISTERED
+  SQRT                     AddSqrt                      REGISTERED
+  SUB                      AddSub                       REGISTERED
+  SUM                      AddSum                       REGISTERED
+  TRANSPOSE                AddTranspose                 REGISTERED
+CUSTOM_CODE='ethos-u' -> AddEthosU REGISTERED
+MINIMUM_REQUIRED_REGISTRATION_SLOTS=26
+MAX_RESOLVER_CAPACITY=29
+RESOLVER_CAPACITY_CHECK=PASS
+BUILTIN_REGISTRATION_CHECK=FAIL
+CUSTOM_REGISTRATION_CHECK=PASS
+
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix
+APPLICATION_SOURCE_FILES=5
+RESOLVER_ADD_CALLS=AddAbs,AddAdd,AddBroadcastArgs,AddBroadcastTo,AddCast,AddConcatenation,AddConv2D,AddDepthwiseConv2D,AddDequantize,AddDiv,AddEthosU,AddExp,AddGather,AddGreaterEqual,AddLogicalNot,AddLogicalOr,AddMaximum,AddMean,AddMirrorPad,AddMul,AddNeg,AddQuantize,AddRelu,AddReshape,AddSelectV2,AddSqrt,AddSub,AddSum,AddTranspose
+RESOLVER_CAPACITIES=[29]
+
+RESOLVER_REGISTRATION_SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix/src/TcnV6Model.cc
+  30: #define TCN6_ADD_OP(label, expression)                                  \
+  41: TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+  42: TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+  43: TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+  44: TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  46: TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+  47: TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+  48: TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+  49: TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+  50: TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+  51: TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+  53: TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+  54: TCN6_ADD_OP("LogicalNot",      m_resolver.AddLogicalNot());
+  55: TCN6_ADD_OP("LogicalOr",       m_resolver.AddLogicalOr());
+  56: TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+  57: TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+  58: TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+  59: TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+  60: TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+  61: TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+  62: TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+  63: TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+  64: TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+  65: TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+  66: TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+  67: TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+  68: TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+  70: #undef TCN6_ADD_OP
+  72: // AddEthosU() in this SDK can return kTfLiteOk even when the
+  82: const TfLiteStatus status = m_resolver.AddEthosU();
+  84: printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+
+BUILTIN_RESOLVER_COMPARISON:
+  ABS                      AddAbs                       REGISTERED
+  ADD                      AddAdd                       REGISTERED
+  BROADCAST_ARGS           AddBroadcastArgs             REGISTERED
+  BROADCAST_TO             AddBroadcastTo               REGISTERED
+  CAST                     AddCast                      REGISTERED
+  CONCATENATION            AddConcatenation             REGISTERED
+  DEQUANTIZE               AddDequantize                REGISTERED
+  DIV                      AddDiv                       REGISTERED
+  EXP                      AddExp                       REGISTERED
+  FULLY_CONNECTED          AddFullyConnected            MISSING
+  GATHER                   AddGather                    REGISTERED
+  GREATER_EQUAL            AddGreaterEqual              REGISTERED
+  MAXIMUM                  AddMaximum                   REGISTERED
+  MEAN                     AddMean                      REGISTERED
+  MIRROR_PAD               AddMirrorPad                 REGISTERED
+  MUL                      AddMul                       REGISTERED
+  NEG                      AddNeg                       REGISTERED
+  QUANTIZE                 AddQuantize                  REGISTERED
+  RELU                     AddRelu                      REGISTERED
+  RESHAPE                  AddReshape                   REGISTERED
+  SELECT_V2                AddSelectV2                  REGISTERED
+  SQRT                     AddSqrt                      REGISTERED
+  SUB                      AddSub                       REGISTERED
+  SUM                      AddSum                       REGISTERED
+  TRANSPOSE                AddTranspose                 REGISTERED
+CUSTOM_CODE='ethos-u' -> AddEthosU REGISTERED
+MINIMUM_REQUIRED_REGISTRATION_SLOTS=26
+MAX_RESOLVER_CAPACITY=29
+RESOLVER_CAPACITY_CHECK=PASS
+BUILTIN_REGISTRATION_CHECK=FAIL
+CUSTOM_REGISTRATION_CHECK=PASS
+
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8
+APPLICATION_SOURCE_FILES=5
+RESOLVER_ADD_CALLS=AddAbs,AddAdd,AddBroadcastArgs,AddBroadcastTo,AddCast,AddConcatenation,AddConv2D,AddDepthwiseConv2D,AddDequantize,AddDiv,AddEthosU,AddExp,AddGather,AddGreaterEqual,AddLogicalNot,AddLogicalOr,AddMaximum,AddMean,AddMirrorPad,AddMul,AddNeg,AddQuantize,AddRelu,AddReshape,AddSelectV2,AddSqrt,AddSub,AddSum,AddTranspose
+RESOLVER_CAPACITIES=[29]
+
+RESOLVER_REGISTRATION_SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8/src/TcnV6Model.cc
+  30: #define TCN6_ADD_OP(label, expression)                                  \
+  41: TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+  42: TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+  43: TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+  44: TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+  45: TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  46: TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+  47: TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+  48: TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+  49: TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+  50: TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+  51: TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+  52: TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+  53: TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+  54: TCN6_ADD_OP("LogicalNot",      m_resolver.AddLogicalNot());
+  55: TCN6_ADD_OP("LogicalOr",       m_resolver.AddLogicalOr());
+  56: TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+  57: TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+  58: TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+  59: TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+  60: TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+  61: TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+  62: TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+  63: TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+  64: TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+  65: TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+  66: TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+  67: TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+  68: TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+  70: #undef TCN6_ADD_OP
+  72: // AddEthosU() in this SDK can return kTfLiteOk even when the
+  82: const TfLiteStatus status = m_resolver.AddEthosU();
+  84: printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+
+BUILTIN_RESOLVER_COMPARISON:
+  ABS                      AddAbs                       REGISTERED
+  ADD                      AddAdd                       REGISTERED
+  BROADCAST_ARGS           AddBroadcastArgs             REGISTERED
+  BROADCAST_TO             AddBroadcastTo               REGISTERED
+  CAST                     AddCast                      REGISTERED
+  CONCATENATION            AddConcatenation             REGISTERED
+  DEQUANTIZE               AddDequantize                REGISTERED
+  DIV                      AddDiv                       REGISTERED
+  EXP                      AddExp                       REGISTERED
+  FULLY_CONNECTED          AddFullyConnected            MISSING
+  GATHER                   AddGather                    REGISTERED
+  GREATER_EQUAL            AddGreaterEqual              REGISTERED
+  MAXIMUM                  AddMaximum                   REGISTERED
+  MEAN                     AddMean                      REGISTERED
+  MIRROR_PAD               AddMirrorPad                 REGISTERED
+  MUL                      AddMul                       REGISTERED
+  NEG                      AddNeg                       REGISTERED
+  QUANTIZE                 AddQuantize                  REGISTERED
+  RELU                     AddRelu                      REGISTERED
+  RESHAPE                  AddReshape                   REGISTERED
+  SELECT_V2                AddSelectV2                  REGISTERED
+  SQRT                     AddSqrt                      REGISTERED
+  SUB                      AddSub                       REGISTERED
+  SUM                      AddSum                       REGISTERED
+  TRANSPOSE                AddTranspose                 REGISTERED
+CUSTOM_CODE='ethos-u' -> AddEthosU REGISTERED
+MINIMUM_REQUIRED_REGISTRATION_SLOTS=26
+MAX_RESOLVER_CAPACITY=29
+RESOLVER_CAPACITY_CHECK=PASS
+BUILTIN_REGISTRATION_CHECK=FAIL
+CUSTOM_REGISTRATION_CHECK=PASS
+
+TCN_V6_PROJECTS_FOUND=4
+
+============================================================
+3. REAL NUMERIC TENSOR ARENA MEASUREMENTS
+============================================================
+LOG_FILES_SCANNED=913
+NUMERIC_ARENA_MEASUREMENT_FOUND=NO
+ARENA_SIZE_REMAINS_UNVERIFIED=YES
+
+============================================================
+4. FINAL READINESS STATUS
+============================================================
+heatstroke_tcn_v6_e8_broadcastfix_gather_int32: BUILTINS=FAIL CUSTOM=PASS CAPACITY=PASS
+heatstroke_tcn_v6_e8_broadcastfix_gather_int32_offline_meta_fix_v2: BUILTINS=FAIL CUSTOM=PASS CAPACITY=PASS
+heatstroke_tcn_v6_e8_broadcastfix: BUILTINS=FAIL CUSTOM=PASS CAPACITY=PASS
+heatstroke_tcn_v6_e8: BUILTINS=FAIL CUSTOM=PASS CAPACITY=PASS
+MODEL_FILE_MODIFIED=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+EXACT_RESOLVER_AUDIT_COMPLETE=YES
+
+============================================================
+EXACT RESOLVER AUDIT FINISHED
+PYTHON_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_exact_resolver_audit_20261124_153137.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
