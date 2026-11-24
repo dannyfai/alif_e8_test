@@ -1,0 +1,67 @@
+======================================================
+SAMPLE317 HOST REFERENCE / MODEL INPUT AUDIT
+Tue Nov 24 10:47:59 PM HKT 2026
+======================================================
+
+========== 1. DISCOVER MODEL FILES ==========
+10317408 bytes  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+9684208 bytes  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+
+========== 2. FIND PYTHON WITH TENSORFLOW ==========
+TENSORFLOW_PYTHON=/home/user/onnx2tflite_env/bin/python
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795531682.231720   43008 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795531682.231974   43008 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795531682.265522   43008 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795531683.022749   43008 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795531683.022935   43008 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TensorFlow: 2.21.0
+NumPy: 2.5.4
+
+========== 3. MODEL INPUT / OUTPUT / REFERENCE AUDIT ==========
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795531684.370555   43037 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795531684.370730   43037 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795531684.399725   43037 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795531685.104331   43037 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795531685.104520   43037 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+NPZ_REFERENCE: shape=(1, 900, 6) dtype=float32 min=-4.00114346 max=1.84668159 mean=-0.0452266037
+MODEL_CANDIDATES: 2
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite bytes= 10317408 classification= NON_VELA
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite bytes= 9684208 classification= VELA
+
+======================================================
+NON_VELA_MODEL_TEST: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+MODEL_SHA256:
+8f0560876be0deb8511cb200e5971eeefc57cab329534c457e742958cf45d048
+INPUT_COUNT: 5
+INPUT[0]: tensor_index=0 name='x_values' shape=(1, 900, 6) dtype=float32 quantization=(0.0, 0) NPZ_MATCHES=['x_values']
+INPUT[1]: tensor_index=1 name='missing_mask' shape=(1, 900, 6) dtype=int8 quantization=(0.0, 0) NPZ_MATCHES=['missing_mask']
+INPUT[2]: tensor_index=2 name='x_mark' shape=(1, 900, 3) dtype=float32 quantization=(0.0, 0) NPZ_MATCHES=['x_mark']
+INPUT[3]: tensor_index=3 name='worker_features_18' shape=(1, 18) dtype=float32 quantization=(0.0, 0) NPZ_MATCHES=['worker_features_18']
+INPUT[4]: tensor_index=4 name='compact_values' shape=(1, 1800, 6) dtype=float32 quantization=(0.0, 0) NPZ_MATCHES=['compact_values']
+FIVE_INPUTS_MAP_UNAMBIGUOUS: True
+OUTPUT: name='reconstructed_values' shape=(1, 900, 6) raw_dtype=float32 quantization=(0.0, 0) min=-4.00114346 max=1.84668159 mean=-0.0452266037
+REFERENCE_COMPARISON: MAE=0 RMSE=0 max_abs=0 gt1e-3=0/5400
+HOST_REFERENCE_REPRODUCED: YES
+
+VELA_MODEL_FILES: 1
+HOST_REFERENCE_MODEL_AUDIT_FINISHED
+
+HOST_REFERENCE_AUDIT_FINISHED
+
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample317_host_reference_audit_20261124_224759.log
+MODEL_MODIFIED=NO
+FLASH_PERFORMED=NO
+Press ENTER to close this terminal...
