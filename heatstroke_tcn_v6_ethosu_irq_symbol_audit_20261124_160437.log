@@ -1,0 +1,343 @@
+============================================================
+TCN V6 ETHOS-U IRQ SYMBOL AUDIT
+============================================================
+Tue Nov 24 04:04:37 PM HKT 2026
+SDK=/home/user/sdk-alif
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+TFLM=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+ETHOSU_CC=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_irq_symbol_audit_20261124_160437.log
+
+============================================================
+[1] EXACT TFLM KERNEL CALL SITES
+============================================================
+19-#include <stdint.h>
+20-
+21-#include "flatbuffers/flexbuffers.h"
+22-#include "tensorflow/lite/c/common.h"
+23-#include "tensorflow/lite/micro/kernels/kernel_util.h"
+24-#include "tensorflow/lite/micro/micro_context.h"
+25-#include "tensorflow/lite/micro/micro_log.h"
+26-
+27:extern "C" uint32_t tcn_v6_ethosu_irq_count_get(void);
+28-
+29-namespace tflite {
+30-namespace {
+31-
+32-constexpr uint8_t CO_TYPE_ETHOSU = 1;
+33-
+34-struct OpData {
+35-  int cms_data_size;
+--
+157-  // buffers using base address 1. This means that it is not possible to point
+158-  // the input and output tensors outside of the TFLM arena.
+159-  num_tensors = std::min(num_tensors, 8);
+160-
+161-  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+162-  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+163-  struct ethosu_driver *drv = ethosu_reserve_driver();
+164-  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+165:  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+166-  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+167-  result = ethosu_invoke_v3(
+168-      drv, cms_data, data->cms_data_size, base_addrs,
+169-      base_addrs_size, num_tensors,
+170-      GetMicroContext(context)->external_context());
+171-  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+172:  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+173-  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+174-  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+175-  ethosu_release_driver(drv);
+176-  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+177-  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+178-  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+179-  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+180-         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+
+--- Full Eval() context around the linker-reported lines ---
+   125	    }
+   126	    base_addrs_size[num_tensors] = byte_size;
+   127	    num_tensors++;
+   128	  }
+   129	
+   130	  // When Vela optimizes a tflite file it will assign the tensors like this:
+   131	  //
+   132	  // +-------+------------------------+  +--------+-------------+
+   133	  // | INPUT | Description            |  | OUTPUT | Description |
+   134	  // +-------+------------------------+  +--------+-------------+
+   135	  // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+   136	  // |     1 | TFLM model             |  +--------+-------------+
+   137	  // |     2 | TFLM arena             |
+   138	  // |     3 | Ethos-U fast scratch   |
+   139	  // |  4..n | Inputs                 |
+   140	  // +-------+------------------------+
+   141	  //
+   142	  // This code will assign the NPU base addresses like this:
+   143	  //
+   144	  // +--------------+----------------------+
+   145	  // | Base address | Description          |
+   146	  // +--------------+----------------------+
+   147	  // |            0 | TFLM model           |
+   148	  // |            1 | TFLM arena           |
+   149	  // |            2 | Ethos-U fast scratch |
+   150	  // |         3..n | Input tensors        |
+   151	  // |         n..m | Output tensors       |
+   152	  // +--------------+----------------------+
+   153	  //
+   154	  // The number of base address will be limited to 8.
+   155	  //
+   156	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   157	  // buffers using base address 1. This means that it is not possible to point
+   158	  // the input and output tensors outside of the TFLM arena.
+   159	  num_tensors = std::min(num_tensors, 8);
+   160	
+   161	  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+   162	  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+   163	  struct ethosu_driver *drv = ethosu_reserve_driver();
+   164	  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+   165	  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+   166	  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+   167	  result = ethosu_invoke_v3(
+   168	      drv, cms_data, data->cms_data_size, base_addrs,
+   169	      base_addrs_size, num_tensors,
+   170	      GetMicroContext(context)->external_context());
+   171	  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+   172	  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+   173	  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+   174	  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+   175	  ethosu_release_driver(drv);
+   176	  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+   177	  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+   178	  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+   179	  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+   180	         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+   181	         "invoke_ms=%u release_ms=%u irq_before=%u "
+   182	         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+   183	         "cumulative_irq_delta=%u\n",
+   184	         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+   185	         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+   186	         tcn_v6_invoke_ms, tcn_v6_release_ms,
+   187	         tcn_v6_irq_before, tcn_v6_irq_after,
+   188	         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+   189	         tcn_v6_npu_cumulative_irq_delta);
+   190	
+
+============================================================
+[2] EXACT SYMBOL REFERENCES AND DEFINITIONS
+============================================================
+
+--- Searching: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver ---
+
+--- Searching: /home/user/sdk-alif/beeinventor ---
+
+--- Searching: /home/user/sdk-alif/optional/modules/lib/tflite-micro ---
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:27:extern "C" uint32_t tcn_v6_ethosu_irq_count_get(void);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:165:  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:172:  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+
+--- Searching: /home/user/sdk-alif/modules/hal/alif ---
+
+--- Searching: /home/user/sdk-alif/modules/hal/ethos_u ---
+
+--- Searching: /home/user/sdk-alif/zephyr ---
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:139:uint32_t tcn_v6_ethosu_irq_count_get(void)
+
+============================================================
+[3] ETHOS-U IRQ / INTERRUPT HANDLER IMPLEMENTATIONS
+============================================================
+
+--- IRQ-related source matches in: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver ---
+
+--- IRQ-related source matches in: /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u ---
+
+--- IRQ-related source matches in: /home/user/sdk-alif/modules/hal/ethos_u ---
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:457:void ETHOSU_PMU_Set_CNTR_IRQ_Enable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:466:void ETHOSU_PMU_Set_CNTR_IRQ_Disable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:476:uint32_t ETHOSU_PMU_Get_IRQ_Enable(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:116:void ethosu_irq_handler(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:224:void ETHOSU_PMU_Set_CNTR_IRQ_Enable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:230:void ETHOSU_PMU_Set_CNTR_IRQ_Disable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:236:uint32_t ETHOSU_PMU_Get_IRQ_Enable(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:383:void __attribute__((weak)) ethosu_irq_handler(struct ethosu_driver *drv)
+
+--- IRQ-related source matches in: /home/user/sdk-alif/zephyr/drivers ---
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:137:static volatile uint32_t tcn_v6_ethosu_irq_count = 0;
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:139:uint32_t tcn_v6_ethosu_irq_count_get(void)
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:141:    return __atomic_load_n(&tcn_v6_ethosu_irq_count, __ATOMIC_RELAXED);
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:144:void ethosu_zephyr_irq_handler(const struct device *dev)
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:149:	__atomic_add_fetch(&tcn_v6_ethosu_irq_count, 1u, __ATOMIC_RELAXED);
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:150:	ethosu_irq_handler(drv);
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:267:	static void ethosu_zephyr_irq_config_##n(void)                                             \
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:269:		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority), ethosu_zephyr_irq_handler,  \
+/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c:279:		.irq_config = &ethosu_zephyr_irq_config_##n,                                       \
+/home/user/sdk-alif/zephyr/drivers/i2s/i2s_ll_stm32.c:672:static uint32_t i2s_stm32_irq_count;
+/home/user/sdk-alif/zephyr/drivers/i2s/i2s_ll_stm32.c:692:	i2s_stm32_irq_count++;
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_system_apic.c:23:#define HARDWARE_IRQ_LIMIT ((z_loapic_irq_base() + LOAPIC_IRQ_COUNT) - 1)
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:101:	uint16_t *const irq_count;
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:102:	const int irq_count_len;
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:108:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:110:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:459:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:461: * If there's more than one core, irq_count points to a 2D-array: irq_count[NUM_CPUs + 1][nr_irqs]
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:479:	return &data->stats.irq_count[offset];
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:492:	return &data->stats.irq_count[offset];
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:494:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:505:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:516:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:630:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:708:	memset(stat.irq_count, 0,
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:718:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:819:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:831:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:847:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:849:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:861:#ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:862:#define PLIC_INTC_IRQ_COUNT_BUF_DEFINE(n)                                                          \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:863:	static uint16_t local_irq_count_##n[COND_CODE_1(CONFIG_MP_MAX_NUM_CPUS, (1),               \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:866:#define PLIC_INTC_IRQ_COUNT_INIT(n)                                                                \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:868:		.irq_count = &local_irq_count_##n[0][0],                                           \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:872:#define PLIC_INTC_IRQ_COUNT_BUF_DEFINE(n)
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:873:#define PLIC_INTC_IRQ_COUNT_INIT(n)
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:874:#endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:888:	PLIC_INTC_IRQ_COUNT_BUF_DEFINE(n);                                                         \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_plic.c:891:		PLIC_INTC_IRQ_COUNT_INIT(n)                                                        \
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_loapic.c:66:#define LOAPIC_SUSPEND_BITS_REQD (ROUND_UP((LOAPIC_IRQ_COUNT * LOAPIC_SSPND_BITS_PER_IRQ), 32))
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_loapic.c:341:	for (loapic_irq = 0; loapic_irq < LOAPIC_IRQ_COUNT; loapic_irq++) {
+/home/user/sdk-alif/zephyr/drivers/interrupt_controller/intc_loapic.c:372:	for (loapic_irq = 0; loapic_irq < LOAPIC_IRQ_COUNT; loapic_irq++) {
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:47:#define IRQ_COUNT    16
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:48:#define NS_IRQ_COUNT 14
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:73:	struct rzt2m_gpio_irq_slot irq_registered_ports[IRQ_COUNT];
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:280:	if (irq >= IRQ_COUNT) {
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:329:	if (irq >= NS_IRQ_COUNT) {
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:417:	static uint8_t n[IRQ_COUNT];
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_rzt2m.c:424:	FOR_EACH(RZT2M_INIT_IRQ, (), LISTIFY(NS_IRQ_COUNT, RZT2M_GPIO_VALUE_IDENTITY, (,)))
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_ite_it8xxx2.c:232:	[IT8XXX2_IRQ_COUNT] = {     0,  0,     0},
+/home/user/sdk-alif/zephyr/drivers/gpio/gpio_ite_it8xxx2.c:234:BUILD_ASSERT(ARRAY_SIZE(gpio_irqs) == IT8XXX2_IRQ_COUNT + 1);
+
+--- IRQ-related source matches in: /home/user/sdk-alif/zephyr/soc/alif ---
+
+============================================================
+[4] LOCAL TFLM SOURCE MODIFICATION STATUS
+============================================================
+--- Git status ---
+ M tensorflow/lite/micro/kernels/broadcast_to.cc
+ M tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+ M tensorflow/lite/micro/kernels/gather.cc
+ M tensorflow/lite/micro/kernels/micro_ops.h
+ M tensorflow/lite/micro/micro_interpreter_graph.cc
+ M tensorflow/lite/micro/micro_mutable_op_resolver.h
+?? tensorflow/lite/micro/kernels/micro_ops.h.bak_topk_int8
+?? tensorflow/lite/micro/kernels/topk_int8.cc
+?? tensorflow/lite/micro/kernels/topk_int8.h
+?? tensorflow/lite/micro/micro_mutable_op_resolver.h.bak_topk_int8
+
+--- Diff for ethosu.cc ---
+diff --git a/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc b/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+index b167b6bf..237e04a4 100644
+--- a/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
++++ b/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+@@ -14,6 +14,9 @@ limitations under the License.
+ ==============================================================================*/
+ 
+ #include <ethosu_driver.h>
++#include <zephyr/kernel.h>
++#include <zephyr/sys/printk.h>
++#include <stdint.h>
+ 
+ #include "flatbuffers/flexbuffers.h"
+ #include "tensorflow/lite/c/common.h"
+@@ -21,6 +24,8 @@ limitations under the License.
+ #include "tensorflow/lite/micro/micro_context.h"
+ #include "tensorflow/lite/micro/micro_log.h"
+ 
++extern "C" uint32_t tcn_v6_ethosu_irq_count_get(void);
++
+ namespace tflite {
+ namespace {
+ 
+@@ -61,6 +66,11 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+ }
+ 
+ TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
++  // TCN V6 runtime profiling counters.
++  static uint32_t tcn_v6_npu_invocation_index = 0;
++  static uint32_t tcn_v6_npu_cumulative_invoke_ms = 0;
++  static uint32_t tcn_v6_npu_cumulative_irq_delta = 0;
++
+   TFLITE_DCHECK(node->user_data != nullptr);
+   TFLITE_DCHECK(context != nullptr);
+   TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+@@ -148,11 +158,35 @@ TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+   // the input and output tensors outside of the TFLM arena.
+   num_tensors = std::min(num_tensors, 8);
+ 
+-  struct ethosu_driver* drv = ethosu_reserve_driver();
+-  result = ethosu_invoke_v3(drv, cms_data, data->cms_data_size, base_addrs,
+-                            base_addrs_size, num_tensors,
+-                            GetMicroContext(context)->external_context());
++  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
++  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
++  struct ethosu_driver *drv = ethosu_reserve_driver();
++  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
++  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
++  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
++  result = ethosu_invoke_v3(
++      drv, cms_data, data->cms_data_size, base_addrs,
++      base_addrs_size, num_tensors,
++      GetMicroContext(context)->external_context());
++  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
++  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
++  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
++  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+   ethosu_release_driver(drv);
++  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
++  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
++  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
++  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
++         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
++         "invoke_ms=%u release_ms=%u irq_before=%u "
++         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
++         "cumulative_irq_delta=%u\n",
++         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
++         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
++         tcn_v6_invoke_ms, tcn_v6_release_ms,
++         tcn_v6_irq_before, tcn_v6_irq_after,
++         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
++         tcn_v6_npu_cumulative_irq_delta);
+ 
+   if (-1 == result) {
+     return kTfLiteError;
+
+--- File history / revision ---
+101d2bb93599a157dda41e499a6a2fb06d98f553 TFLM swapping TfLiteRegistration_V1 struct to a new more embedded friendly api in the TFLMRegistration struct (#2001)
+
+============================================================
+[5] APPLICATION SOURCE FILE INVENTORY
+============================================================
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/BufAttributes.hpp
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/TcnV6Model.hpp
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/Main.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc
+
+============================================================
+[6] BUILD FAILURE CONFIRMATION
+============================================================
+--- ELF artifacts ---
+zephyr_pre0.map 2505880 bytes
+
+--- Final cached Python ---
+Python3_EXECUTABLE:FILEPATH=/home/user/zephyrproject/.py3.12_venv/bin/python
+
+AUDIT_COMPLETE=YES
+SOURCE_FILES_MODIFIED=NO
+BUILD_EXECUTED=NO
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+IRQ SYMBOL AUDIT FINISHED
+EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_irq_symbol_audit_20261124_160437.log
+============================================================
+
+Press ENTER to close this terminal...
