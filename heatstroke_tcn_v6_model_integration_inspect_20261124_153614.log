@@ -1,0 +1,1000 @@
+============================================================
+TCN V6 MODEL INTEGRATION MECHANISM INSPECTION
+============================================================
+DATE=2026-11-24T15:36:14+08:00
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_model_integration_inspect_20261124_153614.log
+SOURCE_MODIFICATION=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+1. TCN V6 APPLICATION MODEL WRAPPER
+============================================================
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc =====
+LINE_COUNT=147
+   1: #include "TcnV6Model.hpp"
+   2: 
+   3: #include <zephyr/sys/printk.h>
+   4: 
+   5: #include "tensorflow/lite/micro/kernels/ethosu.h"
+   6: 
+   7: namespace heatstroke_tcn_v6 {
+   8: 
+   9: const tflite::MicroOpResolver& TcnV6Model::GetOpResolver()
+  10: {
+  11:     return m_resolver;
+  12: }
+  13: 
+  14: bool TcnV6Model::PrepareResolver()
+  15: {
+  16:     return EnlistOperations();
+  17: }
+  18: 
+  19: bool TcnV6Model::EnlistOperations()
+  20: {
+  21:     // TflmModel::Init() calls this again. Cache the result so that the
+  22:     // resolver is not populated twice.
+  23:     if (m_resolverAttempted) {
+  24:         return m_resolverOk;
+  25:     }
+  26: 
+  27:     m_resolverAttempted = true;
+  28:     bool ok = true;
+  29: 
+  30: #define TCN6_ADD_OP(label, expression)                                  \
+  31:     do {                                                                \
+  32:         const TfLiteStatus status = (expression);                       \
+  33:         if (status != kTfLiteOk) {                                      \
+  34:             printk("TCN_V6_RESOLVER: Add%s failed: %d\n",               \
+  35:                    label, static_cast<int>(status));                    \
+  36:             ok = false;                                                 \
+  37:         }                                                               \
+  38:     } while (0)
+  39: 
+  40:     // Exactly the 28 distinct built-in operators from the V6 audit.
+  41:     TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+  42:     TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+  43:     TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+  44:     TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+  45:     TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+  46:     TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+  47:     TCN6_ADD_OP("Conv2D",          m_resolver.AddConv2D());
+  48:     TCN6_ADD_OP("DepthwiseConv2D", m_resolver.AddDepthwiseConv2D());
+  49:     TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+  50:     TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+  51:     TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+  52:     TCN6_ADD_OP("FullyConnected", m_resolver.AddFullyConnected());
+  53:     TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+  54:     TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+  55: TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+  56:     TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+  57:     TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+  58:     TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+  59:     TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+  60:     TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+  61:     TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+  62:     TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+  63:     TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+  64:     TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+  65:     TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+  66:     TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+  67:     TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+  68: 
+  69: #undef TCN6_ADD_OP
+  70: 
+  71:     // AddEthosU() in this SDK can return kTfLiteOk even when the
+  72:     // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+  73:     TFLMRegistration* native_ethos_registration =
+  74:         tflite::Register_ETHOSU();
+  75: 
+  76:     if (native_ethos_registration == nullptr ||
+  77:         native_ethos_registration->invoke == nullptr) {
+  78:         printk("TCN_V6_RESOLVER: native Ethos-U registration/invoke missing\n");
+  79:         ok = false;
+  80:     } else {
+  81:         const TfLiteStatus status = m_resolver.AddEthosU();
+  82:         if (status != kTfLiteOk) {
+  83:             printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+  84:                    static_cast<int>(status));
+  85:             ok = false;
+  86:         }
+  87:     }
+  88: 
+  89:     // Verify that every built-in registration exists and has an invoke.
+  90:     const tflite::BuiltinOperator expected_ops[] = {
+  91:         tflite::BuiltinOperator_ABS,
+  92:         tflite::BuiltinOperator_ADD,
+  93:         tflite::BuiltinOperator_BROADCAST_ARGS,
+  94:         tflite::BuiltinOperator_BROADCAST_TO,
+  95:         tflite::BuiltinOperator_CAST,
+  96:         tflite::BuiltinOperator_CONCATENATION,
+  97:         tflite::BuiltinOperator_CONV_2D,
+  98:         tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
+  99:         tflite::BuiltinOperator_DEQUANTIZE,
+ 100:         tflite::BuiltinOperator_DIV,
+ 101:         tflite::BuiltinOperator_EXP,
+ 102:         tflite::BuiltinOperator_GATHER,
+ 103:         tflite::BuiltinOperator_GREATER_EQUAL,
+ 104:         tflite::BuiltinOperator_LOGICAL_NOT,
+ 105:         tflite::BuiltinOperator_LOGICAL_OR,
+ 106:         tflite::BuiltinOperator_MAXIMUM,
+ 107:         tflite::BuiltinOperator_MEAN,
+ 108:         tflite::BuiltinOperator_MIRROR_PAD,
+ 109:         tflite::BuiltinOperator_MUL,
+ 110:         tflite::BuiltinOperator_NEG,
+ 111:         tflite::BuiltinOperator_QUANTIZE,
+ 112:         tflite::BuiltinOperator_RELU,
+ 113:         tflite::BuiltinOperator_RESHAPE,
+ 114:         tflite::BuiltinOperator_SELECT_V2,
+ 115:         tflite::BuiltinOperator_SQRT,
+ 116:         tflite::BuiltinOperator_SUB,
+ 117:         tflite::BuiltinOperator_SUM,
+ 118:         tflite::BuiltinOperator_TRANSPOSE
+ 119:     };
+ 120: 
+ 121:     for (const auto op : expected_ops) {
+ 122:         const TFLMRegistration* registration = m_resolver.FindOp(op);
+ 123:         if (registration == nullptr || registration->invoke == nullptr) {
+ 124:             printk("TCN_V6_RESOLVER: missing builtin registration %d\n",
+ 125:                    static_cast<int>(op));
+ 126:             ok = false;
+ 127:         }
+ 128:     }
+ 129: 
+ 130:     const char* ethos_name = tflite::GetString_ETHOSU();
+ 131:     const TFLMRegistration* ethos =
+ 132:         (ethos_name != nullptr) ? m_resolver.FindOp(ethos_name) : nullptr;
+ 133: 
+ 134:     if (ethos == nullptr || ethos->invoke == nullptr) {
+ 135:         printk("TCN_V6_RESOLVER: custom ethos-u registration not found\n");
+ 136:         ok = false;
+ 137:     }
+ 138: 
+ 139:     m_resolverOk = ok;
+ 140: 
+ 141:     printk("TCN_V6_RESOLVER: builtin_expected=28 custom=ethos-u status=%s\n",
+ 142:            m_resolverOk ? "PASS" : "FAIL");
+ 143: 
+ 144:     return m_resolverOk;
+ 145: }
+ 146: 
+ 147: } // namespace heatstroke_tcn_v6
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/TcnV6Model.hpp =====
+LINE_COUNT=25
+   1: #ifndef TCN_V6_MODEL_HPP
+   2: #define TCN_V6_MODEL_HPP
+   3: 
+   4: #include "mlek/fwk/tflm/TflmModel.hpp"
+   5: #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+   6: 
+   7: namespace heatstroke_tcn_v6 {
+   8: 
+   9: class TcnV6Model final : public arm::app::fwk::tflm::TflmModel {
+  10: public:
+  11:     bool PrepareResolver();
+  12: 
+  13: protected:
+  14:     const tflite::MicroOpResolver& GetOpResolver() override;
+  15:     bool EnlistOperations() override;
+  16: 
+  17: private:
+  18:     tflite::MicroMutableOpResolver<29> m_resolver;
+  19:     bool m_resolverAttempted{false};
+  20:     bool m_resolverOk{false};
+  21: };
+  22: 
+  23: } // namespace heatstroke_tcn_v6
+  24: 
+  25: #endif
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc =====
+LINE_COUNT=266
+   1: #include "BufAttributes.hpp"
+   2: #include "TcnV6Model.hpp"
+   3: 
+   4: #include <zephyr/kernel.h>
+   5: #include <zephyr/sys/printk.h>
+   6: 
+   7: #include <cmath>
+   8: #include <cstddef>
+   9: #include <cstdint>
+  10: #include <cstring>
+  11: 
+  12: #include "tensorflow/lite/c/common.h"
+  13: 
+  14: namespace arm::app::polyu_heatstroke {
+  15: extern const uint8_t* GetModelPointer();
+  16: extern size_t GetModelLen();
+  17: }
+  18: 
+  19: namespace {
+  20: 
+  21: static uint8_t activationBuf[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+  22: 
+  23: constexpr size_t kInputCount = 5;
+  24: constexpr size_t kOutputElements = 900U * 6U;
+  25: 
+  26: const int kExpectedRanks[kInputCount] = {3, 3, 3, 2, 3};
+  27: 
+  28: const int kExpectedDimensions[kInputCount][3] = {
+  29:     {1,  900,    6},
+  30:     {1,  900,    6},
+  31:     {1,  900,    3},
+  32:     {1,   18,    0},
+  33:     {1, 1800,    6}
+  34: };
+  35: 
+  36: const TfLiteType kExpectedTypes[kInputCount] = {
+  37:     kTfLiteFloat32,
+  38:     kTfLiteBool,
+  39:     kTfLiteFloat32,
+  40:     kTfLiteFloat32,
+  41:     kTfLiteFloat32
+  42: };
+  43: 
+  44: bool ValidateAndZeroInputs(tflite::MicroInterpreter* interpreter)
+  45: {
+  46:     if (interpreter == nullptr) {
+  47:         printk("TCN_V6_ERROR: null interpreter\n");
+  48:         return false;
+  49:     }
+  50: 
+  51:     for (size_t i = 0; i < kInputCount; ++i) {
+  52:         TfLiteTensor* tensor = interpreter->input(i);
+  53: 
+  54:         if (tensor == nullptr || tensor->dims == nullptr) {
+  55:             printk("TCN_V6_ERROR: input %u missing metadata\n",
+  56:                    static_cast<unsigned int>(i));
+  57:             return false;
+  58:         }
+  59: 
+  60:         if (tensor->type != kExpectedTypes[i]) {
+  61:             printk("TCN_V6_ERROR: input %u type=%d expected=%d\n",
+  62:                    static_cast<unsigned int>(i),
+  63:                    static_cast<int>(tensor->type),
+  64:                    static_cast<int>(kExpectedTypes[i]));
+  65:             return false;
+  66:         }
+  67: 
+  68:         if (tensor->dims->size != kExpectedRanks[i]) {
+  69:             printk("TCN_V6_ERROR: input %u rank=%d expected=%d\n",
+  70:                    static_cast<unsigned int>(i),
+  71:                    tensor->dims->size,
+  72:                    kExpectedRanks[i]);
+  73:             return false;
+  74:         }
+  75: 
+  76:         for (int d = 0; d < kExpectedRanks[i]; ++d) {
+  77:             if (tensor->dims->data[d] != kExpectedDimensions[i][d]) {
+  78:                 printk("TCN_V6_ERROR: input %u dim%u=%d expected=%d\n",
+  79:                        static_cast<unsigned int>(i),
+  80:                        static_cast<unsigned int>(d),
+  81:                        tensor->dims->data[d],
+  82:                        kExpectedDimensions[i][d]);
+  83:                 return false;
+  84:             }
+  85:         }
+  86: 
+  87:         if (tensor->data.raw == nullptr || tensor->bytes == 0U) {
+  88:             printk("TCN_V6_ERROR: input %u has no data buffer\n",
+  89:                    static_cast<unsigned int>(i));
+  90:             return false;
+  91:         }
+  92: 
+  93:         // This also safely zeroes the BOOL missing_mask tensor.
+  94:         std::memset(tensor->data.raw, 0, tensor->bytes);
+  95: 
+  96:         printk("TCN_V6_INPUT_%u: type=%d bytes=%u rank=%d shape=",
+  97:                static_cast<unsigned int>(i),
+  98:                static_cast<int>(tensor->type),
+  99:                static_cast<unsigned int>(tensor->bytes),
+ 100:                tensor->dims->size);
+ 101: 
+ 102:         for (int d = 0; d < tensor->dims->size; ++d) {
+ 103:             printk("%s%d", (d == 0) ? "" : "x", tensor->dims->data[d]);
+ 104:         }
+ 105:         printk(" zero_filled=1\n");
+ 106:     }
+ 107: 
+ 108:     return true;
+ 109: }
+ 110: 
+ 111: bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+ 112: {
+ 113:     if (interpreter == nullptr) {
+ 114:         return false;
+ 115:     }
+ 116: 
+ 117:     TfLiteTensor* output = interpreter->output(0);
+ 118: 
+ 119:     if (output == nullptr || output->dims == nullptr ||
+ 120:         output->type != kTfLiteFloat32 ||
+ 121:         output->dims->size != 3 ||
+ 122:         output->dims->data[0] != 1 ||
+ 123:         output->dims->data[1] != 900 ||
+ 124:         output->dims->data[2] != 6 ||
+ 125:         output->bytes != kOutputElements * sizeof(float) ||
+ 126:         output->data.raw == nullptr) {
+ 127:         printk("TCN_V6_ERROR: output metadata mismatch\n");
+ 128:         return false;
+ 129:     }
+ 130: 
+ 131:     printk("TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u\n",
+ 132:            static_cast<unsigned int>(output->bytes));
+ 133:     return true;
+ 134: }
+ 135: 
+ 136: void ReportOutput(tflite::MicroInterpreter* interpreter)
+ 137: {
+ 138:     TfLiteTensor* output = interpreter->output(0);
+ 139:     const float* values = reinterpret_cast<const float*>(output->data.raw);
+ 140: 
+ 141:     float minimum = values[0];
+ 142:     float maximum = values[0];
+ 143:     double sum = 0.0;
+ 144:     size_t nonfinite = 0;
+ 145: 
+ 146:     for (size_t i = 0; i < kOutputElements; ++i) {
+ 147:         const float value = values[i];
+ 148: 
+ 149:         if (!std::isfinite(value)) {
+ 150:             ++nonfinite;
+ 151:             continue;
+ 152:         }
+ 153: 
+ 154:         if (value < minimum) {
+ 155:             minimum = value;
+ 156:         }
+ 157:         if (value > maximum) {
+ 158:             maximum = value;
+ 159:         }
+ 160:         sum += static_cast<double>(value);
+ 161:     }
+ 162: 
+ 163:     printk("TCN_V6_OUTPUT_STATS: elements=%u nonfinite=%u "
+ 164:            "min=%f max=%f mean=%f\n",
+ 165:            static_cast<unsigned int>(kOutputElements),
+ 166:            static_cast<unsigned int>(nonfinite),
+ 167:            static_cast<double>(minimum),
+ 168:            static_cast<double>(maximum),
+ 169:            sum / static_cast<double>(kOutputElements));
+ 170: }
+ 171: 
+ 172: } // namespace
+ 173: 
+ 174: void MainLoop()
+ 175: {
+ 176:     using arm::app::fwk::iface::MemoryRegion;
+ 177:     using heatstroke_tcn_v6::TcnV6Model;
+ 178: 
+ 179:     printk("TCN_V6: activation_buf=%p capacity=%u bytes\n",
+ 180:            activationBuf,
+ 181:            static_cast<unsigned int>(sizeof(activationBuf)));
+ 182: 
+ 183:     const uint8_t* model_pointer =
+ 184:         arm::app::polyu_heatstroke::GetModelPointer();
+ 185:     const size_t model_length =
+ 186:         arm::app::polyu_heatstroke::GetModelLen();
+ 187: 
+ 188:     if (model_pointer == nullptr || model_length == 0U) {
+ 189:         printk("TCN_V6_ERROR: generated model pointer/length invalid\n");
+ 190:         return;
+ 191:     }
+ 192: 
+ 193:     printk("TCN_V6_MODEL: pointer=%p bytes=%u\n",
+ 194:            model_pointer,
+ 195:            static_cast<unsigned int>(model_length));
+ 196: 
+ 197:     MemoryRegion compute_buffer(activationBuf, sizeof(activationBuf));
+ 198:     MemoryRegion model_buffer(
+ 199:         const_cast<uint8_t*>(model_pointer), model_length);
+ 200: 
+ 201:     static TcnV6Model model;
+ 202: 
+ 203:     if (!model.PrepareResolver()) {
+ 204:         printk("TCN_V6_ERROR: resolver preparation failed\n");
+ 205:         return;
+ 206:     }
+ 207: 
+ 208:     printk("TCN_V6: initializing TFLM model\n");
+ 209: 
+ 210:     if (!model.Init(compute_buffer, model_buffer)) {
+ 211:         printk("TCN_V6_ERROR: TFLM model initialization/AllocateTensors failed\n");
+ 212:         return;
+ 213:     }
+ 214: 
+ 215:     if (model.GetNumInputs() != kInputCount ||
+ 216:         model.GetNumOutputs() != 1U) {
+ 217:         printk("TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u\n",
+ 218:                static_cast<unsigned int>(model.GetNumInputs()),
+ 219:                static_cast<unsigned int>(model.GetNumOutputs()));
+ 220:         return;
+ 221:     }
+ 222: 
+ 223:     auto* interpreter = model.GetBackendData().m_pInterpreter.get();
+ 224: 
+ 225:     if (!ValidateAndZeroInputs(interpreter) ||
+ 226:         !ValidateOutput(interpreter)) {
+ 227:         printk("TCN_V6_ERROR: tensor interface validation failed\n");
+ 228:         return;
+ 229:     }
+ 230: 
+ 231:     printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+ 232:            model.ContainsEthosUOperator() ? 1U : 0U);
+ 233: 
+ 234:     printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+ 235:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+ 236:            static_cast<unsigned int>(sizeof(activationBuf)));
+ 237: 
+ 238:     printk("TCN_V6: invoking zero-input smoke inference\n");
+ 239: 
+ 240:     const uint64_t start_cycles = k_cycle_get_64();
+ 241:     const bool inference_ok = model.RunInference();
+ 242:     const uint64_t elapsed_cycles = k_cycle_get_64() - start_cycles;
+ 243:     const uint64_t elapsed_us = k_cyc_to_us_floor64(elapsed_cycles);
+ 244: 
+ 245:     printk("TCN_V6_INFERENCE: success=%u cycles=%llu elapsed_us=%llu\n",
+ 246:            inference_ok ? 1U : 0U,
+ 247:            static_cast<unsigned long long>(elapsed_cycles),
+ 248:            static_cast<unsigned long long>(elapsed_us));
+ 249: 
+ 250:     if (!inference_ok) {
+ 251:         printk("TCN_V6_ERROR: Invoke failed\n");
+ 252:         return;
+ 253:     }
+ 254: 
+ 255:     if (!ValidateOutput(interpreter)) {
+ 256:         return;
+ 257:     }
+ 258: 
+ 259:     ReportOutput(interpreter);
+ 260: 
+ 261:     printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+ 262:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+ 263:            static_cast<unsigned int>(sizeof(activationBuf)));
+ 264: 
+ 265:     printk("TCN_V6_SMOKE_TEST: PASS (zero inputs; not an accuracy test)\n");
+ 266: }
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/BufAttributes.hpp =====
+LINE_COUNT=21
+   1: #ifndef TCN_V6_BUF_ATTRIBUTES_HPP
+   2: #define TCN_V6_BUF_ATTRIBUTES_HPP
+   3: 
+   4: #include <zephyr/devicetree.h>
+   5: 
+   6: #define BYTE_ALIGNMENT              16
+   7: #define ALIGNMENT_REQ               aligned(BYTE_ALIGNMENT)
+   8: #define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+   9: 
+  10: #if CONFIG_MODEL_IN_EXT_FLASH
+  11: #define MODEL_SECTION \
+  12:     section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+  13: #else
+  14: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+  15: #endif
+  16: 
+  17: #define MAKE_ATTRIBUTE(x)           __attribute__((ALIGNMENT_REQ, x))
+  18: #define ACTIVATION_BUF_ATTRIBUTE    MAKE_ATTRIBUTE(ACTIVATION_BUF_SECTION)
+  19: #define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+  20: 
+  21: #endif
+
+============================================================
+2. PROJECT BUILD AND CONFIGURATION FILES
+============================================================
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/CMakeLists.txt =====
+LINE_COUNT=104
+   1: cmake_minimum_required(VERSION 3.20.0)
+   2: 
+   3: # Ensure the OSPI flash snippet is enabled for external model storage.
+   4: if(NOT ospi-flash IN_LIST SNIPPET)
+   5:     set(SNIPPET ospi-flash ${SNIPPET} CACHE STRING "" FORCE)
+   6: endif()
+   7: 
+   8: # Locate MLEK in the current west workspace.
+   9: execute_process(
+  10:     COMMAND west list --format "{abspath}" alif-mlek
+  11:     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  12:     OUTPUT_VARIABLE MLEK_ROOT
+  13:     OUTPUT_STRIP_TRAILING_WHITESPACE
+  14:     RESULT_VARIABLE MLEK_LIST_RESULT
+  15:     ERROR_QUIET
+  16: )
+  17: 
+  18: if(MLEK_LIST_RESULT OR NOT EXISTS "${MLEK_ROOT}")
+  19:     message(FATAL_ERROR "alif-mlek west module not found")
+  20: endif()
+  21: 
+  22: # MLEK's Zephyr port is a nested module and must be registered explicitly.
+  23: list(APPEND ZEPHYR_EXTRA_MODULES
+  24:     "${MLEK_ROOT}/source/lib/ports/zephyr")
+  25: 
+  26: # This model was compiled for Ethos-U55-128 (Vela H128).
+  27: set(ETHOS_U_NPU_CONFIG_ID "H128")
+  28: set(ETHOS_U_NPU_MEMORY_MODE "Shared_Sram")
+  29: set(CONFIG_ARM_ETHOS_U55_128 y
+  30:     CACHE INTERNAL "Select Ethos-U55-128 for V6" FORCE)
+  31: 
+  32: # Force the application-local E8 OSPI overlay.
+  33: set(DTC_OVERLAY_FILE
+  34:     "${CMAKE_CURRENT_SOURCE_DIR}/boards/alif_e8_common.overlay"
+  35:     CACHE STRING "E8 OSPI and external model flash overlay" FORCE)
+  36: 
+  37: find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+  38: 
+  39: project(heatstroke_tcn_v6_e8)
+  40: 
+  41: set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi")
+  42: set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+  43: 
+  44: set(ML_FRAMEWORK TensorFlowLiteMicro)
+  45: set(MLEK_SCRIPTS_DIR "${MLEK_ROOT}/scripts")
+  46: set(RESOURCES_PATH "${MLEK_ROOT}/resources_downloaded" CACHE PATH
+  47:     "MLEK resources")
+  48: 
+  49: setup_source_generator()
+  50: 
+  51: set(SRC_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/src")
+  52: set(INC_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+  53: file(MAKE_DIRECTORY "${SRC_GEN_DIR}" "${INC_GEN_DIR}")
+  54: 
+  55: set(POLYU_MODEL_PATH
+  56:     "/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/vela_gemm_only_legacy_u55_128_size_20261121_201723/heatstroke_tcn_reg_fold2_gemm_only_qdq_vela_broadcast_shape_constfix_gather_int32_20261122_155346.tflite")
+  57: 
+  58: set(POLYU_MODEL_SHA256_EXPECTED
+  59:     "b2282ab069e55ccea08eadcd8decee2bcb6c98b356418d268c8b3d6f71eeef8b")
+  60: 
+  61: if(NOT EXISTS "${POLYU_MODEL_PATH}")
+  62:     message(FATAL_ERROR "V6 Vela model not found: ${POLYU_MODEL_PATH}")
+  63: endif()
+  64: 
+  65: file(SHA256 "${POLYU_MODEL_PATH}" POLYU_MODEL_SHA256_ACTUAL)
+  66: if(NOT POLYU_MODEL_SHA256_ACTUAL STREQUAL POLYU_MODEL_SHA256_EXPECTED)
+  67:     message(FATAL_ERROR
+  68:         "V6 Vela model SHA256 mismatch: ${POLYU_MODEL_SHA256_ACTUAL}")
+  69: endif()
+  70: 
+  71: message(STATUS "TCN V6 model: ${POLYU_MODEL_PATH}")
+  72: message(STATUS "TCN V6 model SHA256: ${POLYU_MODEL_SHA256_ACTUAL}")
+  73: message(STATUS "Ethos-U config: ${ETHOS_U_NPU_CONFIG_ID}")
+  74: message(STATUS "Ethos-U memory mode: ${ETHOS_U_NPU_MEMORY_MODE}")
+  75: 
+  76: generate_model_code(
+  77:     MODEL_PATH "${POLYU_MODEL_PATH}"
+  78:     DESTINATION "${SRC_GEN_DIR}"
+  79:     NAMESPACE "arm" "app" "polyu_heatstroke"
+  80: )
+  81: 
+  82: get_filename_component(POLYU_MODEL_FILENAME "${POLYU_MODEL_PATH}" NAME)
+  83: set(POLYU_MODEL_CPP "${SRC_GEN_DIR}/${POLYU_MODEL_FILENAME}.cc")
+  84: set_source_files_properties("${POLYU_MODEL_CPP}" PROPERTIES GENERATED TRUE)
+  85: 
+  86: target_include_directories(app PRIVATE
+  87:     "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+  88:     "${INC_GEN_DIR}"
+  89: )
+  90: 
+  91: target_compile_definitions(app PRIVATE
+  92:     ACTIVATION_BUF_SZ=CONFIG_ACTIVATION_BUF_SZ
+  93: )
+  94: 
+  95: target_sources(app PRIVATE
+  96:     src/Main.cc
+  97:     src/MainLoop.cc
+  98:     src/TcnV6Model.cc
+  99:     "${POLYU_MODEL_CPP}"
+ 100: )
+ 101: 
+ 102: target_link_libraries(app PRIVATE
+ 103:     mlek::ml_framework_impl
+ 104: )
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/prj.conf =====
+LINE_COUNT=43
+   1: # C++ and diagnostics
+   2: CONFIG_LOG=y
+   3: CONFIG_PRINTK=y
+   4: CONFIG_SERIAL=y
+   5: CONFIG_CONSOLE=y
+   6: CONFIG_UART_CONSOLE=y
+   7: CONFIG_STDOUT_CONSOLE=y
+   8: 
+   9: CONFIG_MAIN_STACK_SIZE=8192
+  10: CONFIG_HEAP_MEM_POOL_SIZE=65536
+  11: 
+  12: # MLEK / TFLM
+  13: CONFIG_MLEK_EXAMPLES_LIB=y
+  14: CONFIG_MLEK_EXAMPLES_FWK_TFLM=y
+  15: CONFIG_TENSORFLOW_LITE_MICRO=y
+  16: 
+  17: # CMSIS-DSP required by the MLEK Zephyr port
+  18: CONFIG_CMSIS_DSP=y
+  19: CONFIG_CMSIS_DSP_TRANSFORM=y
+  20: CONFIG_CMSIS_DSP_FASTMATH=y
+  21: CONFIG_CMSIS_DSP_STATISTICS=y
+  22: CONFIG_CMSIS_DSP_COMPLEXMATH=y
+  23: 
+  24: # Ethos-U; selected specifically as U55-128 by the build command
+  25: CONFIG_ARM_ETHOS_U=y
+  26: 
+  27: # V6 model stored in external OSPI flash
+  28: CONFIG_MODEL_IN_EXT_FLASH=y
+  29: CONFIG_ALIF_OSPI_FLASH_XIP=y
+  30: CONFIG_OSPI_FLASH_IS25WX=y
+  31: CONFIG_OSPI=y
+  32: CONFIG_OSPI_FLASH=y
+  33: CONFIG_USE_ALIF_HAL_OSPI=y
+  34: 
+  35: # IMPORTANT: E8 RTSS-HE SRAM0 section, not .alif_sram0
+  36: CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+  37: 
+  38: # Initial experimental arena capacity: 2.5 MiB
+  39: CONFIG_ACTIVATION_BUF_SZ=0x280000
+  40: 
+  41: # TFLM checkout uses C++17 language/library features.
+  42: CONFIG_CPP=y
+  43: CONFIG_STD_CPP17=y
+
+===== FILE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/Kconfig =====
+LINE_COUNT=20
+   1: source "Kconfig.zephyr"
+   2: 
+   3: config ACTIVATION_BUF_SECTION
+   4:     string "Tensor arena linker section"
+   5:     default "SRAM0.activation_buf"
+   6: 
+   7: config ACTIVATION_BUF_SZ
+   8:     hex "Tensor arena size"
+   9:     default 0x00280000
+  10: 
+  11: config MODEL_IN_EXT_FLASH
+  12:     bool "Store model in external OSPI flash"
+  13:     default y
+  14:     select FLASH
+  15:     select ALIF_OSPI_FLASH_XIP
+  16: 
+  17: config MODEL_SECTION
+  18:     string "Model linker section"
+  19:     depends on !MODEL_IN_EXT_FLASH
+  20:     default ".rodata.tflm_model"
+
+============================================================
+3. MODEL-RELATED FILES IN PROJECT
+============================================================
+PROJECT_MODEL_FILE=src/TcnV6Model.cc bytes=5762
+PROJECT_MODEL_FILE=src/include/TcnV6Model.hpp bytes=568
+PROJECT_MODEL_FILE_COUNT=2
+
+============================================================
+4. MODEL LOADING REFERENCES IN APPLICATION
+============================================================
+
+REFERENCE_FILE=prj.conf
+  28: CONFIG_MODEL_IN_EXT_FLASH=y
+
+REFERENCE_FILE=src/MainLoop.cc
+  44: bool ValidateAndZeroInputs(tflite::MicroInterpreter* interpreter)
+  111: bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+  136: void ReportOutput(tflite::MicroInterpreter* interpreter)
+  185: const size_t model_length =
+  188: if (model_pointer == nullptr || model_length == 0U) {
+  195: static_cast<unsigned int>(model_length));
+  198: MemoryRegion model_buffer(
+  199: const_cast<uint8_t*>(model_pointer), model_length);
+  210: if (!model.Init(compute_buffer, model_buffer)) {
+
+REFERENCE_FILE=src/TcnV6Model.cc
+  21: // TflmModel::Init() calls this again. Cache the result so that the
+
+REFERENCE_FILE=src/include/TcnV6Model.hpp
+  4: #include "mlek/fwk/tflm/TflmModel.hpp"
+  9: class TcnV6Model final : public arm::app::fwk::tflm::TflmModel {
+  18: tflite::MicroMutableOpResolver<29> m_resolver;
+
+REFERENCE_FILE=src/include/BufAttributes.hpp
+  10: #if CONFIG_MODEL_IN_EXT_FLASH
+  11: #define MODEL_SECTION \
+  14: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+  19: #define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+
+FILES_WITH_MODEL_LOADING_REFERENCES=5
+
+============================================================
+5. TFLM WRAPPER IMPLEMENTATION
+============================================================
+
+===== FILE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp =====
+LINE_COUNT=139
+   1: /*
+   2:  * SPDX-FileCopyrightText: Copyright 2021-2023, 2025 Arm Limited and/or its affiliates
+   3:  * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+   4:  *
+   5:  * Licensed under the Apache License, Version 2.0 (the "License");
+   6:  * you may not use this file except in compliance with the License.
+   7:  * You may obtain a copy of the License at
+   8:  *
+   9:  *     http://www.apache.org/licenses/LICENSE-2.0
+  10:  *
+  11:  * Unless required by applicable law or agreed to in writing, software
+  12:  * distributed under the License is distributed on an "AS IS" BASIS,
+  13:  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  14:  * See the License for the specific language governing permissions and
+  15:  * limitations under the License.
+  16:  */
+  17: #ifndef MLEK_TFLM_MODEL_HPP
+  18: #define MLEK_TFLM_MODEL_HPP
+  19: 
+  20: #include "mlek/fwk/iface/Model.hpp"
+  21: #include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp"
+  22: #include <cstdint>
+  23: 
+  24: namespace arm::app::fwk::tflm {
+  25: 
+  26: /**
+  27:  * Backend data for TensorFlow Lite Micro framework.
+  28:  */
+  29: struct TflmBackendData {
+  30:     const tflite::Model* m_pModel{nullptr};        /**< Tflite model pointer. */
+  31:     tflite::MicroAllocator* m_pAllocator{nullptr}; /**< Tflite micro allocator. */
+  32: 
+  33:     /** Tflite interpreter. */
+  34:     std::unique_ptr<tflite::MicroInterpreter> m_pInterpreter{nullptr};
+  35: };
+  36: 
+  37: /**
+  38:  * @brief   NN model class wrapping the underlying TensorFlow-Lite-Micro API.
+  39:  */
+  40: class TflmModel : public iface::Model {
+  41: public:
+  42:     /** @brief Constructor. */
+  43:     TflmModel();
+  44: 
+  45:     /** @brief Destructor. */
+  46:     virtual ~TflmModel() = default;
+  47: 
+  48:     /** @brief  Gets the pointer to the model's input tensor at given input index. */
+  49:     std::shared_ptr<iface::TensorIface> GetInputTensor(size_t index) const override;
+  50: 
+  51:     /** @brief  Gets the pointer to the model's output tensor at given output index. */
+  52:     std::shared_ptr<iface::TensorIface> GetOutputTensor(size_t index) const override;
+  53: 
+  54:     /** @brief  Gets the model's data type. */
+  55:     iface::TensorType GetType() const override;
+  56: 
+  57:     /** @brief  Gets the pointer to the model's input shape. */
+  58:     std::vector<size_t> GetInputShape(size_t index) const override;
+  59: 
+  60:     /** @brief  Gets the pointer to the model's output shape at given output index. */
+  61:     std::vector<size_t> GetOutputShape(size_t index) const override;
+  62: 
+  63:     /** @brief  Gets the number of input tensors the model has. */
+  64:     size_t GetNumInputs() const override;
+  65: 
+  66:     /** @brief  Gets the number of output tensors the model has. */
+  67:     size_t GetNumOutputs() const override;
+  68: 
+  69:     /** @brief  Logs the tensor information to stdout. */
+  70:     void LogTensorInfo(std::shared_ptr<iface::TensorIface> tensor) override;
+  71: 
+  72:     /** @brief  Logs the interpreter information to stdout. */
+  73:     void LogInterpreterInfo() override;
+  74: 
+  75:     /** @brief      Initialise the model class object.
+  76:      *  @return     true if initialisation succeeds, false otherwise.
+  77:      **/
+  78:     bool Init(iface::MemoryRegion& computeBuffer,
+  79:               iface::MemoryRegion& nnModel,
+  80:               const void* backendData = nullptr) override;
+  81: 
+  82:     /** @brief  Checks if this object has been initialised. */
+  83:     bool IsInited() const override;
+  84: 
+  85:     /** @brief  Checks if the model uses signed data. */
+  86:     bool IsDataSigned() const override;
+  87: 
+  88:     /** @brief Checks if the model uses Ethos-U operator */
+  89:     bool ContainsEthosUOperator() const override;
+  90: 
+  91:     /** @brief  Runs the inference (invokes the interpreter). */
+  92:     bool RunInference() override;
+  93: 
+  94:     /**
+  95:      * @brief   Gets memory region information for the backend's compute buffer.
+  96:      * @return  Const reference to MemoryRegion object.
+  97:      */
+  98:     const iface::MemoryRegion& GetComputeBuffer() const override;
+  99: 
+ 100:     /**
+ 101:      * @brief   Gets memory region information for neural network model.
+ 102:      * @return  Const reference to MemoryRegion object.
+ 103:      */
+ 104:     const iface::MemoryRegion& GetModelBuffer() const override;
+ 105: 
+ 106:     /**
+ 107:      * @brief       Gets TensorFlow Lite Micro backend data.
+ 108:      * @return      Backend data, with pointers to the model, memory allocator and interpreter.
+ 109:      **/
+ 110:     const TflmBackendData& GetBackendData() const;
+ 111: 
+ 112: protected:
+ 113:     /**
+ 114:      * @brief       Gets the op resolver for the model instance.
+ 115:      * @return      const reference to a tflite::MicroOpResolver object.
+ 116:      **/
+ 117:     virtual const tflite::MicroOpResolver& GetOpResolver() = 0;
+ 118: 
+ 119:     /**
+ 120:      * @brief       Add all the operators required for the given model.
+ 121:      *              Implementation of this should come from the use case.
+ 122:      * @return      true is ops are successfully added, false otherwise.
+ 123:      **/
+ 124:     virtual bool EnlistOperations() = 0;
+ 125: 
+ 126: private:
+ 127:     TflmBackendData m_backendData{};
+ 128:     bool m_inited{false}; /* Indicates whether this object has been initialised. */
+ 129:     iface::MemoryRegion m_computeBuffer{};
+ 130:     iface::MemoryRegion m_modelBuffer{};
+ 131: 
+ 132:     std::vector<std::shared_ptr<iface::TensorIface>> m_input{}; /* Model's input tensor pointers. */
+ 133:     std::vector<std::shared_ptr<iface::TensorIface>>
+ 134:         m_output{};                                       /* Model's output tensor pointers. */
+ 135:     iface::TensorType m_type{iface::TensorType::INVALID}; /* Model's data type. */
+ 136: };
+ 137: } /* namespace arm::app::fwk::tflm */
+ 138: 
+ 139: #endif /* MLEK_TFLM_MODEL_HPP */
+
+TFLM_MODEL_WRAPPER_FILES_FOUND=1
+
+============================================================
+6. EXTERNAL FLASH / MODEL SECTION DEFINITIONS
+============================================================
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/prj.conf
+  28: CONFIG_MODEL_IN_EXT_FLASH=y
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/boards/alif_e8_common.overlay
+  19: ext_flash_xip: memory@c0000000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc
+  1: #include "BufAttributes.hpp"
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/include/BufAttributes.hpp
+  8: #define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+  10: #if CONFIG_MODEL_IN_EXT_FLASH
+  11: #define MODEL_SECTION \
+  12: section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+  14: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+  19: #define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/CMakeLists.txt
+  145: # AppContext.hpp/BufAttributes.hpp take precedence.
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/prj.conf
+  64: # ASR model is large, so we need to store it in external flash
+  65: CONFIG_MODEL_IN_EXT_FLASH=y
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.overlay
+  38: ext_flash_xip: memory@c0000000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/src/use_case/alif_asr/src/MainLoop.cc
+  32: #include "BufAttributes.hpp"        /* Buffer attributes to be applied */
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/src/use_case/alif_asr/src/UseCaseHandlerEt.cc
+  71: lv_color16_t lvgl_image[LIMAGE_Y][LIMAGE_X] __attribute__((section("SRAM1.lcd_image_buf")));
+  103: __attribute__((section(".bss.NoInit.temp_buf_sram")));
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/alif_asr/src/application/main/include/BufAttributes.hpp
+  38: #define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+  40: #if CONFIG_MODEL_IN_EXT_FLASH
+  41: #define MODEL_SECTION               section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+  43: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+  48: #define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/kws_output.h
+  27: __attribute__((section(".rodata.kws_output"))) = {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/kws_input.h
+  17: __attribute__((section(".rodata.kws_input"))) = {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/main.cpp
+  77: #define ET_METHOD_POOL_ATTR __attribute__((section(".alif_sram0.tensor_arena"), aligned(16)))
+  104: #define ET_NPU_BUF_ATTR __attribute__((section("SRAM1.et_npu"), aligned(16)))
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/prj.conf
+  76: # ASR model is large, so we need to store it in external flash
+  77: CONFIG_MODEL_IN_EXT_FLASH=y
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/deployment/heatstroke_tcn_v6_e8_u55_128_20261121_220242/diagnostics/zephyr.dts
+  3374: ext_flash_xip: memory@c0000000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_e8_common.overlay
+  19: ext_flash_xip: memory@c0000000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/boards/alif_b1_dk_ab1c1f4m51820ph0_rtss_he.overlay
+  29: ext_flash_xip: memory@b0000000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/profiler/unwind/sections.h
+  31: strtab = library_->getSection(".strtab", false);
+  33: symtab = library_->getSection(".symtab", true);
+  34: debug_info = library_->getSection(".debug_info", true);
+  36: debug_abbrev = library_->getSection(".debug_abbrev", false);
+  37: debug_str = library_->getSection(".debug_str", false);
+  38: debug_line = library_->getSection(".debug_line", false);
+  40: debug_line_str = library_->getSection(".debug_line_str", true);
+  41: debug_rnglists = library_->getSection(".debug_rnglists", true);
+  42: debug_addr = library_->getSection(".debug_addr", true);
+  44: debug_ranges = library_->getSection(".debug_ranges", true);
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/profiler/unwind/mem_file.h
+  80: strtab_ = getSection(strtab_hdr);
+  112: Section getSection(const Elf64_Shdr& shdr) {
+  117: Section getSection(const char* name, bool optional) {
+  120: return getSection(shdr_[i]);
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/torch/csrc/lazy/core/metrics.h
+  260: explicit TimedSection(Metric* metric) : metric_(metric), start_(NowNs()) {}
+  262: ~TimedSection() {
+  279: torch::lazy::TimedSection timed_section(timed_metric)
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/work_demand_conversion/.venv_onnx/lib/python3.12/site-packages/torch/include/c10/util/static_tracepoint_elfx86.h
+  90: __attribute__((section(TORCH_SDT_SEMAPHORE_SECTION), used)) = 0;           \
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/backups/prj_before_sram_activation_section_fix_20261117_154147.conf
+  76: # ASR model is large, so we need to store it in external flash
+  77: CONFIG_MODEL_IN_EXT_FLASH=y
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_153321.cc
+  30: #include "BufAttributes.hpp"
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/backups/MainLoop_before_gpio_index_sram0_fix_20261117_152903.cc
+  30: #include "BufAttributes.hpp"
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/log/work_demand_common_overlay_before_aa0000_20261119_162426.overlay
+  19: ext_flash_xip: memory@c0a90000 {
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/MainLoop.cc
+  30: #include "BufAttributes.hpp"
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/src/use_case/alif_asr/src/UseCaseHandlerTflm.cc
+  72: __attribute__((section("SRAM0.audio_inf")));
+  75: __attribute__((section("SRAM0.audio_slab")));
+
+FLASH_CONFIG_FILE=/home/user/sdk-alif/beeinventor/test_heatstroke/src/application/main/include/BufAttributes.hpp
+  26: #define ACTIVATION_BUF_SECTION      section(CONFIG_ACTIVATION_BUF_SECTION)
+  28: #if CONFIG_MODEL_IN_EXT_FLASH
+  29: #define MODEL_SECTION               section(".alif_extflash_" DT_PROP(DT_NODELABEL(ext_flash_xip), zephyr_memory_region))
+  31: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+  36: #define MODEL_SECTION_ATTRIBUTE     MAKE_ATTRIBUTE(MODEL_SECTION)
+
+FLASH_CONFIGURATION_FILES_WITH_MATCHES=28
+
+============================================================
+7. MODEL ARTIFACT SUMMARY
+============================================================
+MODEL_FILE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+MODEL_BYTES=9684208
+MODEL_SHA256_EXPECTED=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+
+INSPECTION_COMPLETE=YES
+SOURCE_MODIFICATION=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+MODEL INTEGRATION INSPECTION FINISHED
+PYTHON_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_model_integration_inspect_20261124_153614.log
+SOURCE_MODIFICATION=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
