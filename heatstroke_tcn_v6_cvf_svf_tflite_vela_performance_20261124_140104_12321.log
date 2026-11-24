@@ -1,0 +1,1546 @@
+
+TOOLS AND SOURCE FILES
+------------------------------------------------------------
+ONNX2TFLITE:
+usage: onnx2tflite [-h]
+                   [--allow-inputs-stripping | --no-allow-inputs-stripping]
+                   [--keep-io-tensors-format | --no-keep-io-tensors-format]
+                   [--skip-shape-inference | --no-skip-shape-inference]
+                   [--qdq-aware-conversion | --no-qdq-aware-conversion]
+                   [-s DIM_NAME:SIZE [DIM_NAME:SIZE ...]]
+                   [-m INPUT_NAME:SHAPE [INPUT_NAME:SHAPE ...]]
+                   [--dont-skip-nodes-with-known-outputs | --no-dont-skip-nodes-with-known-outputs]
+                   [--allow-select-ops | --no-allow-select-ops]
+                   [--generate-artifacts-after-failed-shape-inference | --no-generate-artifacts-after-failed-shape-inference]
+                   [--duplicate-dequantize-linear | --no-duplicate-dequantize-linear]
+                   [--guarantee-non-negative-indices | --no-guarantee-non-negative-indices]
+                   [--cast-int64-to-int32 | --no-cast-int64-to-int32]
+                   [--accept-resize-rounding-error | --no-accept-resize-rounding-error]
+                   [--skip-opset-version-check | --no-skip-opset-version-check]
+                   [-o out] [-v]
+                   onnx_file
+
+Convert a '.onnx' DNN model to an equivalent '.tflite' model. By default the
+output '.tflite' file will be generated in the current working directory and
+have the same name as the input '.onnx' file.
+
+positional arguments:
+  onnx_file             Path to ONNX (*.onnx) model.
+
+options:
+  -h, --help            show this help message and exit
+  --allow-inputs-stripping, --no-allow-inputs-stripping
+                        Model inputs will be removed if they are not necessary
+                        for inference and their values are derived during the
+                        conversion.
+  --keep-io-tensors-format, --no-keep-io-tensors-format
+                        Keep the format of input and output tensors of the
+                        converted model the same, as in the original ONNX
+                        model (NCHW).
+
+VELA VERSION:
+5.0.0
+
+VELA CONFIG:
+/home/user/sdk-alif/alif/samples/modules/executorch/ensemble_vela.ini
+
+CANDIDATE HASHES
+------------------------------------------------------------
+SYMMETRIC394=02130d03df4a9a2eff4ca8bedc06e42eec9fb3560fa886f41a46767dfab03584
+ASYMMETRIC394=7ba1b4dbc1e23ff17cdb20f3a25d163a4f2e62c69bdca6fd4ca5e9f795faabd0
+CANDIDATE_HASH_VALIDATION=PASS
+CONVERTER_OPTION_AVAILABLE=--qdq-aware-conversion
+CONVERTER_OPTION_AVAILABLE=--duplicate-dequantize-linear
+CONVERTER_OPTION_AVAILABLE=--guarantee-non-negative-indices
+VELA_OPTION_AVAILABLE=--accelerator-config
+VELA_OPTION_AVAILABLE=--system-config
+VELA_OPTION_AVAILABLE=--memory-mode
+VELA_OPTION_AVAILABLE=--optimise
+VELA_OPTION_AVAILABLE=--output-dir
+
+VELA_EXTRA_OPTIONS=--verbose-cycle-estimate --show-subgraph-io-summary --debug-force-legacy-core
+
+============================================================
+CANDIDATE: symmetric394
+============================================================
+INPUT_ONNX=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/heatstroke_tcn_v6_cvf_svf_symmetric394.onnx
+OUTPUT_TFLITE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+VELA_OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/vela
+
+START ONNX2TFLITE: symmetric394
+[2026-11-24 14:01:09,254] [WARNING] Found multiple value infos for tensor "reconstructed_values". Returning first one.
+[2026-11-24 14:01:09,254] [WARNING] Some ops in model will be converted to tensor-based quantization representation. Number of ops: 219.
+[2026-11-24 14:01:09,283] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-24 14:01:09,284] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-24 14:01:09,284] [DEBUG] Tensor '' is not yet in the tensors. Adding it!
+[2026-11-24 14:01:09,285] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:09,285] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:09,287] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:09,287] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:09,298] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+	Constant(/Constant_1)
+	Constant(/Constant_2)
+	Constant(/Constant_3)
+	Constant(/Constant_4)
+	Constant(/Constant_5)
+	Constant(/Constant_6)
+	Constant(/Constant_7)
+	Constant(/Constant_8)
+	Constant(/Constant_9)
+	Constant(/Constant_10)
+	Constant(/Constant_11)
+	Constant(/Constant_12)
+	Constant(/Constant_13)
+	Constant(/Constant_14)
+	Constant(/Constant_15)
+	Constant(/Constant_16)
+	Constant(/Constant_17)
+	Constant(Constant_145)
+	Constant(/Constant_18)
+	Constant(/Constant_19)
+	Constant(/Constant_20)
+	Constant(/Constant_21)
+	Constant(/cvf/cvf.0/Constant)
+	Constant(/cvf/cvf.0/Constant_1)
+	Constant(/cvf/cvf.0/Constant_2)
+	Constant(/cvf/cvf.0/Constant_3)
+	Constant(/cvf/cvf.0/Constant_4)
+	Constant(/cvf/cvf.0/Constant_5)
+	Constant(/cvf/cvf.0/Constant_6)
+	Constant(/cvf/cvf.0/Constant_7)
+	Constant(/cvf/cvf.1/Constant)
+	Constant(/cvf/cvf.1/Constant_1)
+	Constant(/cvf/cvf.1/Constant_2)
+	Constant(/cvf/cvf.1/Constant_3)
+	Constant(/cvf/cvf.1/Constant_4)
+	Constant(/cvf/cvf.1/Constant_5)
+	Constant(/cvf/cvf.1/Constant_6)
+	Constant(/cvf/cvf.1/Constant_7)
+	Constant(/cvf/cvf.2/Constant)
+	Constant(/cvf/cvf.2/Constant_1)
+	Constant(/cvf/cvf.2/Constant_2)
+	Constant(/cvf/cvf.3/Constant)
+	Constant(/cvf/cvf.3/Constant_1)
+	Constant(/cvf/cvf.3/Constant_2)
+	Constant(/cvf/cvf.3/Constant_3)
+	Constant(/cvf/cvf.3/Constant_4)
+	Constant(/cvf/cvf.3/Constant_5)
+	Constant(/cvf/cvf.3/Constant_6)
+	Constant(/cvf/cvf.3/Constant_7)
+	Constant(/cvf/cvf.3/Constant_8)
+	Constant(/cvf/cvf.3/Constant_9)
+	Constant(/cvf/cvf.3/Constant_10)
+	Constant(/cvf/cvf.3/Constant_11)
+	Constant(/cvf/cvf.3/Constant_12)
+	Constant(/cvf/cvf.4/Constant)
+	Constant(/cvf/cvf.4/Constant_1)
+	Constant(/cvf/cvf.4/Constant_2)
+	Constant(/cvf/cvf.4/Constant_3)
+	Constant(/cvf/cvf.4/Constant_4)
+	Constant(/cvf/cvf.4/Constant_5)
+	Constant(/cvf/cvf.4/Constant_6)
+	Constant(/cvf/cvf.4/Constant_7)
+	Constant(/cvf/cvf.5/Constant)
+	Constant(/cvf/cvf.5/Constant_1)
+	Constant(/cvf/cvf.5/Constant_2)
+	Constant(/cvf/cvf.5/Constant_3)
+	Constant(/cvf/cvf.5/Constant_4)
+	Constant(/cvf/cvf.5/Constant_5)
+	Constant(/cvf/cvf.5/Constant_6)
+	Constant(/cvf/cvf.5/Constant_7)
+	Constant(/cvf/cvf.6/Constant)
+	Constant(/cvf/cvf.6/Constant_1)
+	Constant(/cvf/cvf.6/Constant_2)
+	Constant(/cvf/cvf.7/Constant)
+	Constant(/cvf/cvf.7/Constant_1)
+	Constant(/cvf/cvf.7/Constant_2)
+	Constant(/cvf/cvf.7/Constant_3)
+	Constant(/cvf/cvf.7/Constant_4)
+	Constant(/cvf/cvf.7/Constant_5)
+	Constant(/cvf/cvf.7/Constant_6)
+	Constant(/cvf/cvf.7/Constant_7)
+	Constant(/cvf/cvf.7/Constant_8)
+	Constant(/cvf/cvf.7/Constant_9)
+	Constant(/cvf/cvf.7/Constant_10)
+	Constant(/cvf/cvf.7/Constant_11)
+	Constant(/cvf/cvf.7/Constant_12)
+	Constant(/cvf/cvf.8/Constant)
+	Constant(/cvf/cvf.8/Constant_1)
+	Constant(/cvf/cvf.8/Constant_2)
+	Constant(/cvf/cvf.8/Constant_3)
+	Constant(/cvf/cvf.8/Constant_4)
+	Constant(/cvf/cvf.8/Constant_5)
+	Constant(/cvf/cvf.8/Constant_6)
+	Constant(/cvf/cvf.8/Constant_7)
+	Constant(/Constant_22)
+	Constant(/Constant_23)
+	ConstantOfShape(/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.0/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.1/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.4/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.5/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.8/ConstantOfShape)
+	Mul(/Mul)
+	Concat(/cvf/cvf.0/Concat)
+	Concat(/cvf/cvf.1/Concat)
+	Concat(/cvf/cvf.4/Concat)
+	Concat(/cvf/cvf.5/Concat)
+	Concat(/cvf/cvf.8/Concat)
+	Equal(/Equal_3)
+	Reshape(/cvf/cvf.0/Reshape)
+	Reshape(/cvf/cvf.1/Reshape)
+	Reshape(/cvf/cvf.4/Reshape)
+	Reshape(/cvf/cvf.5/Reshape)
+	Reshape(/cvf/cvf.8/Reshape)
+	Where(/Where_2)
+	Slice(/cvf/cvf.0/Slice)
+	Slice(/cvf/cvf.1/Slice)
+	Slice(/cvf/cvf.4/Slice)
+	Slice(/cvf/cvf.5/Slice)
+	Slice(/cvf/cvf.8/Slice)
+	Transpose(/cvf/cvf.0/Transpose)
+	Transpose(/cvf/cvf.1/Transpose)
+	Transpose(/cvf/cvf.4/Transpose)
+	Transpose(/cvf/cvf.5/Transpose)
+	Transpose(/cvf/cvf.8/Transpose)
+	Reshape(/cvf/cvf.0/Reshape_1)
+	Reshape(/cvf/cvf.1/Reshape_1)
+	Reshape(/cvf/cvf.4/Reshape_1)
+	Reshape(/cvf/cvf.5/Reshape_1)
+	Reshape(/cvf/cvf.8/Reshape_1)
+	Cast(/cvf/cvf.0/Cast)
+	Cast(/cvf/cvf.1/Cast)
+	Cast(/cvf/cvf.4/Cast)
+	Cast(/cvf/cvf.5/Cast)
+	Cast(/cvf/cvf.8/Cast)
+	Shape(/Shape)
+	ConstantOfShape(/ConstantOfShape_1)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-24 14:01:09,424] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/heatstroke_tcn_v6_cvf_svf_symmetric394.onnx' model to '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite'.
+TFLITE_CONVERSION=PASS
+TFLITE_SIZE_BYTES=10294736
+TFLITE_SHA256=aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5
+
+START VELA: symmetric394
+Warning: Option --show-subgraph-io-summary is deprecated and will be removed in a future release.
+Warning: Option --debug-force-legacy-core is deprecated and will be removed in a future release.
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_OR '/Or_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Or_output_0
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_OR '/Or_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Or_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.0/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.0/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.0/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_1_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_1_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.1/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.1/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.1/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_2_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_2_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.2/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.2/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.2/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_3_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_3_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.3/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.3/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.3/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_4_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_4_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.4/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.4/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.4/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_5_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_5_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.5/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.5/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.5/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for CONCATENATION '/Concat_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Unsqueeze_1_output_0, /Unsqueeze_2_output_0, /Concat_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_NOT '/Not_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Not_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUM '/ReduceSum_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for CAST '/Cast_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Cast_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUM '/ReduceSum_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_output_0
+Warning: Unsupported TensorFlow Lite semantics for MAXIMUM '/Clip_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_output_0, /Constant_18_output_0, /Clip_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for BROADCAST_ARGS 'broadcasted_shape'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: broadcasted_shape
+Warning: Unsupported TensorFlow Lite semantics for BROADCAST_TO '/Expand_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Expand_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.0/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.2/ReduceMean_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_, /cvf/cvf.2/ReduceMean_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.2/ReduceMean_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_output_00, /cvf/cvf.2/ReduceMean_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.2/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output, /cvf/cvf.2/ReduceMean_output_0, /cvf/cvf.2/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.2/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Sub_output_0, /cvf/cvf.2/Sub_output_0, /cvf/cvf.2/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.2/ReduceMean_1_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Mul_output_0_transposed_, /cvf/cvf.2/ReduceMean_1_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.2/ReduceMean_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_1_output_00, /cvf/cvf.2/ReduceMean_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.2/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_1_output_0, /cvf/cvf.2/Constant_2_output_00, /cvf/cvf.2/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for SQRT '/cvf/cvf.2/Sqrt_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Sqrt_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.2/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.2/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Div_output_0, model.cvf.2.weight0, /cvf/cvf.2/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.2/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Mul_1_output_0, model.cvf.2.bias0, /cvf/cvf.2/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_10_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Add_1_output_0, /cvf/cvf.3/Constant_11_output_00, /cvf/cvf.3/Mul_10_output_0
+Warning: Unsupported TensorFlow Lite semantics for GREATER_EQUAL '/cvf/cvf.3/GreaterOrEqual_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/GreaterOrEqual_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Add_1_output_0, /cvf/cvf.3/Constant_output_00, /cvf/cvf.3/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for ABS '/cvf/cvf.3/Abs_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_output_0, /cvf/cvf.3/Abs_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Constant_1_output_00, /cvf/cvf.3/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_1_output_0, /cvf/cvf.3/Constant_2_output_00, /cvf/cvf.3/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.3/Mul_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Constant_4_output_00, /cvf/cvf.3/Mul_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_3_output_0, /cvf/cvf.3/Constant_5_output_00, /cvf/cvf.3/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Sub_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_4_output_0, /cvf/cvf.3/Constant_6_output_00, /cvf/cvf.3/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Add_1_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_5_output_0, /cvf/cvf.3/Constant_7_output_00, /cvf/cvf.3/Sub_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_6_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Sub_1_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_6_output_0, /cvf/cvf.3/Constant_8_output_00, /cvf/cvf.3/Add_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_7_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Add_2_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_8_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Mul_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.3/Neg_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_output_0
+Warning: Unsupported TensorFlow Lite semantics for EXP '/cvf/cvf.3/Exp_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_output_0, /cvf/cvf.3/Exp_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_9_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_7_output_0, /cvf/cvf.3/Exp_output_0, /cvf/cvf.3/Mul_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Constant_9_output_00, /cvf/cvf.3/Mul_9_output_0, /cvf/cvf.3/Sub_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.3/Neg_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/cvf/cvf.3/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Where_output_0, /cvf/cvf.3/Constant_12_output_00, /cvf/cvf.3/Add_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_11_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_10_output_0, /cvf/cvf.3/Add_3_output_0, /cvf/cvf.3/Mul_11_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.4/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.6/ReduceMean_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_, /cvf/cvf.6/ReduceMean_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.6/ReduceMean_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_output_00, /cvf/cvf.6/ReduceMean_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.6/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output, /cvf/cvf.6/ReduceMean_output_0, /cvf/cvf.6/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.6/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Sub_output_0, /cvf/cvf.6/Sub_output_0, /cvf/cvf.6/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.6/ReduceMean_1_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Mul_output_0_transposed_, /cvf/cvf.6/ReduceMean_1_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.6/ReduceMean_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_1_output_00, /cvf/cvf.6/ReduceMean_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.6/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_1_output_0, /cvf/cvf.6/Constant_2_output_00, /cvf/cvf.6/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for SQRT '/cvf/cvf.6/Sqrt_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Sqrt_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.6/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.6/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Div_output_0, model.cvf.6.weight0, /cvf/cvf.6/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.6/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Mul_1_output_0, model.cvf.6.bias0, /cvf/cvf.6/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_10_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Add_1_output_0, /cvf/cvf.7/Constant_11_output_00, /cvf/cvf.7/Mul_10_output_0
+Warning: Unsupported TensorFlow Lite semantics for GREATER_EQUAL '/cvf/cvf.7/GreaterOrEqual_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/GreaterOrEqual_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Add_1_output_0, /cvf/cvf.7/Constant_output_00, /cvf/cvf.7/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for ABS '/cvf/cvf.7/Abs_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_output_0, /cvf/cvf.7/Abs_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Constant_1_output_00, /cvf/cvf.7/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_1_output_0, /cvf/cvf.7/Constant_2_output_00, /cvf/cvf.7/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.7/Mul_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Constant_4_output_00, /cvf/cvf.7/Mul_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_3_output_0, /cvf/cvf.7/Constant_5_output_00, /cvf/cvf.7/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Sub_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_4_output_0, /cvf/cvf.7/Constant_6_output_00, /cvf/cvf.7/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Add_1_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_5_output_0, /cvf/cvf.7/Constant_7_output_00, /cvf/cvf.7/Sub_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_6_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Sub_1_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_6_output_0, /cvf/cvf.7/Constant_8_output_00, /cvf/cvf.7/Add_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_7_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Add_2_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_8_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Mul_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.7/Neg_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_output_0
+Warning: Unsupported TensorFlow Lite semantics for EXP '/cvf/cvf.7/Exp_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_output_0, /cvf/cvf.7/Exp_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_9_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_7_output_0, /cvf/cvf.7/Exp_output_0, /cvf/cvf.7/Mul_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Constant_9_output_00, /cvf/cvf.7/Mul_9_output_0, /cvf/cvf.7/Sub_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.7/Neg_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/cvf/cvf.7/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Where_output_0, /cvf/cvf.7/Constant_12_output_00, /cvf/cvf.7/Add_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_11_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_10_output_0, /cvf/cvf.7/Add_3_output_0, /cvf/cvf.7/Mul_11_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.8/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_output_0, /Where_4_output_0, /Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/Div_1_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_23_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for FULLY_CONNECTED '/non_seq_enc/Gemm_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: worker_features_18, model.non_seq_enc.weight_reshape, /non_seq_enc/Gemm_output_0
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Reshape_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /non_seq_enc/Gemm_output_0, /Reshape_output_0
+Warning: Unsupported TensorFlow Lite semantics for CONCATENATION '/Concat_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_5_output_0, x_mark, /Concat_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Transpose_2_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Concat_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.0/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.0/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.0/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Relu_output_0_DequantizeLinear_Output, /tcn_blocks.0/layer2/Relu_output_0, /tcn_blocks.0/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.1/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.1/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.1/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.1/layer2/Relu_output_0, /tcn_blocks.1/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.2/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.2/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.2/layer2/Relu_output_0, /tcn_blocks.2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.3/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.3/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.3/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.3/layer2/Relu_output_0, /tcn_blocks.3/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.4/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.4/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.4/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.4/layer2/Relu_output_0, /tcn_blocks.4/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.5/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.5/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.5/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.5/layer2/Relu_output_0, /tcn_blocks.5/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.6/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.6/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.6/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.6/layer2/Relu_output_0, /tcn_blocks.6/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.7/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.7/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.7/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.7/layer2/Relu_output_0, /tcn_blocks.7/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.8/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.8/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.8/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.8/layer2/Relu_output_0, /tcn_blocks.8/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.9/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.9/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.9/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.9/layer2/Relu_output_0, /tcn_blocks.9/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE 'reconstructed_values'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: reconstructed_values
+Warning: MIRROR_PAD '/cvf/cvf.8/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.7/Mul_11_output_0' has data type: float32, Tensor '/cvf/cvf.8/Pad_output_0' has data type: float32
+Warning: MIRROR_PAD '/cvf/cvf.4/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.3/Mul_11_output_0' has data type: float32, Tensor '/cvf/cvf.4/Pad_output_0' has data type: float32
+Warning: MIRROR_PAD '/cvf/cvf.0/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/Where_3_output_0' has data type: float32, Tensor '/cvf/cvf.0/Pad_output_0' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' has data type: float32, Tensor '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.2/Mul_output_0_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.2/Mul_output_0' has data type: float32, Tensor '/cvf/cvf.2/Mul_output_0_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output' has data type: float32, Tensor '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.6/Mul_output_0_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.6/Mul_output_0' has data type: float32, Tensor '/cvf/cvf.6/Mul_output_0_transposed_' has data type: float32
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1296, in main
+    nng = process(
+          ^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 79, in process
+    compiler_driver.compiler_driver(nng, arch, compiler_options, scheduler_options, network_type, output_basename)
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/compiler_driver.py", line 245, in compiler_driver
+    high_level_command_stream_generator.generate_high_level_command_stream_for_schedule(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream_generator.py", line 63, in generate_high_level_command_stream_for_schedule
+    res += list(generate_high_level_commands_for_sched_op(sched_op, sg.schedule))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream_generator.py", line 245, in generate_high_level_commands_for_sched_op
+    yield NpuStripe(
+          ^^^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream.py", line 243, in __init__
+    assert self.ofm_box.end_coord[i] <= ps.ofm_shapes[0][i]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+VELA_COMPILATION_FAILED=symmetric394
+VELA_EXIT_CODE=1
+
+============================================================
+CANDIDATE: asymmetric394
+============================================================
+INPUT_ONNX=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/heatstroke_tcn_v6_cvf_svf_asymmetric394.onnx
+OUTPUT_TFLITE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+VELA_OUTPUT_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/vela
+
+START ONNX2TFLITE: asymmetric394
+[2026-11-24 14:01:12,648] [WARNING] Found multiple value infos for tensor "reconstructed_values". Returning first one.
+[2026-11-24 14:01:12,649] [WARNING] Some ops in model will be converted to tensor-based quantization representation. Number of ops: 219.
+[2026-11-24 14:01:12,679] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-24 14:01:12,679] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceSum`.
+[2026-11-24 14:01:12,679] [DEBUG] Tensor '' is not yet in the tensors. Adding it!
+[2026-11-24 14:01:12,680] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:12,680] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:12,682] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:12,682] [DEBUG] Using inferred data for the `axes` input tensor of ONNX `ReduceMean`.
+[2026-11-24 14:01:12,693] [INFO] The output data of the following nodes has been statically inferred, so they will not be present in the output model.
+	Constant(/Constant)
+	Constant(/Constant_1)
+	Constant(/Constant_2)
+	Constant(/Constant_3)
+	Constant(/Constant_4)
+	Constant(/Constant_5)
+	Constant(/Constant_6)
+	Constant(/Constant_7)
+	Constant(/Constant_8)
+	Constant(/Constant_9)
+	Constant(/Constant_10)
+	Constant(/Constant_11)
+	Constant(/Constant_12)
+	Constant(/Constant_13)
+	Constant(/Constant_14)
+	Constant(/Constant_15)
+	Constant(/Constant_16)
+	Constant(/Constant_17)
+	Constant(Constant_145)
+	Constant(/Constant_18)
+	Constant(/Constant_19)
+	Constant(/Constant_20)
+	Constant(/Constant_21)
+	Constant(/cvf/cvf.0/Constant)
+	Constant(/cvf/cvf.0/Constant_1)
+	Constant(/cvf/cvf.0/Constant_2)
+	Constant(/cvf/cvf.0/Constant_3)
+	Constant(/cvf/cvf.0/Constant_4)
+	Constant(/cvf/cvf.0/Constant_5)
+	Constant(/cvf/cvf.0/Constant_6)
+	Constant(/cvf/cvf.0/Constant_7)
+	Constant(/cvf/cvf.1/Constant)
+	Constant(/cvf/cvf.1/Constant_1)
+	Constant(/cvf/cvf.1/Constant_2)
+	Constant(/cvf/cvf.1/Constant_3)
+	Constant(/cvf/cvf.1/Constant_4)
+	Constant(/cvf/cvf.1/Constant_5)
+	Constant(/cvf/cvf.1/Constant_6)
+	Constant(/cvf/cvf.1/Constant_7)
+	Constant(/cvf/cvf.2/Constant)
+	Constant(/cvf/cvf.2/Constant_1)
+	Constant(/cvf/cvf.2/Constant_2)
+	Constant(/cvf/cvf.3/Constant)
+	Constant(/cvf/cvf.3/Constant_1)
+	Constant(/cvf/cvf.3/Constant_2)
+	Constant(/cvf/cvf.3/Constant_3)
+	Constant(/cvf/cvf.3/Constant_4)
+	Constant(/cvf/cvf.3/Constant_5)
+	Constant(/cvf/cvf.3/Constant_6)
+	Constant(/cvf/cvf.3/Constant_7)
+	Constant(/cvf/cvf.3/Constant_8)
+	Constant(/cvf/cvf.3/Constant_9)
+	Constant(/cvf/cvf.3/Constant_10)
+	Constant(/cvf/cvf.3/Constant_11)
+	Constant(/cvf/cvf.3/Constant_12)
+	Constant(/cvf/cvf.4/Constant)
+	Constant(/cvf/cvf.4/Constant_1)
+	Constant(/cvf/cvf.4/Constant_2)
+	Constant(/cvf/cvf.4/Constant_3)
+	Constant(/cvf/cvf.4/Constant_4)
+	Constant(/cvf/cvf.4/Constant_5)
+	Constant(/cvf/cvf.4/Constant_6)
+	Constant(/cvf/cvf.4/Constant_7)
+	Constant(/cvf/cvf.5/Constant)
+	Constant(/cvf/cvf.5/Constant_1)
+	Constant(/cvf/cvf.5/Constant_2)
+	Constant(/cvf/cvf.5/Constant_3)
+	Constant(/cvf/cvf.5/Constant_4)
+	Constant(/cvf/cvf.5/Constant_5)
+	Constant(/cvf/cvf.5/Constant_6)
+	Constant(/cvf/cvf.5/Constant_7)
+	Constant(/cvf/cvf.6/Constant)
+	Constant(/cvf/cvf.6/Constant_1)
+	Constant(/cvf/cvf.6/Constant_2)
+	Constant(/cvf/cvf.7/Constant)
+	Constant(/cvf/cvf.7/Constant_1)
+	Constant(/cvf/cvf.7/Constant_2)
+	Constant(/cvf/cvf.7/Constant_3)
+	Constant(/cvf/cvf.7/Constant_4)
+	Constant(/cvf/cvf.7/Constant_5)
+	Constant(/cvf/cvf.7/Constant_6)
+	Constant(/cvf/cvf.7/Constant_7)
+	Constant(/cvf/cvf.7/Constant_8)
+	Constant(/cvf/cvf.7/Constant_9)
+	Constant(/cvf/cvf.7/Constant_10)
+	Constant(/cvf/cvf.7/Constant_11)
+	Constant(/cvf/cvf.7/Constant_12)
+	Constant(/cvf/cvf.8/Constant)
+	Constant(/cvf/cvf.8/Constant_1)
+	Constant(/cvf/cvf.8/Constant_2)
+	Constant(/cvf/cvf.8/Constant_3)
+	Constant(/cvf/cvf.8/Constant_4)
+	Constant(/cvf/cvf.8/Constant_5)
+	Constant(/cvf/cvf.8/Constant_6)
+	Constant(/cvf/cvf.8/Constant_7)
+	Constant(/Constant_22)
+	Constant(/Constant_23)
+	ConstantOfShape(/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.0/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.1/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.4/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.5/ConstantOfShape)
+	ConstantOfShape(/cvf/cvf.8/ConstantOfShape)
+	Mul(/Mul)
+	Concat(/cvf/cvf.0/Concat)
+	Concat(/cvf/cvf.1/Concat)
+	Concat(/cvf/cvf.4/Concat)
+	Concat(/cvf/cvf.5/Concat)
+	Concat(/cvf/cvf.8/Concat)
+	Equal(/Equal_3)
+	Reshape(/cvf/cvf.0/Reshape)
+	Reshape(/cvf/cvf.1/Reshape)
+	Reshape(/cvf/cvf.4/Reshape)
+	Reshape(/cvf/cvf.5/Reshape)
+	Reshape(/cvf/cvf.8/Reshape)
+	Where(/Where_2)
+	Slice(/cvf/cvf.0/Slice)
+	Slice(/cvf/cvf.1/Slice)
+	Slice(/cvf/cvf.4/Slice)
+	Slice(/cvf/cvf.5/Slice)
+	Slice(/cvf/cvf.8/Slice)
+	Transpose(/cvf/cvf.0/Transpose)
+	Transpose(/cvf/cvf.1/Transpose)
+	Transpose(/cvf/cvf.4/Transpose)
+	Transpose(/cvf/cvf.5/Transpose)
+	Transpose(/cvf/cvf.8/Transpose)
+	Reshape(/cvf/cvf.0/Reshape_1)
+	Reshape(/cvf/cvf.1/Reshape_1)
+	Reshape(/cvf/cvf.4/Reshape_1)
+	Reshape(/cvf/cvf.5/Reshape_1)
+	Reshape(/cvf/cvf.8/Reshape_1)
+	Cast(/cvf/cvf.0/Cast)
+	Cast(/cvf/cvf.1/Cast)
+	Cast(/cvf/cvf.4/Cast)
+	Cast(/cvf/cvf.5/Cast)
+	Cast(/cvf/cvf.8/Cast)
+	Shape(/Shape)
+	ConstantOfShape(/ConstantOfShape_1)
+If you wish to prohibit this and convert all operators, run the conversion again with the flag [1m[96m--dont-skip-nodes-with-known-outputs[0m.
+[2026-11-24 14:01:12,820] [INFO] Successfully converted '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/heatstroke_tcn_v6_cvf_svf_asymmetric394.onnx' model to '/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite'.
+TFLITE_CONVERSION=PASS
+TFLITE_SIZE_BYTES=10294736
+TFLITE_SHA256=84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5
+
+START VELA: asymmetric394
+Warning: Option --show-subgraph-io-summary is deprecated and will be removed in a future release.
+Warning: Option --debug-force-legacy-core is deprecated and will be removed in a future release.
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_OR '/Or_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Or_output_0
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_OR '/Or_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Or_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.0/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.0/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.0/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_1_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_1_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.1/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.1/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.1/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_2_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_2_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.2/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.2/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.2/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_3_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_3_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.3/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.3/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.3/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_4_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_4_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.4/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.4/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.4/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for GATHER '/Gather_5_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Gather_5_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Gather_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/svf.5/Gemm_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.5/Gemm_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Unsqueeze_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /svf.5/Gemm_output_0_DequantizeLinear_Output, /Unsqueeze_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for CONCATENATION '/Concat_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Unsqueeze_1_output_0, /Unsqueeze_2_output_0, /Concat_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for LOGICAL_NOT '/Not_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Not_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUM '/ReduceSum_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for CAST '/Cast_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Cast_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUM '/ReduceSum_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_output_0
+Warning: Unsupported TensorFlow Lite semantics for MAXIMUM '/Clip_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /ReduceSum_output_0, /Constant_18_output_0, /Clip_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for BROADCAST_ARGS 'broadcasted_shape'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: broadcasted_shape
+Warning: Unsupported TensorFlow Lite semantics for BROADCAST_TO '/Expand_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Expand_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.0/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.2/ReduceMean_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_, /cvf/cvf.2/ReduceMean_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.2/ReduceMean_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_output_00, /cvf/cvf.2/ReduceMean_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.2/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.1/Conv_output_0_DequantizeLinear_Output, /cvf/cvf.2/ReduceMean_output_0, /cvf/cvf.2/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.2/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Sub_output_0, /cvf/cvf.2/Sub_output_0, /cvf/cvf.2/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.2/ReduceMean_1_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Mul_output_0_transposed_, /cvf/cvf.2/ReduceMean_1_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.2/ReduceMean_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_1_output_00, /cvf/cvf.2/ReduceMean_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.2/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/ReduceMean_1_output_0, /cvf/cvf.2/Constant_2_output_00, /cvf/cvf.2/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for SQRT '/cvf/cvf.2/Sqrt_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Sqrt_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.2/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.2/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Div_output_0, model.cvf.2.weight0, /cvf/cvf.2/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.2/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Mul_1_output_0, model.cvf.2.bias0, /cvf/cvf.2/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_10_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Add_1_output_0, /cvf/cvf.3/Constant_11_output_00, /cvf/cvf.3/Mul_10_output_0
+Warning: Unsupported TensorFlow Lite semantics for GREATER_EQUAL '/cvf/cvf.3/GreaterOrEqual_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/GreaterOrEqual_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.2/Add_1_output_0, /cvf/cvf.3/Constant_output_00, /cvf/cvf.3/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for ABS '/cvf/cvf.3/Abs_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_output_0, /cvf/cvf.3/Abs_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Constant_1_output_00, /cvf/cvf.3/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_1_output_0, /cvf/cvf.3/Constant_2_output_00, /cvf/cvf.3/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.3/Mul_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Constant_4_output_00, /cvf/cvf.3/Mul_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_3_output_0, /cvf/cvf.3/Constant_5_output_00, /cvf/cvf.3/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Sub_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_4_output_0, /cvf/cvf.3/Constant_6_output_00, /cvf/cvf.3/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Add_1_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_5_output_0, /cvf/cvf.3/Constant_7_output_00, /cvf/cvf.3/Sub_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_6_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Sub_1_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_6_output_0, /cvf/cvf.3/Constant_8_output_00, /cvf/cvf.3/Add_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_7_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Add_2_output_0, /cvf/cvf.3/Mul_2_output_0, /cvf/cvf.3/Mul_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_8_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Abs_output_0, /cvf/cvf.3/Mul_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.3/Neg_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_output_0
+Warning: Unsupported TensorFlow Lite semantics for EXP '/cvf/cvf.3/Exp_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_output_0, /cvf/cvf.3/Exp_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_9_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_7_output_0, /cvf/cvf.3/Exp_output_0, /cvf/cvf.3/Mul_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.3/Sub_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Constant_9_output_00, /cvf/cvf.3/Mul_9_output_0, /cvf/cvf.3/Sub_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.3/Neg_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Neg_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/cvf/cvf.3/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.3/Add_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Where_output_0, /cvf/cvf.3/Constant_12_output_00, /cvf/cvf.3/Add_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.3/Mul_11_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.3/Mul_10_output_0, /cvf/cvf.3/Add_3_output_0, /cvf/cvf.3/Mul_11_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.4/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.6/ReduceMean_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_, /cvf/cvf.6/ReduceMean_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.6/ReduceMean_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_output_00, /cvf/cvf.6/ReduceMean_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.6/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.5/Conv_output_0_DequantizeLinear_Output, /cvf/cvf.6/ReduceMean_output_0, /cvf/cvf.6/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.6/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Sub_output_0, /cvf/cvf.6/Sub_output_0, /cvf/cvf.6/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for MEAN '/cvf/cvf.6/ReduceMean_1_output_00'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Mul_output_0_transposed_, /cvf/cvf.6/ReduceMean_1_output_00
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/cvf/cvf.6/ReduceMean_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_1_output_00, /cvf/cvf.6/ReduceMean_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.6/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/ReduceMean_1_output_0, /cvf/cvf.6/Constant_2_output_00, /cvf/cvf.6/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for SQRT '/cvf/cvf.6/Sqrt_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Sqrt_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.6/Div_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Div_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.6/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Div_output_0, model.cvf.6.weight0, /cvf/cvf.6/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.6/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Mul_1_output_0, model.cvf.6.bias0, /cvf/cvf.6/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_10_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Add_1_output_0, /cvf/cvf.7/Constant_11_output_00, /cvf/cvf.7/Mul_10_output_0
+Warning: Unsupported TensorFlow Lite semantics for GREATER_EQUAL '/cvf/cvf.7/GreaterOrEqual_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/GreaterOrEqual_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.6/Add_1_output_0, /cvf/cvf.7/Constant_output_00, /cvf/cvf.7/Mul_output_0
+Warning: Unsupported TensorFlow Lite semantics for ABS '/cvf/cvf.7/Abs_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_output_0, /cvf/cvf.7/Abs_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Constant_1_output_00, /cvf/cvf.7/Mul_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_1_output_0, /cvf/cvf.7/Constant_2_output_00, /cvf/cvf.7/Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/cvf/cvf.7/Mul_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Constant_4_output_00, /cvf/cvf.7/Mul_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_3_output_0, /cvf/cvf.7/Constant_5_output_00, /cvf/cvf.7/Sub_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Sub_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_4_output_0, /cvf/cvf.7/Constant_6_output_00, /cvf/cvf.7/Add_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Add_1_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_5_output_0, /cvf/cvf.7/Constant_7_output_00, /cvf/cvf.7/Sub_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_6_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Sub_1_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_6_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_6_output_0, /cvf/cvf.7/Constant_8_output_00, /cvf/cvf.7/Add_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_7_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Add_2_output_0, /cvf/cvf.7/Mul_2_output_0, /cvf/cvf.7/Mul_7_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_8_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Abs_output_0, /cvf/cvf.7/Mul_8_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.7/Neg_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_output_0
+Warning: Unsupported TensorFlow Lite semantics for EXP '/cvf/cvf.7/Exp_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_output_0, /cvf/cvf.7/Exp_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_9_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_7_output_0, /cvf/cvf.7/Exp_output_0, /cvf/cvf.7/Mul_9_output_0
+Warning: Unsupported TensorFlow Lite semantics for SUB '/cvf/cvf.7/Sub_2_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Constant_9_output_00, /cvf/cvf.7/Mul_9_output_0, /cvf/cvf.7/Sub_2_output_0
+Warning: Unsupported TensorFlow Lite semantics for NEG '/cvf/cvf.7/Neg_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Neg_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/cvf/cvf.7/Where_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Where_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/cvf/cvf.7/Add_3_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Where_output_0, /cvf/cvf.7/Constant_12_output_00, /cvf/cvf.7/Add_3_output_0
+Warning: Unsupported TensorFlow Lite semantics for MUL '/cvf/cvf.7/Mul_11_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.7/Mul_10_output_0, /cvf/cvf.7/Add_3_output_0, /cvf/cvf.7/Mul_11_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.8/Pad_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_4_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_4_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/Add_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_output_0, /Where_4_output_0, /Add_output_0
+Warning: Unsupported TensorFlow Lite semantics for DIV '/Div_1_output_0'. Placing on CPU instead
+ - Scalar Input tensors are only valid for op type: ADD, ARG_MAX, EXPAND_DIMS, MAXIMUM, MEAN, MINIMUM, MUL, QUANTIZE, SPLIT, SPLIT_V, SUB
+   Op has scalar input tensor(s): /Constant_23_output_0
+Warning: Unsupported TensorFlow Lite semantics for SELECT_V2 '/Where_5_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_5_output_0
+Warning: Unsupported TensorFlow Lite semantics for FULLY_CONNECTED '/non_seq_enc/Gemm_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: worker_features_18, model.non_seq_enc.weight_reshape, /non_seq_enc/Gemm_output_0
+Warning: Unsupported TensorFlow Lite semantics for RESHAPE '/Reshape_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /non_seq_enc/Gemm_output_0, /Reshape_output_0
+Warning: Unsupported TensorFlow Lite semantics for CONCATENATION '/Concat_1_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Where_5_output_0, x_mark, /Concat_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/Transpose_2_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Concat_1_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.0/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.0/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.0/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /Relu_output_0_DequantizeLinear_Output, /tcn_blocks.0/layer2/Relu_output_0, /tcn_blocks.0/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.1/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.1/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.1/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.0/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.1/layer2/Relu_output_0, /tcn_blocks.1/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.2/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.2/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.1/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.2/layer2/Relu_output_0, /tcn_blocks.2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.3/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.3/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.3/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.2/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.3/layer2/Relu_output_0, /tcn_blocks.3/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.4/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.4/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.4/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.3/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.4/layer2/Relu_output_0, /tcn_blocks.4/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.5/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.5/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.5/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.4/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.5/layer2/Relu_output_0, /tcn_blocks.5/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.6/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.6/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.6/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.5/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.6/layer2/Relu_output_0, /tcn_blocks.6/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.7/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.7/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.7/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.6/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.7/layer2/Relu_output_0, /tcn_blocks.7/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.8/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.8/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.8/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.7/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.8/layer2/Relu_output_0, /tcn_blocks.8/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE '/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Warning: Unsupported TensorFlow Lite semantics for RELU '/tcn_blocks.9/layer2/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output, /tcn_blocks.9/layer2/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for ADD '/tcn_blocks.9/Relu_output_0'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.8/Relu_output_0_DequantizeLinear_Output, /tcn_blocks.9/layer2/Relu_output_0, /tcn_blocks.9/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for QUANTIZE '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: /tcn_blocks.9/Relu_output_0
+Warning: Unsupported TensorFlow Lite semantics for DEQUANTIZE 'reconstructed_values'. Placing on CPU instead
+ - Input(s), Output and Weight tensors must have quantization parameters
+   Op has tensors with missing quantization parameters: reconstructed_values
+Warning: MIRROR_PAD '/cvf/cvf.8/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.7/Mul_11_output_0' has data type: float32, Tensor '/cvf/cvf.8/Pad_output_0' has data type: float32
+Warning: MIRROR_PAD '/cvf/cvf.4/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.3/Mul_11_output_0' has data type: float32, Tensor '/cvf/cvf.4/Pad_output_0' has data type: float32
+Warning: MIRROR_PAD '/cvf/cvf.0/Pad_output_0' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/Where_3_output_0' has data type: float32, Tensor '/cvf/cvf.0/Pad_output_0' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' has data type: float32, Tensor '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.2/Mul_output_0_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.2/Mul_output_0' has data type: float32, Tensor '/cvf/cvf.2/Mul_output_0_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output' has data type: float32, Tensor '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' has data type: float32
+Warning: TRANSPOSE '/cvf/cvf.6/Mul_output_0_transposed_' is not supported on the NPU. Placing on CPU instead
+ - Tensors must be of type: int16, int32, int8, uint8
+   Tensor '/cvf/cvf.6/Mul_output_0' has data type: float32, Tensor '/cvf/cvf.6/Mul_output_0_transposed_' has data type: float32
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1296, in main
+    nng = process(
+          ^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 79, in process
+    compiler_driver.compiler_driver(nng, arch, compiler_options, scheduler_options, network_type, output_basename)
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/compiler_driver.py", line 245, in compiler_driver
+    high_level_command_stream_generator.generate_high_level_command_stream_for_schedule(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream_generator.py", line 63, in generate_high_level_command_stream_for_schedule
+    res += list(generate_high_level_commands_for_sched_op(sched_op, sg.schedule))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream_generator.py", line 245, in generate_high_level_commands_for_sched_op
+    yield NpuStripe(
+          ^^^^^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/high_level_command_stream.py", line 243, in __init__
+    assert self.ofm_box.end_coord[i] <= ps.ofm_shapes[0][i]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+VELA_COMPILATION_FAILED=asymmetric394
+VELA_EXIT_CODE=1
+
+============================================================
+TFLITE + VELA COMPARISON SUMMARY
+============================================================
+SYMMETRIC394_EXIT_CODE=1
+ASYMMETRIC394_EXIT_CODE=1
+
+OUTPUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321
+SYMMETRIC394=FAILED
+ASYMMETRIC394=FAILED
+
+CONVERSION_FAILURES=2
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+OVERALL_STATUS=PARTIAL_OR_FAILED
