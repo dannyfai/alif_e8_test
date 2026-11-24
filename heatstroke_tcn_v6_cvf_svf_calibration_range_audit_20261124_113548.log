@@ -1,0 +1,283 @@
+============================================================
+CVF/SVF CORRECTED CALIBRATION RANGE AUDIT
+============================================================
+HYBRID=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/heatstroke_tcn_v6_cvf_svf_hybrid_int8_qdq.onnx
+DEBUG_MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/layer_sensitivity_debug/hybrid_intermediate_outputs.onnx
+CALIBRATION=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/int8_calibration
+EVALUATION=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/data/split_byid
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_calibration_range_audit_20261124_113548.log
+HYBRID_SHA256=4ad1fdbd7a5b79b6891e7658a26e5131987d44075a22c5d585dc7599ae1a276b
+DEBUG_MODEL_SHA256=756811f319c25569cc164ebcf0472c18c962d7ee7e23b2805b68b67a995c8844
+HYBRID_ONNX_CHECKER=PASS
+
+FIXED ACTIVATION QUANTIZATION PARAMETERS
+cvf.0 scale=0.02272063307 zero_point=0
+cvf.1 scale=0.0128415972 zero_point=0
+cvf.4 scale=0.05099659041 zero_point=0
+cvf.5 scale=0.07631400228 zero_point=0
+cvf.8 scale=0.3630671799 zero_point=0
+svf.0 scale=0.1638725251 zero_point=0
+svf.1 scale=1.178055882 zero_point=0
+svf.2 scale=0.1219009608 zero_point=0
+svf.3 scale=0.4015713036 zero_point=0
+svf.4 scale=0.1881571859 zero_point=0
+svf.5 scale=0.1746229231 zero_point=0
+
+============================================================================
+CALIBRATION_ALL_394 RANGE MEASUREMENTS
+============================================================================
+Subject-level split column: worker_id
+[test] loaded samples=394, skipped_incomplete=0
+[test] distinct subject groups=25
+SAMPLES=394
+WORKERS=25
+Processed 50/394
+Processed 100/394
+Processed 150/394
+Processed 200/394
+Processed 250/394
+Processed 300/394
+Processed 350/394
+Processed 394/394
+
+LAYER cvf.0
+  scale=0.02272063307 zero_point=0
+  representable=[-2.908241, 2.88552]
+  raw_range=[-2.358637, 2.88416]
+  raw_rms=0.3568214 qdq_rmse=0.00655049 qdq_mae=0.005673226
+  strict_clip=0.000018% endpoint_codes=0.000018% (-128=0.000000%, +127=0.000018%)
+  q_code_range=[-104, 127]
+  worst_sample={"index": 380, "worker_id": "45", "sample_id": "462", "rmse": 0.008220562718430536}
+
+LAYER cvf.1
+  scale=0.0128415972 zero_point=0
+  representable=[-1.643724, 1.630883]
+  raw_range=[-1.706756, 1.725146]
+  raw_rms=0.2233258 qdq_rmse=0.003717339 qdq_mae=0.003220389
+  strict_clip=0.000203% endpoint_codes=0.000203% (-128=0.000123%, +127=0.000079%)
+  q_code_range=[-128, 127]
+  worst_sample={"index": 393, "worker_id": "47", "sample_id": "475", "rmse": 0.004365063777255457}
+
+LAYER cvf.4
+  scale=0.05099659041 zero_point=0
+  representable=[-6.527564, 6.476567]
+  raw_range=[-5.275897, 6.667833]
+  raw_rms=0.3128494 qdq_rmse=0.01462785 qdq_mae=0.01259518
+  strict_clip=0.000018% endpoint_codes=0.000018% (-128=0.000000%, +127=0.000018%)
+  q_code_range=[-103, 127]
+  worst_sample={"index": 228, "worker_id": "25", "sample_id": "279", "rmse": 0.015358071612210535}
+
+LAYER cvf.5
+  scale=0.07631400228 zero_point=0
+  representable=[-9.768192, 9.691878]
+  raw_range=[-7.739554, 9.435516]
+  raw_rms=0.5499028 qdq_rmse=0.02188255 qdq_mae=0.01883191
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-101, 124]
+  worst_sample={"index": 255, "worker_id": "30", "sample_id": "314", "rmse": 0.023262801811010557}
+
+LAYER cvf.8
+  scale=0.3630671799 zero_point=0
+  representable=[-46.4726, 46.10953]
+  raw_range=[-70.21635, 40.40857]
+  raw_rms=2.904147 qdq_rmse=0.1069969 qdq_mae=0.08532098
+  strict_clip=0.000705% endpoint_codes=0.000705% (-128=0.000705%, +127=0.000000%)
+  q_code_range=[-128, 111]
+  worst_sample={"index": 194, "worker_id": "7", "sample_id": "240", "rmse": 0.7228560793700692}
+
+LAYER svf.0
+  scale=0.1638725251 zero_point=0
+  representable=[-20.97568, 20.81181]
+  raw_range=[-20.92811, 12.25944]
+  raw_rms=6.224726 qdq_rmse=0.04392431 qdq_mae=0.03592037
+  strict_clip=0.000282% endpoint_codes=0.000282% (-128=0.000282%, +127=0.000000%)
+  q_code_range=[-128, 75]
+  worst_sample={"index": 169, "worker_id": "24", "sample_id": "208", "rmse": 0.055309133265810044}
+
+LAYER svf.1
+  scale=1.178055882 zero_point=0
+  representable=[-150.7912, 149.6131]
+  raw_range=[-149.6052, 50.13071]
+  raw_rms=3.620131 qdq_rmse=0.2932955 qdq_mae=0.2211093
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-127, 43]
+  worst_sample={"index": 280, "worker_id": "23", "sample_id": "348", "rmse": 0.40447193184803026}
+
+LAYER svf.2
+  scale=0.1219009608 zero_point=0
+  representable=[-15.60332, 15.48142]
+  raw_range=[-15.48783, 13.09834]
+  raw_rms=2.680609 qdq_rmse=0.03077561 qdq_mae=0.02399366
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-127, 107]
+  worst_sample={"index": 153, "worker_id": "12", "sample_id": "192", "rmse": 0.03669228943659189}
+
+LAYER svf.3
+  scale=0.4015713036 zero_point=0
+  representable=[-51.40113, 50.99956]
+  raw_range=[-28.00279, 54.96109]
+  raw_rms=1.978616 qdq_rmse=0.06790287 qdq_mae=0.03736218
+  strict_clip=0.001410% endpoint_codes=0.001410% (-128=0.000000%, +127=0.001410%)
+  q_code_range=[-70, 127]
+  worst_sample={"index": 17, "worker_id": "14", "sample_id": "21", "rmse": 0.18594586121896758}
+
+LAYER svf.4
+  scale=0.1881571859 zero_point=0
+  representable=[-24.08412, 23.89596]
+  raw_range=[-18.53026, 23.89893]
+  raw_rms=1.022609 qdq_rmse=0.03220209 qdq_mae=0.02014072
+  strict_clip=0.000282% endpoint_codes=0.000282% (-128=0.000000%, +127=0.000282%)
+  q_code_range=[-98, 127]
+  worst_sample={"index": 9, "worker_id": "4", "sample_id": "11", "rmse": 0.05640768427470193}
+
+LAYER svf.5
+  scale=0.1746229231 zero_point=0
+  representable=[-22.35173, 22.17711]
+  raw_range=[-22.17839, 21.56055]
+  raw_rms=1.060631 qdq_rmse=0.03018562 qdq_mae=0.01994845
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-127, 123]
+  worst_sample={"index": 16, "worker_id": "14", "sample_id": "20", "rmse": 0.05197830298000118}
+
+============================================================================
+EVALUATION_449 RANGE MEASUREMENTS
+============================================================================
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+SAMPLES=449
+WORKERS=3
+Processed 50/449
+Processed 100/449
+Processed 150/449
+Processed 200/449
+Processed 250/449
+Processed 300/449
+Processed 350/449
+Processed 400/449
+Processed 449/449
+
+LAYER cvf.0
+  scale=0.02272063307 zero_point=0
+  representable=[-2.908241, 2.88552]
+  raw_range=[-2.447608, 3.221478]
+  raw_rms=0.4152146 qdq_rmse=0.006537933 qdq_mae=0.005645997
+  strict_clip=0.001191% endpoint_codes=0.001191% (-128=0.000000%, +127=0.001191%)
+  q_code_range=[-108, 127]
+  worst_sample={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.008644602806068293}
+
+LAYER cvf.1
+  scale=0.0128415972 zero_point=0
+  representable=[-1.643724, 1.630883]
+  raw_range=[-1.70334, 1.943261]
+  raw_rms=0.2615027 qdq_rmse=0.003739224 qdq_mae=0.003207643
+  strict_clip=0.001763% endpoint_codes=0.001763% (-128=0.000503%, +127=0.001261%)
+  q_code_range=[-128, 127]
+  worst_sample={"index": 269, "worker_id": "8", "sample_id": "269", "rmse": 0.009073594268282428}
+
+LAYER cvf.4
+  scale=0.05099659041 zero_point=0
+  representable=[-6.527564, 6.476567]
+  raw_range=[-5.851545, 5.01405]
+  raw_rms=0.2969362 qdq_rmse=0.01447181 qdq_mae=0.01234625
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-115, 98]
+  worst_sample={"index": 192, "worker_id": "9", "sample_id": "192", "rmse": 0.0150361388008079}
+
+LAYER cvf.5
+  scale=0.07631400228 zero_point=0
+  representable=[-9.768192, 9.691878]
+  raw_range=[-6.593008, 7.927143]
+  raw_rms=0.4886889 qdq_rmse=0.02161267 qdq_mae=0.01839105
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-86, 104]
+  worst_sample={"index": 268, "worker_id": "8", "sample_id": "268", "rmse": 0.02321099076889263}
+
+LAYER cvf.8
+  scale=0.3630671799 zero_point=0
+  representable=[-46.4726, 46.10953]
+  raw_range=[-51.14412, 35.66164]
+  raw_rms=2.985159 qdq_rmse=0.09861203 qdq_mae=0.08291586
+  strict_clip=0.000289% endpoint_codes=0.000289% (-128=0.000289%, +127=0.000000%)
+  q_code_range=[-128, 98]
+  worst_sample={"index": 97, "worker_id": "9", "sample_id": "97", "rmse": 0.14361199275559208}
+
+LAYER svf.0
+  scale=0.1638725251 zero_point=0
+  representable=[-20.97568, 20.81181]
+  raw_range=[-18.21764, 13.61644]
+  raw_rms=4.991453 qdq_rmse=0.0419578 qdq_mae=0.03316799
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-111, 83]
+  worst_sample={"index": 203, "worker_id": "9", "sample_id": "203", "rmse": 0.05497153553291357}
+
+LAYER svf.1
+  scale=1.178055882 zero_point=0
+  representable=[-150.7912, 149.6131]
+  raw_range=[-149.9286, 55.82438]
+  raw_rms=3.618776 qdq_rmse=0.2955711 qdq_mae=0.2246715
+  strict_clip=0.000000% endpoint_codes=0.000000% (-128=0.000000%, +127=0.000000%)
+  q_code_range=[-127, 47]
+  worst_sample={"index": 171, "worker_id": "5", "sample_id": "171", "rmse": 0.3936486883921318}
+
+LAYER svf.2
+  scale=0.1219009608 zero_point=0
+  representable=[-15.60332, 15.48142]
+  raw_range=[-16.03393, 10.44057]
+  raw_rms=2.478417 qdq_rmse=0.03099289 qdq_mae=0.02428281
+  strict_clip=0.000247% endpoint_codes=0.000247% (-128=0.000247%, +127=0.000000%)
+  q_code_range=[-128, 86]
+  worst_sample={"index": 136, "worker_id": "9", "sample_id": "136", "rmse": 0.038709516809591164}
+
+LAYER svf.3
+  scale=0.4015713036 zero_point=0
+  representable=[-51.40113, 50.99956]
+  raw_range=[-30.59138, 64.62978]
+  raw_rms=3.390158 qdq_rmse=0.1086659 qdq_mae=0.07191693
+  strict_clip=0.004454% endpoint_codes=0.004454% (-128=0.000000%, +127=0.004454%)
+  q_code_range=[-76, 127]
+  worst_sample={"index": 298, "worker_id": "8", "sample_id": "298", "rmse": 0.7531015476087084}
+
+LAYER svf.4
+  scale=0.1881571859 zero_point=0
+  representable=[-24.08412, 23.89596]
+  raw_range=[-23.56262, 31.30453]
+  raw_rms=1.275187 qdq_rmse=0.04949098 qdq_mae=0.03485907
+  strict_clip=0.001485% endpoint_codes=0.001485% (-128=0.000000%, +127=0.001485%)
+  q_code_range=[-125, 127]
+  worst_sample={"index": 138, "worker_id": "9", "sample_id": "138", "rmse": 0.4110444595540214}
+
+LAYER svf.5
+  scale=0.1746229231 zero_point=0
+  representable=[-22.35173, 22.17711]
+  raw_range=[-44.08261, 41.28981]
+  raw_rms=2.146971 qdq_rmse=0.1250992 qdq_mae=0.03451595
+  strict_clip=0.040584% endpoint_codes=0.040584% (-128=0.032418%, +127=0.008166%)
+  q_code_range=[-128, 127]
+  worst_sample={"index": 152, "worker_id": "5", "sample_id": "152", "rmse": 1.8613492352381256}
+
+============================================================================
+CALIBRATION / EVALUATION COMPARISON
+============================================================================
+cvf.0 CAL_RMS=0.3568214 TEST_RMS=0.4152146 TEST/CAL_RMS=1.16365 CAL_QDQ_RMSE=0.00655049 TEST_QDQ_RMSE=0.006537933 CAL_CLIP=0.000018% TEST_CLIP=0.001191% CAL_END=0.000018% TEST_END=0.001191%
+cvf.1 CAL_RMS=0.2233258 TEST_RMS=0.2615027 TEST/CAL_RMS=1.17095 CAL_QDQ_RMSE=0.003717339 TEST_QDQ_RMSE=0.003739224 CAL_CLIP=0.000203% TEST_CLIP=0.001763% CAL_END=0.000203% TEST_END=0.001763%
+cvf.4 CAL_RMS=0.3128494 TEST_RMS=0.2969362 TEST/CAL_RMS=0.949135 CAL_QDQ_RMSE=0.01462785 TEST_QDQ_RMSE=0.01447181 CAL_CLIP=0.000018% TEST_CLIP=0.000000% CAL_END=0.000018% TEST_END=0.000000%
+cvf.5 CAL_RMS=0.5499028 TEST_RMS=0.4886889 TEST/CAL_RMS=0.888682 CAL_QDQ_RMSE=0.02188255 TEST_QDQ_RMSE=0.02161267 CAL_CLIP=0.000000% TEST_CLIP=0.000000% CAL_END=0.000000% TEST_END=0.000000%
+cvf.8 CAL_RMS=2.904147 TEST_RMS=2.985159 TEST/CAL_RMS=1.0279 CAL_QDQ_RMSE=0.1069969 TEST_QDQ_RMSE=0.09861203 CAL_CLIP=0.000705% TEST_CLIP=0.000289% CAL_END=0.000705% TEST_END=0.000289%
+svf.0 CAL_RMS=6.224726 TEST_RMS=4.991453 TEST/CAL_RMS=0.801875 CAL_QDQ_RMSE=0.04392431 TEST_QDQ_RMSE=0.0419578 CAL_CLIP=0.000282% TEST_CLIP=0.000000% CAL_END=0.000282% TEST_END=0.000000%
+svf.1 CAL_RMS=3.620131 TEST_RMS=3.618776 TEST/CAL_RMS=0.999626 CAL_QDQ_RMSE=0.2932955 TEST_QDQ_RMSE=0.2955711 CAL_CLIP=0.000000% TEST_CLIP=0.000000% CAL_END=0.000000% TEST_END=0.000000%
+svf.2 CAL_RMS=2.680609 TEST_RMS=2.478417 TEST/CAL_RMS=0.924572 CAL_QDQ_RMSE=0.03077561 TEST_QDQ_RMSE=0.03099289 CAL_CLIP=0.000000% TEST_CLIP=0.000247% CAL_END=0.000000% TEST_END=0.000247%
+svf.3 CAL_RMS=1.978616 TEST_RMS=3.390158 TEST/CAL_RMS=1.7134 CAL_QDQ_RMSE=0.06790287 TEST_QDQ_RMSE=0.1086659 CAL_CLIP=0.001410% TEST_CLIP=0.004454% CAL_END=0.001410% TEST_END=0.004454%
+svf.4 CAL_RMS=1.022609 TEST_RMS=1.275187 TEST/CAL_RMS=1.24699 CAL_QDQ_RMSE=0.03220209 TEST_QDQ_RMSE=0.04949098 CAL_CLIP=0.000282% TEST_CLIP=0.001485% CAL_END=0.000282% TEST_END=0.001485%
+svf.5 CAL_RMS=1.060631 TEST_RMS=2.146971 TEST/CAL_RMS=2.02424 CAL_QDQ_RMSE=0.03018562 TEST_QDQ_RMSE=0.1250992 CAL_CLIP=0.000000% TEST_CLIP=0.040584% CAL_END=0.000000% TEST_END=0.040584%
+
+RANGE_AUDIT_REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/calibration_range_audit_all394_vs_test449.json
+CALIBRATION_RANGE_AUDIT=PASS
+MODEL_MODIFIED=NO
+QUANTIZATION_REPEATED=NO
+FIRMWARE_OR_FLASH=NOT_PERFORMED
+
+============================================================
+RANGE_AUDIT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_calibration_range_audit_20261124_113548.log
+============================================================
