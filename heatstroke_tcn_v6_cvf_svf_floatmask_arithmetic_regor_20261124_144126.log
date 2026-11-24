@@ -1,0 +1,123 @@
+============================================================
+TCN V6 BOOL INPUT -> FLOAT32 MASK ARITHMETIC
+============================================================
+DATE=2026-11-24T14:41:26+08:00
+HOST=user-Swift-SFL14-52M
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_floatmask_arithmetic_regor_20261124_144126
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_floatmask_arithmetic_regor_20261124_144126.log
+
+SOURCE HASHES:
+ebd9efe2cef45c312d432f5e3fba51b4540dac437d3dc38e6dd6328f3f2221dd  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_not_elimination_regor_20261124_143512/tflite_patched/symmetric394_no_logical_not.tflite
+a7cacede3a5b9898557975a382848db4d8b2fb6e7f3152aeee0ef43fb29ec331  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_not_elimination_regor_20261124_143512/tflite_patched/asymmetric394_no_logical_not.tflite
+
+PYTHON:
+Python 3.12.16
+
+VELA:
+5.0.0
+
+CHECK VELA GRAPH VERBOSITY OPTION:
+VERBOSE_GRAPH_OPTION=AVAILABLE
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795502486.879455   14848 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795502486.879645   14848 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795502486.908023   14848 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795502487.622130   14848 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795502487.622386   14848 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+
+==========================================================================================
+PATCH MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_not_elimination_regor_20261124_143512/tflite_patched/symmetric394_no_logical_not.tflite
+==========================================================================================
+SOURCE_BYTES = 10294672
+SOURCE_SHA256 = ebd9efe2cef45c312d432f5e3fba51b4540dac437d3dc38e6dd6328f3f2221dd
+BOOL_GRAPH_INPUTS_BEFORE = [1]
+DIRECT_MASK_USERS = [(14, 0), (15, 0), (16, 0), (43, 0), (44, 0), (147, 0)]
+MASK_SELECT_INDICES = [14, 15, 43, 44, 147]
+MASK_CAST_INDICES = [16]
+SELECT #14: true='/Constant_22_output_0' false='x_values' output='/Where_5_output_0' true_zero=True false_zero=False
+SELECT #15: true='/Constant_17_output_0' false='x_values' output='/Where_1_output_0' true_zero=True false_zero=False
+SELECT #43: true='/Expand_output_0' false='x_values' output='/Where_3_output_0' true_zero=False false_zero=False
+SELECT #44: true='/Concat_output_0' false='/Constant_16_output_0' output='/Where_output_0' true_zero=False false_zero=True
+SELECT #147: true='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' false='/ConstantOfShape_1_output_0' output='/Where_4_output_0' true_zero=False false_zero=True
+
+PATCHED_SELECT_COUNT = 5
+REMOVED_CAST_COUNT = 1
+NEW_MUL_COUNT = 6
+NEW_ADD_COUNT = 1
+NEW_INVERSE_MASK_SUB_COUNT = 1
+NEW_OPERATOR_COUNT = 302
+NEW_TENSOR_COUNT = 482
+MISSING_MASK_TYPE=FLOAT32
+BOOL_GRAPH_INPUT_COUNT=0
+MASK_CONDITIONED_SELECT_COUNT=0
+MASK_CAST_COUNT=0
+SUM_DIRECT_FLOAT_MASK=PASS
+STRUCTURAL_VALIDATION=PASS
+PATCHED_BYTES = 10316720
+PATCHED_SHA256 = d251d7b907c3779fd42c00ad581eb32f08d99354369061f082e9fb9c18c036ca
+SERIALIZED_REOPEN_VALIDATION=PASS
+
+==========================================================================================
+PATCH MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_not_elimination_regor_20261124_143512/tflite_patched/asymmetric394_no_logical_not.tflite
+==========================================================================================
+SOURCE_BYTES = 10294672
+SOURCE_SHA256 = a7cacede3a5b9898557975a382848db4d8b2fb6e7f3152aeee0ef43fb29ec331
+BOOL_GRAPH_INPUTS_BEFORE = [1]
+DIRECT_MASK_USERS = [(14, 0), (15, 0), (16, 0), (43, 0), (44, 0), (147, 0)]
+MASK_SELECT_INDICES = [14, 15, 43, 44, 147]
+MASK_CAST_INDICES = [16]
+SELECT #14: true='/Constant_22_output_0' false='x_values' output='/Where_5_output_0' true_zero=True false_zero=False
+SELECT #15: true='/Constant_17_output_0' false='x_values' output='/Where_1_output_0' true_zero=True false_zero=False
+SELECT #43: true='/Expand_output_0' false='x_values' output='/Where_3_output_0' true_zero=False false_zero=False
+SELECT #44: true='/Concat_output_0' false='/Constant_16_output_0' output='/Where_output_0' true_zero=False false_zero=True
+SELECT #147: true='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' false='/ConstantOfShape_1_output_0' output='/Where_4_output_0' true_zero=False false_zero=True
+
+PATCHED_SELECT_COUNT = 5
+REMOVED_CAST_COUNT = 1
+NEW_MUL_COUNT = 6
+NEW_ADD_COUNT = 1
+NEW_INVERSE_MASK_SUB_COUNT = 1
+NEW_OPERATOR_COUNT = 302
+NEW_TENSOR_COUNT = 482
+MISSING_MASK_TYPE=FLOAT32
+BOOL_GRAPH_INPUT_COUNT=0
+MASK_CONDITIONED_SELECT_COUNT=0
+MASK_CAST_COUNT=0
+SUM_DIRECT_FLOAT_MASK=PASS
+STRUCTURAL_VALIDATION=PASS
+PATCHED_BYTES = 10316720
+PATCHED_SHA256 = fd161e9dfa5856909ea584243ab133bd729a0aaf0aa7c70cfe4bc25c48bd90d7
+SERIALIZED_REOPEN_VALIDATION=PASS
+
+==========================================================================================
+TFLITE NUMERICAL EQUIVALENCE: symmetric394
+==========================================================================================
+all_valid: max_abs=1.30806613 rmse=0.299097657
+Traceback (most recent call last):
+  File "<stdin>", line 818, in <module>
+  File "<stdin>", line 795, in numerical_equivalence_test
+RuntimeError: all_valid: numerical equivalence FAILED
+
+FLOAT32_MASK_PATCH_OR_NUMERICAL_TEST=FAILED
+VELA_COMPILATION=NOT_STARTED
+
+============================================================
+FLOAT32 MASK ARITHMETIC + VELA FINISHED
+SCRIPT_EXIT_CODE=1
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_floatmask_arithmetic_regor_20261124_144126
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_floatmask_arithmetic_regor_20261124_144126.log
+SOURCE_MODELS_MODIFIED=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
