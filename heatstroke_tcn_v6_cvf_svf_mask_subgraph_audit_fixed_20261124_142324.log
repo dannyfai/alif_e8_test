@@ -1,0 +1,781 @@
+============================================================
+TCN V6 BOOL MASK SUBGRAPH AUDIT - ARRAY HANDLING FIXED
+============================================================
+DATE=2026-11-24T14:23:24+08:00
+HOST=user-Swift-SFL14-52M
+PYTHON=/home/user/onnx2tflite_env/bin/python
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_mask_subgraph_audit_fixed_20261124_142324.log
+
+SOURCE_MODELS_BEFORE_AUDIT:
+aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501404.542709   13864 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501404.542883   13864 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795501404.572035   13864 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501405.385068   13864 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501405.385267   13864 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+====================================================================================================
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+====================================================================================================
+MODEL_BYTES = 10294736
+MODEL_SHA256 = aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5
+MODEL_VERSION = 3
+SUBGRAPH_COUNT = 1
+
+GRAPH INPUTS:
+  tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+  tensor[2] name='x_mark' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(3)] consumers=1 producers=[] flags=GRAPH_INPUT
+  tensor[3] name='worker_features_18' type=FLOAT32 shape=[np.int32(1), np.int32(18)] consumers=1 producers=[] flags=GRAPH_INPUT
+  tensor[4] name='compact_values' type=FLOAT32 shape=[np.int32(1), np.int32(1800), np.int32(6)] consumers=6 producers=[] flags=GRAPH_INPUT
+
+GRAPH OUTPUTS:
+  tensor[304] name='reconstructed_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=0 producers=[301] flags=GRAPH_OUTPUT
+
+ALL MASK/MISSING-NAMED TENSORS: 1
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+
+MISSING_MASK SEED INDICES: [1]
+
+BOOLEAN SUBGRAPH WALK:
+
+DEPTH=0 SOURCE_TENSOR=1 SOURCE_NAME='missing_mask'
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+DEPTH=0 SOURCE_TENSOR=1 SOURCE_NAME='missing_mask'
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #17: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[82] name='/Constant_22_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=78,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[101] name='/Where_5_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[17] flags=-
+         CONSUMER_OPS: [(152, 'CONCATENATION')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #45: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[129] name='/Where_3_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[45] flags=-
+         CONSUMER_OPS: [(47, 'MIRROR_PAD')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #46: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[128] name='/Concat_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[44] flags=-
+       tensor[79] name='/Constant_16_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=75,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[130] name='/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[46] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #149: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[214] name='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[148] flags=-
+       tensor[215] name='/ConstantOfShape_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=81,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[216] name='/Where_4_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[149] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+DEPTH=2 SOURCE_TENSOR=100 SOURCE_NAME='/Not_output_0'
+
+  OPERATOR #18: SELECT_V2
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[80] name='/Constant_17_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=76,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[102] name='/Where_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[18] flags=-
+         CONSUMER_OPS: [(26, 'SUM')]
+
+DEPTH=2 SOURCE_TENSOR=100 SOURCE_NAME='/Not_output_0'
+
+  OPERATOR #19: CAST
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    OUTPUTS:
+       tensor[103] name='/Cast_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[19] flags=-
+         CONSUMER_OPS: [(27, 'SUM')]
+
+REACHABLE_OPERATOR_COUNT = 9
+REACHABLE_TENSOR_COUNT = 4
+
+BOOLEAN OUTPUT SHARING AUDIT:
+
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    consumed by OP #0: LOGICAL_OR
+    consumed by OP #0: LOGICAL_OR
+    consumed by OP #8: LOGICAL_OR
+
+  tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+    consumed by OP #8: LOGICAL_OR
+
+  tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    consumed by OP #16: LOGICAL_NOT
+    consumed by OP #17: SELECT_V2
+    consumed by OP #45: SELECT_V2
+    consumed by OP #46: SELECT_V2
+    consumed by OP #149: SELECT_V2
+
+  tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    consumed by OP #18: SELECT_V2
+    consumed by OP #19: CAST
+
+ALL LOGICAL/EQUALITY/SELECTION OPERATORS:
+
+OP #0: LOGICAL_OR
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+OP #8: LOGICAL_OR
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+OP #16: LOGICAL_NOT
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+OP #17: SELECT_V2
+
+  OPERATOR #17: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[82] name='/Constant_22_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=78,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[101] name='/Where_5_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[17] flags=-
+         CONSUMER_OPS: [(152, 'CONCATENATION')]
+
+OP #18: SELECT_V2
+
+  OPERATOR #18: SELECT_V2
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[80] name='/Constant_17_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=76,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[102] name='/Where_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[18] flags=-
+         CONSUMER_OPS: [(26, 'SUM')]
+
+OP #19: CAST
+
+  OPERATOR #19: CAST
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    OUTPUTS:
+       tensor[103] name='/Cast_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[19] flags=-
+         CONSUMER_OPS: [(27, 'SUM')]
+
+OP #42: BROADCAST_ARGS
+
+  OPERATOR #42: BROADCAST_ARGS
+    INPUTS:
+       tensor[307] name='x_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=84,bytes=24,data=[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0]
+       tensor[110] name='/Where_2_output_0' type=INT64 shape=[np.int32(3)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=80,bytes=24,data=[1, 0, 0, 0, 0, 0, 0, 0, 132, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+    OUTPUTS:
+       tensor[308] name='broadcasted_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[42] flags=-
+         CONSUMER_OPS: [(43, 'BROADCAST_TO')]
+
+OP #43: BROADCAST_TO
+
+  OPERATOR #43: BROADCAST_TO
+    INPUTS:
+       tensor[120] name='/Div_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(6)] consumers=1 producers=[35] flags=-
+       tensor[308] name='broadcasted_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[42] flags=-
+    OUTPUTS:
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+         CONSUMER_OPS: [(45, 'SELECT_V2')]
+
+OP #45: SELECT_V2
+
+  OPERATOR #45: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[129] name='/Where_3_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[45] flags=-
+         CONSUMER_OPS: [(47, 'MIRROR_PAD')]
+
+OP #46: SELECT_V2
+
+  OPERATOR #46: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[128] name='/Concat_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[44] flags=-
+       tensor[79] name='/Constant_16_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=75,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[130] name='/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[46] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+OP #71: GREATER_EQUAL
+
+  OPERATOR #71: GREATER_EQUAL
+    INPUTS:
+       tensor[145] name='/cvf/cvf.2/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=3 producers=[69] flags=-
+       tensor[327] name='/cvf/cvf.3/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=95,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+         CONSUMER_OPS: [(92, 'SELECT_V2')]
+
+OP #92: SELECT_V2
+
+  OPERATOR #92: SELECT_V2
+    INPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+       tensor[166] name='/cvf/cvf.3/Sub_2_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=2 producers=[90] flags=-
+       tensor[167] name='/cvf/cvf.3/Neg_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[91] flags=-
+    OUTPUTS:
+       tensor[168] name='/cvf/cvf.3/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[92] flags=-
+         CONSUMER_OPS: [(93, 'ADD')]
+
+OP #119: GREATER_EQUAL
+
+  OPERATOR #119: GREATER_EQUAL
+    INPUTS:
+       tensor[185] name='/cvf/cvf.6/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=3 producers=[117] flags=-
+       tensor[357] name='/cvf/cvf.7/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=117,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+         CONSUMER_OPS: [(140, 'SELECT_V2')]
+
+OP #140: SELECT_V2
+
+  OPERATOR #140: SELECT_V2
+    INPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+       tensor[206] name='/cvf/cvf.7/Sub_2_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=2 producers=[138] flags=-
+       tensor[207] name='/cvf/cvf.7/Neg_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[139] flags=-
+    OUTPUTS:
+       tensor[208] name='/cvf/cvf.7/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[140] flags=-
+         CONSUMER_OPS: [(141, 'ADD')]
+
+OP #149: SELECT_V2
+
+  OPERATOR #149: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[214] name='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[148] flags=-
+       tensor[215] name='/ConstantOfShape_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=81,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[216] name='/Where_4_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[149] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+INTERESTING_OPERATOR_COUNT = 15
+
+ALL OPERATORS WITH BOOLEAN OUTPUTS:
+
+OP #0: LOGICAL_OR BOOL_OUTPUTS=[84]
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+OP #8: LOGICAL_OR BOOL_OUTPUTS=[92]
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+OP #16: LOGICAL_NOT BOOL_OUTPUTS=[100]
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+OP #71: GREATER_EQUAL BOOL_OUTPUTS=[147]
+
+  OPERATOR #71: GREATER_EQUAL
+    INPUTS:
+       tensor[145] name='/cvf/cvf.2/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=3 producers=[69] flags=-
+       tensor[327] name='/cvf/cvf.3/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=95,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+         CONSUMER_OPS: [(92, 'SELECT_V2')]
+
+OP #119: GREATER_EQUAL BOOL_OUTPUTS=[187]
+
+  OPERATOR #119: GREATER_EQUAL
+    INPUTS:
+       tensor[185] name='/cvf/cvf.6/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=3 producers=[117] flags=-
+       tensor[357] name='/cvf/cvf.7/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=117,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+         CONSUMER_OPS: [(140, 'SELECT_V2')]
+
+BOOLEAN_OUTPUT_OPERATOR_COUNT = 5
+MODEL_AUDIT_COMPLETE = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+
+====================================================================================================
+MODEL: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+====================================================================================================
+MODEL_BYTES = 10294736
+MODEL_SHA256 = 84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5
+MODEL_VERSION = 3
+SUBGRAPH_COUNT = 1
+
+GRAPH INPUTS:
+  tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+  tensor[2] name='x_mark' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(3)] consumers=1 producers=[] flags=GRAPH_INPUT
+  tensor[3] name='worker_features_18' type=FLOAT32 shape=[np.int32(1), np.int32(18)] consumers=1 producers=[] flags=GRAPH_INPUT
+  tensor[4] name='compact_values' type=FLOAT32 shape=[np.int32(1), np.int32(1800), np.int32(6)] consumers=6 producers=[] flags=GRAPH_INPUT
+
+GRAPH OUTPUTS:
+  tensor[304] name='reconstructed_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=0 producers=[301] flags=GRAPH_OUTPUT
+
+ALL MASK/MISSING-NAMED TENSORS: 1
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+
+MISSING_MASK SEED INDICES: [1]
+
+BOOLEAN SUBGRAPH WALK:
+
+DEPTH=0 SOURCE_TENSOR=1 SOURCE_NAME='missing_mask'
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+DEPTH=0 SOURCE_TENSOR=1 SOURCE_NAME='missing_mask'
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #17: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[82] name='/Constant_22_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=78,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[101] name='/Where_5_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[17] flags=-
+         CONSUMER_OPS: [(152, 'CONCATENATION')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #45: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[129] name='/Where_3_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[45] flags=-
+         CONSUMER_OPS: [(47, 'MIRROR_PAD')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #46: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[128] name='/Concat_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[44] flags=-
+       tensor[79] name='/Constant_16_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=75,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[130] name='/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[46] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+DEPTH=1 SOURCE_TENSOR=92 SOURCE_NAME='/Or_1_output_0'
+
+  OPERATOR #149: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[214] name='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[148] flags=-
+       tensor[215] name='/ConstantOfShape_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=81,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[216] name='/Where_4_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[149] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+DEPTH=2 SOURCE_TENSOR=100 SOURCE_NAME='/Not_output_0'
+
+  OPERATOR #18: SELECT_V2
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[80] name='/Constant_17_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=76,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[102] name='/Where_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[18] flags=-
+         CONSUMER_OPS: [(26, 'SUM')]
+
+DEPTH=2 SOURCE_TENSOR=100 SOURCE_NAME='/Not_output_0'
+
+  OPERATOR #19: CAST
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    OUTPUTS:
+       tensor[103] name='/Cast_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[19] flags=-
+         CONSUMER_OPS: [(27, 'SUM')]
+
+REACHABLE_OPERATOR_COUNT = 9
+REACHABLE_TENSOR_COUNT = 4
+
+BOOLEAN OUTPUT SHARING AUDIT:
+
+  tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    consumed by OP #0: LOGICAL_OR
+    consumed by OP #0: LOGICAL_OR
+    consumed by OP #8: LOGICAL_OR
+
+  tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+    consumed by OP #8: LOGICAL_OR
+
+  tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    consumed by OP #16: LOGICAL_NOT
+    consumed by OP #17: SELECT_V2
+    consumed by OP #45: SELECT_V2
+    consumed by OP #46: SELECT_V2
+    consumed by OP #149: SELECT_V2
+
+  tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    consumed by OP #18: SELECT_V2
+    consumed by OP #19: CAST
+
+ALL LOGICAL/EQUALITY/SELECTION OPERATORS:
+
+OP #0: LOGICAL_OR
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+OP #8: LOGICAL_OR
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+OP #16: LOGICAL_NOT
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+OP #17: SELECT_V2
+
+  OPERATOR #17: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[82] name='/Constant_22_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=78,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[101] name='/Where_5_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[17] flags=-
+         CONSUMER_OPS: [(152, 'CONCATENATION')]
+
+OP #18: SELECT_V2
+
+  OPERATOR #18: SELECT_V2
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[80] name='/Constant_17_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=76,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[102] name='/Where_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[18] flags=-
+         CONSUMER_OPS: [(26, 'SUM')]
+
+OP #19: CAST
+
+  OPERATOR #19: CAST
+    INPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+    OUTPUTS:
+       tensor[103] name='/Cast_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[19] flags=-
+         CONSUMER_OPS: [(27, 'SUM')]
+
+OP #42: BROADCAST_ARGS
+
+  OPERATOR #42: BROADCAST_ARGS
+    INPUTS:
+       tensor[307] name='x_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=84,bytes=24,data=[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0]
+       tensor[110] name='/Where_2_output_0' type=INT64 shape=[np.int32(3)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=80,bytes=24,data=[1, 0, 0, 0, 0, 0, 0, 0, 132, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+    OUTPUTS:
+       tensor[308] name='broadcasted_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[42] flags=-
+         CONSUMER_OPS: [(43, 'BROADCAST_TO')]
+
+OP #43: BROADCAST_TO
+
+  OPERATOR #43: BROADCAST_TO
+    INPUTS:
+       tensor[120] name='/Div_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(6)] consumers=1 producers=[35] flags=-
+       tensor[308] name='broadcasted_shape' type=INT64 shape=[np.int32(3)] consumers=1 producers=[42] flags=-
+    OUTPUTS:
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+         CONSUMER_OPS: [(45, 'SELECT_V2')]
+
+OP #45: SELECT_V2
+
+  OPERATOR #45: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[127] name='/Expand_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[43] flags=-
+       tensor[0] name='x_values' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[129] name='/Where_3_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[45] flags=-
+         CONSUMER_OPS: [(47, 'MIRROR_PAD')]
+
+OP #46: SELECT_V2
+
+  OPERATOR #46: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[128] name='/Concat_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[44] flags=-
+       tensor[79] name='/Constant_16_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=75,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[130] name='/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[46] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+OP #71: GREATER_EQUAL
+
+  OPERATOR #71: GREATER_EQUAL
+    INPUTS:
+       tensor[145] name='/cvf/cvf.2/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=3 producers=[69] flags=-
+       tensor[327] name='/cvf/cvf.3/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=95,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+         CONSUMER_OPS: [(92, 'SELECT_V2')]
+
+OP #92: SELECT_V2
+
+  OPERATOR #92: SELECT_V2
+    INPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+       tensor[166] name='/cvf/cvf.3/Sub_2_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=2 producers=[90] flags=-
+       tensor[167] name='/cvf/cvf.3/Neg_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[91] flags=-
+    OUTPUTS:
+       tensor[168] name='/cvf/cvf.3/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[92] flags=-
+         CONSUMER_OPS: [(93, 'ADD')]
+
+OP #119: GREATER_EQUAL
+
+  OPERATOR #119: GREATER_EQUAL
+    INPUTS:
+       tensor[185] name='/cvf/cvf.6/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=3 producers=[117] flags=-
+       tensor[357] name='/cvf/cvf.7/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=117,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+         CONSUMER_OPS: [(140, 'SELECT_V2')]
+
+OP #140: SELECT_V2
+
+  OPERATOR #140: SELECT_V2
+    INPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+       tensor[206] name='/cvf/cvf.7/Sub_2_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=2 producers=[138] flags=-
+       tensor[207] name='/cvf/cvf.7/Neg_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[139] flags=-
+    OUTPUTS:
+       tensor[208] name='/cvf/cvf.7/Where_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[140] flags=-
+         CONSUMER_OPS: [(141, 'ADD')]
+
+OP #149: SELECT_V2
+
+  OPERATOR #149: SELECT_V2
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+       tensor[214] name='/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[148] flags=-
+       tensor[215] name='/ConstantOfShape_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=81,bytes=21600,data=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]...
+    OUTPUTS:
+       tensor[216] name='/Where_4_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[149] flags=-
+         CONSUMER_OPS: [(150, 'ADD')]
+
+INTERESTING_OPERATOR_COUNT = 15
+
+ALL OPERATORS WITH BOOLEAN OUTPUTS:
+
+OP #0: LOGICAL_OR BOOL_OUTPUTS=[84]
+
+  OPERATOR #0: LOGICAL_OR
+    INPUTS:
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+         CONSUMER_OPS: [(8, 'LOGICAL_OR')]
+
+OP #8: LOGICAL_OR BOOL_OUTPUTS=[92]
+
+  OPERATOR #8: LOGICAL_OR
+    INPUTS:
+       tensor[84] name='/Or_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=1 producers=[0] flags=-
+       tensor[1] name='missing_mask' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=3 producers=[] flags=GRAPH_INPUT
+    OUTPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+         CONSUMER_OPS: [(16, 'LOGICAL_NOT'), (17, 'SELECT_V2'), (45, 'SELECT_V2'), (46, 'SELECT_V2'), (149, 'SELECT_V2')]
+
+OP #16: LOGICAL_NOT BOOL_OUTPUTS=[100]
+
+  OPERATOR #16: LOGICAL_NOT
+    INPUTS:
+       tensor[92] name='/Or_1_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=5 producers=[8] flags=-
+    OUTPUTS:
+       tensor[100] name='/Not_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(6)] consumers=2 producers=[16] flags=-
+         CONSUMER_OPS: [(18, 'SELECT_V2'), (19, 'CAST')]
+
+OP #71: GREATER_EQUAL BOOL_OUTPUTS=[147]
+
+  OPERATOR #71: GREATER_EQUAL
+    INPUTS:
+       tensor[145] name='/cvf/cvf.2/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=3 producers=[69] flags=-
+       tensor[327] name='/cvf/cvf.3/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=95,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[147] name='/cvf/cvf.3/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(32)] consumers=1 producers=[71] flags=-
+         CONSUMER_OPS: [(92, 'SELECT_V2')]
+
+OP #119: GREATER_EQUAL BOOL_OUTPUTS=[187]
+
+  OPERATOR #119: GREATER_EQUAL
+    INPUTS:
+       tensor[185] name='/cvf/cvf.6/Add_1_output_0' type=FLOAT32 shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=3 producers=[117] flags=-
+       tensor[357] name='/cvf/cvf.7/Constant_10_output_00' type=FLOAT32 shape=[np.int32(1), np.int32(1), np.int32(1)] consumers=1 producers=[] flags=NO_PRODUCER
+         CONSTANT: buffer=117,bytes=4,data=[0, 0, 0, 0]
+    OUTPUTS:
+       tensor[187] name='/cvf/cvf.7/GreaterOrEqual_output_0' type=BOOL shape=[np.int32(1), np.int32(900), np.int32(128)] consumers=1 producers=[119] flags=-
+         CONSUMER_OPS: [(140, 'SELECT_V2')]
+
+BOOLEAN_OUTPUT_OPERATOR_COUNT = 5
+MODEL_AUDIT_COMPLETE = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+
+BOTH_MODEL_AUDITS_COMPLETE
+
+PYTHON_AUDIT=PASS
+
+EXPECTED_HASH_VALIDATION:
+SYMMETRIC_EXPECTED=aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5
+SYMMETRIC_ACTUAL=aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5
+ASYMMETRIC_EXPECTED=84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5
+ASYMMETRIC_ACTUAL=84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5
+ORIGINAL_MODEL_HASH_VALIDATION=PASS
+
+============================================================
+MASK SUBGRAPH AUDIT FINISHED
+AUDIT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_mask_subgraph_audit_fixed_20261124_142324.log
+MODEL_MODIFICATION=NOT_PERFORMED
+VELA_COMPILATION=NOT_PERFORMED
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
