@@ -1,0 +1,137 @@
+============================================================
+PREPARE TCN V6 FULLY CONNECTED RESOLVER FIX
+============================================================
+DATE=2026-11-24T15:34:27+08:00
+SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_broadcastfix_gather_int32
+NEW_PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_prepare_fc_resolver_20261124_153427.log
+
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795505668.057385   16248 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795505668.057573   16248 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795505668.086730   16248 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795505668.803257   16248 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795505668.803451   16248 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+============================================================
+1. VERIFY ORIGINAL SOURCE AND MODEL
+============================================================
+ORIGINAL_MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+ORIGINAL_MODEL_HASH=PASS
+
+============================================================
+2. COPY APPLICATION SOURCE INTO ISOLATED DIRECTORY
+============================================================
+ISOLATED_PROJECT_CREATED=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+
+============================================================
+3. PATCH ONLY THE COPIED RESOLVER
+============================================================
+REMOVED_LogicalNot_REGISTRATION_COUNT=1
+REMOVED_LogicalOr_REGISTRATION_COUNT=1
+ADDED_FULLY_CONNECTED_REGISTRATION=YES
+EXISTING_RESOLVER_CAPACITY=29
+MACRO_REGISTRATION_COUNT=27
+ETHOS_U_REGISTERED=True
+TOTAL_RESOLVER_REGISTRATIONS=28
+RESOLVER_CAPACITY_CHECK=PASS
+
+============================================================
+4. CHECK TFLM FULLY CONNECTED SUPPORT
+============================================================
+TFLM_ADD_FULLY_CONNECTED_API=PASS
+TFLM_FULLY_CONNECTED_KERNEL=PASS
+FC_KERNEL_kTfLiteFloat32=REFERENCED
+FC_KERNEL_kTfLiteInt8=REFERENCED
+FC_KERNEL_kTfLiteInt32=NOT_REFERENCED
+
+============================================================
+5. MODEL OPERATOR / RESOLVER COMPARISON
+============================================================
+MODEL_UNIQUE_OPERATOR_CODES=26
+MODEL_TOTAL_OPERATORS=197
+ABS                      AddAbs                       PASS
+ADD                      AddAdd                       PASS
+BROADCAST_ARGS           AddBroadcastArgs             PASS
+BROADCAST_TO             AddBroadcastTo               PASS
+CAST                     AddCast                      PASS
+CONCATENATION            AddConcatenation             PASS
+CUSTOM ethos-u: 14 operators -> AddEthosU PASS
+DEQUANTIZE               AddDequantize                PASS
+DIV                      AddDiv                       PASS
+EXP                      AddExp                       PASS
+FULLY_CONNECTED          AddFullyConnected            PASS
+GATHER                   AddGather                    PASS
+GREATER_EQUAL            AddGreaterEqual              PASS
+MAXIMUM                  AddMaximum                   PASS
+MEAN                     AddMean                      PASS
+MIRROR_PAD               AddMirrorPad                 PASS
+MUL                      AddMul                       PASS
+NEG                      AddNeg                       PASS
+QUANTIZE                 AddQuantize                  PASS
+RELU                     AddRelu                      PASS
+RESHAPE                  AddReshape                   PASS
+SELECT_V2                AddSelectV2                  PASS
+SQRT                     AddSqrt                      PASS
+SUB                      AddSub                       PASS
+SUM                      AddSum                       PASS
+TRANSPOSE                AddTranspose                 PASS
+EXACT_MODEL_RESOLVER_COMPARISON=PASS
+
+============================================================
+6. INSPECT FULLY CONNECTED OPERATOR TENSOR TYPES
+============================================================
+FULLY_CONNECTED_INPUTS:
+  tensor=0 worker_features_18 dtype=FLOAT32 shape=(1, 18)
+  tensor=1 model.non_seq_enc.weight dtype=FLOAT32 shape=(900, 18)
+  tensor=2 model.non_seq_enc.bias dtype=FLOAT32 shape=(900,)
+FULLY_CONNECTED_OUTPUTS:
+  tensor=3 /non_seq_enc/Gemm_output_0 dtype=FLOAT32 shape=(1, 900)
+
+============================================================
+7. LOCATE APPLICATION MODEL-DATA FILES
+============================================================
+MODEL_RELATED_FILE=src/TcnV6Model.cc bytes=5762
+MODEL_RELATED_FILE=src/include/TcnV6Model.hpp bytes=568
+
+MODEL_REFERENCE_SOURCE=src/MainLoop.cc
+  2: #include "TcnV6Model.hpp"
+
+MODEL_REFERENCE_SOURCE=src/TcnV6Model.cc
+  1: #include "TcnV6Model.hpp"
+
+MODEL_REFERENCE_SOURCE=src/include/BufAttributes.hpp
+  10: #if CONFIG_MODEL_IN_EXT_FLASH
+  14: #define MODEL_SECTION               section(CONFIG_MODEL_SECTION)
+
+MODEL_REFERENCE_SOURCE=src/include/TcnV6Model.hpp
+  4: #include "mlek/fwk/tflm/TflmModel.hpp"
+
+============================================================
+8. PATCH SUMMARY
+============================================================
+PATCHED_PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+ORIGINAL_PROJECT_MODIFIED=NO
+ORIGINAL_MODEL_MODIFIED=NO
+LOGICAL_NOT_REGISTRATION_REMOVED=YES
+LOGICAL_OR_REGISTRATION_REMOVED=YES
+FULLY_CONNECTED_REGISTRATION_ADDED=YES
+RESOLVER_CAPACITY=29
+RESOLVER_REGISTRATIONS=28
+EXACT_MODEL_RESOLVER_COMPARISON=PASS
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+STATIC_PATCH_AUDIT=PASS
+
+============================================================
+RESOLVER PREPARATION FINISHED
+PYTHON_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_prepare_fc_resolver_20261124_153427.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
