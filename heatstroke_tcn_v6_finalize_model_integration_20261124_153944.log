@@ -1,0 +1,97 @@
+============================================================
+TCN V6 FINALIZE INT8-MASK MODEL INTEGRATION
+============================================================
+DATE=2026-11-24T15:39:44+08:00
+PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_finalize_model_integration_20261124_153944.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+============================================================
+1. UPDATE CMAKE MODEL SOURCE AND HASH
+============================================================
+MODEL_PATH_UPDATED=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+MODEL_SHA_UPDATED=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MLEK_GENERATE_MODEL_CODE=PRESENT
+
+============================================================
+2. CHANGE MASK INPUT EXPECTATION FROM BOOL TO INT8
+============================================================
+MISSING_MASK_EXPECTED_TYPE=INT8
+MISSING_MASK_ZERO_FILL_COMMENT=UPDATED
+
+============================================================
+3. REMOVE UNNEEDED CONV BUILTIN REGISTRATIONS
+============================================================
+REMOVED_Conv2D_REGISTRATION_COUNT=1
+REMOVED_DepthwiseConv2D_REGISTRATION_COUNT=1
+
+============================================================
+4. REPLACE RUNTIME EXPECTED OPERATOR LIST
+============================================================
+EXPECTED_BUILTIN_OPERATOR_COUNT=25
+FULLY_CONNECTED_IN_EXPECTED_LIST=YES
+LOGICAL_NOT_IN_EXPECTED_LIST=NO
+LOGICAL_OR_IN_EXPECTED_LIST=NO
+
+============================================================
+5. VERIFY REGISTRATIONS MATCH EXACT MODEL OP INVENTORY
+============================================================
+BUILTIN_REGISTRATIONS=25
+ETHOS_U_CUSTOM_REGISTRATION=1
+TOTAL_REGISTRATIONS=26
+RESOLVER_CAPACITY=29
+EXACT_RESOLVER_INVENTORY=PASS
+RESOLVER_CAPACITY_CHECK=PASS
+
+============================================================
+6. VERIFY EXTERNAL FLASH MODEL CONFIGURATION
+============================================================
+CONFIG_PRESENT=CONFIG_MODEL_IN_EXT_FLASH=y
+CONFIG_PRESENT=CONFIG_ALIF_OSPI_FLASH_XIP=y
+CONFIG_PRESENT=CONFIG_ACTIVATION_BUF_SECTION="SRAM0.activation_buf"
+EXTERNAL_FLASH_MODEL_CONFIGURATION=PASS
+MODEL_GENERATION_CALL=PASS
+
+============================================================
+7. VERIFY TFLM KERNEL / API SUPPORT
+============================================================
+AddFullyConnected API=PASS
+FullyConnected kernel registration=PASS
+FullyConnected FLOAT32 support=PASS
+CAST INT8 support=PASS
+CAST FLOAT32 support=PASS
+GATHER INT32 index support=PASS
+
+============================================================
+8. PATCH SUMMARY
+============================================================
+PATCHED_PROJECT=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver
+MODEL_PATH=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MODEL_CPP_GENERATED_BY_MLEK_DURING_CMAKE=YES
+MISSING_MASK_RUNTIME_TYPE=INT8
+FULLY_CONNECTED_RESOLVER=REGISTERED_AND_CHECKED
+STALE_LOGICAL_OP_CHECKS=REMOVED
+UNNECESSARY_CONV_BUILTIN_REGISTRATIONS=REMOVED
+ETHOS_U_CUSTOM_REGISTRATION=PRESENT
+RESOLVER_INVENTORY=25_BUILTINS_PLUS_1_ETHOS_U
+RESOLVER_CAPACITY=29
+EXTERNAL_OSPI_MODEL_CONFIGURATION=PRESENT
+ORIGINAL_PROJECT_MODIFIED=NO
+VALIDATED_MODEL_MODIFIED=NO
+STATIC_INTEGRATION_PATCH=PASS
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+FINAL MODEL INTEGRATION PATCH FINISHED
+PYTHON_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_finalize_model_integration_20261124_153944.log
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
