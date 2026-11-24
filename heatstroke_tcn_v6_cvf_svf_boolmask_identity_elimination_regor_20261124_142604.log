@@ -1,0 +1,3012 @@
+============================================================
+TCN V6 BOOL MASK IDENTITY ELIMINATION + VELA REGOR
+============================================================
+DATE=2026-11-24T14:26:04+08:00
+HOST=user-Swift-SFL14-52M
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_elimination_regor_20261124_142604.log
+
+SOURCE HASHES BEFORE PATCH:
+aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+
+PYTHON VERSION:
+Python 3.12.16
+
+VELA VERSION:
+5.0.0
+
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501564.705782   13970 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501564.705978   13970 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795501564.734748   13970 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795501565.509538   13970 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795501565.509736   13970 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+==========================================================================================
+PATCH MODEL
+==========================================================================================
+SOURCE = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+DESTINATION = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+SOURCE_BYTES = 10294736
+SOURCE_SHA256 = aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5
+ORIGINAL_OPERATOR_COUNT = 302
+GRAPH_INPUTS = [0, 1, 2, 3, 4]
+GRAPH_OUTPUTS = [304]
+LOGICAL_OR_OPERATOR_INDICES = [0, 8]
+FIRST_OR_OPERATOR = 0
+FIRST_OR_INPUTS = [np.int32(1), np.int32(1)]
+FIRST_OR_OUTPUT = 84
+SECOND_OR_OPERATOR = 8
+SECOND_OR_INPUTS = [np.int32(84), np.int32(1)]
+SECOND_OR_OUTPUT = 92
+SECOND_OR_OUTPUT_CONSUMERS = [(16, 0), (17, 0), (45, 0), (46, 0), (149, 0)]
+DIRECT_MASK_INPUT_USES_BEFORE = 3
+DIRECT_MASK_INPUT_USES_EXPECTED_AFTER = 5
+REWIRED_CONSUMER_INPUTS = 5
+REMOVED_OPERATOR_INDICES = [0, 8]
+REMOVED_OPERATOR_TYPES = LOGICAL_OR, LOGICAL_OR
+REMAINING_LOGICAL_OR_COUNT = 0
+NEW_OPERATOR_COUNT = 300
+DIRECT_MASK_INPUT_USES_AFTER = 5
+PATCHED_BYTES = 10294512
+PATCHED_SHA256 = 221ec8d94e88d7f6e13d9d5995e1c7a8523a75fe1a70a8cf695a2c2fdfdf8b01
+SERIALIZED_REOPEN_VALIDATION=PASS
+SERIALIZED_LOGICAL_OR_COUNT=0
+SERIALIZED_DIRECT_MASK_USES=5
+PATCH_RESULT=PASS
+
+==========================================================================================
+PATCH MODEL
+==========================================================================================
+SOURCE = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+DESTINATION = /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/asymmetric394_boolmask_identity_fixed.tflite
+SOURCE_BYTES = 10294736
+SOURCE_SHA256 = 84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5
+ORIGINAL_OPERATOR_COUNT = 302
+GRAPH_INPUTS = [0, 1, 2, 3, 4]
+GRAPH_OUTPUTS = [304]
+LOGICAL_OR_OPERATOR_INDICES = [0, 8]
+FIRST_OR_OPERATOR = 0
+FIRST_OR_INPUTS = [np.int32(1), np.int32(1)]
+FIRST_OR_OUTPUT = 84
+SECOND_OR_OPERATOR = 8
+SECOND_OR_INPUTS = [np.int32(84), np.int32(1)]
+SECOND_OR_OUTPUT = 92
+SECOND_OR_OUTPUT_CONSUMERS = [(16, 0), (17, 0), (45, 0), (46, 0), (149, 0)]
+DIRECT_MASK_INPUT_USES_BEFORE = 3
+DIRECT_MASK_INPUT_USES_EXPECTED_AFTER = 5
+REWIRED_CONSUMER_INPUTS = 5
+REMOVED_OPERATOR_INDICES = [0, 8]
+REMOVED_OPERATOR_TYPES = LOGICAL_OR, LOGICAL_OR
+REMAINING_LOGICAL_OR_COUNT = 0
+NEW_OPERATOR_COUNT = 300
+DIRECT_MASK_INPUT_USES_AFTER = 5
+PATCHED_BYTES = 10294512
+PATCHED_SHA256 = e96333de799decf82aa9436a84ece7f2b7ef49a69741dd35561b05809174a8f0
+SERIALIZED_REOPEN_VALIDATION=PASS
+SERIALIZED_LOGICAL_OR_COUNT=0
+SERIALIZED_DIRECT_MASK_USES=5
+PATCH_RESULT=PASS
+
+BOTH_MODEL_PATCHES=PASS
+
+TFLITE_IDENTITY_ELIMINATION=PASS
+
+SOURCE HASHES AFTER PATCH:
+aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+ORIGINAL_TFLITE_HASH_VALIDATION=PASS
+
+PATCHED_MODELS:
+221ec8d94e88d7f6e13d9d5995e1c7a8523a75fe1a70a8cf695a2c2fdfdf8b01  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+e96333de799decf82aa9436a84ece7f2b7ef49a69741dd35561b05809174a8f0  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/asymmetric394_boolmask_identity_fixed.tflite
+-rw-rw-r-- 1 user user 9.9M Nov 24 14:26 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/asymmetric394_boolmask_identity_fixed.tflite
+-rw-rw-r-- 1 user user 9.9M Nov 24 14:26 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+
+============================================================
+VELA REGOR: symmetric394
+============================================================
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+VELA_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/vela/symmetric394
+VELA_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_vela_symmetric394_20261124_142604.log
+TfLiteReader: Built-in options type 'LogicalNotOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'CastOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'BroadcastToOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+
+Warning (supported operators) operator:DEQUANTIZE ofm:reconstructed_values
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.9/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.8/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.7/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.6/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.5/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.4/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.3/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.2/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+TfLiteReader: Built-in options type 'LogicalNotOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'CastOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'BroadcastToOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+
+Warning (supported operators) operator:DEQUANTIZE ofm:reconstructed_values
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.9/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.8/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.7/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.6/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.5/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.4/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.3/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.2/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.1/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.0/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Transpose_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Reshape_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:FULLY_CONNECTED ofm:/non_seq_enc/Gemm_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.1/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.0/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Transpose_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+
+Warning (supported operators) operator:RESHAPE ofm:/Reshape_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:FULLY_CONNECTED ofm:/non_seq_enc/Gemm_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_5_output_0
+Reason: Unsupported opType
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/Div_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.8/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.7/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.7/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.7/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.6/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.6/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.6/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.6/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.8/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.7/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.7/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.7/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.6/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.6/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.6/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.6/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.4/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.3/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.3/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.3/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.2/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.2/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.2/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.2/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.0/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:/Expand_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:broadcasted_shape
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MAXIMUM ofm:/Clip_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CAST ofm:/Cast_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:LOGICAL_NOT ofm:/Not_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.3/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.3/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.7/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.7/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.5/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_5_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.4/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_4_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.3/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_3_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.2/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.1/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_1_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.0/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.4/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.3/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.3/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.3/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.2/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.2/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.2/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.2/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.0/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:/Expand_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:broadcasted_shape
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MAXIMUM ofm:/Clip_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CAST ofm:/Cast_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:LOGICAL_NOT ofm:/Not_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.3/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.3/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.7/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.7/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.5/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_5_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.4/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_4_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.3/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_3_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.2/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.1/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_1_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.0/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1249, in main
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1249, in main
+    process_regor(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 135, in process_regor
+    compiled_model = regor.compile(accelerator, network, fmt, system_config, options=options, verbose=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Non-passthrough operation (NotEqual) could not run on NPU
+    process_regor(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 135, in process_regor
+    compiled_model = regor.compile(accelerator, network, fmt, system_config, options=options, verbose=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Non-passthrough operation (NotEqual) could not run on NPU
+
+VELA_symmetric394_EXIT_CODE=1
+VELA_symmetric394_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_vela_symmetric394_20261124_142604.log
+VELA_symmetric394_OUTPUT_FILES:
+VELA_symmetric394=FAILED
+
+============================================================
+VELA REGOR: asymmetric394
+============================================================
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/asymmetric394_boolmask_identity_fixed.tflite
+VELA_DIR=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/vela/asymmetric394
+VELA_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_vela_asymmetric394_20261124_142604.log
+TfLiteReader: Built-in options type 'LogicalNotOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'LogicalNotOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'CastOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'BroadcastToOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+
+Warning (supported operators) operator:DEQUANTIZE ofm:reconstructed_values
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.9/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.8/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.7/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.6/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.5/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.4/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.3/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.2/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.1/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.0/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Transpose_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Reshape_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:FULLY_CONNECTED ofm:/non_seq_enc/Gemm_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.8/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.7/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.7/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.7/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.6/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.6/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.6/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.6/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.4/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.3/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.3/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.3/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.2/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.2/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.2/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.2/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.0/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:/Expand_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:broadcasted_shape
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MAXIMUM ofm:/Clip_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CAST ofm:/Cast_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:LOGICAL_NOT ofm:/Not_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.3/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.3/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.7/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.7/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.5/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_5_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.4/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_4_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.3/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_3_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.2/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.1/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_1_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.0/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+TfLiteReader: Built-in options type 'CastOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'BroadcastToOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'GreaterEqualOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'AbsOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'ExpOptions' is not yet implemented and will be ignored.
+TfLiteReader: Built-in options type 'NegOptions' is not yet implemented and will be ignored.
+
+Warning (supported operators) operator:DEQUANTIZE ofm:reconstructed_values
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.9/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.9/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.8/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.8/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.7/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.7/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.6/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.6/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.5/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.5/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.4/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.4/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.3/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.3/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.2/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.2/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.1/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.1/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:Passthrough ofm:/tcn_blocks.0/Relu_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RELU ofm:/tcn_blocks.0/layer2/Relu_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Transpose_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Reshape_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:FULLY_CONNECTED ofm:/non_seq_enc/Gemm_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.8/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.7/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.7/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.7/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.7/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.6/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.6/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.6/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.6/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.6/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.6/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.6/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.6/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.4/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_11_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/cvf/cvf.3/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_9_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:EXP ofm:/cvf/cvf.3/Exp_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:NEG ofm:/cvf/cvf.3/Neg_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_8_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ABS ofm:/cvf/cvf.3/Abs_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.2/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SQRT ofm:/cvf/cvf.2/Sqrt_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.2/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_1_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.2/Mul_output_0_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.2/Mul_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.2/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/cvf/cvf.2/ReduceMean_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MEAN ofm:/cvf/cvf.2/ReduceMean_output_00
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:TRANSPOSE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MIRROR_PAD ofm:/cvf/cvf.0/Pad_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:/Expand_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:None ofm:broadcasted_shape
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DIV ofm:/Div_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MAXIMUM ofm:/Clip_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:CAST ofm:/Cast_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:LOGICAL_NOT ofm:/Not_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:SUM ofm:/ReduceSum_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.3/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.3/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.3/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.3/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.3/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_7_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DIV ofm:/cvf/cvf.7/Mul_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_6_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:ADD ofm:/cvf/cvf.7/Add_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SUB ofm:/cvf/cvf.7/Sub_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GREATER_EQUAL ofm:/cvf/cvf.7/GreaterOrEqual_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:MUL ofm:/cvf/cvf.7/Mul_10_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:SELECT_V2 ofm:/Where_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:CONCATENATION ofm:/Concat_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_5_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.5/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_5_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_5_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_4_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.4/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_4_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_4_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_3_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.3/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_3_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_3_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_2_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.2/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_2_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_2_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_1_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.1/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_1_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_1_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:RESHAPE ofm:/Unsqueeze_output_0
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/svf.0/Gemm_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:QUANTIZE ofm:/Gather_output_0_DequantizeLinear_Output
+Reason: Operation has tensor with unsupported DataType Float32
+Feature-map dataTypes must be one of {"INT16", "INT32", "INT64", "INT8", "UINT8"}
+
+Warning (supported operators) operator:GATHER ofm:/Gather_output_0
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+
+Warning (supported operators) operator:DEQUANTIZE ofm:/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output
+Reason: Unsupported opType
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1249, in main
+Traceback (most recent call last):
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/vela", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 1249, in main
+    process_regor(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 135, in process_regor
+    compiled_model = regor.compile(accelerator, network, fmt, system_config, options=options, verbose=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Non-passthrough operation (NotEqual) could not run on NPU
+    process_regor(
+  File "/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/ethosu/vela/vela.py", line 135, in process_regor
+    compiled_model = regor.compile(accelerator, network, fmt, system_config, options=options, verbose=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Non-passthrough operation (NotEqual) could not run on NPU
+
+VELA_asymmetric394_EXIT_CODE=1
+VELA_asymmetric394_LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_vela_asymmetric394_20261124_142604.log
+VELA_asymmetric394_OUTPUT_FILES:
+VELA_asymmetric394=FAILED
+
+============================================================
+FINAL VALIDATION
+============================================================
+ORIGINAL_SOURCE_HASHES:
+aa339b9fc10eb4bd9e627d84ac8dfb969ed2d4f99811b079d25d333c60da61d5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/symmetric394/tflite/symmetric394.tflite
+84766da01046b31a635b0f50f25394443d6c5512b46de6adca1bd13dd0f432b5  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_vela_performance_20261124_140104_12321/asymmetric394/tflite/asymmetric394.tflite
+
+PATCHED_MODEL_HASHES:
+221ec8d94e88d7f6e13d9d5995e1c7a8523a75fe1a70a8cf695a2c2fdfdf8b01  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/symmetric394_boolmask_identity_fixed.tflite
+e96333de799decf82aa9436a84ece7f2b7ef49a69741dd35561b05809174a8f0  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604/tflite_patched/asymmetric394_boolmask_identity_fixed.tflite
+
+PATCHED_TFLITE_FILES:
+total 20M
+-rw-rw-r-- 1 user user 9.9M Nov 24 14:26 asymmetric394_boolmask_identity_fixed.tflite
+-rw-rw-r-- 1 user user 9.9M Nov 24 14:26 symmetric394_boolmask_identity_fixed.tflite
+
+VELA_OUTPUT_TREE:
+
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+
+============================================================
+BOOL MASK IDENTITY ELIMINATION + VELA FINISHED
+SCRIPT_EXIT_CODE=1
+OUT_ROOT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_boolmask_identity_elimination_regor_20261124_142604
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_boolmask_identity_elimination_regor_20261124_142604.log
+SOURCE_MODELS_MODIFIED=NO
+FIRMWARE_BUILD=NOT_PERFORMED
+FLASH_ACTION=NOT_PERFORMED
+============================================================
+
+Press ENTER to close this terminal...
