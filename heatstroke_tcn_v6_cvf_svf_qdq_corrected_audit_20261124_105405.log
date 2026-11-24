@@ -1,0 +1,212 @@
+============================================================
+TCN V6 CORRECTED CVF/SVF QDQ AUDIT
+============================================================
+SOURCE=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_tcn_dw_qdqpair_dup_20261122_221133/heatstroke_tcn_reg_fold2_v6_int8_qdq_qdqpair_dup.onnx
+HYBRID=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/heatstroke_tcn_v6_cvf_svf_hybrid_int8_qdq.onnx
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_qdq_corrected_audit_20261124_105405.log
+SOURCE_SHA256=4cdca76e885c0333abdb8a31d4b9e00cc1c716291a038f3e0e81f31ce373bfc8
+HYBRID_SHA256=4ad1fdbd7a5b79b6891e7658a26e5131987d44075a22c5d585dc7599ae1a276b
+SOURCE_ONNX_CHECKER=PASS
+HYBRID_ONNX_CHECKER=PASS
+
+ACTUAL TARGET OPERATOR NAMES
+('cvf', 0) /cvf/cvf.0/Conv
+('cvf', 1) /cvf/cvf.1/Conv
+('cvf', 4) /cvf/cvf.4/Conv
+('cvf', 5) /cvf/cvf.5/Conv
+('cvf', 8) /cvf/cvf.8/Conv
+('svf', 0) /svf.0/Gemm
+('svf', 1) /svf.1/Gemm
+('svf', 2) /svf.2/Gemm
+('svf', 3) /svf.3/Gemm
+('svf', 4) /svf.4/Gemm
+('svf', 5) /svf.5/Gemm
+
+INITIALIZER PRESERVATION AUDIT
+Base initializers=348
+Hybrid initializers=436
+Removed initializers=22
+Added initializers=110
+Changed initializers=0
+Target-related original initializers=['model.cvf.0.bias', 'model.cvf.0.weight', 'model.cvf.1.bias', 'model.cvf.1.weight', 'model.cvf.4.bias', 'model.cvf.4.weight', 'model.cvf.5.bias', 'model.cvf.5.weight', 'model.cvf.8.bias', 'model.cvf.8.weight', 'model.svf.0.bias', 'model.svf.0.weight', 'model.svf.1.bias', 'model.svf.1.weight', 'model.svf.2.bias', 'model.svf.2.weight', 'model.svf.3.bias', 'model.svf.3.weight', 'model.svf.4.bias', 'model.svf.4.weight', 'model.svf.5.bias', 'model.svf.5.weight']
+Unexpected removals=[]
+Unexpected changes=[]
+
+QUANTIZED TARGET INITIALIZERS
+  model.cvf.0.bias_quantized dtype=int32 shape=(16,)
+  model.cvf.0.bias_quantized_scale dtype=float32 shape=(16,)
+  model.cvf.0.bias_quantized_zero_point dtype=int32 shape=(16,)
+  model.cvf.0.weight_quantized dtype=int8 shape=(16, 6, 3)
+  model.cvf.1.bias_quantized dtype=int32 shape=(32,)
+  model.cvf.1.bias_quantized_scale dtype=float32 shape=(32,)
+  model.cvf.1.bias_quantized_zero_point dtype=int32 shape=(32,)
+  model.cvf.1.weight_quantized dtype=int8 shape=(32, 16, 5)
+  model.cvf.4.bias_quantized dtype=int32 shape=(64,)
+  model.cvf.4.bias_quantized_scale dtype=float32 shape=(64,)
+  model.cvf.4.bias_quantized_zero_point dtype=int32 shape=(64,)
+  model.cvf.4.weight_quantized dtype=int8 shape=(64, 32, 7)
+  model.cvf.5.bias_quantized dtype=int32 shape=(128,)
+  model.cvf.5.bias_quantized_scale dtype=float32 shape=(128,)
+  model.cvf.5.bias_quantized_zero_point dtype=int32 shape=(128,)
+  model.cvf.5.weight_quantized dtype=int8 shape=(128, 64, 9)
+  model.cvf.8.bias_quantized dtype=int32 shape=(6,)
+  model.cvf.8.bias_quantized_scale dtype=float32 shape=(6,)
+  model.cvf.8.bias_quantized_zero_point dtype=int32 shape=(6,)
+  model.cvf.8.weight_quantized dtype=int8 shape=(6, 128, 11)
+  model.svf.0.bias_quantized dtype=int32 shape=(900,)
+  model.svf.0.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.0.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.0.weight_quantized dtype=int8 shape=(900, 1800)
+  model.svf.1.bias_quantized dtype=int32 shape=(900,)
+  model.svf.1.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.1.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.1.weight_quantized dtype=int8 shape=(900, 1800)
+  model.svf.2.bias_quantized dtype=int32 shape=(900,)
+  model.svf.2.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.2.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.2.weight_quantized dtype=int8 shape=(900, 1800)
+  model.svf.3.bias_quantized dtype=int32 shape=(900,)
+  model.svf.3.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.3.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.3.weight_quantized dtype=int8 shape=(900, 1800)
+  model.svf.4.bias_quantized dtype=int32 shape=(900,)
+  model.svf.4.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.4.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.4.weight_quantized dtype=int8 shape=(900, 1800)
+  model.svf.5.bias_quantized dtype=int32 shape=(900,)
+  model.svf.5.bias_quantized_scale dtype=float32 shape=(900,)
+  model.svf.5.bias_quantized_zero_point dtype=int32 shape=(900,)
+  model.svf.5.weight_quantized dtype=int8 shape=(900, 1800)
+
+============================================================================
+ACTUAL CVF/SVF OPERATOR QDQ AUDIT
+============================================================================
+
+('cvf', 0) NODE=/cvf/cvf.0/Conv OP=Conv
+  WEIGHT={"name": "model.cvf.0.weight_quantized", "dtype": "int8", "shape": [16, 6, 3], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.0.weight_DequantizeLinear", "output": "model.cvf.0.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.cvf.0.bias_quantized", "dtype": "int32", "shape": [16], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.0.bias_DequantizeLinear", "output": "model.cvf.0.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/cvf/cvf.0/Pad_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('cvf', 1) NODE=/cvf/cvf.1/Conv OP=Conv
+  WEIGHT={"name": "model.cvf.1.weight_quantized", "dtype": "int8", "shape": [32, 16, 5], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.1.weight_DequantizeLinear", "output": "model.cvf.1.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.cvf.1.bias_quantized", "dtype": "int32", "shape": [32], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.1.bias_DequantizeLinear", "output": "model.cvf.1.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/cvf/cvf.1/Pad_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('cvf', 4) NODE=/cvf/cvf.4/Conv OP=Conv
+  WEIGHT={"name": "model.cvf.4.weight_quantized", "dtype": "int8", "shape": [64, 32, 7], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.4.weight_DequantizeLinear", "output": "model.cvf.4.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.cvf.4.bias_quantized", "dtype": "int32", "shape": [64], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.4.bias_DequantizeLinear", "output": "model.cvf.4.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/cvf/cvf.4/Pad_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('cvf', 5) NODE=/cvf/cvf.5/Conv OP=Conv
+  WEIGHT={"name": "model.cvf.5.weight_quantized", "dtype": "int8", "shape": [128, 64, 9], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.5.weight_DequantizeLinear", "output": "model.cvf.5.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.cvf.5.bias_quantized", "dtype": "int32", "shape": [128], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.5.bias_DequantizeLinear", "output": "model.cvf.5.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/cvf/cvf.5/Pad_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('cvf', 8) NODE=/cvf/cvf.8/Conv OP=Conv
+  WEIGHT={"name": "model.cvf.8.weight_quantized", "dtype": "int8", "shape": [6, 128, 11], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.8.weight_DequantizeLinear", "output": "model.cvf.8.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.cvf.8.bias_quantized", "dtype": "int32", "shape": [6], "chain": [{"op": "DequantizeLinear", "name": "model.cvf.8.bias_DequantizeLinear", "output": "model.cvf.8.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/cvf/cvf.8/Pad_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 0) NODE=/svf.0/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.0.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.0.weight_DequantizeLinear", "output": "model.svf.0.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.0.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.0.bias_DequantizeLinear", "output": "model.svf.0.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 1) NODE=/svf.1/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.1.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.1.weight_DequantizeLinear", "output": "model.svf.1.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.1.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.1.bias_DequantizeLinear", "output": "model.svf.1.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_1_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 2) NODE=/svf.2/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.2.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.2.weight_DequantizeLinear", "output": "model.svf.2.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.2.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.2.bias_DequantizeLinear", "output": "model.svf.2.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_2_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 3) NODE=/svf.3/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.3.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.3.weight_DequantizeLinear", "output": "model.svf.3.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.3.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.3.bias_DequantizeLinear", "output": "model.svf.3.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_3_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 4) NODE=/svf.4/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.4.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.4.weight_DequantizeLinear", "output": "model.svf.4.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.4.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.4.bias_DequantizeLinear", "output": "model.svf.4.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_4_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+('svf', 5) NODE=/svf.5/Gemm OP=Gemm
+  WEIGHT={"name": "model.svf.5.weight_quantized", "dtype": "int8", "shape": [900, 1800], "chain": [{"op": "DequantizeLinear", "name": "model.svf.5.weight_DequantizeLinear", "output": "model.svf.5.weight_DequantizeLinear_Output"}]}
+  BIAS={"name": "model.svf.5.bias_quantized", "dtype": "int32", "shape": [900], "chain": [{"op": "DequantizeLinear", "name": "model.svf.5.bias_DequantizeLinear", "output": "model.svf.5.bias"}]}
+  ACTIVATION={"input_producer": "DequantizeLinear", "input_qdq_pair_detected": true, "input_quantize_node": "/Gather_5_output_0_QuantizeLinear", "output_quantize_detected": true}
+
+INT8_TARGET_WEIGHT_COUNT=11/11
+INT32_TARGET_BIAS_COUNT=11/11
+INPUT_QDQ_PAIR_COUNT=11/11
+OUTPUT_Q_COUNT=11/11
+
+ALL_11_TARGET_WEIGHTS_INT8=PASS
+[0;93m2026-11-24 10:54:07.623476522 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-24 10:54:07.623497194 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-24 10:54:07.623515042 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-24 10:54:07.737196178 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_3_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-24 10:54:07.737227109 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_1_output_0'. It is not used by any node and should be removed from the model.[m
+[0;93m2026-11-24 10:54:07.737273531 [W:onnxruntime:, graph.cc:5241 CleanUnusedInitializersAndNodeArgs] Removing initializer '/Constant_2_output_0'. It is not used by any node and should be removed from the model.[m
+Subject-level split column: worker_id
+[test] loaded samples=449, skipped_incomplete=0
+[test] distinct subject groups=3
+
+RUNNING ALL 449 TEST SAMPLES
+Compared 50/449
+Compared 100/449
+Compared 150/449
+Compared 200/449
+Compared 250/449
+Compared 300/449
+Compared 350/449
+Compared 400/449
+Compared 449/449
+
+OVERALL TEST METRICS
+{
+  "rmse": 0.26281333383089295,
+  "mae": 0.1981933986255657,
+  "max_abs": 3.3855831623077393,
+  "element_count": 2424600,
+  "sample_count": 449
+}
+
+PER-OUTPUT-CHANNEL METRICS
+('reconstructed_values', 0) RMSE=0.2355128 MAE=0.1800737 MAX=1.538901 P99=0.6155605 REF_RMS=0.6469248 REL_RMS=0.36405
+('reconstructed_values', 1) RMSE=0.2608789 MAE=0.199139 MAX=1.846682 P99=0.7694507 REF_RMS=0.4139569 REL_RMS=0.63021
+('reconstructed_values', 2) RMSE=0.284465 MAE=0.217615 MAX=1.846682 P99=0.7694507 REF_RMS=0.5567585 REL_RMS=0.51093
+('reconstructed_values', 3) RMSE=0.2286029 MAE=0.1748508 MAX=1.615846 P99=0.6155605 REF_RMS=0.5590828 REL_RMS=0.40889
+('reconstructed_values', 4) RMSE=0.2412791 MAE=0.1828172 MAX=1.769737 P99=0.6925056 REF_RMS=0.3258237 REL_RMS=0.74052
+('reconstructed_values', 5) RMSE=0.3154454 MAE=0.2346647 MAX=3.385583 P99=0.9233408 REF_RMS=1.067634 REL_RMS=0.29546
+
+WORST 20 TEST SAMPLES
+{"index": 107, "worker_id": "9", "sample_id": "107", "rmse": 0.47342353148234606}
+{"index": 366, "worker_id": "8", "sample_id": "366", "rmse": 0.4351473616333541}
+{"index": 368, "worker_id": "8", "sample_id": "368", "rmse": 0.4351473616333541}
+{"index": 371, "worker_id": "8", "sample_id": "371", "rmse": 0.4351473616333541}
+{"index": 223, "worker_id": "8", "sample_id": "223", "rmse": 0.4288059363339243}
+{"index": 369, "worker_id": "8", "sample_id": "369", "rmse": 0.418936661446093}
+{"index": 373, "worker_id": "8", "sample_id": "373", "rmse": 0.4176483786063115}
+{"index": 367, "worker_id": "8", "sample_id": "367", "rmse": 0.4123925373885741}
+{"index": 370, "worker_id": "8", "sample_id": "370", "rmse": 0.4123925373885741}
+{"index": 372, "worker_id": "8", "sample_id": "372", "rmse": 0.4123925373885741}
+{"index": 375, "worker_id": "8", "sample_id": "375", "rmse": 0.4123925373885741}
+{"index": 374, "worker_id": "8", "sample_id": "374", "rmse": 0.4106501159755008}
+{"index": 233, "worker_id": "8", "sample_id": "233", "rmse": 0.4066174475771194}
+{"index": 446, "worker_id": "8", "sample_id": "446", "rmse": 0.39375586115656286}
+{"index": 92, "worker_id": "9", "sample_id": "92", "rmse": 0.39086051651867526}
+{"index": 229, "worker_id": "8", "sample_id": "229", "rmse": 0.3858564717830828}
+{"index": 199, "worker_id": "9", "sample_id": "199", "rmse": 0.3746460123036241}
+{"index": 316, "worker_id": "8", "sample_id": "316", "rmse": 0.37391514075082677}
+{"index": 234, "worker_id": "8", "sample_id": "234", "rmse": 0.36419008977861067}
+{"index": 425, "worker_id": "9", "sample_id": "425", "rmse": 0.3597267571924438}
+
+VALIDATION_REPORT=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_ptq_balanced256_20261123_230945/hybrid_qdq_corrected_validation.json
+CORRECTED_QDQ_AUDIT=PASS
+
+============================================================
+AUDIT_EXIT_CODE=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cvf_svf_qdq_corrected_audit_20261124_105405.log
+============================================================
