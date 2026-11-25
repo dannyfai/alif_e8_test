@@ -1,0 +1,2641 @@
+======================================================
+SAMPLE317 ALLOCATION LIFETIME AUDIT V2
+Timestamp=20261125_152329
+======================================================
+
+========== 1. FIND ALLOCATION INFO SOURCE FILES ==========
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/ibuffer_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+
+========== 2. ALLOCATION INFO BUILDER IMPLEMENTATION ==========
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc
+...
+   97:   }
+   98:   BufferRequirements* current = &requirements_[buffer_count_];
+   99:   current->size = size;
+  100:   current->first_time_used = first_time_used;
+  101:   current->last_time_used = last_time_used;
+  102:   current->offline_offset = kOnlinePlannedBuffer;
+  103:   ++buffer_count_;
+  104:   need_to_calculate_offsets_ = true;
+  105:   return kTfLiteOk;
+  106: }
+  107: 
+  108: TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+  109:                                             int last_time_used,
+  110:                                             int offline_offset) {
+  111:   BufferRequirements* current = &requirements_[buffer_count_];
+  112:   if (AddBuffer(size, first_time_used, last_time_used) != kTfLiteOk) {
+  113:     return kTfLiteError;
+  114:   }
+  115:   current->offline_offset = offline_offset;
+  116:   return kTfLiteOk;
+  117: }
+  118: 
+  119: bool GreedyMemoryPlanner::DoesEntryOverlapInTime(
+  120:     const GreedyMemoryPlanner::ListEntry* entry, const int first_time_used,
+  121:     const int last_time_used) const {
+  122:   const BufferRequirements* entry_requirements =
+  123:       &requirements_[entry->requirements_index];
+  124:   if (entry_requirements->first_time_used > last_time_used) {
+...
+  172:   // gaps with small buffers at the beginning. Add offline planned offsets
+  173:   // first in the list, since they have a predetermined offset.
+  174:   int idx_from_tail = buffer_count_;
+  175:   int idx_from_head = 0;
+  176:   for (int i = 0; i < buffer_count_; ++i) {
+  177:     if (requirements_[i].offline_offset == kOnlinePlannedBuffer) {
+  178:       idx_from_tail--;
+  179:       buffer_sizes_sorted_[idx_from_tail] = requirements_[i].size;
+  180:       buffer_ids_sorted_[idx_from_tail] = i;
+  181:       buffer_offsets_[i] = -1;
+  182:     } else {
+  183:       buffer_sizes_sorted_[idx_from_head] = requirements_[i].size;
+  184:       buffer_ids_sorted_[idx_from_head] = i;
+  185:       buffer_offsets_[i] = requirements_[i].offline_offset;
+  186:       idx_from_head++;
+  187:     }
+  188:   }
+  189: 
+  190:   // This sorting algorithm is naive, and may end up taking a very long time
+  191:   // with hundreds of buffers. Do not sort the offline planned offsets.
+  192:   ReverseSortInPlace(&buffer_sizes_sorted_[idx_from_head],
+  193:                      &buffer_ids_sorted_[idx_from_head],
+  194:                      buffer_count_ - idx_from_head);
+...
+  203:   next_free_entry_ = 1;
+  204:   ListEntry* first_entry = &buffers_sorted_by_offset_[first_entry_index_];
+  205:   first_entry->next_entry_index = -1;  // to mark the entry as end of list
+  206:   int buffer_id = buffer_ids_sorted_[0];
+  207:   first_entry->requirements_index = buffer_id;
+  208:   if (requirements_[buffer_id].offline_offset == kOnlinePlannedBuffer) {
+  209:     buffer_offsets_[buffer_id] = 0;
+  210:   }
+  211:   first_entry->offset = buffer_offsets_[buffer_id];
+  212: 
+  213:   // Work through the rest of the buffers to find a good gap to place each one.
+  214:   for (int i = 1; i < buffer_count_; ++i) {
+  215:     // The id is the order the buffer was originally added by the client.
+  216:     buffer_id = buffer_ids_sorted_[i];
+  217:     // Look at what size and time range the buffer needs to be active.
+...
+  226:     // The candidate_entry variable holds the buffer that we're considering
+  227:     // placing the current buffer after.
+  228: 
+  229:     int candidate_offset = 0;
+  230:     // Loop through the offset-ordered list of buffers, looking for gaps.
+  231:     if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
+  232:       ListEntry* prior_entry = nullptr;
+  233:       while (true) {
+  234:         // Find out what the next active buffer is.
+  235:         ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
+  236:             prior_entry, wanted_first_time_used, wanted_last_time_used);
+  237: 
+  238:         if (prior_entry) {
+  239:           BufferRequirements* candidate_requirements =
+  240:               &requirements_[prior_entry->requirements_index];
+...
+  259:         // The gap wasn't big enough, so move on to another candidate.
+  260:         prior_entry = next_entry;
+  261:       }
+  262:     } else {
+  263:       // Offline planned offset are to be considered constant
+  264:       candidate_offset = wanted_requirements->offline_offset;
+  265:     }
+  266:     // At this point, we've either found a gap (possibly at the end of the
+  267:     // list) and want to place the buffer there, or there are no other active
+  268:     // buffers in this time range and so we can put it at offset zero.
+  269:     // Record the buffer's offset in our plan.
+  270:     buffer_offsets_[buffer_id] = candidate_offset;
+  271:     // Add the newly-placed buffer to our offset-ordered list, so that
+  272:     // subsequent passes can fit in their buffers around it.
+  273:     ListEntry* new_entry = &buffers_sorted_by_offset_[next_free_entry_];
+...
+  338:     char c = '*';
+  339:     if (requirements_[i].first_time_used != requirements_[i].last_time_used) {
+  340:       // not a scratch buffer nor subgraph output tensor
+  341:       c = GetOrdinalCharacter(i);
+  342:     }
+  343:     MicroPrintf("%c (id=%d): size=%d, offset=%d, first_used=%d last_used=%d", c,
+  344:                 i, requirements_[i].size, buffer_offsets_[i],
+  345:                 requirements_[i].first_time_used,
+  346:                 requirements_[i].last_time_used);
+  347:   }
+  348: 
+  349:   constexpr int kLineWidth = 80;
+  350:   int max_size = kLineWidth;
+  351:   int max_time = 0;
+  352:   for (int i = 0; i < buffer_count_; ++i) {
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h
+...
+   64:   // Record details of a buffer we want to place.
+   65:   TfLiteStatus AddBuffer(int size, int first_time_used,
+   66:                          int last_time_used) override;
+   67: 
+   68:   // Record details of an offline planned buffer offset we want to place.
+   69:   // offline_offset is the buffer offset from the start of the arena.
+   70:   TfLiteStatus AddBuffer(int size, int first_time_used, int last_time_used,
+   71:                          int offline_offset) override;
+   72: 
+   73:   // Returns the high-water mark of used memory. This is the minimum size of a
+   74:   // memory arena you'd need to allocate to hold these buffers.
+   75:   size_t GetMaximumMemorySize() override;
+   76: 
+   77:   // How many buffers have been recorded.
+   78:   int GetBufferCount() override;
+   79: 
+   80:   // Where a given buffer should be placed in the memory arena.
+...
+  134:   int buffer_count_;
+  135: 
+  136:   // Records the client-provided information about each buffer.
+  137:   struct BufferRequirements {
+  138:     int size;
+  139:     int offline_offset;
+  140:     int first_time_used;
+  141:     int last_time_used;
+  142:   };
+  143: 
+  144:   // Working arrays used during the layout algorithm.
+  145:   BufferRequirements* requirements_;
+  146:   // buffer_sizes_sorted_ and buffer_ids_sorted_ are sorted according to:
+  147:   //   {
+  148:   //     offline planned buffers,
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h
+...
+   54:   // GetOffsetForBuffer().
+   55:   virtual TfLiteStatus AddBuffer(int size, int first_time_used,
+   56:                                  int last_time_used) = 0;
+   57: 
+   58:   // Record details of an offline planned buffer offset we want to place.
+   59:   // offline_offset is the buffer offset from the start of the arena.
+   60:   // This is to support offline memory planning from the flatbuffer metadata.
+   61:   // By default, it returns an error.
+   62:   virtual TfLiteStatus AddBuffer(int size, int first_time_used,
+   63:                                  int last_time_used, int offline_offset) {
+   64:     return kTfLiteError;
+   65:   }
+   66: 
+   67:   // The largest contiguous block of memory that's needed to hold the layout.
+   68:   virtual size_t GetMaximumMemorySize() = 0;
+   69:   // How many buffers have been added to the planner.
+   70:   virtual int GetBufferCount() = 0;
+   71:   // Calculated layout offset for the N-th buffer added to the planner.
+   72:   virtual TfLiteStatus GetOffsetForBuffer(int buffer_index, int* offset) = 0;
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+...
+   32: }  // namespace
+   33: 
+   34: // Mark the given Allocation info as first created at the specified allocation
+   35: // scope count. Only the first creation must be recorded since the allocation
+   36: // scope count monotonically increases throughout the lifetime marking process.
+   37: void AllocationInfoBuilder::UpdateFirstCreated(AllocationInfo* current,
+   38:                                                int allocation_scope_count) {
+   39:   TFLITE_DCHECK(current->first_created <= allocation_scope_count);
+   40:   if (current->first_created == kUninitializedLifetime) {
+   41:     current->first_created = allocation_scope_count;
+   42:   }
+   43: }
+   44: 
+   45: // Mark the given AllocationInfo as last used at the specified allocation scope
+   46: // count. Update the last used marker every time, since the allocation scope
+   47: // count monotonically increases through the lifetime marking process.
+   48: void AllocationInfoBuilder::UpdateLastUsed(AllocationInfo* current,
+   49:                                            int allocation_scope_count) {
+   50:   TFLITE_DCHECK(current->last_used <= allocation_scope_count);
+   51:   current->last_used = allocation_scope_count;
+   52: }
+   53: 
+   54: TfLiteStatus AllocationInfoBuilder::MarkSubgraphLifetimesIfNecessary(
+   55:     const Operator* op, internal::ScratchBufferRequest* scratch_buffer_requests,
+   56:     ScratchBufferHandle* scratch_buffer_handles,
+   57:     SubgraphAllocations* allocations) {
+   58:   int first_subgraph_index = -1;
+   59:   int second_subgraph_index = -1;
+   60:   const OperatorCode* opcode =
+   61:       model_->operator_codes()->Get(op->opcode_index());
+   62:   switch (opcode->builtin_code()) {
+   63:     case BuiltinOperator_IF: {
+...
+   85:   }
+   86:   if (first_subgraph_index != -1) {
+   87:     // Enter a new allocation scope for each subgraph.
+   88:     allocation_scope_count_++;
+   89:     TF_LITE_ENSURE_STATUS(
+   90:         MarkAllocationLifetimes(first_subgraph_index, scratch_buffer_requests,
+   91:                                 scratch_buffer_handles, allocations));
+   92:   }
+   93:   if (second_subgraph_index != -1) {
+   94:     // Enter a new allocation scope for each subgraph.
+   95:     allocation_scope_count_++;
+   96:     TF_LITE_ENSURE_STATUS(
+   97:         MarkAllocationLifetimes(second_subgraph_index, scratch_buffer_requests,
+   98:                                 scratch_buffer_handles, allocations));
+   99:   }
+  100:   return kTfLiteOk;
+  101: }
+  102: 
+  103: TfLiteStatus AllocationInfoBuilder::CreateAllocationInfo(
+  104:     int scratch_buffer_request_count) {
+  105:   size_t subgraph_offsets_length = model_->subgraphs()->size() * sizeof(size_t);
+  106:   info_.subgraph_offsets =
+  107:       reinterpret_cast<size_t*>(non_persistent_allocator_->AllocateTemp(
+  108:           subgraph_offsets_length, alignof(size_t)));
+  109:   if (info_.subgraph_offsets == nullptr) {
+  110:     MicroPrintf(
+  111:         "Failed to allocate memory for memory planning, %d bytes required",
+  112:         subgraph_offsets_length);
+  113:     return kTfLiteError;
+  114:   }
+  115:   size_t tensor_count = 0;
+  116:   for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+  117:        subgraph_idx++) {
+  118:     // Add all tensors in each subgraph to the AllocationInfo array. Even weight
+  119:     // tensors are added but marked with needs_allocating = false. Including all
+  120:     // tensors in the graph here simplifies logic.
+  121:     info_.subgraph_offsets[subgraph_idx] = tensor_count;
+  122:     tensor_count += model_->subgraphs()->Get(subgraph_idx)->tensors()->size();
+  123:   }
+  124:   info_.tensor_count = tensor_count;
+  125: 
+  126:   // Scratch buffer allocations follow tensor allocations, so the scratch offset
+  127:   // is equal to the number of tensor allocations.
+  128:   info_.scratch_offset = tensor_count;
+  129:   info_.allocation_info_count = tensor_count + scratch_buffer_request_count;
+  130:   info_.scratch_buffer_count = scratch_buffer_request_count;
+  131:   size_t bytes = sizeof(AllocationInfo) * info_.allocation_info_count;
+  132: 
+  133:   // Allocate an array of AllocationInfo structs from the temp section. This
+  134:   // struct will be used by AllocationInfoBuilder to find buffer usage.
+  135:   info_.allocation_info = reinterpret_cast<AllocationInfo*>(
+  136:       non_persistent_allocator_->AllocateTemp(bytes, alignof(AllocationInfo)));
+  137:   if (info_.allocation_info == nullptr) {
+  138:     MicroPrintf(
+  139:         "Failed to allocate memory for memory planning, %d bytes required",
+  140:         bytes);
+  141:     return kTfLiteError;
+  142:   }
+  143:   return kTfLiteOk;
+  144: }
+  145: 
+  146: TfLiteStatus AllocationInfoBuilder::FreeAllocationInfo() {
+  147:   non_persistent_allocator_->DeallocateTemp(
+  148:       reinterpret_cast<uint8_t*>(info_.allocation_info));
+  149:   non_persistent_allocator_->DeallocateTemp(
+  150:       reinterpret_cast<uint8_t*>(info_.subgraph_offsets));
+  151:   return kTfLiteOk;
+  152: }
+  153: 
+  154: TfLiteStatus AllocationInfoBuilder::ValidateSubgraph(
+  155:     const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors) {
+  156:   uint32_t operators_size = NumSubgraphOperators(subgraph);
+  157: 
+  158:   for (uint32_t i = 0; i < operators_size; i++) {
+  159:     const auto op = subgraph->operators()->Get(i);
+  160:     for (size_t n = 0;
+  161:          op->intermediates() != nullptr && n < op->intermediates()->size();
+  162:          n++) {
+  163:       const int tensor_index = op->intermediates()->Get(n);
+...
+  173:     }
+  174:   }
+  175:   return kTfLiteOk;
+  176: }
+  177: 
+  178: TfLiteStatus AllocationInfoBuilder::InitializeAllocationInfo(
+  179:     const int32_t* offline_offsets, SubgraphAllocations* allocations) {
+  180:   AllocationInfo* allocation_info = info_.allocation_info;
+  181:   // Initialize allocation info for every tensor in every subgraph.
+  182:   int offline_index = 0;
+  183:   for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+  184:        subgraph_idx++) {
+  185:     const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+  186:     TfLiteEvalTensor* eval_tensors = allocations[subgraph_idx].tensors;
+  187:     AllocationInfo* subgraph_allocation_info =
+  188:         &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+  189: 
+  190:     // Ensure constraints are met.
+  191:     TF_LITE_ENSURE_STATUS(ValidateSubgraph(subgraph, eval_tensors));
+  192: 
+  193:     for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+  194:       AllocationInfo* current = &subgraph_allocation_info[i];
+  195:       current->output_ptr = &(eval_tensors[i].data.data);
+  196: 
+  197:       TF_LITE_ENSURE_STATUS(
+  198:           TfLiteEvalTensorByteLength(&eval_tensors[i], &current->bytes));
+  199: 
+  200:       current->first_created = kUninitializedLifetime;
+  201:       current->last_used = kUninitializedLifetime;
+  202:       current->needs_allocating =
+  203:           (eval_tensors[i].data.data == nullptr) &&
+  204:           (!subgraph->tensors()->Get(i)->is_variable()) &&
+  205:           (current->bytes != 0);
+  206:       if (offline_offsets) {
+  207:         current->offline_offset = offline_offsets[offline_index++];
+  208: 
+  209:         // Mark offline planned variable tensors so they can get an offline
+  210:         // offset and be handled offline.
+  211:         if (subgraph->tensors()->Get(i)->is_variable() &&
+  212:             current->offline_offset != kOnlinePlannedBuffer) {
+  213:           current->needs_allocating = true;
+  214:         }
+  215:       } else {
+  216:         current->offline_offset = kOnlinePlannedBuffer;
+  217:       }
+  218:     }
+  219:   }
+  220:   // Initialize allocation info for every scratch buffer.
+  221:   AllocationInfo* scratch_allocation_info =
+  222:       &allocation_info[info_.scratch_offset];
+  223:   for (size_t i = 0; i < info_.scratch_buffer_count; i++) {
+  224:     AllocationInfo* current = &scratch_allocation_info[i];
+  225:     current->first_created = kUninitializedLifetime;
+  226:     current->last_used = kUninitializedLifetime;
+  227:     current->needs_allocating = true;
+  228:     current->offline_offset = kOnlinePlannedBuffer;
+  229:   }
+  230:   return kTfLiteOk;
+  231: }
+  232: 
+  233: TfLiteStatus AllocationInfoBuilder::MarkAllocationLifetimes(
+  234:     int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_requests,
+  235:     ScratchBufferHandle* scratch_buffer_handles,
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h
+...
+   22: #include "tensorflow/lite/schema/schema_generated.h"
+   23: 
+   24: namespace tflite {
+   25: 
+   26: // Used to hold information used during allocation calculations.
+   27: struct AllocationInfo {
+   28:   size_t bytes;
+   29:   void** output_ptr;
+   30:   int first_created;
+   31:   int last_used;
+   32:   int32_t offline_offset;
+   33:   bool needs_allocating;
+   34: };
+   35: 
+   36: // Used to hold the allocation info list and related metadata for the entire
+   37: // graph (including subgraphs). Since all subgraphs are planned together, the
+   38: // allocation info list contains allocations for all subgraphs. Track the offset
+   39: // into this list for each subgraph then reserve space to track all allocations.
+   40: //
+   41: // The AllocationInfo list is a contiguous list of allocations across all
+   42: // subgraphs and scratch buffers. Each element here is marked as
+   43: // s<subgraph index>t<tensor index>. The following is a possible
+   44: // AllocationInfo list:
+   45: // [s0t0, s0t1, s1t0, s2t1, s1t2, s3t0, s3t1, scratch0, scratch1, scratch2]
+   46: //
+   47: // For this example, the subgraph offsets would be [0, 2, 5] and the scratch
+   48: // offset would be 7.
+   49: struct GraphAllocationInfo {
+   50:   AllocationInfo* allocation_info;
+   51:   size_t allocation_info_count;
+   52:   size_t* subgraph_offsets;
+   53:   size_t scratch_offset;
+   54:   size_t tensor_count;
+   55:   size_t scratch_buffer_count;
+   56: };
+   57: 
+   58: // A helper class to construct AllocationInfo array. This array contains the
+   59: // lifetime of tensors / scratch_buffer and will be used to calculate the memory
+   60: // plan. Methods need to be called in order from `Create`, Init`, `Add*`, to
+   61: // `Finish`.
+   62: class AllocationInfoBuilder {
+   63:  public:
+   64:   AllocationInfoBuilder(const Model* model,
+   65:                         INonPersistentBufferAllocator* non_persistent_allocator)
+   66:       : model_(model), non_persistent_allocator_(non_persistent_allocator) {}
+   67: 
+   68:   // Check if model contains offline planned buffer offsets.
+   69:   //  - If there's no metadata available, offline_planner_offsets is not set
+   70:   //  - If there's metadata available, offline_planner_offsets will point to the
+   71:   //    first offset in the metadata buffer list.
+   72:   TfLiteStatus GetOfflinePlannedOffsets(
+   73:       const int32_t** offline_planner_offsets);
+   74: 
+   75:   // Allocate memory for the allocation info array as well as offsets into that
+   76:   // array for each subgraph.
+   77:   TfLiteStatus CreateAllocationInfo(int scratch_buffer_request_count);
+   78: 
+   79:   // Release memory used for the allocation info array.
+   80:   TfLiteStatus FreeAllocationInfo();
+   81: 
+   82:   // Initialize AllocationInfo for all tensors and scratch buffers in the graph.
+   83:   TfLiteStatus InitializeAllocationInfo(const int32_t* offline_offsets,
+   84:                                         SubgraphAllocations* allocations);
+   85: 
+   86:   // Mark the scope of each tensor and scratch buffer across the graph. Enter
+   87:   // all possible subgraphs invoked by each control flow operator. This method
+   88:   // marks the maximum lifetime of each buffer so that tensors are correctly
+   89:   // planned for all valid invocation flows.
+   90:   TfLiteStatus MarkAllocationLifetimes(
+   91:       int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_request,
+   92:       ScratchBufferHandle* scratch_buffer_handles,
+   93:       SubgraphAllocations* allocations);
+   94: 
+   95:   // Identify control flow operators and recursively mark all subgraphs which
+   96:   // that operator can invoke. The lifetime of all tensors within a subgraph
+   97:   // can only be extended. The order of subgraph invocation does not matter
+   98:   // since subgraphs within the same control flow operator are executed
+   99:   // within their own allocation scope (planned buffers in a subgraph cannot
+...
+  105:       SubgraphAllocations* allocations);
+  106: 
+  107:   // Returns the number of allocations.
+  108:   int AllocationCount() const { return info_.allocation_info_count; }
+  109: 
+  110:   // Returns a pointer to the built AllocationInfo array.
+  111:   AllocationInfo* Finish() const { return info_.allocation_info; }
+  112: 
+  113:  private:
+  114:   // Mark the given Allocation info as first created at the specified allocation
+  115:   // scope count. Only the first creation must be recorded since the allocation
+  116:   // scope count monotonically increases throughout the lifetime marking
+  117:   // process.
+  118:   void UpdateFirstCreated(AllocationInfo* current, int allocation_scope_count);
+  119: 
+  120:   // Mark the given AllocationInfo as last used at the specified allocation
+  121:   // scope
+  122:   // count. Update the last used marker every time, since the allocation scope
+  123:   // count monotonically increases through the lifetime marking process.
+  124:   void UpdateLastUsed(AllocationInfo* current, int allocation_scope_count);
+  125: 
+  126:   // Validate if a subgraph satisfies assumptions.
+  127:   TfLiteStatus ValidateSubgraph(const SubGraph* subgraph,
+  128:                                 TfLiteEvalTensor* eval_tensors);
+  129: 
+  130:   const tflite::Model* model_ = nullptr;
+  131:   INonPersistentBufferAllocator* non_persistent_allocator_ = nullptr;
+  132:   GraphAllocationInfo info_ =
+  133:       {};  // Prevents problems caused by accessing uninitialized memory.
+  134:   int allocation_scope_count_ = 0;
+  135: };
+  136: 
+  137: }  // namespace tflite
+  138: 
+  139: #endif  // TENSORFLOW_LITE_MICRO_MICRO_ALLOCATION_INFO_H_
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info_test.cc
+...
+   24: TF_LITE_MICRO_TEST(TestSingleSubgraph) {
+   25:   constexpr int kArenaSize = 1024;
+   26:   uint8_t arena[kArenaSize];
+   27:   const tflite::Model* model = tflite::testing::GetSimpleMockModel();
+   28:   tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+   29:   tflite::AllocationInfoBuilder builder(model, &allocator);
+   30:   builder.CreateAllocationInfo(0);
+   31:   tflite::MicroAllocator* micro_allocator =
+   32:       tflite::MicroAllocator::Create(arena, kArenaSize);
+   33:   tflite::SubgraphAllocations* subgraph_allocations =
+   34:       micro_allocator->StartModelAllocation(model);
+   35:   builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+   36:   builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+   37:   TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 4);
+   38:   tflite::AllocationInfo* allocation_info = builder.Finish();
+   39:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+   40:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 2);
+   41:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, -1);
+   42:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 2);
+   43:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 1);
+   44:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 2);
+   45:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 2);
+   46:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 2);
+   47: }
+   48: 
+   49: TF_LITE_MICRO_TEST(TestSingleSubgraphWithIntermediates) {
+   50:   constexpr int kArenaSize = 1024;
+   51:   uint8_t arena[kArenaSize];
+   52:   const tflite::Model* model = tflite::testing::GetSimpleStatefulModel();
+   53:   tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+   54:   tflite::AllocationInfoBuilder builder(model, &allocator);
+   55:   builder.CreateAllocationInfo(0);
+   56:   tflite::MicroAllocator* micro_allocator =
+   57:       tflite::MicroAllocator::Create(arena, kArenaSize);
+   58:   tflite::SubgraphAllocations* subgraph_allocations =
+   59:       micro_allocator->StartModelAllocation(model);
+   60:   builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+   61:   builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+   62:   TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 4);
+   63:   tflite::AllocationInfo* allocation_info = builder.Finish();
+   64:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+   65:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 1);
+   66:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].needs_allocating, true);
+   67:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 1);
+   68:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 1);
+   69:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].needs_allocating, true);
+   70:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 1);
+   71:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 1);
+   72:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].needs_allocating, true);
+   73:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, -1);
+   74:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, -1);
+   75:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].needs_allocating, false);
+   76: }
+   77: 
+   78: TF_LITE_MICRO_TEST(TestMultiSubgraphWithIf) {
+   79:   constexpr int kArenaSize = 1024;
+   80:   uint8_t arena[kArenaSize];
+   81:   const tflite::Model* model =
+   82:       tflite::testing::GetSimpleModelWithSubgraphsAndIf();
+   83:   tflite::SingleArenaBufferAllocator allocator(arena, kArenaSize);
+   84:   tflite::AllocationInfoBuilder builder(model, &allocator);
+   85:   builder.CreateAllocationInfo(0);
+   86:   tflite::MicroAllocator* micro_allocator =
+   87:       tflite::MicroAllocator::Create(arena, kArenaSize);
+   88:   tflite::SubgraphAllocations* subgraph_allocations =
+   89:       micro_allocator->StartModelAllocation(model);
+   90:   builder.InitializeAllocationInfo(nullptr, subgraph_allocations);
+   91:   builder.MarkAllocationLifetimes(0, nullptr, nullptr, subgraph_allocations);
+   92:   TF_LITE_MICRO_EXPECT_EQ(builder.AllocationCount(), 10);
+   93:   tflite::AllocationInfo* allocation_info = builder.Finish();
+   94:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].first_created, 0);
+   95:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[0].last_used, 5);
+   96:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].first_created, 0);
+   97:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[1].last_used, 5);
+   98:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].first_created, 0);
+   99:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[2].last_used, 5);
+  100:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].first_created, 1);
+  101:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[3].last_used, 5);
+  102:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].first_created, 2);
+  103:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[4].last_used, 3);
+  104:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[5].first_created, 2);
+  105:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[5].last_used, 3);
+  106:   TF_LITE_MICRO_EXPECT_EQ(allocation_info[6].first_created, 3);
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+...
+  102:   }
+  103:   return memory_planner;
+  104: }
+  105: 
+  106: TfLiteStatus CreatePlan(MicroMemoryPlanner* planner,
+  107:                         const AllocationInfo* allocation_info,
+  108:                         size_t allocation_info_size) {
+  109:   // Add the tensors to our allocation plan.
+  110:   for (size_t i = 0; i < allocation_info_size; ++i) {
+  111:     const AllocationInfo* current = &allocation_info[i];
+  112:     if (current->needs_allocating) {
+  113:       size_t aligned_bytes_required =
+  114:           AlignSizeUp(current->bytes, MicroArenaBufferAlignment());
+  115:       if (current->offline_offset == kOnlinePlannedBuffer) {
+  116:         TF_LITE_ENSURE_STATUS(planner->AddBuffer(aligned_bytes_required,
+  117:                                                  current->first_created,
+  118:                                                  current->last_used));
+  119:       } else {
+  120:         TF_LITE_ENSURE_STATUS(
+  121:             planner->AddBuffer(aligned_bytes_required, current->first_created,
+  122:                                current->last_used, current->offline_offset));
+  123:       }
+  124:     }
+  125:   }
+  126:   return kTfLiteOk;
+  127: }
+  128: 
+  129: TfLiteStatus CommitPlan(MicroMemoryPlanner* planner, uint8_t* starting_point,
+  130:                         const AllocationInfo* allocation_info,
+  131:                         size_t allocation_info_size) {
+  132:   // Figure out the actual memory addresses for each buffer, based on the plan.
+  133:   int planner_index = 0;
+  134:   for (size_t i = 0; i < allocation_info_size; ++i) {
+  135:     const AllocationInfo* current = &allocation_info[i];
+  136:     if (current->needs_allocating) {
+  137:       int offset = -1;
+  138:       TF_LITE_ENSURE_STATUS(
+  139:           planner->GetOffsetForBuffer(planner_index, &offset));
+  140:       *current->output_ptr = reinterpret_cast<void*>(starting_point + offset);
+  141:       ++planner_index;
+  142:     }
+  143:   }
+  144:   return kTfLiteOk;
+...
+ 1112: TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
+ 1113:     const Model* model, SubgraphAllocations* allocations,
+ 1114:     ScratchBufferHandle* scratch_buffer_handles) {
+ 1115:   size_t head_usage = 0;
+ 1116:   // Create static memory plan
+ 1117:   // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+ 1118:   // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+ 1119:   // 3. Static memory planning using the planner.
+ 1120:   // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+ 1121:   //
+ 1122:   // Note that AllocationInfo is only needed for creating the plan. It will be
+ 1123:   // allocated from the temp section and cleaned up at the bottom of this
+ 1124:   // function.
+ 1125: 
+ 1126:   // Use the AllocationInfoBuilder class to help determine where buffers are
+ 1127:   // used in the subgraph.
+ 1128:   AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+ 1129:   TF_LITE_ENSURE_STATUS(
+ 1130:       builder.CreateAllocationInfo(scratch_buffer_request_count_));
+ 1131: 
+ 1132:   const int32_t* offline_planner_offsets = nullptr;
+ 1133:   TF_LITE_ENSURE_STATUS(
+ 1134:       builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+ 1135: 
+ 1136:   // We allocate buffers for variable tensors here since the offline planner
+ 1137:   // offsets are conviently available here.
+ 1138:   for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+ 1139:        subgraph_idx++) {
+...
+ 1142:     TF_LITE_ENSURE_STATUS(AllocateVariables(
+ 1143:         subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+ 1144:   }
+ 1145: 
+ 1146:   TF_LITE_ENSURE_STATUS(
+ 1147:       builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+ 1148: 
+ 1149:   internal::ScratchBufferRequest* scratch_buffer_requests =
+ 1150:       GetScratchBufferRequests();
+ 1151:   TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+ 1152:       0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+ 1153:   int allocation_info_count = builder.AllocationCount();
+ 1154:   AllocationInfo* allocation_info = builder.Finish();
+ 1155: 
+ 1156:   // Remaining arena size that memory planner can use for calculating offsets.
+ 1157:   size_t remaining_arena_size =
+ 1158:       non_persistent_buffer_allocator_->GetAvailableMemory(
+ 1159:           MicroArenaBufferAlignment());
+ 1160:   uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+ 1161:       remaining_arena_size, MicroArenaBufferAlignment());
+ 1162: 
+ 1163:   if (planner_arena == nullptr) {
+...
+ 1173:       CommitPlan(memory_planner_,
+ 1174:                  non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+ 1175:                  allocation_info, allocation_info_count));
+ 1176: 
+ 1177:   // Reset all temp allocations used above:
+ 1178:   builder.FreeAllocationInfo();
+ 1179:   non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+ 1180:   TF_LITE_ENSURE_STATUS(
+ 1181:       non_persistent_buffer_allocator_->ResetTempAllocations());
+ 1182:   TF_LITE_ENSURE_STATUS(
+ 1183:       non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+ 1184:           scratch_buffer_head_));
+ 1185: 
+ 1186: #ifdef TF_LITE_SHOW_MEMORY_USE
+ 1187:   memory_planner_->PrintMemoryPlan();
+
+==============================================================================
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h
+...
+   62: struct ScratchBufferRequest {
+   63:   // Number of bytes required by the buffer. The actual allocated size might be
+   64:   // greater than `bytes` due to buffer alignment.
+   65:   size_t bytes;
+   66:   // Node where the buffer is allocated for. This provides useful information to
+   67:   // determine the lifetime of the buffer. In AllocationInfo, this buffer will
+   68:   // have `before` = node_idx and `after` = node_idx.
+   69:   int node_idx;
+   70:   int subgraph_idx;
+   71: };
+   72: 
+   73: }  // namespace internal
+   74: 
+   75: // Enum used to keep track of which MemoryPlanner is being used for
+   76: // MicroAllocater::Create();
+
+========== 3. MICRO ALLOCATOR PLAN CREATION ==========
+  1085	          return kTfLiteError;
+  1086	        }
+  1087	      }
+  1088	    }
+  1089	  }
+  1090	  return kTfLiteOk;
+  1091	}
+  1092	
+  1093	TfLiteTensor* MicroAllocator::AllocatePersistentTfLiteTensorInternal() {
+  1094	  return reinterpret_cast<TfLiteTensor*>(
+  1095	      persistent_buffer_allocator_->AllocatePersistentBuffer(
+  1096	          sizeof(TfLiteTensor), alignof(TfLiteTensor)));
+  1097	}
+  1098	
+  1099	TfLiteStatus MicroAllocator::PopulateTfLiteTensorFromFlatbuffer(
+  1100	    const Model* model, TfLiteTensor* tensor, int tensor_index,
+  1101	    int subgraph_idx, bool allocate_temp) {
+  1102	  // TODO(b/162311891): This method serves as a stub to ensure quantized
+  1103	  // allocations in the tail can be recorded. Once the interpreter has APIs for
+  1104	  // accessing buffers on TfLiteEvalTensor this method can be dropped.
+  1105	  return internal::InitializeTfLiteTensorFromFlatbuffer(
+  1106	      persistent_buffer_allocator_, non_persistent_buffer_allocator_,
+  1107	      allocate_temp,
+  1108	      *model->subgraphs()->Get(subgraph_idx)->tensors()->Get(tensor_index),
+  1109	      model->buffers(), tensor);
+  1110	}
+  1111	
+  1112	TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
+  1113	    const Model* model, SubgraphAllocations* allocations,
+  1114	    ScratchBufferHandle* scratch_buffer_handles) {
+  1115	  size_t head_usage = 0;
+  1116	  // Create static memory plan
+  1117	  // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+  1118	  // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+  1119	  // 3. Static memory planning using the planner.
+  1120	  // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+  1121	  //
+  1122	  // Note that AllocationInfo is only needed for creating the plan. It will be
+  1123	  // allocated from the temp section and cleaned up at the bottom of this
+  1124	  // function.
+  1125	
+  1126	  // Use the AllocationInfoBuilder class to help determine where buffers are
+  1127	  // used in the subgraph.
+  1128	  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+  1129	  TF_LITE_ENSURE_STATUS(
+  1130	      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+  1131	
+  1132	  const int32_t* offline_planner_offsets = nullptr;
+  1133	  TF_LITE_ENSURE_STATUS(
+  1134	      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+  1135	
+  1136	  // We allocate buffers for variable tensors here since the offline planner
+  1137	  // offsets are conviently available here.
+  1138	  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+  1139	       subgraph_idx++) {
+  1140	    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+  1141	    TFLITE_DCHECK(subgraph != nullptr);
+  1142	    TF_LITE_ENSURE_STATUS(AllocateVariables(
+  1143	        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+  1144	  }
+  1145	
+  1146	  TF_LITE_ENSURE_STATUS(
+  1147	      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+  1148	
+  1149	  internal::ScratchBufferRequest* scratch_buffer_requests =
+  1150	      GetScratchBufferRequests();
+  1151	  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+  1152	      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+  1153	  int allocation_info_count = builder.AllocationCount();
+  1154	  AllocationInfo* allocation_info = builder.Finish();
+  1155	
+  1156	  // Remaining arena size that memory planner can use for calculating offsets.
+  1157	  size_t remaining_arena_size =
+  1158	      non_persistent_buffer_allocator_->GetAvailableMemory(
+  1159	          MicroArenaBufferAlignment());
+  1160	  uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+  1161	      remaining_arena_size, MicroArenaBufferAlignment());
+  1162	
+  1163	  if (planner_arena == nullptr) {
+  1164	    return kTfLiteError;
+  1165	  }
+  1166	
+  1167	  memory_planner_->Init(planner_arena, remaining_arena_size);
+  1168	  TF_LITE_ENSURE_STATUS(
+  1169	      CreatePlan(memory_planner_, allocation_info, allocation_info_count));
+  1170	
+  1171	  // Commit the plan.
+  1172	  TF_LITE_ENSURE_STATUS(
+  1173	      CommitPlan(memory_planner_,
+  1174	                 non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+  1175	                 allocation_info, allocation_info_count));
+  1176	
+  1177	  // Reset all temp allocations used above:
+  1178	  builder.FreeAllocationInfo();
+  1179	  non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+  1180	  TF_LITE_ENSURE_STATUS(
+  1181	      non_persistent_buffer_allocator_->ResetTempAllocations());
+  1182	  TF_LITE_ENSURE_STATUS(
+  1183	      non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+  1184	          scratch_buffer_head_));
+  1185	
+  1186	#ifdef TF_LITE_SHOW_MEMORY_USE
+  1187	  memory_planner_->PrintMemoryPlan();
+  1188	#endif
+  1189	  head_usage = memory_planner_->GetMaximumMemorySize();
+  1190	
+  1191	  // The head is used to store memory plans for one model at a time during the
+  1192	  // model preparation stage, and is re-purposed to store scratch buffer handles
+  1193	  // during model invocation. The head must be as large as the greater of the
+  1194	  // largest model memory plan's size and the total space required for all
+  1195	  // scratch buffer handles.
+  1196	  if (max_head_buffer_usage_ < head_usage) {
+  1197	    max_head_buffer_usage_ = head_usage;
+  1198	  }
+  1199	
+  1200	  // The head is used for storing scratch buffer allocations before finalizing a
+  1201	  // memory plan in this function. Ensure that the head is set to the largest
+  1202	  // memory plan sent through the allocator:
+  1203	  TF_LITE_ENSURE_STATUS(
+  1204	      non_persistent_buffer_allocator_->ReserveNonPersistentOverlayMemory(
+  1205	          max_head_buffer_usage_, MicroArenaBufferAlignment()));
+  1206	  return kTfLiteOk;
+  1207	}
+  1208	
+  1209	TfLiteStatus MicroAllocator::AllocateScratchBufferHandles(
+  1210	    ScratchBufferHandle** scratch_buffer_handles, size_t handle_count) {
+
+========== 4. GREEDY PLANNER TIME OVERLAP ==========
+    88	GreedyMemoryPlanner::~GreedyMemoryPlanner() {
+    89	  // We don't own the scratch buffer, so don't deallocate anything.
+    90	}
+    91	
+    92	TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+    93	                                            int last_time_used) {
+    94	  if (buffer_count_ >= max_buffer_count_) {
+    95	    MicroPrintf("Too many buffers (max is %d)", max_buffer_count_);
+    96	    return kTfLiteError;
+    97	  }
+    98	  BufferRequirements* current = &requirements_[buffer_count_];
+    99	  current->size = size;
+   100	  current->first_time_used = first_time_used;
+   101	  current->last_time_used = last_time_used;
+   102	  current->offline_offset = kOnlinePlannedBuffer;
+   103	  ++buffer_count_;
+   104	  need_to_calculate_offsets_ = true;
+   105	  return kTfLiteOk;
+   106	}
+   107	
+   108	TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+   109	                                            int last_time_used,
+   110	                                            int offline_offset) {
+   111	  BufferRequirements* current = &requirements_[buffer_count_];
+   112	  if (AddBuffer(size, first_time_used, last_time_used) != kTfLiteOk) {
+   113	    return kTfLiteError;
+   114	  }
+   115	  current->offline_offset = offline_offset;
+   116	  return kTfLiteOk;
+   117	}
+   118	
+   119	bool GreedyMemoryPlanner::DoesEntryOverlapInTime(
+   120	    const GreedyMemoryPlanner::ListEntry* entry, const int first_time_used,
+   121	    const int last_time_used) const {
+   122	  const BufferRequirements* entry_requirements =
+   123	      &requirements_[entry->requirements_index];
+   124	  if (entry_requirements->first_time_used > last_time_used) {
+   125	    return false;
+   126	  }
+   127	  if (first_time_used > entry_requirements->last_time_used) {
+   128	    return false;
+   129	  }
+   130	  return true;
+   131	}
+   132	
+   133	GreedyMemoryPlanner::ListEntry*
+   134	GreedyMemoryPlanner::NextSimultaneouslyActiveBuffer(
+   135	    const GreedyMemoryPlanner::ListEntry* start, const int first_time_used,
+   136	    const int last_time_used) {
+   137	  ListEntry* result = nullptr;
+   138	  ListEntry* candidate_next_entry;
+   139	  if (start == nullptr) {
+   140	    candidate_next_entry = &buffers_sorted_by_offset_[first_entry_index_];
+   141	  } else {
+   142	    if (start->next_entry_index == -1) {
+   143	      return nullptr;
+   144	    }
+   145	    candidate_next_entry = &buffers_sorted_by_offset_[start->next_entry_index];
+   146	  }
+   147	  do {
+   148	    if (DoesEntryOverlapInTime(candidate_next_entry, first_time_used,
+   149	                               last_time_used)) {
+   150	      result = candidate_next_entry;
+   151	      break;
+   152	    }
+   153	    if (candidate_next_entry->next_entry_index == -1) {
+   154	      break;
+   155	    }
+   156	    candidate_next_entry =
+   157	        &buffers_sorted_by_offset_[candidate_next_entry->next_entry_index];
+   158	  } while (true);
+   159	  return result;
+   160	}
+   161	
+   162	void GreedyMemoryPlanner::CalculateOffsetsIfNeeded() {
+   163	  if (!need_to_calculate_offsets_ || (buffer_count_ == 0)) {
+   164	    return;
+   165	  }
+
+========== 5. GREEDY PLANNER OFFSET ASSIGNMENT ==========
+   162	void GreedyMemoryPlanner::CalculateOffsetsIfNeeded() {
+   163	  if (!need_to_calculate_offsets_ || (buffer_count_ == 0)) {
+   164	    return;
+   165	  }
+   166	  need_to_calculate_offsets_ = false;
+   167	
+   168	  // Start off by ordering the buffers in descending order of size.
+   169	  // This helps find a more compact layout. Intuitively, you can think
+   170	  // about putting the large buffers in place first, and then the
+   171	  // smaller buffers can fit in the gaps, rather than fragmenting the
+   172	  // gaps with small buffers at the beginning. Add offline planned offsets
+   173	  // first in the list, since they have a predetermined offset.
+   174	  int idx_from_tail = buffer_count_;
+   175	  int idx_from_head = 0;
+   176	  for (int i = 0; i < buffer_count_; ++i) {
+   177	    if (requirements_[i].offline_offset == kOnlinePlannedBuffer) {
+   178	      idx_from_tail--;
+   179	      buffer_sizes_sorted_[idx_from_tail] = requirements_[i].size;
+   180	      buffer_ids_sorted_[idx_from_tail] = i;
+   181	      buffer_offsets_[i] = -1;
+   182	    } else {
+   183	      buffer_sizes_sorted_[idx_from_head] = requirements_[i].size;
+   184	      buffer_ids_sorted_[idx_from_head] = i;
+   185	      buffer_offsets_[i] = requirements_[i].offline_offset;
+   186	      idx_from_head++;
+   187	    }
+   188	  }
+   189	
+   190	  // This sorting algorithm is naive, and may end up taking a very long time
+   191	  // with hundreds of buffers. Do not sort the offline planned offsets.
+   192	  ReverseSortInPlace(&buffer_sizes_sorted_[idx_from_head],
+   193	                     &buffer_ids_sorted_[idx_from_head],
+   194	                     buffer_count_ - idx_from_head);
+   195	
+   196	  // Initialize the first entry to the first buffer in
+   197	  // buffer_ids_sorted_.
+   198	  //   - If there are no offline planned offsets, the largest buffer will be
+   199	  //     first, and the buffers will be handled in size order.
+   200	  //   - If offline offsets are present, these will be handled first in order
+   201	  //     for the greedy algorithm to utilized gaps in the offline plan.
+   202	  first_entry_index_ = 0;
+   203	  next_free_entry_ = 1;
+   204	  ListEntry* first_entry = &buffers_sorted_by_offset_[first_entry_index_];
+   205	  first_entry->next_entry_index = -1;  // to mark the entry as end of list
+   206	  int buffer_id = buffer_ids_sorted_[0];
+   207	  first_entry->requirements_index = buffer_id;
+   208	  if (requirements_[buffer_id].offline_offset == kOnlinePlannedBuffer) {
+   209	    buffer_offsets_[buffer_id] = 0;
+   210	  }
+   211	  first_entry->offset = buffer_offsets_[buffer_id];
+   212	
+   213	  // Work through the rest of the buffers to find a good gap to place each one.
+   214	  for (int i = 1; i < buffer_count_; ++i) {
+   215	    // The id is the order the buffer was originally added by the client.
+   216	    buffer_id = buffer_ids_sorted_[i];
+   217	    // Look at what size and time range the buffer needs to be active.
+   218	    BufferRequirements* wanted_requirements = &requirements_[buffer_id];
+   219	    const int wanted_size = wanted_requirements->size;
+   220	    const int wanted_first_time_used = wanted_requirements->first_time_used;
+   221	    const int wanted_last_time_used = wanted_requirements->last_time_used;
+   222	
+   223	    // Find the first buffer that's active in our time range. All placed
+   224	    // buffers are stored in the order of their starting position in the arena
+   225	    // so that it's easy to find the next buffer in memory, and so the gap.
+   226	    // The candidate_entry variable holds the buffer that we're considering
+   227	    // placing the current buffer after.
+   228	
+   229	    int candidate_offset = 0;
+   230	    // Loop through the offset-ordered list of buffers, looking for gaps.
+   231	    if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
+   232	      ListEntry* prior_entry = nullptr;
+   233	      while (true) {
+   234	        // Find out what the next active buffer is.
+   235	        ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
+   236	            prior_entry, wanted_first_time_used, wanted_last_time_used);
+   237	
+   238	        if (prior_entry) {
+   239	          BufferRequirements* candidate_requirements =
+   240	              &requirements_[prior_entry->requirements_index];
+   241	          const int prior_entry_offset =
+   242	              prior_entry->offset + candidate_requirements->size;
+   243	          if (prior_entry_offset > candidate_offset) {
+   244	            candidate_offset = prior_entry_offset;
+   245	          }
+   246	        }
+   247	        if (next_entry == nullptr) {
+   248	          // We're at the end of the list, so we can always append the buffer
+   249	          // here.
+   250	          break;
+   251	        }
+   252	        // Find out how much space there is between us and the next buffer.
+   253	        const int gap = next_entry->offset - candidate_offset;
+   254	        if (gap >= wanted_size) {
+   255	          // This entry has a big enough gap between it and the next, so
+   256	          // use it!
+   257	          break;
+   258	        }
+   259	        // The gap wasn't big enough, so move on to another candidate.
+   260	        prior_entry = next_entry;
+   261	      }
+   262	    } else {
+   263	      // Offline planned offset are to be considered constant
+   264	      candidate_offset = wanted_requirements->offline_offset;
+   265	    }
+   266	    // At this point, we've either found a gap (possibly at the end of the
+   267	    // list) and want to place the buffer there, or there are no other active
+   268	    // buffers in this time range and so we can put it at offset zero.
+   269	    // Record the buffer's offset in our plan.
+   270	    buffer_offsets_[buffer_id] = candidate_offset;
+   271	    // Add the newly-placed buffer to our offset-ordered list, so that
+   272	    // subsequent passes can fit in their buffers around it.
+   273	    ListEntry* new_entry = &buffers_sorted_by_offset_[next_free_entry_];
+   274	    new_entry->offset = candidate_offset;
+   275	    new_entry->requirements_index = buffer_id;
+   276	    const int new_entry_index = next_free_entry_;
+   277	    ++next_free_entry_;
+   278	
+   279	    if (first_entry->offset > candidate_offset) {
+   280	      // The new entry offset is smaller than the first entry offset =>
+   281	      // replace the first entry
+   282	      first_entry = new_entry;
+   283	      first_entry->next_entry_index = first_entry_index_;
+   284	      first_entry_index_ = new_entry_index;
+   285	    } else {
+   286	      ListEntry* current_entry = first_entry;
+   287	      // Make sure that we insert the buffer at the correct place in the
+   288	      // buffer-offset-ordered list
+   289	      while (true) {
+   290	        const int next_entry_index = current_entry->next_entry_index;
+   291	        if (next_entry_index == -1) {
+   292	          // We're at the end of the list, so just add the new entry here.
+   293	          current_entry->next_entry_index = new_entry_index;
+   294	          new_entry->next_entry_index = -1;
+   295	          break;
+   296	        }
+   297	        // not at the end of the list -> take a look at next entry
+   298	        ListEntry* next_entry = &buffers_sorted_by_offset_[next_entry_index];
+   299	        if (next_entry->offset > candidate_offset) {
+   300	          // We're at the right spot to do an insertion and retain the sorting
+   301	          // order, so place the new entry here.
+   302	          new_entry->next_entry_index = current_entry->next_entry_index;
+   303	          current_entry->next_entry_index = new_entry_index;
+   304	          break;
+   305	        }
+   306	        current_entry = next_entry;
+   307	      }
+   308	    }
+   309	  }
+   310	}
+
+========== 6. GET EVAL TENSOR IMPLEMENTATION ==========
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc
+...
+   63:   allocated_temp_count_--;
+   64:   allocator_->DeallocateTemp(buffer);
+   65: }
+   66: 
+   67: TfLiteEvalTensor* FakeMicroContext::GetEvalTensor(int tensor_index) {
+   68:   TfLiteEvalTensor* eval_tensor =
+   69:       reinterpret_cast<TfLiteEvalTensor*>(allocator_->AllocateTemp(
+   70:           sizeof(TfLiteEvalTensor), alignof(TfLiteEvalTensor)));
+   71:   TFLITE_DCHECK(eval_tensor != nullptr);
+   72: 
+   73:   // In unit tests, the TfLiteTensor pointer contains the source of truth for
+   74:   // buffers and values:
+   75:   eval_tensor->data = tensors_[tensor_index].data;
+   76:   eval_tensor->dims = tensors_[tensor_index].dims;
+   77:   eval_tensor->type = tensors_[tensor_index].type;
+   78:   return eval_tensor;
+   79: }
+   80: 
+   81: void* FakeMicroContext::AllocatePersistentBuffer(size_t bytes) {
+   82:   // FakeMicroContext use SingleArenaBufferAllocator, which does not
+   83:   // automatically apply the buffer alignment like MicroAllocator. The buffer
+   84:   // alignment is potentially wasteful but allows the fake_micro_context to work
+   85:   // correctly with optimized kernels.
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.h
+...
+   48: 
+   49:   uint8_t* AllocateTempBuffer(size_t size, size_t alignment) override;
+   50:   void DeallocateTempBuffer(uint8_t* buffer) override;
+   51: 
+   52:   TfLiteEvalTensor* GetEvalTensor(int tensor_index) override;
+   53: 
+   54:   TfLiteStatus set_external_context(void* external_context_payload) override;
+   55:   void* external_context() override;
+   56:   MicroGraph& graph() override;
+   57: 
+   58: #ifdef USE_TFLM_COMPRESSION
+   59: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_matmul.cc
+...
+   90: 
+   91: TfLiteEvalTensor* AllocInitTransposeTensorFromTfLiteTensor(
+   92:     TfLiteContext* context, const TfLiteTensor& tensor) {
+   93:   MicroContext* micro_context = GetMicroContext(context);
+   94:   TfLiteEvalTensor* eval_tensor = static_cast<TfLiteEvalTensor*>(
+   95:       micro_context->AllocatePersistentBuffer(sizeof(TfLiteEvalTensor)));
+   96:   if (eval_tensor == nullptr) {
+   97:     return nullptr;
+   98:   }
+   99: 
+  100:   eval_tensor->type = tensor.type;
+  101: 
+  102:   const int tensor_rank = NumDimensions(&tensor);
+  103:   const size_t eval_dims_size = TfLiteIntArrayGetSizeInBytes(tensor_rank);
+  104:   eval_tensor->dims = static_cast<TfLiteIntArray*>(
+  105:       micro_context->AllocatePersistentBuffer(eval_dims_size));
+  106:   if (eval_tensor->dims == nullptr) {
+  107:     return nullptr;
+  108:   }
+  109:   eval_tensor->dims->size = tensor_rank;
+  110:   for (int i = 0; i < tensor_rank - 2; ++i) {
+  111:     eval_tensor->dims->data[i] = tensor.dims->data[i];
+  112:   }
+  113:   // Swap last two dimensions.
+  114:   eval_tensor->dims->data[tensor_rank - 2] = tensor.dims->data[tensor_rank - 1];
+  115:   eval_tensor->dims->data[tensor_rank - 1] = tensor.dims->data[tensor_rank - 2];
+  116: 
+  117:   const size_t eval_data_size = static_cast<size_t>(NumElements(&tensor)) *
+  118:                                 TfLiteTypeGetSize(tensor.type);
+  119:   eval_tensor->data.data =
+  120:       micro_context->AllocatePersistentBuffer(eval_data_size);
+  121:   if (eval_tensor->data.data == nullptr) {
+  122:     return nullptr;
+  123:   }
+  124: 
+  125:   return eval_tensor;
+  126: }
+  127: 
+  128: // Initializes tensors to store transposed operands.
+  129: // Allocate storage for hybrid quantization if needed.
+  130: // Allocate normal quantization data if needed.
+  131: TfLiteStatus InitializeTemporaries(TfLiteContext* context, TfLiteNode* node,
+  132:                                    const PrepareOpContext& op_context) {
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cmsis_nn/batch_matmul.cc
+...
+  136: 
+  137: TfLiteEvalTensor* AllocInitTransposeTensorFromTfLiteTensor(
+  138:     TfLiteContext* context, MicroContext* micro_context,
+  139:     const TfLiteTensor& tensor) {
+  140:   TfLiteEvalTensor* eval_tensor = static_cast<TfLiteEvalTensor*>(
+  141:       micro_context->AllocatePersistentBuffer(sizeof(TfLiteEvalTensor)));
+  142:   if (eval_tensor == nullptr) {
+  143:     return nullptr;
+  144:   }
+  145: 
+  146:   eval_tensor->type = tensor.type;
+  147: 
+  148:   const int tensor_rank = NumDimensions(&tensor);
+  149:   const size_t eval_dims_size = TfLiteIntArrayGetSizeInBytes(tensor_rank);
+  150:   eval_tensor->dims = static_cast<TfLiteIntArray*>(
+  151:       micro_context->AllocatePersistentBuffer(eval_dims_size));
+  152:   if (eval_tensor->dims == nullptr) {
+  153:     return nullptr;
+  154:   }
+  155:   eval_tensor->dims->size = tensor_rank;
+  156:   for (int i = 0; i < tensor_rank - 2; ++i) {
+  157:     eval_tensor->dims->data[i] = tensor.dims->data[i];
+  158:   }
+  159:   // Swap last two dimensions.
+  160:   eval_tensor->dims->data[tensor_rank - 2] = tensor.dims->data[tensor_rank - 1];
+  161:   eval_tensor->dims->data[tensor_rank - 1] = tensor.dims->data[tensor_rank - 2];
+  162: 
+  163:   const size_t eval_data_size = static_cast<size_t>(NumElements(&tensor)) *
+  164:                                 TfLiteTypeGetSize(tensor.type);
+  165:   eval_tensor->data.data =
+  166:       micro_context->AllocatePersistentBuffer(eval_data_size);
+  167:   if (eval_tensor->data.data == nullptr) {
+  168:     return nullptr;
+  169:   }
+  170: 
+  171:   return eval_tensor;
+  172: }
+  173: 
+  174: void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+  175:   TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+  176:   return context->AllocatePersistentBuffer(context, sizeof(OpData));
+  177: }
+  178: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+...
+   97:     return kTfLiteError;
+   98:   }
+   99: 
+  100:   // Get command stream data address.
+  101:   tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+  102:   cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+  103: 
+  104:   // Get addresses to weights/scratch/input data.
+  105:   for (i = 1; i < node->inputs->size; ++i) {
+  106:     tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+  107:     base_addrs[num_tensors] =
+  108:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+  109:     size_t byte_size = 1;
+  110:     for (int k = 0; k < tensor->dims->size; k++) {
+  111:       byte_size = byte_size * tensor->dims->data[k];
+  112:     }
+  113:     base_addrs_size[num_tensors] = byte_size;
+...
+  115:   }
+  116: 
+  117:   // Get addresses to output data.
+  118:   for (i = 0; i < node->outputs->size; ++i) {
+  119:     tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+  120:     base_addrs[num_tensors] =
+  121:         static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+  122:     size_t byte_size = 1;
+  123:     for (int k = 0; k < tensor->dims->size; k++) {
+  124:       byte_size = byte_size * tensor->dims->data[k];
+  125:     }
+  126:     base_addrs_size[num_tensors] = byte_size;
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc
+...
+   57:   context_.impl_ = static_cast<void*>(&fake_micro_context_);
+   58:   context_.ReportError = MicroContextReportOpError;
+   59:   context_.recommended_num_threads = 1;
+   60:   context_.GetTensor = MicroContextGetTensor;
+   61:   context_.GetEvalTensor = MicroContextGetEvalTensor;
+   62:   tflite::micro::ClearBufferApi(&context_);
+   63:   context_.AllocatePersistentBuffer = MicroContextAllocatePersistentBuffer;
+   64: 
+   65:   context_.recommended_num_threads = 0;
+   66: 
+   67:   // Prepare TfLiteNode:
+   68:   node_.inputs = inputs;
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.cc
+...
+   74:   if (tensor_index < 0) {
+   75:     return nullptr;
+   76:   }
+   77: 
+   78:   return context->GetEvalTensor(context, node->inputs->data[index]);
+   79: }
+   80: 
+   81: // Returns the TfLiteEvalTensor struct for a given input index in a node.
+   82: const TfLiteEvalTensor* GetEvalInput(const TfLiteContext* context,
+   83:                                      const TfLiteNode* node, int index) {
+   84:   return GetMutableEvalInput(context, node, index);
+   85: }
+...
+   88: TfLiteEvalTensor* GetEvalOutput(const TfLiteContext* context,
+   89:                                 const TfLiteNode* node, int index) {
+   90:   TFLITE_DCHECK(context != nullptr);
+   91:   TFLITE_DCHECK(node != nullptr);
+   92:   return context->GetEvalTensor(context, node->outputs->data[index]);
+   93: }
+   94: 
+   95: bool HaveSameShapes(const TfLiteEvalTensor* input1,
+   96:                     const TfLiteEvalTensor* input2) {
+   97:   TFLITE_DCHECK(input1 != nullptr);
+   98:   TFLITE_DCHECK(input2 != nullptr);
+   99:   return TfLiteIntArrayEqual(input1->dims, input2->dims);
+...
+  122: }
+  123: 
+  124: // Relocate tensor dims from FlatBuffer to the persistent storage arena.
+  125: // The old dims data is copied to the new storage area.
+  126: // The tensor and eval_tensor must be the same tensor.
+  127: // Only use during Prepare phase.
+  128: TfLiteStatus CreateWritableTensorDimsWithCopy(TfLiteContext* context,
+  129:                                               TfLiteTensor* tensor,
+  130:                                               TfLiteEvalTensor* eval_tensor) {
+  131:   TF_LITE_ENSURE(context, tensor != nullptr);
+  132:   TF_LITE_ENSURE(context, eval_tensor != nullptr);
+  133:   TF_LITE_ENSURE(context, context->AllocatePersistentBuffer != nullptr);
+  134:   int ranks = tensor->dims->size;
+  135:   size_t alloc_size = TfLiteIntArrayGetSizeInBytes(ranks);
+  136:   TfLiteIntArray* new_dims = static_cast<TfLiteIntArray*>(
+  137:       context->AllocatePersistentBuffer(context, alloc_size));
+  138:   TfLiteIntArray* old_dims = tensor->dims;
+  139:   new_dims->size = ranks;
+  140:   tensor->dims = new_dims;
+  141:   eval_tensor->dims = new_dims;
+  142:   for (int i = 0; i < ranks; i++) {
+  143:     new_dims->data[i] = old_dims->data[i];
+  144:   }
+  145: 
+  146:   return kTfLiteOk;
+  147: }
+  148: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.h
+...
+  152: PaddingType RuntimePaddingType(TfLitePadding padding);
+  153: 
+  154: // Relocate tensor dims from FlatBuffer to the persistent storage arena.
+  155: // The old dims data is copied to the new storage area.
+  156: // The tensor and eval_tensor must be the same tensor.
+  157: // Only use during Prepare phase.
+  158: TfLiteStatus CreateWritableTensorDimsWithCopy(TfLiteContext* context,
+  159:                                               TfLiteTensor* tensor,
+  160:                                               TfLiteEvalTensor* eval_tensor);
+  161: 
+  162: // Copy all op input tensors to op output tensors. Requires all op input tensor
+  163: // shapes and types to be identical to op output tensor shapes and types.
+  164: TfLiteStatus CopyOpInputsToOpOutputs(TfLiteContext* context, TfLiteNode* node);
+  165: 
+  166: // Copy all op input tensors to subgraph input tensors. Requires all op input
+  167: // tensor shapes and types to be identical to subgraph input tensor shapes and
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval_test.cc
+...
+   49:           gate_output_data.cell_state);
+   50: 
+   51:   // Forget gate
+   52:   tflite::testing::TestCalculateLstmGateFloat<2, 2>(
+   53:       float_node_contents.GetEvalTensor(tflite::kLstmInputTensor),
+   54:       float_node_contents.GetEvalTensor(
+   55:           tflite::kLstmInputToForgetWeightsTensor),
+   56:       float_node_contents.GetEvalTensor(tflite::kLstmForgetGateBiasTensor),
+   57:       // Recurrent FC
+   58:       float_node_contents.HiddenStateEvalTensor(),
+   59:       float_node_contents.GetEvalTensor(
+   60:           tflite::kLstmRecurrentToForgetWeightsTensor),
+   61:       nullptr,  // bias fused to activation FC,
+   62:       // Result comparison
+   63:       kTfLiteActSigmoid, gate_output_data.expected_forget_gate_output,
+   64:       kTestFloatTolerance);
+   65: 
+   66:   // Input gate
+   67:   tflite::testing::TestCalculateLstmGateFloat<2, 2>(
+   68:       float_node_contents.GetEvalTensor(tflite::kLstmInputTensor),
+   69:       float_node_contents.GetEvalTensor(tflite::kLstmInputToInputWeightsTensor),
+   70:       float_node_contents.GetEvalTensor(tflite::kLstmInputGateBiasTensor),
+   71:       // Recurrent FC
+   72:       float_node_contents.HiddenStateEvalTensor(),
+   73:       float_node_contents.GetEvalTensor(
+   74:           tflite::kLstmRecurrentToInputWeightsTensor),
+   75:       nullptr,  // bias fused to activation FC,
+   76:       // Result comparison
+   77:       kTfLiteActSigmoid, gate_output_data.expected_input_gate_output,
+   78:       kTestFloatTolerance);
+   79: 
+   80:   // Output gate
+   81:   tflite::testing::TestCalculateLstmGateFloat<2, 2>(
+   82:       float_node_contents.GetEvalTensor(tflite::kLstmInputTensor),
+   83:       float_node_contents.GetEvalTensor(
+   84:           tflite::kLstmInputToOutputWeightsTensor),
+   85:       float_node_contents.GetEvalTensor(tflite::kLstmOutputGateBiasTensor),
+   86:       // Recurrent FC
+   87:       float_node_contents.HiddenStateEvalTensor(),
+   88:       float_node_contents.GetEvalTensor(
+   89:           tflite::kLstmRecurrentToOutputWeightsTensor),
+   90:       nullptr,  // bias fused to activation FC,
+   91:       // Result comparison
+   92:       kTfLiteActSigmoid, gate_output_data.expected_output_gate_output,
+   93:       kTestFloatTolerance);
+   94: 
+   95:   // Cell gate
+   96:   tflite::testing::TestCalculateLstmGateFloat<2, 2>(
+   97:       float_node_contents.GetEvalTensor(tflite::kLstmInputTensor),
+   98:       float_node_contents.GetEvalTensor(tflite::kLstmInputToCellWeightsTensor),
+   99:       float_node_contents.GetEvalTensor(tflite::kLstmCellGateBiasTensor),
+  100:       // Recurrent FC
+  101:       float_node_contents.HiddenStateEvalTensor(),
+  102:       float_node_contents.GetEvalTensor(
+  103:           tflite::kLstmRecurrentToCellWeightsTensor),
+  104:       nullptr,  // bias fused to activation FC,
+  105:       // Result comparison
+  106:       float_node_contents.BuiltinData().activation,
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval_test.h
+...
+  156:         node_contents) {
+  157:   LSTMKernelContents kernel_content;
+  158:   // Point to correct tensors
+  159:   kernel_content.internal_tensors[kLstmInputTensor] =
+  160:       node_contents.GetEvalTensor(kLstmInputTensor);
+  161:   kernel_content.internal_tensors[kLstmInputToInputWeightsTensor] =
+  162:       node_contents.GetEvalTensor(kLstmInputToInputWeightsTensor);
+  163:   kernel_content.internal_tensors[kLstmInputToForgetWeightsTensor] =
+  164:       node_contents.GetEvalTensor(kLstmInputToForgetWeightsTensor);
+  165:   kernel_content.internal_tensors[kLstmInputToCellWeightsTensor] =
+  166:       node_contents.GetEvalTensor(kLstmInputToCellWeightsTensor);
+  167:   kernel_content.internal_tensors[kLstmInputToOutputWeightsTensor] =
+  168:       node_contents.GetEvalTensor(kLstmInputToOutputWeightsTensor);
+  169:   kernel_content.internal_tensors[kLstmRecurrentToInputWeightsTensor] =
+  170:       node_contents.GetEvalTensor(kLstmRecurrentToInputWeightsTensor);
+  171:   kernel_content.internal_tensors[kLstmRecurrentToForgetWeightsTensor] =
+  172:       node_contents.GetEvalTensor(kLstmRecurrentToForgetWeightsTensor);
+  173:   kernel_content.internal_tensors[kLstmRecurrentToCellWeightsTensor] =
+  174:       node_contents.GetEvalTensor(kLstmRecurrentToCellWeightsTensor);
+  175:   kernel_content.internal_tensors[kLstmRecurrentToOutputWeightsTensor] =
+  176:       node_contents.GetEvalTensor(kLstmRecurrentToOutputWeightsTensor);
+  177:   kernel_content.internal_tensors[kLstmInputGateBiasTensor] =
+  178:       node_contents.GetEvalTensor(kLstmInputGateBiasTensor);
+  179:   kernel_content.internal_tensors[kLstmForgetGateBiasTensor] =
+  180:       node_contents.GetEvalTensor(kLstmForgetGateBiasTensor);
+  181:   kernel_content.internal_tensors[kLstmCellGateBiasTensor] =
+  182:       node_contents.GetEvalTensor(kLstmCellGateBiasTensor);
+  183:   kernel_content.internal_tensors[kLstmOutputGateBiasTensor] =
+  184:       node_contents.GetEvalTensor(kLstmOutputGateBiasTensor);
+  185:   kernel_content.internal_tensors[kLstmOutputStateTensor] =
+  186:       node_contents.GetEvalTensor(kLstmOutputStateTensor);
+  187:   kernel_content.internal_tensors[kLstmOutputGateBiasTensor] =
+  188:       node_contents.GetEvalTensor(kLstmOutputGateBiasTensor);
+  189:   kernel_content.internal_tensors[kLstmCellStateTensor] =
+  190:       node_contents.GetEvalTensor(kLstmCellStateTensor);
+  191:   // Not used internal tensors
+  192:   kernel_content.internal_tensors[kLstmCellToInputWeightsTensor] = nullptr;
+  193:   kernel_content.internal_tensors[kLstmCellToForgetWeightsTensor] = nullptr;
+  194:   kernel_content.internal_tensors[kLstmCellToOutputWeightsTensor] = nullptr;
+  195:   kernel_content.internal_tensors[kLstmProjectionWeightsTensor] = nullptr;
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/testdata/lstm_test_data.h
+...
+  241:   CellType* GetCellStateData() { return cell_state_; }
+  242:   ActivationType* GetOutputData() { return output_; }
+  243: 
+  244:   // Internal tensors, see lstm_shared.h for tensor names
+  245:   TfLiteEvalTensor* GetEvalTensor(const int tensor_index) {
+  246:     auto valid_index = input_tensor_indices_[tensor_index + 1];
+  247:     if (valid_index < 0) {
+  248:       return nullptr;
+  249:     }
+  250:     return &eval_tensors_[tensor_index];
+  251:   }
+  252: 
+  253:   TfLiteTensor* GetTensors() { return tensors_; }
+  254: 
+  255:   // Required by the kernel runner
+  256:   TfLiteIntArray* KernelInputs() {
+  257:     return IntArrayFromInts(input_tensor_indices_);
+...
+  262:   }
+  263: 
+  264:   // Variable tensors (will be changed, can not be const)
+  265:   TfLiteEvalTensor* HiddenStateEvalTensor() {
+  266:     return &eval_tensors_[kLstmOutputStateTensor];
+  267:   }
+  268:   TfLiteEvalTensor* CellStateEvalTensor() {
+  269:     return &eval_tensors_[kLstmCellStateTensor];
+  270:   }
+  271:   TfLiteEvalTensor* OutputEvalTensor() { return &eval_tensors_[24]; }
+  272: 
+  273:   const GateData<WeightType, BiasType, input_dimension, state_dimension>&
+  274:   ForgetGateData() const {
+  275:     return forget_gate_data_;
+  276:   }
+  277:   const GateData<WeightType, BiasType, input_dimension, state_dimension>&
+  278:   InputGateData() const {
+...
+  348:     tensors_[index].dims = IntArrayFromInts(dims);
+  349:     tensors_[index].type = typeToTfLiteType<T>();
+  350:     tensors_[index].is_variable = is_variable;
+  351:     // Eval tensors for internal computation testing
+  352:     eval_tensors_[index].data.data = const_cast<T*>(data);
+  353:     eval_tensors_[index].dims = IntArrayFromInts(dims);
+  354:     eval_tensors_[index].type = typeToTfLiteType<T>();
+  355:     // update the index
+  356:     if (index < 24) {
+  357:       input_tensor_indices_[index + 1] = index;
+  358:     }
+  359:   }
+  360: 
+  361:   void SetTensorQuantizationParam(
+...
+  391: 
+  392:   // see lstm_shared.h for tensor names, the last tensor is the output tensor
+  393:   TfLiteTensor tensors_[24 + 1] = {};
+  394:   // Use for internel kernel testing
+  395:   TfLiteEvalTensor eval_tensors_[24 + 1] = {};
+  396:   // indices for the tensors inside the node (required by kernel runner)
+  397:   int input_tensor_indices_[1 + 24] = {};
+  398:   // single output (last in the tensors array)
+  399:   int output_tensor_indices_[2] = {1, 24};
+  400: 
+  401:   // tennsor data
+  402:   // states are initialized to zero
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc
+...
+  122:   *bytes = element_count * (*type_size);
+  123:   return kTfLiteOk;
+  124: }
+  125: 
+  126: TfLiteStatus TfLiteEvalTensorByteLength(const TfLiteEvalTensor* eval_tensor,
+  127:                                         size_t* out_bytes) {
+  128:   TFLITE_DCHECK(out_bytes != nullptr);
+  129: 
+  130:   int element_count = 1;
+  131:   // If eval_tensor->dims == nullptr, then tensor is a scalar so has 1 element.
+  132:   if (eval_tensor->dims != nullptr) {
+  133:     for (int n = 0; n < eval_tensor->dims->size; ++n) {
+  134:       element_count *= eval_tensor->dims->data[n];
+  135:     }
+  136:   }
+  137:   size_t type_size;
+  138:   TF_LITE_ENSURE_STATUS(TfLiteTypeSizeOf(eval_tensor->type, &type_size));
+  139:   *out_bytes = element_count * type_size;
+  140:   return kTfLiteOk;
+  141: }
+  142: 
+  143: TfLiteStatus AllocateOutputDimensionsFromInput(TfLiteContext* context,
+  144:                                                const TfLiteTensor* input1,
+  145:                                                const TfLiteTensor* input2,
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.h
+...
+   47:                                     size_t* bytes, size_t* type_size);
+   48: 
+   49: // How many bytes are used in a TfLiteEvalTensor instance. The byte length is
+   50: // returned in out_bytes.
+   51: TfLiteStatus TfLiteEvalTensorByteLength(const TfLiteEvalTensor* eval_tensor,
+   52:                                         size_t* out_bytes);
+   53: 
+   54: // Deduce output dimensions from input and allocate given size.
+   55: // Useful for operators with two inputs where the largest input should equal the
+   56: // output dimension.
+   57: TfLiteStatus AllocateOutputDimensionsFromInput(TfLiteContext* context,
+   58:                                                const TfLiteTensor* input1,
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+...
+  151:   return kTfLiteOk;
+  152: }
+  153: 
+  154: TfLiteStatus AllocationInfoBuilder::ValidateSubgraph(
+  155:     const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors) {
+  156:   uint32_t operators_size = NumSubgraphOperators(subgraph);
+  157: 
+  158:   for (uint32_t i = 0; i < operators_size; i++) {
+  159:     const auto op = subgraph->operators()->Get(i);
+  160:     for (size_t n = 0;
+  161:          op->intermediates() != nullptr && n < op->intermediates()->size();
+  162:          n++) {
+  163:       const int tensor_index = op->intermediates()->Get(n);
+  164:       size_t tensor_size = -1;
+  165:       TF_LITE_ENSURE_STATUS(TfLiteEvalTensorByteLength(
+  166:           &eval_tensors[tensor_index], &tensor_size));
+  167:       if (tensor_size != 0) {
+  168:         MicroPrintf(
+  169:             "Does not support intermediate tensor with non-zero size: %d",
+  170:             tensor_size);
+  171:         return kTfLiteError;
+  172:       }
+  173:     }
+...
+  182:   int offline_index = 0;
+  183:   for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+  184:        subgraph_idx++) {
+  185:     const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+  186:     TfLiteEvalTensor* eval_tensors = allocations[subgraph_idx].tensors;
+  187:     AllocationInfo* subgraph_allocation_info =
+  188:         &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+  189: 
+  190:     // Ensure constraints are met.
+  191:     TF_LITE_ENSURE_STATUS(ValidateSubgraph(subgraph, eval_tensors));
+  192: 
+  193:     for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+  194:       AllocationInfo* current = &subgraph_allocation_info[i];
+  195:       current->output_ptr = &(eval_tensors[i].data.data);
+  196: 
+  197:       TF_LITE_ENSURE_STATUS(
+  198:           TfLiteEvalTensorByteLength(&eval_tensors[i], &current->bytes));
+  199: 
+  200:       current->first_created = kUninitializedLifetime;
+  201:       current->last_used = kUninitializedLifetime;
+  202:       current->needs_allocating =
+  203:           (eval_tensors[i].data.data == nullptr) &&
+  204:           (!subgraph->tensors()->Get(i)->is_variable()) &&
+  205:           (current->bytes != 0);
+  206:       if (offline_offsets) {
+  207:         current->offline_offset = offline_offsets[offline_index++];
+  208: 
+  209:         // Mark offline planned variable tensors so they can get an offline
+  210:         // offset and be handled offline.
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h
+...
+  124:   void UpdateLastUsed(AllocationInfo* current, int allocation_scope_count);
+  125: 
+  126:   // Validate if a subgraph satisfies assumptions.
+  127:   TfLiteStatus ValidateSubgraph(const SubGraph* subgraph,
+  128:                                 TfLiteEvalTensor* eval_tensors);
+  129: 
+  130:   const tflite::Model* model_ = nullptr;
+  131:   INonPersistentBufferAllocator* non_persistent_allocator_ = nullptr;
+  132:   GraphAllocationInfo info_ =
+  133:       {};  // Prevents problems caused by accessing uninitialized memory.
+  134:   int allocation_scope_count_ = 0;
+  135: };
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+...
+ 1043:         persistent_buffer_allocator_->AllocatePersistentBuffer(
+ 1044:             sizeof(TfLiteEvalTensor) * alloc_count, alignof(TfLiteEvalTensor)));
+ 1045:     if (tensors == nullptr) {
+ 1046:       MicroPrintf(
+ 1047:           "Failed to allocate memory for context->eval_tensors, "
+ 1048:           "%d bytes required",
+ 1049:           sizeof(TfLiteEvalTensor) * alloc_count);
+ 1050:       return kTfLiteError;
+ 1051:     }
+ 1052: 
+ 1053:     for (size_t i = 0; i < alloc_count; ++i) {
+ 1054:       TfLiteStatus status = internal::InitializeTfLiteEvalTensorFromFlatbuffer(
+...
+ 1063:   return kTfLiteOk;
+ 1064: }
+ 1065: 
+ 1066: TfLiteStatus MicroAllocator::AllocateVariables(
+ 1067:     const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+ 1068:     const int32_t* offline_planner_offsets) {
+ 1069:   for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+ 1070:     auto* tensor = subgraph->tensors()->Get(i);
+ 1071:     if (tensor->is_variable()) {
+ 1072:       if (offline_planner_offsets == nullptr ||
+ 1073:           offline_planner_offsets[i] == kOnlinePlannedBuffer) {
+ 1074:         size_t buffer_size;
+ 1075:         TF_LITE_ENSURE_STATUS(
+ 1076:             TfLiteEvalTensorByteLength(&eval_tensors[i], &buffer_size));
+ 1077: 
+ 1078:         eval_tensors[i].data.data =
+ 1079:             persistent_buffer_allocator_->AllocatePersistentBuffer(
+ 1080:                 buffer_size, MicroArenaBufferAlignment());
+ 1081: 
+ 1082:         if (eval_tensors[i].data.data == nullptr) {
+ 1083:           MicroPrintf("Failed to allocate variable tensor of size %d",
+ 1084:                       buffer_size);
+ 1085:           return kTfLiteError;
+ 1086:         }
+ 1087:       }
+ 1088:     }
+ 1089:   }
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.h
+...
+  198: 
+  199:   // Allocates a TfLiteTensor struct and populates the returned value with
+  200:   // properties from the model flatbuffer. This struct is allocated from
+  201:   // persistent arena memory is only guaranteed for the lifetime of the
+  202:   // application. The eval_tensors pointer should be the value passed into this
+  203:   // class during StartModelAllocation() and contains the source-of-truth for
+  204:   // buffers.
+  205:   virtual TfLiteTensor* AllocatePersistentTfLiteTensor(
+  206:       const Model* model, const SubgraphAllocations* subgraph_allocations,
+  207:       int tensor_index, int subgraph_index);
+  208: 
+  209:   // Allocates a TfLiteTensor struct and populates the returned value with
+...
+  291:   // Allocates persistent tensor buffers for variable tensors in the subgraph.
+  292:   // Online and offline variable tensors are handled differently hence the
+  293:   // offline_planner_offsets parameter is needed.
+  294:   virtual TfLiteStatus AllocateVariables(
+  295:       const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+  296:       const int32_t* offline_planner_offsets);
+  297: 
+  298:   // Allocate and return a persistent TfLiteTensor.
+  299:   // TODO(b/162311891): Drop this method when the interpreter has an API for
+  300:   // accessing TfLiteEvalTensor structs.
+  301:   virtual TfLiteTensor* AllocatePersistentTfLiteTensorInternal();
+  302: 
+...
+  310:                                                           bool allocate_temp);
+  311: 
+  312:  private:
+  313:   // Commits a memory plan for all non-persistent buffer allocations in the
+  314:   // 'head' section of the memory arena. The eval_tensors pointer is the list of
+  315:   // pre-allocated TfLiteEvalTensor structs that will point to the buffers that
+  316:   // will be allocated into the head section in this function call. The
+  317:   // scratch_buffer_handles pointer is the array of pre-allocated
+  318:   // ScratchBufferHandle structs that will point to allocated buffers also in
+  319:   // the head section.
+  320:   virtual TfLiteStatus CommitStaticMemoryPlan(
+  321:       const Model* model, SubgraphAllocations* allocations,
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc
+...
+  113:   }
+  114: }
+  115: 
+  116: void EnsureUniqueVariableTensorBuffer(const Model* model,
+  117:                                       TfLiteEvalTensor* eval_tensors,
+  118:                                       const int variable_tensor_idx) {
+  119:   for (size_t i = 0; i < GetModelTensorCount(model); i++) {
+  120:     if (i != static_cast<size_t>(variable_tensor_idx)) {
+  121:       TF_LITE_MICRO_EXPECT_NE(eval_tensors[variable_tensor_idx].data.raw,
+  122:                               eval_tensors[i].data.raw);
+  123:     }
+  124:   }
+  125: }
+  126: 
+  127: void VerifyRegistrationAndNodeAllocation(
+  128:     SubgraphAllocations* subgraph_allocations, size_t count,
+  129:     int num_subgraphs) {
+...
+  138: 
+  139: size_t GetArenaUsedBytesBySimpleMockModel(bool is_memory_planner_injected) {
+  140:   const int tensor_count = 4;
+  141:   const int node_count = 2;
+  142:   size_t eval_tensor_size = AlignSizeUp<TfLiteEvalTensor>(tensor_count);
+  143:   size_t node_registration_size = AlignSizeUp<NodeAndRegistration>(node_count);
+  144: 
+  145:   const int activation_tensor_count = 3;
+  146:   size_t activation_tensor_buffer =
+  147:       activation_tensor_count * AlignSizeUp(1, MicroArenaBufferAlignment());
+  148: 
+  149:   size_t default_tail_usage =
+...
+  152:     default_tail_usage =
+  153:         MicroAllocator::GetDefaultTailUsage(/*is_memory_plan_given=*/true);
+  154:   }
+  155: 
+  156:   return default_tail_usage + eval_tensor_size + node_registration_size +
+  157:          activation_tensor_buffer;
+  158: }
+  159: 
+  160: }  // namespace
+  161: }  // namespace testing
+  162: }  // namespace tflite
+  163: 
+...
+  340:                                                subgraph_allocations, 2);
+  341:   tflite::testing::AllocateAndVerifyMockTensor(model, allocator,
+  342:                                                subgraph_allocations, 3);
+  343: 
+  344:   TfLiteEvalTensor* eval_tensors = subgraph_allocations[0].tensors;
+  345:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[1].data.raw, eval_tensors[0].data.raw);
+  346:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[2].data.raw, eval_tensors[0].data.raw);
+  347:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[1].data.raw, eval_tensors[2].data.raw);
+  348:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[0].data.raw);
+  349:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[1].data.raw);
+  350:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[2].data.raw);
+  351: 
+  352:   // SimpleMockModel has 2 operators:
+  353:   tflite::testing::VerifyRegistrationAndNodeAllocation(subgraph_allocations,
+  354:                                                        /*count=*/2,
+  355:                                                        /*num_subgraphs=*/1);
+  356: }
+  357: 
+...
+  386:                                                subgraph_allocations, 2);
+  387:   tflite::testing::AllocateAndVerifyMockTensor(model, allocator,
+  388:                                                subgraph_allocations, 3);
+  389: 
+  390:   TfLiteEvalTensor* eval_tensors = subgraph_allocations[0].tensors;
+  391:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[1].data.raw, eval_tensors[0].data.raw);
+  392:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[2].data.raw, eval_tensors[0].data.raw);
+  393:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[1].data.raw, eval_tensors[2].data.raw);
+  394:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[0].data.raw);
+  395:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[1].data.raw);
+  396:   TF_LITE_MICRO_EXPECT_NE(eval_tensors[3].data.raw, eval_tensors[2].data.raw);
+  397: 
+  398:   // SimpleMockModel has 2 operators:
+  399:   tflite::testing::VerifyRegistrationAndNodeAllocation(subgraph_allocations,
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.h
+...
+   92:   // Signals that the temporary buffer is no longer needed.
+   93:   virtual void DeallocateTempBuffer(uint8_t* buffer) = 0;
+   94: 
+   95:   // Returns a TfLiteEvalTensor struct for a given index.
+   96:   virtual TfLiteEvalTensor* GetEvalTensor(int tensor_idx) = 0;
+   97: 
+   98:   // Does not take ownership of the pointer and the pointer must refer to valid
+   99:   // an object that outlive this class instance.
+  100:   // This can only be called once to set one external context.
+  101:   virtual TfLiteStatus set_external_context(void* external_context_payload) = 0;
+  102: 
+  103:   virtual void* external_context() = 0;
+...
+  195: inline TfLiteTensor* MicroContextGetTensor(const struct TfLiteContext* context,
+  196:                                            int tensor_idx) {
+  197:   return GetMicroContext(context)->AllocateTempTfLiteTensor(tensor_idx);
+  198: }
+  199: inline TfLiteEvalTensor* MicroContextGetEvalTensor(
+  200:     const struct TfLiteContext* context, int tensor_idx) {
+  201:   return GetMicroContext(context)->GetEvalTensor(tensor_idx);
+  202: }
+  203: inline TfLiteExternalContext* MicroContextGetExternalContext(
+  204:     TfLiteContext* context, TfLiteExternalContextType unused) {
+  205:   return reinterpret_cast<TfLiteExternalContext*>(
+  206:       GetMicroContext(context)->external_context());
+  207: }
+  208: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc
+...
+   92:       MicroInterpreterContext::InterpreterState::kInit);
+   93:   context_.impl_ = static_cast<void*>(&micro_context_);
+   94:   context_.ReportError = MicroContextReportOpError;
+   95:   context_.GetTensor = MicroContextGetTensor;
+   96:   context_.GetEvalTensor = MicroContextGetEvalTensor;
+   97:   context_.profiler = profiler;
+   98:   context_.RequestScratchBufferInArena =
+   99:       MicroContextRequestScratchBufferInArena;
+  100:   context_.GetExternalContext = MicroContextGetExternalContext;
+  101:   context_.AllocatePersistentBuffer = MicroContextAllocatePersistentBuffer;
+  102:   context_.GetScratchBuffer = MicroContextGetScratchBuffer;
+  103: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc
+...
+   99:   TFLITE_DCHECK(state_ == InterpreterState::kPrepare);
+  100:   allocator_.DeallocateTempBuffer(buffer);
+  101: }
+  102: 
+  103: TfLiteEvalTensor* MicroInterpreterContext::GetEvalTensor(int tensor_idx) {
+  104:   return &graph_.GetAllocations()[graph_.GetCurrentSubgraphIndex()]
+  105:               .tensors[tensor_idx];
+  106: }
+  107: 
+  108: void MicroInterpreterContext::SetScratchBufferHandles(
+  109:     ScratchBufferHandle* scratch_buffer_handles) {
+  110:   scratch_buffer_handles_ = scratch_buffer_handles;
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.h
+...
+   83:   virtual void DeallocateTempBuffer(uint8_t* buffer) override;
+   84: 
+   85:   // Returns a TfLiteEvalTensor struct for a given index.
+   86:   // Virtual so that it can be faked for kernel tests.
+   87:   virtual TfLiteEvalTensor* GetEvalTensor(int tensor_idx) override;
+   88: 
+   89:   // Sets the State of MemoryPlanning MicroInterpreterContext
+   90:   void SetInterpreterState(InterpreterState state);
+   91: 
+   92:   // Sets the State of MemoryPlanning MicroInterpreterContext
+   93:   InterpreterState GetInterpreterState() const;
+   94: 
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+...
+   64: RecordedAllocation RecordingMicroAllocator::GetRecordedAllocation(
+   65:     RecordedAllocationType allocation_type) const {
+   66:   switch (allocation_type) {
+   67:     case RecordedAllocationType::kTfLiteEvalTensorData:
+   68:       return recorded_tflite_eval_tensor_data_;
+   69:     case RecordedAllocationType::kPersistentTfLiteTensorData:
+   70:       return recorded_persistent_tflite_tensor_data_;
+   71:     case RecordedAllocationType::kPersistentTfLiteTensorQuantizationData:
+   72:       return recorded_persistent_tflite_tensor_quantization_data_;
+   73:     case RecordedAllocationType::kPersistentBufferData:
+   74:       return recorded_persistent_buffer_data_;
+   75:     case RecordedAllocationType::kTfLiteTensorVariableBufferData:
+...
+  187: 
+  188:   TfLiteStatus status =
+  189:       MicroAllocator::AllocateTfLiteEvalTensors(model, subgraph_allocations);
+  190: 
+  191:   RecordAllocationUsage(allocations, recorded_tflite_eval_tensor_data_);
+  192: 
+  193:   for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+  194:        subgraph_idx++) {
+  195:     // The allocation for this recording will always be 1. This is because the
+  196:     // parent class mallocs one large allocation for the number of tensors in
+  197:     // the graph (e.g. sizeof(TfLiteEvalTensor) * num_tensors). To prevent extra
+  198:     // overhead and potential for fragmentation, manually adjust the accounting
+  199:     // by decrementing by 1 and adding the actual number of tensors used in the
+  200:     // graph:
+  201:     recorded_tflite_eval_tensor_data_.count +=
+  202:         model->subgraphs()->Get(subgraph_idx)->tensors()->size() - 1;
+  203:   }
+  204:   return status;
+  205: }
+  206: 
+  207: TfLiteStatus RecordingMicroAllocator::AllocateVariables(
+  208:     const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+  209:     const int32_t* offline_planner_offsets) {
+  210:   RecordedAllocation allocations = SnapshotAllocationUsage();
+  211: 
+  212:   TfLiteStatus status = MicroAllocator::AllocateVariables(
+  213:       subgraph, eval_tensors, offline_planner_offsets);
+  214: 
+  215:   RecordAllocationUsage(allocations,
+  216:                         recorded_tflite_tensor_variable_buffer_data_);
+  217:   return status;
+  218: }
+  219: 
+  220: TfLiteTensor*
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.h
+...
+   82:       const Model* model, SubgraphAllocations* subgraph_allocations) override;
+   83:   TfLiteStatus AllocateTfLiteEvalTensors(
+   84:       const Model* model, SubgraphAllocations* subgraph_allocations) override;
+   85:   TfLiteStatus AllocateVariables(
+   86:       const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors,
+   87:       const int32_t* offline_planner_offsets) override;
+   88:   // TODO(b/162311891): Once all kernels have been updated to the new API drop
+   89:   // this method. It is only used to record TfLiteTensor persistent allocations.
+   90:   TfLiteTensor* AllocatePersistentTfLiteTensorInternal() override;
+   91: 
+   92:   // TODO(b/162311891): Once all kernels have been updated to the new API drop
+   93:   // this function since all allocations for quantized data will take place in
+...
+  118:                              RecordedAllocation& recorded_allocation);
+  119: 
+  120:   const RecordingSingleArenaBufferAllocator* recording_memory_allocator_;
+  121: 
+  122:   RecordedAllocation recorded_tflite_eval_tensor_data_ = {};
+  123:   RecordedAllocation recorded_persistent_tflite_tensor_data_ = {};
+  124:   RecordedAllocation recorded_persistent_tflite_tensor_quantization_data_ = {};
+  125:   RecordedAllocation recorded_persistent_buffer_data_ = {};
+  126:   RecordedAllocation recorded_tflite_tensor_variable_buffer_data_ = {};
+  127:   RecordedAllocation recorded_node_and_registration_array_data_ = {};
+  128: #ifdef USE_TFLM_COMPRESSION
+  129:   RecordedAllocation recorded_compression_data_ = {};
+
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator_test.cc
+...
+   20: #include "tensorflow/lite/micro/testing/micro_test.h"
+   21: #include "tensorflow/lite/micro/testing/test_conv_model.h"
+   22: 
+   23: #define TF_LITE_TENSOR_STRUCT_SIZE sizeof(TfLiteTensor)
+   24: #define TF_LITE_EVAL_TENSOR_STRUCT_SIZE sizeof(TfLiteEvalTensor)
+   25: #define TF_LITE_AFFINE_QUANTIZATION_SIZE sizeof(TfLiteAffineQuantization)
+   26: #define NODE_AND_REGISTRATION_STRUCT_SIZE sizeof(tflite::NodeAndRegistration)
+   27: 
+   28: // TODO(b/158303868): Move tests into anonymous namespace.
+   29: namespace {
+   30: 
+   31: constexpr int kTestConvArenaSize = 1024 * 12;
+...
+   68:   size_t tensors_count = tflite::testing::GetModelTensorCount(model);
+   69: 
+   70:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.count, tensors_count);
+   71:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.requested_bytes,
+   72:                           tensors_count * TF_LITE_EVAL_TENSOR_STRUCT_SIZE);
+   73:   TF_LITE_MICRO_EXPECT_GE(recorded_allocation.used_bytes,
+   74:                           tensors_count * TF_LITE_EVAL_TENSOR_STRUCT_SIZE);
+   75: }
+   76: 
+   77: TF_LITE_MICRO_TEST(TestRecordsNodeAndRegistrationArrayData) {
+   78:   tflite::ScratchBufferHandle* scratch_buffer_handles = nullptr;
+   79:   tflite::testing::TestingOpResolver ops_resolver;
+   80:   const tflite::Model* model = tflite::GetModel(kTestConvModelData);
+   81:   uint8_t arena[kTestConvArenaSize];
+...
+  151: 
+  152:   // Node and tensor arrays must be allocated as well as each node and tensor.
+  153:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.count, tensors_count * 2);
+  154:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.requested_bytes,
+  155:                           tensors_count * TF_LITE_EVAL_TENSOR_STRUCT_SIZE * 2);
+  156:   TF_LITE_MICRO_EXPECT_GE(recorded_allocation.used_bytes,
+  157:                           tensors_count * TF_LITE_EVAL_TENSOR_STRUCT_SIZE * 2);
+  158: }
+  159: 
+  160: TF_LITE_MICRO_TEST(TestRecordsPersistentTfLiteTensorData) {
+  161:   const tflite::Model* model = tflite::GetModel(kTestConvModelData);
+  162:   uint8_t arena[kTestConvArenaSize];
+  163: 
+  164:   tflite::RecordingMicroAllocator* micro_allocator =
+...
+  311:       tflite::RecordedAllocationType::kTfLiteEvalTensorData);
+  312: 
+  313:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.count, num_tensors);
+  314:   TF_LITE_MICRO_EXPECT_EQ(recorded_allocation.requested_bytes,
+  315:                           num_tensors * TF_LITE_EVAL_TENSOR_STRUCT_SIZE);
+  316:   TF_LITE_MICRO_EXPECT_GE(recorded_allocation.used_bytes,
+  317:                           num_tensors * TF_LITE_EVAL_TENSOR_STRUCT_SIZE);
+  318: }
+  319: 
+  320: #ifdef USE_TFLM_COMPRESSION
+  321: 
+  322: TF_LITE_MICRO_TEST(TestCompressedModel) {
+  323:   tflite::ScratchBufferHandle* scratch_buffer_handles = nullptr;
+  324:   tflite::testing::TestingOpResolver ops_resolver;
+
+========== 7. OFFLINE MEMORY ALLOCATION SUPPORT ==========
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-356-  for (int i = 0; i < num_conns; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-357-    model_builder.AddNode(op_id, node_conn[i].input, node_conn[i].output);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-358-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-359-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-360-  model_builder.AddMetadata(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:361:      "OfflineMemoryAllocation", metadata_buffer,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc:362:      number_of_tensors + tflite::testing::kOfflinePlannerHeaderSize);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-363-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-364-  return model_builder.BuildModel(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-365-      node_conn[0].input, node_conn[num_conns - 1].output, num_subgraph_inputs);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-366-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc-367-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-27-struct AllocationInfo {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-28-  size_t bytes;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-29-  void** output_ptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-30-  int first_created;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-31-  int last_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:32:  int32_t offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-33-  bool needs_allocating;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-34-};
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-35-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-36-// Used to hold the allocation info list and related metadata for the entire
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-37-// graph (including subgraphs). Since all subgraphs are planned together, the
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-78-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-79-  // Release memory used for the allocation info array.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-80-  TfLiteStatus FreeAllocationInfo();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-81-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-82-  // Initialize AllocationInfo for all tensors and scratch buffers in the graph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h:83:  TfLiteStatus InitializeAllocationInfo(const int32_t* offline_offsets,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-84-                                        SubgraphAllocations* allocations);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-85-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-86-  // Mark the scope of each tensor and scratch buffer across the graph. Enter
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-87-  // all possible subgraphs invoked by each control flow operator. This method
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.h-88-  // marks the maximum lifetime of each buffer so that tensors are correctly
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-25-#include "tensorflow/lite/micro/micro_log.h"
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-26-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-27-namespace tflite {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-28-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-29-namespace {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:30:constexpr char kOfflineMemAllocMetadata[] = "OfflineMemoryAllocation";
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-31-constexpr int kUninitializedLifetime = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-32-}  // namespace
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-33-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-34-// Mark the given Allocation info as first created at the specified allocation
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-35-// scope count. Only the first creation must be recorded since the allocation
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-174-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-175-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-176-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-177-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-178-TfLiteStatus AllocationInfoBuilder::InitializeAllocationInfo(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:179:    const int32_t* offline_offsets, SubgraphAllocations* allocations) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-180-  AllocationInfo* allocation_info = info_.allocation_info;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-181-  // Initialize allocation info for every tensor in every subgraph.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-182-  int offline_index = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-183-  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-184-       subgraph_idx++) {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-201-      current->last_used = kUninitializedLifetime;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-202-      current->needs_allocating =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-203-          (eval_tensors[i].data.data == nullptr) &&
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-204-          (!subgraph->tensors()->Get(i)->is_variable()) &&
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-205-          (current->bytes != 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:206:      if (offline_offsets) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:207:        current->offline_offset = offline_offsets[offline_index++];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-208-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-209-        // Mark offline planned variable tensors so they can get an offline
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-210-        // offset and be handled offline.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-211-        if (subgraph->tensors()->Get(i)->is_variable() &&
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:212:            current->offline_offset != kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-213-          current->needs_allocating = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-214-        }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-215-      } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:216:        current->offline_offset = kOnlinePlannedBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-217-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-218-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-219-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-220-  // Initialize allocation info for every scratch buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-221-  AllocationInfo* scratch_allocation_info =
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-223-  for (size_t i = 0; i < info_.scratch_buffer_count; i++) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-224-    AllocationInfo* current = &scratch_allocation_info[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-225-    current->first_created = kUninitializedLifetime;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-226-    current->last_used = kUninitializedLifetime;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-227-    current->needs_allocating = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:228:    current->offline_offset = kOnlinePlannedBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-229-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-230-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-231-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-232-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-233-TfLiteStatus AllocationInfoBuilder::MarkAllocationLifetimes(
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-331-    UpdateLastUsed(current, allocation_scope_count_);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-332-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-333-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-334-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-335-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc:336:// Get offline tensors allocation plan. See
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-337-// micro/docs/memory_management.md for more info.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-338-TfLiteStatus AllocationInfoBuilder::GetOfflinePlannedOffsets(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-339-    const int32_t** offline_planner_offsets) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-340-  if (model_->metadata()) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc-341-    for (size_t i = 0; i < model_->metadata()->size(); ++i) {
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-39-#endif  // TENSORFLOW_LITE_MICRO_TEST_HELPERS_H_
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-40-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-41-namespace tflite {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-42-namespace testing {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-43-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h:44:constexpr int kOfflinePlannerHeaderSize = 3;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-45-using TestingOpResolver = tflite::MicroMutableOpResolver<10>;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-46-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-47-struct NodeConnection_ {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-48-  std::initializer_list<int32_t> input;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.h-49-  std::initializer_list<int32_t> output;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-54-  // GetOffsetForBuffer().
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-55-  virtual TfLiteStatus AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-56-                                 int last_time_used) = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-57-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-58-  // Record details of an offline planned buffer offset we want to place.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h:59:  // offline_offset is the buffer offset from the start of the arena.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-60-  // This is to support offline memory planning from the flatbuffer metadata.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-61-  // By default, it returns an error.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-62-  virtual TfLiteStatus AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h:63:                                 int last_time_used, int offline_offset) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-64-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-65-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-66-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-67-  // The largest contiguous block of memory that's needed to hold the layout.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/micro_memory_planner.h-68-  virtual size_t GetMaximumMemorySize() = 0;
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-97-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-98-  BufferRequirements* current = &requirements_[buffer_count_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-99-  current->size = size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-100-  current->first_time_used = first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-101-  current->last_time_used = last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:102:  current->offline_offset = kOnlinePlannedBuffer;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-103-  ++buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-104-  need_to_calculate_offsets_ = true;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-105-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-106-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-107-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-108-TfLiteStatus GreedyMemoryPlanner::AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-109-                                            int last_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:110:                                            int offline_offset) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-111-  BufferRequirements* current = &requirements_[buffer_count_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-112-  if (AddBuffer(size, first_time_used, last_time_used) != kTfLiteOk) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-113-    return kTfLiteError;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-114-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:115:  current->offline_offset = offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-116-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-117-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-118-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-119-bool GreedyMemoryPlanner::DoesEntryOverlapInTime(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-120-    const GreedyMemoryPlanner::ListEntry* entry, const int first_time_used,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-172-  // gaps with small buffers at the beginning. Add offline planned offsets
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-173-  // first in the list, since they have a predetermined offset.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-174-  int idx_from_tail = buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-175-  int idx_from_head = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-176-  for (int i = 0; i < buffer_count_; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:177:    if (requirements_[i].offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-178-      idx_from_tail--;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-179-      buffer_sizes_sorted_[idx_from_tail] = requirements_[i].size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-180-      buffer_ids_sorted_[idx_from_tail] = i;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-181-      buffer_offsets_[i] = -1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-182-    } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-183-      buffer_sizes_sorted_[idx_from_head] = requirements_[i].size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-184-      buffer_ids_sorted_[idx_from_head] = i;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:185:      buffer_offsets_[i] = requirements_[i].offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-186-      idx_from_head++;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-187-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-188-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-189-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-190-  // This sorting algorithm is naive, and may end up taking a very long time
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-203-  next_free_entry_ = 1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-204-  ListEntry* first_entry = &buffers_sorted_by_offset_[first_entry_index_];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-205-  first_entry->next_entry_index = -1;  // to mark the entry as end of list
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-206-  int buffer_id = buffer_ids_sorted_[0];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-207-  first_entry->requirements_index = buffer_id;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:208:  if (requirements_[buffer_id].offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-209-    buffer_offsets_[buffer_id] = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-210-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-211-  first_entry->offset = buffer_offsets_[buffer_id];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-212-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-213-  // Work through the rest of the buffers to find a good gap to place each one.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-226-    // The candidate_entry variable holds the buffer that we're considering
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-227-    // placing the current buffer after.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-228-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-229-    int candidate_offset = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-230-    // Loop through the offset-ordered list of buffers, looking for gaps.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:231:    if (wanted_requirements->offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-232-      ListEntry* prior_entry = nullptr;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-233-      while (true) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-234-        // Find out what the next active buffer is.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-235-        ListEntry* next_entry = NextSimultaneouslyActiveBuffer(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-236-            prior_entry, wanted_first_time_used, wanted_last_time_used);
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-259-        // The gap wasn't big enough, so move on to another candidate.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-260-        prior_entry = next_entry;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-261-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-262-    } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-263-      // Offline planned offset are to be considered constant
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc:264:      candidate_offset = wanted_requirements->offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-265-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-266-    // At this point, we've either found a gap (possibly at the end of the
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-267-    // list) and want to place the buffer there, or there are no other active
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-268-    // buffers in this time range and so we can put it at offset zero.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc-269-    // Record the buffer's offset in our plan.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-64-  // Record details of a buffer we want to place.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-65-  TfLiteStatus AddBuffer(int size, int first_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-66-                         int last_time_used) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-67-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-68-  // Record details of an offline planned buffer offset we want to place.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:69:  // offline_offset is the buffer offset from the start of the arena.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-70-  TfLiteStatus AddBuffer(int size, int first_time_used, int last_time_used,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:71:                         int offline_offset) override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-72-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-73-  // Returns the high-water mark of used memory. This is the minimum size of a
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-74-  // memory arena you'd need to allocate to hold these buffers.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-75-  size_t GetMaximumMemorySize() override;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-76-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-134-  int buffer_count_;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-135-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-136-  // Records the client-provided information about each buffer.
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-137-  struct BufferRequirements {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-138-    int size;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h:139:    int offline_offset;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-140-    int first_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-141-    int last_time_used;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-142-  };
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-143-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h-144-  // Working arrays used during the layout algorithm.
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-645-  tflite::testing::VerifyRegistrationAndNodeAllocation(subgraph_allocations,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-646-                                                       /*count=*/3,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-647-                                                       /*num_subgraphs=*/1);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-648-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-649-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:650:TF_LITE_MICRO_TEST(OfflinePlannerBranchesAllOnline) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-651-  int version = 1;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-652-  int subgraph = 0;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-653-  constexpr int number_tensors = 4;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-654-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-655-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-656-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:657:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-658-                                number_tensors] = {version, subgraph,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-659-                                                   number_tensors,  // header
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-660-                                                   // memory offsets:
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-661-                                                   -1, -1, -1, -1};
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-662-
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-716-  TF_LITE_MICRO_EXPECT_EQ(0, tflite::micro::GetTensorData<int8_t>(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-717-                                 &subgraph_allocations[0].tensors[3]) -
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-718-                                 start);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-719-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-720-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:721:TF_LITE_MICRO_TEST(OfflinePlannerBasic) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-722-  constexpr int number_tensors = 4;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-723-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-724-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-725-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:726:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-727-                                number_tensors] = {1,         0, number_tensors,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-728-                                                   /*t0=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-729-                                                   /*t1=*/48,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-730-                                                   /*t2=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-731-                                                   /*t3=*/48};
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-768-  TF_LITE_MICRO_EXPECT_EQ(48, tflite::micro::GetTensorData<int8_t>(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-769-                                  &subgraph_allocations[0].tensors[3]) -
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-770-                                  start);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-771-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-772-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:773:TF_LITE_MICRO_TEST(OfflinePlannerOverlappingAllocation) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-774-  constexpr int number_tensors = 4;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-775-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-776-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-777-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:778:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-779-                                number_tensors] = {/*version=*/1,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-780-                                                   /*subgraph=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-781-                                                   number_tensors,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-782-                                                   /*t0=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-783-                                                   /*t1=*/0,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-823-                                 &subgraph_allocations[0].tensors[3]) -
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-824-                                 start);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-825-  // TF_LITE_MICRO_EXPECT_EQ(static_cast<size_t>(48), context.tensors[0].bytes);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-826-}
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-827-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:828:TF_LITE_MICRO_TEST(OfflinePlannerOfflineOnline) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-829-  constexpr int number_tensors = 5;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-830-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-831-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-832-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:833:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-834-                                number_tensors] = {/*version=*/1,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-835-                                                   /*subgraph=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-836-                                                   number_tensors,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-837-                                                   /*t0=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-838-                                                   /*t1=*/48,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1051-TF_LITE_MICRO_TEST(TestOperatorInputsNotInSubgraphInputs) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1052-  constexpr int number_tensors = 5;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1053-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1054-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1055-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1056:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1057-                                number_tensors] = {/*version=*/1,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1058-                                                   /*subgraph=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1059-                                                   number_tensors,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1060-                                                   /*t0=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1061-                                                   /*t1=*/0,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1114-TF_LITE_MICRO_TEST(TestTypicalFirstOpAndSecondOpWithScratchTensors) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1115-  constexpr int number_tensors = 6;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1116-  tflite::testing::TestingOpResolver op_resolver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1117-  TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1118-                          tflite::testing::GetTestingOpResolver(op_resolver));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc:1119:  const int32_t metadata_buffer[tflite::testing::kOfflinePlannerHeaderSize +
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1120-                                number_tensors] = {/*version=*/1,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1121-                                                   /*subgraph=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1122-                                                   number_tensors,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1123-                                                   /*t0=*/0,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator_test.cc-1124-                                                   /*t1=*/0,
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-110-  for (size_t i = 0; i < allocation_info_size; ++i) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-111-    const AllocationInfo* current = &allocation_info[i];
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-112-    if (current->needs_allocating) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-113-      size_t aligned_bytes_required =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-114-          AlignSizeUp(current->bytes, MicroArenaBufferAlignment());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:115:      if (current->offline_offset == kOnlinePlannedBuffer) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-116-        TF_LITE_ENSURE_STATUS(planner->AddBuffer(aligned_bytes_required,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-117-                                                 current->first_created,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-118-                                                 current->last_used));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-119-      } else {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-120-        TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-121-            planner->AddBuffer(aligned_bytes_required, current->first_created,
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:122:                               current->last_used, current->offline_offset));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-123-      }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-124-    }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-125-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-126-  return kTfLiteOk;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-127-}
+--
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1142-    TF_LITE_ENSURE_STATUS(AllocateVariables(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1143-        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1144-  }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1145-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1146-  TF_LITE_ENSURE_STATUS(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc:1147:      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1148-
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1149-  internal::ScratchBufferRequest* scratch_buffer_requests =
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1150-      GetScratchBufferRequests();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1151-  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc-1152-      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+
+========== 8. APPLICATION INTERPRETER / ARENA SETUP ==========
+
+SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_boundary_20261125_091320/src/MainLoop.cc
+...
+  176:     kTfLiteFloat32,
+  177:     kTfLiteFloat32
+  178: };
+  179: 
+  180: bool ValidateAndPopulateInputs(tflite::MicroInterpreter* interpreter)
+  181: {
+  182:     using namespace sample317_vectors;
+  183: 
+  184:     if (interpreter == nullptr) {
+  185:         printk("TCN_V6_ERROR: null interpreter\n");
+  186:         return false;
+  187:     }
+...
+  254:     printk("TCN_V6_SAMPLE317_INPUTS: PASS (all five genuine tensors copied)\n");
+  255:     return true;
+  256: }
+  257: 
+  258: bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+  259: {
+  260:     if (interpreter == nullptr) {
+  261:         return false;
+  262:     }
+  263: 
+  264:     TfLiteTensor* output = interpreter->output(0);
+  265: 
+...
+  279:            static_cast<unsigned int>(output->bytes));
+  280:     return true;
+  281: }
+  282: 
+  283: void ReportOutput(tflite::MicroInterpreter* interpreter)
+  284: {
+  285:     using namespace sample317_vectors;
+  286: 
+  287:     TfLiteTensor* output = interpreter->output(0);
+  288:     const float* values = reinterpret_cast<const float*>(output->data.raw);
+  289:     const float* reference = kReferenceOutput;
+  290: 
+...
+  448: 
+  449:     printk("TCN_V6: initializing TFLM model\n");
+  450: 
+  451:     if (!model.Init(compute_buffer, model_buffer)) {
+  452:         printk("TCN_V6_ERROR: TFLM model initialization/AllocateTensors failed\n");
+  453:         return;
+  454:     }
+  455: 
+  456:     if (model.GetNumInputs() != kInputCount ||
+  457:         model.GetNumOutputs() != 1U) {
+  458:         printk("TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u\n",
+  459:                static_cast<unsigned int>(model.GetNumInputs()),
+...
+  471: 
+  472:     printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+  473:            model.ContainsEthosUOperator() ? 1U : 0U);
+  474: 
+  475:     printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+  476:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  477:            static_cast<unsigned int>(sizeof(activationBuf)));
+  478: 
+  479:     printk("TCN_V6: invoking sample317 real-input validation\n");
+  480: 
+  481:     const uint64_t start_cycles = k_cycle_get_64();
+  482:     const bool inference_ok = model.RunInference();
+  483:     const uint64_t elapsed_cycles = k_cycle_get_64() - start_cycles;
+...
+  498:     }
+  499: 
+  500:     ReportOutput(interpreter);
+  501: 
+  502:     printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+  503:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  504:            static_cast<unsigned int>(sizeof(activationBuf)));
+  505: 
+  506:     printk("TCN_V6_SAMPLE317_RUN: FINISHED (inspect numerical comparison metrics)\n");
+  507: }
+
+========== 9. ETHOS-U KERNEL TENSOR INDEX MAPPING ==========
+    95	  if (co_type != CO_TYPE_ETHOSU) {
+    96	    MicroPrintf("CO_TYPE != ETHOSU");
+    97	    return kTfLiteError;
+    98	  }
+    99	
+   100	  // Get command stream data address.
+   101	  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+   102	  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+   103	
+   104	  // Get addresses to weights/scratch/input data.
+   105	  for (i = 1; i < node->inputs->size; ++i) {
+   106	    tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+   107	    base_addrs[num_tensors] =
+   108	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   109	    size_t byte_size = 1;
+   110	    for (int k = 0; k < tensor->dims->size; k++) {
+   111	      byte_size = byte_size * tensor->dims->data[k];
+   112	    }
+   113	    base_addrs_size[num_tensors] = byte_size;
+   114	    num_tensors++;
+   115	  }
+   116	
+   117	  // Get addresses to output data.
+   118	  for (i = 0; i < node->outputs->size; ++i) {
+   119	    tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+   120	    base_addrs[num_tensors] =
+   121	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   122	    size_t byte_size = 1;
+   123	    for (int k = 0; k < tensor->dims->size; k++) {
+   124	      byte_size = byte_size * tensor->dims->data[k];
+   125	    }
+   126	    base_addrs_size[num_tensors] = byte_size;
+   127	    num_tensors++;
+   128	  }
+   129	
+   130	  // When Vela optimizes a tflite file it will assign the tensors like this:
+   131	  //
+   132	  // +-------+------------------------+  +--------+-------------+
+   133	  // | INPUT | Description            |  | OUTPUT | Description |
+   134	  // +-------+------------------------+  +--------+-------------+
+   135	  // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+   136	  // |     1 | TFLM model             |  +--------+-------------+
+   137	  // |     2 | TFLM arena             |
+   138	  // |     3 | Ethos-U fast scratch   |
+   139	  // |  4..n | Inputs                 |
+   140	  // +-------+------------------------+
+   141	  //
+   142	  // This code will assign the NPU base addresses like this:
+   143	  //
+   144	  // +--------------+----------------------+
+   145	  // | Base address | Description          |
+   146	  // +--------------+----------------------+
+   147	  // |            0 | TFLM model           |
+   148	  // |            1 | TFLM arena           |
+   149	  // |            2 | Ethos-U fast scratch |
+   150	  // |         3..n | Input tensors        |
+   151	  // |         n..m | Output tensors       |
+   152	  // +--------------+----------------------+
+   153	  //
+   154	  // The number of base address will be limited to 8.
+   155	  //
+   156	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   157	  // buffers using base address 1. This means that it is not possible to point
+   158	  // the input and output tensors outside of the TFLM arena.
+   159	  num_tensors = std::min(num_tensors, 8);
+   160	
+   161	  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+   162	  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+   163	  struct ethosu_driver *drv = ethosu_reserve_driver();
+   164	  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+   165	  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+   166	  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+   167	  result = ethosu_invoke_v3(
+   168	      drv, cms_data, data->cms_data_size, base_addrs,
+   169	      base_addrs_size, num_tensors,
+   170	      GetMicroContext(context)->external_context());
+   171	  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+   172	  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+   173	  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+   174	  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+   175	  ethosu_release_driver(drv);
+   176	  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+   177	  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+   178	  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+   179	  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+   180	         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+   181	         "invoke_ms=%u release_ms=%u irq_before=%u "
+   182	         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+   183	         "cumulative_irq_delta=%u\n",
+   184	         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+   185	         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+   186	         tcn_v6_invoke_ms, tcn_v6_release_ms,
+   187	         tcn_v6_irq_before, tcn_v6_irq_after,
+   188	         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+   189	         tcn_v6_npu_cumulative_irq_delta);
+   190	
+
+========== 10. REFERENCE VELA GRAPH ==========
+541-  op[26] GATHER inputs=[32, 45] outputs=[46]
+542-  op[27] QUANTIZE inputs=[46] outputs=[47]
+543-  op[28] GATHER inputs=[32, 48] outputs=[49]
+544-  op[29] QUANTIZE inputs=[49] outputs=[50]
+545:  op[30] ethos-u inputs=[51, 52, 53, 53, 31] outputs=[54]
+546-  op[31] DEQUANTIZE inputs=[54] outputs=[55]
+547-  op[32] TRANSPOSE inputs=[55, 56] outputs=[57]
+548-  op[33] MEAN inputs=[57, 58] outputs=[59]
+549-  op[34] RESHAPE inputs=[59, 60] outputs=[61]
+550-  op[37] TRANSPOSE inputs=[63, 64] outputs=[65]
+551-  op[38] MEAN inputs=[65, 66] outputs=[67]
+552-  op[39] RESHAPE inputs=[67, 68] outputs=[69]
+553-  op[42] DIV inputs=[62, 72] outputs=[73]
+554-  op[52] DIV inputs=[88, 87] outputs=[89]
+--
+633-  --- around operator 30 ---
+634-  op[27] QUANTIZE in=[46] out=[47]
+635-  op[28] GATHER in=[32, 48] out=[49]
+636-  op[29] QUANTIZE in=[49] out=[50]
+637:  op[30] ethos-u in=[51, 52, 53, 53, 31] out=[54]
+638-    NODE_INPUT_TENSORS:
+639-       tensor[51] 'ethos_u_command_stream' shape=[928] type=UINT8
+640-       tensor[52] 'read_only' shape=[9526576] type=UINT8
+641-       tensor[53] 'scratch' shape=[2372448] type=UINT8
+642-       tensor[53] 'scratch' shape=[2372448] type=UINT8
+643:       tensor[31] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' shape=[1, 902, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+644-    NODE_OUTPUT_TENSORS:
+645:       tensor[54] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+646-  op[31] DEQUANTIZE in=[54] out=[55]
+647-  op[32] TRANSPOSE in=[55, 56] out=[57]
+648-  op[33] MEAN in=[57, 58] out=[59]
+649-  --- around operator 72 ---
+650-  op[69] MUL in=[114, 112] out=[115]
+651-  op[70] MIRROR_PAD in=[115, 116] out=[117]
+652-  op[71] QUANTIZE in=[117] out=[118]
+653-  op[72] ethos-u in=[119, 52, 53, 53, 118] out=[120]
+654-    NODE_INPUT_TENSORS:
+--
+883-  tensor[26] '/Expand_output_0' shape=[1, 900, 6] type=FLOAT32
+884-  tensor[28] '/Where_3_output_0' shape=[1, 900, 6] type=FLOAT32
+885-  tensor[29] 'paddings_' shape=[3, 2] type=INT32
+886-  tensor[30] '/cvf/cvf.0/Pad_output_0' shape=[1, 902, 6] type=FLOAT32
+887:  tensor[31] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' shape=[1, 902, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+888-  tensor[32] 'compact_values' shape=[1, 1800, 6] type=FLOAT32
+889-  tensor[33] '/Constant_9_output_0_int32_gather_op7' shape=[] type=INT32
+890-  tensor[34] '/Gather_5_output_0' shape=[1, 1800] type=FLOAT32
+891-  tensor[35] '/Gather_5_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02881852351129055] zp=[0]
+892-  tensor[36] '/Constant_8_output_0_int32_gather_op6' shape=[] type=INT32
+893-  tensor[37] '/Gather_4_output_0' shape=[1, 1800] type=FLOAT32
+894-  tensor[38] '/Gather_4_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.0263220202177763] zp=[0]
+895-  tensor[39] '/Constant_7_output_0_int32_gather_op5' shape=[] type=INT32
+896-  tensor[40] '/Gather_3_output_0' shape=[1, 1800] type=FLOAT32
+--
+906-  tensor[50] '/Gather_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.028659837320446968] zp=[0]
+907-  tensor[51] 'ethos_u_command_stream' shape=[928] type=UINT8
+908-  tensor[52] 'read_only' shape=[9526576] type=UINT8
+909-  tensor[53] 'scratch' shape=[2372448] type=UINT8
+910:  tensor[54] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+911-  tensor[55] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+912-  tensor[56] 'perm' shape=[3] type=INT32
+913-  tensor[57] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' shape=[1, 32, 900] type=FLOAT32
+914-  tensor[58] 'axes4' shape=[1] type=INT32
+915-  tensor[59] '/cvf/cvf.2/ReduceMean_output_00' shape=[1, 32, 1] type=FLOAT32
+916-  tensor[60] 'new_shape' shape=[3] type=INT32
+917-  tensor[61] '/cvf/cvf.2/ReduceMean_output_0' shape=[1, 1, 32] type=FLOAT32
+918-  tensor[62] '/cvf/cvf.2/Sub_output_0' shape=[1, 900, 32] type=FLOAT32
+919-  tensor[63] '/cvf/cvf.2/Mul_output_0' shape=[1, 900, 32] type=FLOAT32
+
+========== 11. RESULT ==========
+ALLOCATION_LIFETIME_AUDIT_V2_FINISHED
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FLASH_PERFORMED=NO
+OSPI1_REPROGRAMMED=NO
+
+======================================================
+AUDIT_EXIT=0
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FLASH_PERFORMED=NO
+OSPI1_REPROGRAMMED=NO
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_allocation_lifetime_v2_20261125_152329.log
+======================================================
+Press ENTER to close this terminal...
