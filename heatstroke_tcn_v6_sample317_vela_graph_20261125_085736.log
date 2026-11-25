@@ -1,0 +1,1103 @@
+======================================================
+SAMPLE317 PRE-VELA / VELA GRAPH COMPARISON
+Wed Nov 25 08:57:36 AM HKT 2026
+======================================================
+MODEL_SIZE=10317408 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+8f0560876be0deb8511cb200e5971eeefc57cab329534c457e742958cf45d048  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+MODEL_SIZE=9684208 /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568256.486103   59916 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568256.486283   59916 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795568256.514546   59916 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568257.336045   59916 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568257.336234   59916 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+TensorFlow: 2.21.0
+TFLite schema import: PASS
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568258.715824   59945 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568258.716084   59945 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795568258.744677   59945 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568259.508161   59945 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568259.508348   59945 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+
+==========================================================================================
+PRE_VELA /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+SHA256: 8f0560876be0deb8511cb200e5971eeefc57cab329534c457e742958cf45d048
+MODEL_VERSION: 3
+SUBGRAPHS: 1
+OPCODE_TABLE: 29
+TENSORS: 489
+OPERATORS: 303
+
+MODEL_INPUTS:
+  tensor[0] 'x_values' shape=[1, 900, 6] type=FLOAT32
+  tensor[1] 'missing_mask' shape=[1, 900, 6] type=INT8
+  tensor[2] 'x_mark' shape=[1, 900, 3] type=FLOAT32
+  tensor[3] 'worker_features_18' shape=[1, 18] type=FLOAT32
+  tensor[4] 'compact_values' shape=[1, 1800, 6] type=FLOAT32
+MODEL_OUTPUTS:
+  tensor[304] 'reconstructed_values' shape=[1, 900, 6] type=FLOAT32
+
+OPERATOR_COUNTS:
+  RESHAPE: 65
+  MUL: 32
+  DEQUANTIZE: 30
+  CONV_2D: 27
+  ADD: 24
+  RELU: 21
+  QUANTIZE: 20
+  DEPTHWISE_CONV_2D: 20
+  SUB: 10
+  FULLY_CONNECTED: 7
+  GATHER: 6
+  DIV: 6
+  MIRROR_PAD: 5
+  TRANSPOSE: 4
+  MEAN: 4
+  NEG: 4
+  SUM: 2
+  CONCATENATION: 2
+  SQRT: 2
+  GREATER_EQUAL: 2
+  ABS: 2
+  EXP: 2
+  SELECT_V2: 2
+  CAST: 1
+  MAXIMUM: 1
+  BROADCAST_ARGS: 1
+  BROADCAST_TO: 1
+
+IMPORTANT_OPERATOR_INDICES:
+  op[0] CAST inputs=[1] outputs=[482]
+  op[3] GATHER inputs=[4, 483] outputs=[86]
+  op[4] GATHER inputs=[4, 484] outputs=[87]
+  op[5] GATHER inputs=[4, 485] outputs=[88]
+  op[6] GATHER inputs=[4, 486] outputs=[89]
+  op[7] GATHER inputs=[4, 487] outputs=[90]
+  op[8] GATHER inputs=[4, 488] outputs=[91]
+  op[9] RESHAPE inputs=[85] outputs=[93]
+  op[10] QUANTIZE inputs=[86] outputs=[94]
+  op[11] QUANTIZE inputs=[87] outputs=[95]
+  op[12] QUANTIZE inputs=[88] outputs=[96]
+  op[13] QUANTIZE inputs=[89] outputs=[97]
+  op[14] QUANTIZE inputs=[90] outputs=[98]
+  op[15] QUANTIZE inputs=[91] outputs=[99]
+  op[28] DEQUANTIZE inputs=[104] outputs=[114]
+  op[29] DEQUANTIZE inputs=[105] outputs=[115]
+  op[30] DEQUANTIZE inputs=[106] outputs=[116]
+  op[31] DEQUANTIZE inputs=[107] outputs=[117]
+  op[32] DEQUANTIZE inputs=[108] outputs=[118]
+  op[33] DEQUANTIZE inputs=[109] outputs=[119]
+  op[34] DIV inputs=[111, 113] outputs=[120]
+  op[35] RESHAPE inputs=[114] outputs=[121]
+  op[36] RESHAPE inputs=[115] outputs=[122]
+  op[37] RESHAPE inputs=[116] outputs=[123]
+  op[38] RESHAPE inputs=[117] outputs=[124]
+  op[39] RESHAPE inputs=[118] outputs=[125]
+  op[40] RESHAPE inputs=[119] outputs=[126]
+  op[41] BROADCAST_ARGS inputs=[307, 110] outputs=[308]
+  op[42] BROADCAST_TO inputs=[120, 308] outputs=[127]
+  op[43] CONCATENATION inputs=[121, 122, 123, 124, 125, 126] outputs=[128]
+  op[48] MIRROR_PAD inputs=[129, 309] outputs=[131]
+  op[49] QUANTIZE inputs=[131] outputs=[132]
+  op[50] RESHAPE inputs=[132] outputs=[310]
+  op[52] RESHAPE inputs=[311] outputs=[133]
+  op[53] MIRROR_PAD inputs=[133, 312] outputs=[134]
+  op[54] RESHAPE inputs=[134] outputs=[313]
+  op[56] RESHAPE inputs=[314] outputs=[135]
+  op[57] DEQUANTIZE inputs=[135] outputs=[136]
+  op[58] TRANSPOSE inputs=[136, 317] outputs=[316]
+  op[59] MEAN inputs=[316, 315] outputs=[318]
+  op[60] RESHAPE inputs=[318] outputs=[137]
+  op[63] TRANSPOSE inputs=[139, 321] outputs=[320]
+  op[64] MEAN inputs=[320, 319] outputs=[322]
+  op[65] RESHAPE inputs=[322] outputs=[140]
+  op[68] DIV inputs=[138, 142] outputs=[143]
+  op[72] GREATER_EQUAL inputs=[145, 327] outputs=[147]
+  op[79] DIV inputs=[331, 152] outputs=[154]
+  op[96] MIRROR_PAD inputs=[170, 339] outputs=[171]
+  op[97] QUANTIZE inputs=[171] outputs=[172]
+  op[98] RESHAPE inputs=[172] outputs=[340]
+  op[100] RESHAPE inputs=[341] outputs=[173]
+  op[101] MIRROR_PAD inputs=[173, 342] outputs=[174]
+  op[102] RESHAPE inputs=[174] outputs=[343]
+  op[104] RESHAPE inputs=[344] outputs=[175]
+  op[105] DEQUANTIZE inputs=[175] outputs=[176]
+  op[106] TRANSPOSE inputs=[176, 347] outputs=[346]
+  op[107] MEAN inputs=[346, 345] outputs=[348]
+  op[108] RESHAPE inputs=[348] outputs=[177]
+  op[111] TRANSPOSE inputs=[179, 351] outputs=[350]
+  op[112] MEAN inputs=[350, 349] outputs=[352]
+  op[113] RESHAPE inputs=[352] outputs=[180]
+  op[116] DIV inputs=[178, 182] outputs=[183]
+  op[120] GREATER_EQUAL inputs=[185, 357] outputs=[187]
+  op[127] DIV inputs=[361, 192] outputs=[194]
+  op[144] MIRROR_PAD inputs=[210, 369] outputs=[211]
+  op[145] QUANTIZE inputs=[211] outputs=[212]
+  op[146] RESHAPE inputs=[212] outputs=[370]
+  op[148] RESHAPE inputs=[371] outputs=[213]
+  op[149] DEQUANTIZE inputs=[213] outputs=[214]
+  op[152] DIV inputs=[217, 83] outputs=[218]
+  op[153] CONCATENATION inputs=[218, 101, 2, 93] outputs=[219]
+  op[154] QUANTIZE inputs=[219] outputs=[220]
+  op[155] RESHAPE inputs=[220] outputs=[372]
+  op[157] RESHAPE inputs=[373] outputs=[221]
+  op[159] DEQUANTIZE inputs=[222] outputs=[223]
+  op[160] RESHAPE inputs=[222] outputs=[374]
+  op[163] RESHAPE inputs=[378] outputs=[224]
+  op[165] RESHAPE inputs=[225] outputs=[379]
+  op[168] RESHAPE inputs=[383] outputs=[226]
+  op[169] DEQUANTIZE inputs=[226] outputs=[227]
+  op[172] QUANTIZE inputs=[229] outputs=[230]
+  op[173] DEQUANTIZE inputs=[230] outputs=[231]
+  op[174] RESHAPE inputs=[230] outputs=[384]
+  op[177] RESHAPE inputs=[388] outputs=[232]
+  op[179] RESHAPE inputs=[233] outputs=[389]
+  op[182] RESHAPE inputs=[393] outputs=[234]
+  op[183] DEQUANTIZE inputs=[234] outputs=[235]
+  op[186] QUANTIZE inputs=[237] outputs=[238]
+  op[187] DEQUANTIZE inputs=[238] outputs=[239]
+  op[188] RESHAPE inputs=[238] outputs=[394]
+  op[191] RESHAPE inputs=[398] outputs=[240]
+  op[193] RESHAPE inputs=[241] outputs=[399]
+  op[196] RESHAPE inputs=[403] outputs=[242]
+  op[197] DEQUANTIZE inputs=[242] outputs=[243]
+  op[200] QUANTIZE inputs=[245] outputs=[246]
+  op[201] DEQUANTIZE inputs=[246] outputs=[247]
+  op[202] RESHAPE inputs=[246] outputs=[404]
+  op[205] RESHAPE inputs=[408] outputs=[248]
+  op[207] RESHAPE inputs=[249] outputs=[409]
+  op[210] RESHAPE inputs=[413] outputs=[250]
+  op[211] DEQUANTIZE inputs=[250] outputs=[251]
+  op[214] QUANTIZE inputs=[253] outputs=[254]
+  op[215] DEQUANTIZE inputs=[254] outputs=[255]
+  op[216] RESHAPE inputs=[254] outputs=[414]
+  op[219] RESHAPE inputs=[418] outputs=[256]
+  op[221] RESHAPE inputs=[257] outputs=[419]
+  op[224] RESHAPE inputs=[423] outputs=[258]
+  op[225] DEQUANTIZE inputs=[258] outputs=[259]
+  op[228] QUANTIZE inputs=[261] outputs=[262]
+  op[229] DEQUANTIZE inputs=[262] outputs=[263]
+  op[230] RESHAPE inputs=[262] outputs=[424]
+  op[233] RESHAPE inputs=[428] outputs=[264]
+  op[235] RESHAPE inputs=[265] outputs=[429]
+  op[238] RESHAPE inputs=[433] outputs=[266]
+  op[239] DEQUANTIZE inputs=[266] outputs=[267]
+  op[242] QUANTIZE inputs=[269] outputs=[270]
+  op[243] DEQUANTIZE inputs=[270] outputs=[271]
+  op[244] RESHAPE inputs=[270] outputs=[434]
+  op[247] RESHAPE inputs=[438] outputs=[272]
+  op[249] RESHAPE inputs=[273] outputs=[439]
+  op[252] RESHAPE inputs=[443] outputs=[274]
+  op[253] DEQUANTIZE inputs=[274] outputs=[275]
+  op[256] QUANTIZE inputs=[277] outputs=[278]
+  op[257] DEQUANTIZE inputs=[278] outputs=[279]
+  op[258] RESHAPE inputs=[278] outputs=[444]
+  op[261] RESHAPE inputs=[448] outputs=[280]
+  op[263] RESHAPE inputs=[281] outputs=[449]
+  op[266] RESHAPE inputs=[453] outputs=[282]
+  op[267] DEQUANTIZE inputs=[282] outputs=[283]
+  op[270] QUANTIZE inputs=[285] outputs=[286]
+  op[271] DEQUANTIZE inputs=[286] outputs=[287]
+  op[272] RESHAPE inputs=[286] outputs=[454]
+  op[275] RESHAPE inputs=[458] outputs=[288]
+  op[277] RESHAPE inputs=[289] outputs=[459]
+  op[280] RESHAPE inputs=[463] outputs=[290]
+  op[281] DEQUANTIZE inputs=[290] outputs=[291]
+  op[284] QUANTIZE inputs=[293] outputs=[294]
+  op[285] DEQUANTIZE inputs=[294] outputs=[295]
+  op[286] RESHAPE inputs=[294] outputs=[464]
+  op[289] RESHAPE inputs=[468] outputs=[296]
+  op[291] RESHAPE inputs=[297] outputs=[469]
+  op[294] RESHAPE inputs=[473] outputs=[298]
+  op[295] DEQUANTIZE inputs=[298] outputs=[299]
+  op[298] QUANTIZE inputs=[301] outputs=[302]
+  op[299] RESHAPE inputs=[302] outputs=[474]
+  op[301] RESHAPE inputs=[475] outputs=[303]
+  op[302] DEQUANTIZE inputs=[303] outputs=[304]
+
+ETHOS_CUSTOM_OPERATOR_CONTEXT:
+  No operator name explicitly contains ETHOS.
+
+SELECTED_TENSOR_DETAILS:
+  tensor[0] 'x_values' shape=[1, 900, 6] type=FLOAT32
+  tensor[1] 'missing_mask' shape=[1, 900, 6] type=INT8
+  tensor[2] 'x_mark' shape=[1, 900, 3] type=FLOAT32
+  tensor[3] 'worker_features_18' shape=[1, 18] type=FLOAT32
+  tensor[4] 'compact_values' shape=[1, 1800, 6] type=FLOAT32
+  tensor[83] '/Constant_23_output_0' shape=[] type=FLOAT32
+  tensor[85] '/non_seq_enc/Gemm_output_0' shape=[1, 900] type=FLOAT32
+  tensor[86] '/Gather_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[87] '/Gather_1_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[88] '/Gather_2_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[89] '/Gather_3_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[90] '/Gather_4_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[91] '/Gather_5_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[93] '/Reshape_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[94] '/Gather_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.028659837320446968] zp=[0]
+  tensor[95] '/Gather_1_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.037776194512844086] zp=[0]
+  tensor[96] '/Gather_2_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.026440665125846863] zp=[0]
+  tensor[97] '/Gather_3_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02819562889635563] zp=[0]
+  tensor[98] '/Gather_4_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.0263220202177763] zp=[0]
+  tensor[99] '/Gather_5_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02881852351129055] zp=[0]
+  tensor[101] '/Where_5_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[104] '/svf.0/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.18789717555046082] zp=[0]
+  tensor[105] '/svf.1/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[1.171284556388855] zp=[0]
+  tensor[106] '/svf.2/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.12326247990131378] zp=[0]
+  tensor[107] '/svf.3/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.49247631430625916] zp=[0]
+  tensor[108] '/svf.4/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.17539432644844055] zp=[0]
+  tensor[109] '/svf.5/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.19671890139579773] zp=[0]
+  tensor[110] '/Where_2_output_0' shape=[3] type=INT64
+  tensor[111] '/ReduceSum_1_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[113] '/Clip_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[114] '/svf.0/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[115] '/svf.1/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[116] '/svf.2/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[117] '/svf.3/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[118] '/svf.4/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[119] '/svf.5/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[120] '/Div_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[121] '/Unsqueeze_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[122] '/Unsqueeze_1_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[123] '/Unsqueeze_2_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[124] '/Unsqueeze_3_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[125] '/Unsqueeze_4_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[126] '/Unsqueeze_5_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[127] '/Expand_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[128] '/Concat_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[129] '/Where_3_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[131] '/cvf/cvf.0/Pad_output_0' shape=[1, 902, 6] type=FLOAT32
+  tensor[132] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' shape=[1, 902, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+  tensor[133] '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 16] type=INT8 scale=[0.022140227258205414] zp=[0]
+  tensor[134] '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output' shape=[1, 904, 16] type=INT8 scale=[0.022140227258205414] zp=[0]
+  tensor[135] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+  tensor[136] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[137] '/cvf/cvf.2/ReduceMean_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[138] '/cvf/cvf.2/Sub_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[139] '/cvf/cvf.2/Mul_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[140] '/cvf/cvf.2/ReduceMean_1_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[142] '/cvf/cvf.2/Sqrt_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[143] '/cvf/cvf.2/Div_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[145] '/cvf/cvf.2/Add_1_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[147] '/cvf/cvf.3/GreaterOrEqual_output_0' shape=[1, 900, 32] type=BOOL
+  tensor[152] '/cvf/cvf.3/Add_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[154] '/cvf/cvf.3/Mul_2_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[170] '/cvf/cvf.3/Mul_11_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[171] '/cvf/cvf.4/Pad_output_0' shape=[1, 906, 32] type=FLOAT32
+  tensor[172] '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output' shape=[1, 906, 32] type=INT8 scale=[0.055356524884700775] zp=[0]
+  tensor[173] '/cvf/cvf.4/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 64] type=INT8 scale=[0.03794609010219574] zp=[0]
+  tensor[174] '/cvf/cvf.5/Pad_output_0_DequantizeLinear_Output' shape=[1, 908, 64] type=INT8 scale=[0.03794609010219574] zp=[0]
+  tensor[175] '/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 128] type=INT8 scale=[0.05620533972978592] zp=[0]
+  tensor[176] '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 128] type=FLOAT32
+  tensor[177] '/cvf/cvf.6/ReduceMean_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[178] '/cvf/cvf.6/Sub_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[179] '/cvf/cvf.6/Mul_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[180] '/cvf/cvf.6/ReduceMean_1_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[182] '/cvf/cvf.6/Sqrt_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[183] '/cvf/cvf.6/Div_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[185] '/cvf/cvf.6/Add_1_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[187] '/cvf/cvf.7/GreaterOrEqual_output_0' shape=[1, 900, 128] type=BOOL
+  tensor[192] '/cvf/cvf.7/Add_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[194] '/cvf/cvf.7/Mul_2_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[210] '/cvf/cvf.7/Mul_11_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[211] '/cvf/cvf.8/Pad_output_0' shape=[1, 910, 128] type=FLOAT32
+  tensor[212] '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output' shape=[1, 910, 128] type=INT8 scale=[0.04851965978741646] zp=[0]
+  tensor[213] '/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.35608869791030884] zp=[0]
+  tensor[214] '/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 6] type=FLOAT32
+  tensor[217] '/Add_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[218] '/Div_1_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[219] '/Concat_1_output_0' shape=[1, 900, 16] type=FLOAT32
+  tensor[220] '/Transpose_2_output_0_DequantizeLinear_Output' shape=[1, 900, 16] type=INT8 scale=[0.5809819102287292] zp=[0]
+  tensor[221] '/tcn_in/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.2636161148548126] zp=[0]
+  tensor[222] '/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0' shape=[1, 900, 32] type=INT8 scale=[0.23490256071090698] zp=[0]
+  tensor[223] '/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[224] '/tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.10038380324840546] zp=[0]
+  tensor[225] '/tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.10038380324840546] zp=[0]
+  tensor[226] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1111641526222229] zp=[0]
+  tensor[227] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[229] '/tcn_blocks.0/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[230] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+  tensor[231] '/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[232] '/tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11540369689464569] zp=[0]
+  tensor[233] '/tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11540369689464569] zp=[0]
+  tensor[234] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11245092749595642] zp=[0]
+  tensor[235] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[237] '/tcn_blocks.1/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[238] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+  tensor[239] '/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[240] '/tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.10993313789367676] zp=[0]
+  tensor[241] '/tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.10993313789367676] zp=[0]
+  tensor[242] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11775314062833786] zp=[0]
+  tensor[243] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[245] '/tcn_blocks.2/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[246] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+  tensor[247] '/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[248] '/tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.12846605479717255] zp=[0]
+  tensor[249] '/tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.12738505005836487] zp=[0]
+  tensor[250] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.12831193208694458] zp=[0]
+  tensor[251] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[253] '/tcn_blocks.3/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[254] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+  tensor[255] '/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[256] '/tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13723249733448029] zp=[0]
+  tensor[257] '/tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13723249733448029] zp=[0]
+  tensor[258] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1310039609670639] zp=[0]
+  tensor[259] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[261] '/tcn_blocks.4/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[262] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+  tensor[263] '/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[264] '/tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14271582663059235] zp=[0]
+  tensor[265] '/tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14271582663059235] zp=[0]
+  tensor[266] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13308443129062653] zp=[0]
+  tensor[267] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[269] '/tcn_blocks.5/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[270] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[271] '/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[272] '/tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14282996952533722] zp=[0]
+  tensor[273] '/tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14282996952533722] zp=[0]
+  tensor[274] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1375664323568344] zp=[0]
+  tensor[275] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[277] '/tcn_blocks.6/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[278] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[279] '/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[280] '/tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13805657625198364] zp=[0]
+  tensor[281] '/tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13805657625198364] zp=[0]
+  tensor[282] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13774767518043518] zp=[0]
+  tensor[283] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[285] '/tcn_blocks.7/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[286] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+  tensor[287] '/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[288] '/tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1444079577922821] zp=[0]
+  tensor[289] '/tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1373267024755478] zp=[0]
+  tensor[290] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1512395143508911] zp=[0]
+  tensor[291] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[293] '/tcn_blocks.8/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[294] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+  tensor[295] '/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[296] '/tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14566458761692047] zp=[0]
+  tensor[297] '/tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14566458761692047] zp=[0]
+  tensor[298] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14423802495002747] zp=[0]
+  tensor[299] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[301] '/tcn_blocks.9/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[302] '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.9981051087379456] zp=[0]
+  tensor[303] '/tcn_out/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.07694506645202637] zp=[0]
+  tensor[304] 'reconstructed_values' shape=[1, 900, 6] type=FLOAT32
+  tensor[307] 'x_shape' shape=[3] type=INT64
+  tensor[308] 'broadcasted_shape' shape=[3] type=INT64
+  tensor[309] 'paddings_' shape=[3, 2] type=INT32
+  tensor[310] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output_4D_' shape=[1, 902, 1, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+  tensor[311] '/cvf/cvf.0/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 16] type=INT8 scale=[0.022140227258205414] zp=[0]
+  tensor[312] 'paddings_0' shape=[3, 2] type=INT32
+  tensor[313] '/cvf/cvf.1/Pad_output_0_DequantizeLinear_Output_4D_' shape=[1, 904, 1, 16] type=INT8 scale=[0.022140227258205414] zp=[0]
+  tensor[314] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+  tensor[315] 'axes4' shape=[1] type=INT32
+  tensor[316] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' shape=[1, 32, 900] type=FLOAT32
+  tensor[317] 'perm' shape=[3] type=INT32
+  tensor[318] '/cvf/cvf.2/ReduceMean_output_00' shape=[1, 32, 1] type=FLOAT32
+  tensor[319] 'axes6' shape=[1] type=INT32
+  tensor[320] '/cvf/cvf.2/Mul_output_0_transposed_' shape=[1, 32, 900] type=FLOAT32
+  tensor[321] 'perm1' shape=[3] type=INT32
+  tensor[322] '/cvf/cvf.2/ReduceMean_1_output_00' shape=[1, 32, 1] type=FLOAT32
+  tensor[327] '/cvf/cvf.3/Constant_10_output_00' shape=[1, 1, 1] type=FLOAT32
+  tensor[331] 'one' shape=[1] type=FLOAT32
+  tensor[339] 'paddings_1' shape=[3, 2] type=INT32
+  tensor[340] '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output_4D_' shape=[1, 906, 1, 32] type=INT8 scale=[0.055356524884700775] zp=[0]
+  tensor[341] '/cvf/cvf.4/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 64] type=INT8 scale=[0.03794609010219574] zp=[0]
+  tensor[342] 'paddings_2' shape=[3, 2] type=INT32
+  tensor[343] '/cvf/cvf.5/Pad_output_0_DequantizeLinear_Output_4D_' shape=[1, 908, 1, 64] type=INT8 scale=[0.03794609010219574] zp=[0]
+  tensor[344] '/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 128] type=INT8 scale=[0.05620533972978592] zp=[0]
+  tensor[345] 'axes8' shape=[1] type=INT32
+  tensor[346] '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' shape=[1, 128, 900] type=FLOAT32
+  tensor[347] 'perm3' shape=[3] type=INT32
+  tensor[348] '/cvf/cvf.6/ReduceMean_output_00' shape=[1, 128, 1] type=FLOAT32
+  tensor[349] 'axes10' shape=[1] type=INT32
+  tensor[350] '/cvf/cvf.6/Mul_output_0_transposed_' shape=[1, 128, 900] type=FLOAT32
+  tensor[351] 'perm5' shape=[3] type=INT32
+  tensor[352] '/cvf/cvf.6/ReduceMean_1_output_00' shape=[1, 128, 1] type=FLOAT32
+  tensor[357] '/cvf/cvf.7/Constant_10_output_00' shape=[1, 1, 1] type=FLOAT32
+  tensor[361] 'one0' shape=[1] type=FLOAT32
+  tensor[369] 'paddings_3' shape=[3, 2] type=INT32
+  tensor[370] '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output_4D_' shape=[1, 910, 1, 128] type=INT8 scale=[0.04851965978741646] zp=[0]
+  tensor[371] '/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 6] type=INT8 scale=[0.35608869791030884] zp=[0]
+  tensor[372] '/Transpose_2_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 16] type=INT8 scale=[0.5809819102287292] zp=[0]
+  tensor[373] '/tcn_in/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.2636161148548126] zp=[0]
+  tensor[374] '/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.23490256071090698] zp=[0]
+  tensor[378] '/tcn_blocks.0/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.10038380324840546] zp=[0]
+  tensor[379] '/tcn_blocks.0/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.10038380324840546] zp=[0]
+  tensor[383] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1111641526222229] zp=[0]
+  tensor[384] '/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_1_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+  tensor[388] '/tcn_blocks.1/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.11540369689464569] zp=[0]
+  tensor[389] '/tcn_blocks.1/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.11540369689464569] zp=[0]
+  tensor[393] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.11245092749595642] zp=[0]
+  tensor[394] '/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_2_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+  tensor[398] '/tcn_blocks.2/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.10993313789367676] zp=[0]
+  tensor[399] '/tcn_blocks.2/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.10993313789367676] zp=[0]
+  tensor[403] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.11775314062833786] zp=[0]
+  tensor[404] '/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_3_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+  tensor[408] '/tcn_blocks.3/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.12846605479717255] zp=[0]
+  tensor[409] '/tcn_blocks.3/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.12738505005836487] zp=[0]
+  tensor[413] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.12831193208694458] zp=[0]
+  tensor[414] '/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_4_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+  tensor[418] '/tcn_blocks.4/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13723249733448029] zp=[0]
+  tensor[419] '/tcn_blocks.4/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13723249733448029] zp=[0]
+  tensor[423] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1310039609670639] zp=[0]
+  tensor[424] '/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_5_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+  tensor[428] '/tcn_blocks.5/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14271582663059235] zp=[0]
+  tensor[429] '/tcn_blocks.5/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14271582663059235] zp=[0]
+  tensor[433] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13308443129062653] zp=[0]
+  tensor[434] '/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_6_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[438] '/tcn_blocks.6/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14282996952533722] zp=[0]
+  tensor[439] '/tcn_blocks.6/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14282996952533722] zp=[0]
+  tensor[443] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1375664323568344] zp=[0]
+  tensor[444] '/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_7_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[448] '/tcn_blocks.7/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13805657625198364] zp=[0]
+  tensor[449] '/tcn_blocks.7/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13805657625198364] zp=[0]
+  tensor[453] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.13774767518043518] zp=[0]
+  tensor[454] '/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_8_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+  tensor[458] '/tcn_blocks.8/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1444079577922821] zp=[0]
+  tensor[459] '/tcn_blocks.8/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1373267024755478] zp=[0]
+  tensor[463] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.1512395143508911] zp=[0]
+  tensor[464] '/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_9_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+  tensor[468] '/tcn_blocks.9/layer1/pointwise/Conv_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14566458761692047] zp=[0]
+  tensor[469] '/tcn_blocks.9/layer1/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14566458761692047] zp=[0]
+  tensor[473] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.14423802495002747] zp=[0]
+  tensor[474] '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output_4D_' shape=[1, 900, 1, 32] type=INT8 scale=[0.9981051087379456] zp=[0]
+  tensor[475] '/tcn_out/Conv_output_0_QuantizeLinear_Output_4D_' shape=[1, 900, 1, 6] type=INT8 scale=[0.07694506645202637] zp=[0]
+  tensor[482] 'missing_mask_cast_float32' shape=[1, 900, 6] type=FLOAT32
+  tensor[483] '/Constant_output_0_int32_gather_op2' shape=[] type=INT32
+  tensor[484] '/Constant_4_output_0_int32_gather_op3' shape=[] type=INT32
+  tensor[485] '/Constant_6_output_0_int32_gather_op4' shape=[] type=INT32
+  tensor[486] '/Constant_7_output_0_int32_gather_op5' shape=[] type=INT32
+  tensor[487] '/Constant_8_output_0_int32_gather_op6' shape=[] type=INT32
+  tensor[488] '/Constant_9_output_0_int32_gather_op7' shape=[] type=INT32
+
+==========================================================================================
+VELA /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+SHA256: 0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MODEL_VERSION: 3
+SUBGRAPHS: 1
+OPCODE_TABLE: 26
+TENSORS: 304
+OPERATORS: 197
+
+MODEL_INPUTS:
+  tensor[10] 'x_values' shape=[1, 900, 6] type=FLOAT32
+  tensor[6] 'missing_mask' shape=[1, 900, 6] type=INT8
+  tensor[218] 'x_mark' shape=[1, 900, 3] type=FLOAT32
+  tensor[0] 'worker_features_18' shape=[1, 18] type=FLOAT32
+  tensor[32] 'compact_values' shape=[1, 1800, 6] type=FLOAT32
+MODEL_OUTPUTS:
+  tensor[303] 'reconstructed_values' shape=[1, 900, 6] type=FLOAT32
+
+OPERATOR_COUNTS:
+  MUL: 32
+  DEQUANTIZE: 30
+  ADD: 24
+  QUANTIZE: 20
+  ethos-u: 14
+  RESHAPE: 11
+  SUB: 10
+  RELU: 10
+  DIV: 6
+  GATHER: 6
+  TRANSPOSE: 4
+  MEAN: 4
+  NEG: 4
+  MIRROR_PAD: 3
+  SUM: 2
+  SQRT: 2
+  ABS: 2
+  EXP: 2
+  GREATER_EQUAL: 2
+  SELECT_V2: 2
+  CONCATENATION: 2
+  FULLY_CONNECTED: 1
+  CAST: 1
+  BROADCAST_ARGS: 1
+  MAXIMUM: 1
+  BROADCAST_TO: 1
+
+IMPORTANT_OPERATOR_INDICES:
+  op[1] RESHAPE inputs=[3, 4] outputs=[5]
+  op[2] CAST inputs=[6] outputs=[7]
+  op[6] BROADCAST_ARGS inputs=[13, 14] outputs=[15]
+  op[12] DIV inputs=[24, 21] outputs=[25]
+  op[13] BROADCAST_TO inputs=[25, 15] outputs=[26]
+  op[16] MIRROR_PAD inputs=[28, 29] outputs=[30]
+  op[17] QUANTIZE inputs=[30] outputs=[31]
+  op[18] GATHER inputs=[32, 33] outputs=[34]
+  op[19] QUANTIZE inputs=[34] outputs=[35]
+  op[20] GATHER inputs=[32, 36] outputs=[37]
+  op[21] QUANTIZE inputs=[37] outputs=[38]
+  op[22] GATHER inputs=[32, 39] outputs=[40]
+  op[23] QUANTIZE inputs=[40] outputs=[41]
+  op[24] GATHER inputs=[32, 42] outputs=[43]
+  op[25] QUANTIZE inputs=[43] outputs=[44]
+  op[26] GATHER inputs=[32, 45] outputs=[46]
+  op[27] QUANTIZE inputs=[46] outputs=[47]
+  op[28] GATHER inputs=[32, 48] outputs=[49]
+  op[29] QUANTIZE inputs=[49] outputs=[50]
+  op[30] ethos-u inputs=[51, 52, 53, 53, 31] outputs=[54]
+  op[31] DEQUANTIZE inputs=[54] outputs=[55]
+  op[32] TRANSPOSE inputs=[55, 56] outputs=[57]
+  op[33] MEAN inputs=[57, 58] outputs=[59]
+  op[34] RESHAPE inputs=[59, 60] outputs=[61]
+  op[37] TRANSPOSE inputs=[63, 64] outputs=[65]
+  op[38] MEAN inputs=[65, 66] outputs=[67]
+  op[39] RESHAPE inputs=[67, 68] outputs=[69]
+  op[42] DIV inputs=[62, 72] outputs=[73]
+  op[52] DIV inputs=[88, 87] outputs=[89]
+  op[65] GREATER_EQUAL inputs=[77, 108] outputs=[109]
+  op[70] MIRROR_PAD inputs=[115, 116] outputs=[117]
+  op[71] QUANTIZE inputs=[117] outputs=[118]
+  op[72] ethos-u inputs=[119, 52, 53, 53, 118] outputs=[120]
+  op[73] DEQUANTIZE inputs=[120] outputs=[121]
+  op[74] TRANSPOSE inputs=[121, 122] outputs=[123]
+  op[75] MEAN inputs=[123, 124] outputs=[125]
+  op[76] RESHAPE inputs=[125, 126] outputs=[127]
+  op[79] TRANSPOSE inputs=[129, 130] outputs=[131]
+  op[80] MEAN inputs=[131, 132] outputs=[133]
+  op[81] RESHAPE inputs=[133, 134] outputs=[135]
+  op[84] DIV inputs=[128, 138] outputs=[139]
+  op[94] DIV inputs=[154, 153] outputs=[155]
+  op[107] GREATER_EQUAL inputs=[143, 174] outputs=[175]
+  op[112] MIRROR_PAD inputs=[181, 182] outputs=[183]
+  op[113] QUANTIZE inputs=[183] outputs=[184]
+  op[114] ethos-u inputs=[185, 52, 53, 53, 184, 35, 38, 41, 44, 47, 50] outputs=[186, 187, 188, 189, 190, 191, 192]
+  op[115] DEQUANTIZE inputs=[186] outputs=[193]
+  op[117] DEQUANTIZE inputs=[187] outputs=[195]
+  op[118] RESHAPE inputs=[195, 196] outputs=[197]
+  op[119] DEQUANTIZE inputs=[188] outputs=[198]
+  op[120] RESHAPE inputs=[198, 199] outputs=[200]
+  op[121] DEQUANTIZE inputs=[189] outputs=[201]
+  op[122] RESHAPE inputs=[201, 202] outputs=[203]
+  op[123] DEQUANTIZE inputs=[190] outputs=[204]
+  op[124] RESHAPE inputs=[204, 205] outputs=[206]
+  op[125] DEQUANTIZE inputs=[191] outputs=[207]
+  op[126] RESHAPE inputs=[207, 208] outputs=[209]
+  op[127] DEQUANTIZE inputs=[192] outputs=[210]
+  op[128] RESHAPE inputs=[210, 211] outputs=[212]
+  op[129] CONCATENATION inputs=[212, 209, 206, 203, 200, 197] outputs=[213]
+  op[132] DIV inputs=[215, 216] outputs=[217]
+  op[133] CONCATENATION inputs=[217, 11, 218, 5] outputs=[219]
+  op[134] QUANTIZE inputs=[219] outputs=[220]
+  op[135] ethos-u inputs=[221, 52, 53, 53, 220] outputs=[222, 223]
+  op[136] DEQUANTIZE inputs=[223] outputs=[224]
+  op[138] DEQUANTIZE inputs=[222] outputs=[226]
+  op[140] QUANTIZE inputs=[227] outputs=[228]
+  op[141] ethos-u inputs=[229, 52, 53, 53, 228] outputs=[230, 231]
+  op[142] DEQUANTIZE inputs=[231] outputs=[232]
+  op[144] DEQUANTIZE inputs=[230] outputs=[234]
+  op[146] QUANTIZE inputs=[235] outputs=[236]
+  op[147] ethos-u inputs=[237, 52, 53, 53, 236] outputs=[238, 239]
+  op[148] DEQUANTIZE inputs=[239] outputs=[240]
+  op[150] DEQUANTIZE inputs=[238] outputs=[242]
+  op[152] QUANTIZE inputs=[243] outputs=[244]
+  op[153] ethos-u inputs=[245, 52, 53, 53, 244] outputs=[246, 247]
+  op[154] DEQUANTIZE inputs=[247] outputs=[248]
+  op[156] DEQUANTIZE inputs=[246] outputs=[250]
+  op[158] QUANTIZE inputs=[251] outputs=[252]
+  op[159] ethos-u inputs=[253, 52, 53, 53, 252] outputs=[254, 255]
+  op[160] DEQUANTIZE inputs=[255] outputs=[256]
+  op[162] DEQUANTIZE inputs=[254] outputs=[258]
+  op[164] QUANTIZE inputs=[259] outputs=[260]
+  op[165] ethos-u inputs=[261, 52, 53, 53, 260] outputs=[262, 263]
+  op[166] DEQUANTIZE inputs=[263] outputs=[264]
+  op[168] DEQUANTIZE inputs=[262] outputs=[266]
+  op[170] QUANTIZE inputs=[267] outputs=[268]
+  op[171] ethos-u inputs=[269, 52, 53, 53, 268] outputs=[270, 271]
+  op[172] DEQUANTIZE inputs=[271] outputs=[272]
+  op[174] DEQUANTIZE inputs=[270] outputs=[274]
+  op[176] QUANTIZE inputs=[275] outputs=[276]
+  op[177] ethos-u inputs=[277, 52, 53, 53, 276] outputs=[278, 279]
+  op[178] DEQUANTIZE inputs=[279] outputs=[280]
+  op[180] DEQUANTIZE inputs=[278] outputs=[282]
+  op[182] QUANTIZE inputs=[283] outputs=[284]
+  op[183] ethos-u inputs=[285, 52, 53, 53, 284] outputs=[286, 287]
+  op[184] DEQUANTIZE inputs=[287] outputs=[288]
+  op[186] DEQUANTIZE inputs=[286] outputs=[290]
+  op[188] QUANTIZE inputs=[291] outputs=[292]
+  op[189] ethos-u inputs=[293, 52, 53, 53, 292] outputs=[294, 295]
+  op[190] DEQUANTIZE inputs=[295] outputs=[296]
+  op[192] DEQUANTIZE inputs=[294] outputs=[298]
+  op[194] QUANTIZE inputs=[299] outputs=[300]
+  op[195] ethos-u inputs=[301, 52, 53, 53, 300] outputs=[302]
+  op[196] DEQUANTIZE inputs=[302] outputs=[303]
+
+ETHOS_CUSTOM_OPERATOR_CONTEXT:
+  --- around operator 30 ---
+  op[27] QUANTIZE in=[46] out=[47]
+  op[28] GATHER in=[32, 48] out=[49]
+  op[29] QUANTIZE in=[49] out=[50]
+  op[30] ethos-u in=[51, 52, 53, 53, 31] out=[54]
+    NODE_INPUT_TENSORS:
+       tensor[51] 'ethos_u_command_stream' shape=[928] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[31] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' shape=[1, 902, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[54] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+  op[31] DEQUANTIZE in=[54] out=[55]
+  op[32] TRANSPOSE in=[55, 56] out=[57]
+  op[33] MEAN in=[57, 58] out=[59]
+  --- around operator 72 ---
+  op[69] MUL in=[114, 112] out=[115]
+  op[70] MIRROR_PAD in=[115, 116] out=[117]
+  op[71] QUANTIZE in=[117] out=[118]
+  op[72] ethos-u in=[119, 52, 53, 53, 118] out=[120]
+    NODE_INPUT_TENSORS:
+       tensor[119] 'ethos_u_command_stream' shape=[792] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[118] '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output' shape=[1, 906, 32] type=INT8 scale=[0.055356524884700775] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[120] '/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 128] type=INT8 scale=[0.05620533972978592] zp=[0]
+  op[73] DEQUANTIZE in=[120] out=[121]
+  op[74] TRANSPOSE in=[121, 122] out=[123]
+  op[75] MEAN in=[123, 124] out=[125]
+  --- around operator 114 ---
+  op[111] MUL in=[180, 178] out=[181]
+  op[112] MIRROR_PAD in=[181, 182] out=[183]
+  op[113] QUANTIZE in=[183] out=[184]
+  op[114] ethos-u in=[185, 52, 53, 53, 184, 35, 38, 41, 44, 47, 50] out=[186, 187, 188, 189, 190, 191, 192]
+    NODE_INPUT_TENSORS:
+       tensor[185] 'ethos_u_command_stream' shape=[728] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[184] '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output' shape=[1, 910, 128] type=INT8 scale=[0.04851965978741646] zp=[0]
+       tensor[35] '/Gather_5_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02881852351129055] zp=[0]
+       tensor[38] '/Gather_4_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.0263220202177763] zp=[0]
+       tensor[41] '/Gather_3_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02819562889635563] zp=[0]
+       tensor[44] '/Gather_2_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.026440665125846863] zp=[0]
+       tensor[47] '/Gather_1_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.037776194512844086] zp=[0]
+       tensor[50] '/Gather_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.028659837320446968] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[186] '/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.35608869791030884] zp=[0]
+       tensor[187] '/svf.5/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.19671890139579773] zp=[0]
+       tensor[188] '/svf.4/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.17539432644844055] zp=[0]
+       tensor[189] '/svf.3/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.49247631430625916] zp=[0]
+       tensor[190] '/svf.2/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.12326247990131378] zp=[0]
+       tensor[191] '/svf.1/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[1.171284556388855] zp=[0]
+       tensor[192] '/svf.0/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.18789717555046082] zp=[0]
+  op[115] DEQUANTIZE in=[186] out=[193]
+  op[116] MUL in=[7, 193] out=[194]
+  op[117] DEQUANTIZE in=[187] out=[195]
+  --- around operator 135 ---
+  op[132] DIV in=[215, 216] out=[217]
+  op[133] CONCATENATION in=[217, 11, 218, 5] out=[219]
+  op[134] QUANTIZE in=[219] out=[220]
+  op[135] ethos-u in=[221, 52, 53, 53, 220] out=[222, 223]
+    NODE_INPUT_TENSORS:
+       tensor[221] 'ethos_u_command_stream' shape=[1128] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[220] '/Transpose_2_output_0_DequantizeLinear_Output' shape=[1, 900, 16] type=INT8 scale=[0.5809819102287292] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[222] '/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_copy' shape=[1, 900, 32] type=INT8 scale=[0.23490256071090698] zp=[0]
+       tensor[223] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1111641526222229] zp=[0]
+  op[136] DEQUANTIZE in=[223] out=[224]
+  op[137] RELU in=[224] out=[225]
+  op[138] DEQUANTIZE in=[222] out=[226]
+  --- around operator 141 ---
+  op[139] ADD in=[226, 225] out=[227]
+  op[140] QUANTIZE in=[227] out=[228]
+  op[141] ethos-u in=[229, 52, 53, 53, 228] out=[230, 231]
+    NODE_INPUT_TENSORS:
+       tensor[229] 'ethos_u_command_stream' shape=[792] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[228] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[230] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+       tensor[231] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11245092749595642] zp=[0]
+  op[142] DEQUANTIZE in=[231] out=[232]
+  op[143] RELU in=[232] out=[233]
+  op[144] DEQUANTIZE in=[230] out=[234]
+  --- around operator 147 ---
+  op[145] ADD in=[234, 233] out=[235]
+  op[146] QUANTIZE in=[235] out=[236]
+  op[147] ethos-u in=[237, 52, 53, 53, 236] out=[238, 239]
+    NODE_INPUT_TENSORS:
+       tensor[237] 'ethos_u_command_stream' shape=[776] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[236] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[238] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+       tensor[239] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11775314062833786] zp=[0]
+  op[148] DEQUANTIZE in=[239] out=[240]
+  op[149] RELU in=[240] out=[241]
+  op[150] DEQUANTIZE in=[238] out=[242]
+  --- around operator 153 ---
+  op[151] ADD in=[242, 241] out=[243]
+  op[152] QUANTIZE in=[243] out=[244]
+  op[153] ethos-u in=[245, 52, 53, 53, 244] out=[246, 247]
+    NODE_INPUT_TENSORS:
+       tensor[245] 'ethos_u_command_stream' shape=[1004] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[244] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[246] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+       tensor[247] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.12831193208694458] zp=[0]
+  op[154] DEQUANTIZE in=[247] out=[248]
+  op[155] RELU in=[248] out=[249]
+  op[156] DEQUANTIZE in=[246] out=[250]
+  --- around operator 159 ---
+  op[157] ADD in=[250, 249] out=[251]
+  op[158] QUANTIZE in=[251] out=[252]
+  op[159] ethos-u in=[253, 52, 53, 53, 252] out=[254, 255]
+    NODE_INPUT_TENSORS:
+       tensor[253] 'ethos_u_command_stream' shape=[776] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[252] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[254] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+       tensor[255] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1310039609670639] zp=[0]
+  op[160] DEQUANTIZE in=[255] out=[256]
+  op[161] RELU in=[256] out=[257]
+  op[162] DEQUANTIZE in=[254] out=[258]
+  --- around operator 165 ---
+  op[163] ADD in=[258, 257] out=[259]
+  op[164] QUANTIZE in=[259] out=[260]
+  op[165] ethos-u in=[261, 52, 53, 53, 260] out=[262, 263]
+    NODE_INPUT_TENSORS:
+       tensor[261] 'ethos_u_command_stream' shape=[792] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[260] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[262] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+       tensor[263] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13308443129062653] zp=[0]
+  op[166] DEQUANTIZE in=[263] out=[264]
+  op[167] RELU in=[264] out=[265]
+  op[168] DEQUANTIZE in=[262] out=[266]
+  --- around operator 171 ---
+  op[169] ADD in=[266, 265] out=[267]
+  op[170] QUANTIZE in=[267] out=[268]
+  op[171] ethos-u in=[269, 52, 53, 53, 268] out=[270, 271]
+    NODE_INPUT_TENSORS:
+       tensor[269] 'ethos_u_command_stream' shape=[776] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[268] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[270] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+       tensor[271] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1375664323568344] zp=[0]
+  op[172] DEQUANTIZE in=[271] out=[272]
+  op[173] RELU in=[272] out=[273]
+  op[174] DEQUANTIZE in=[270] out=[274]
+  --- around operator 177 ---
+  op[175] ADD in=[274, 273] out=[275]
+  op[176] QUANTIZE in=[275] out=[276]
+  op[177] ethos-u in=[277, 52, 53, 53, 276] out=[278, 279]
+    NODE_INPUT_TENSORS:
+       tensor[277] 'ethos_u_command_stream' shape=[792] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[276] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[278] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+       tensor[279] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13774767518043518] zp=[0]
+  op[178] DEQUANTIZE in=[279] out=[280]
+  op[179] RELU in=[280] out=[281]
+  op[180] DEQUANTIZE in=[278] out=[282]
+  --- around operator 183 ---
+  op[181] ADD in=[282, 281] out=[283]
+  op[182] QUANTIZE in=[283] out=[284]
+  op[183] ethos-u in=[285, 52, 53, 53, 284] out=[286, 287]
+    NODE_INPUT_TENSORS:
+       tensor[285] 'ethos_u_command_stream' shape=[988] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[284] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[286] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+       tensor[287] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1512395143508911] zp=[0]
+  op[184] DEQUANTIZE in=[287] out=[288]
+  op[185] RELU in=[288] out=[289]
+  op[186] DEQUANTIZE in=[286] out=[290]
+  --- around operator 189 ---
+  op[187] ADD in=[290, 289] out=[291]
+  op[188] QUANTIZE in=[291] out=[292]
+  op[189] ethos-u in=[293, 52, 53, 53, 292] out=[294, 295]
+    NODE_INPUT_TENSORS:
+       tensor[293] 'ethos_u_command_stream' shape=[792] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[292] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[294] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+       tensor[295] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14423802495002747] zp=[0]
+  op[190] DEQUANTIZE in=[295] out=[296]
+  op[191] RELU in=[296] out=[297]
+  op[192] DEQUANTIZE in=[294] out=[298]
+  --- around operator 195 ---
+  op[193] ADD in=[298, 297] out=[299]
+  op[194] QUANTIZE in=[299] out=[300]
+  op[195] ethos-u in=[301, 52, 53, 53, 300] out=[302]
+    NODE_INPUT_TENSORS:
+       tensor[301] 'ethos_u_command_stream' shape=[368] type=UINT8
+       tensor[52] 'read_only' shape=[9526576] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[53] 'scratch' shape=[2372448] type=UINT8
+       tensor[300] '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.9981051087379456] zp=[0]
+    NODE_OUTPUT_TENSORS:
+       tensor[302] '/tcn_out/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.07694506645202637] zp=[0]
+  op[196] DEQUANTIZE in=[302] out=[303]
+
+SELECTED_TENSOR_DETAILS:
+  tensor[0] 'worker_features_18' shape=[1, 18] type=FLOAT32
+  tensor[3] '/non_seq_enc/Gemm_output_0' shape=[1, 900] type=FLOAT32
+  tensor[4] 'new_shape' shape=[3] type=INT32
+  tensor[5] '/Reshape_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[6] 'missing_mask' shape=[1, 900, 6] type=INT8
+  tensor[7] 'missing_mask_cast_float32' shape=[1, 900, 6] type=FLOAT32
+  tensor[10] 'x_values' shape=[1, 900, 6] type=FLOAT32
+  tensor[11] '/Where_5_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[13] 'x_shape' shape=[3] type=INT64
+  tensor[14] '/Where_2_output_0' shape=[3] type=INT64
+  tensor[15] 'broadcasted_shape' shape=[3] type=INT64
+  tensor[21] '/Clip_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[24] '/ReduceSum_1_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[25] '/Div_output_0' shape=[1, 1, 6] type=FLOAT32
+  tensor[26] '/Expand_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[28] '/Where_3_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[29] 'paddings_' shape=[3, 2] type=INT32
+  tensor[30] '/cvf/cvf.0/Pad_output_0' shape=[1, 902, 6] type=FLOAT32
+  tensor[31] '/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output' shape=[1, 902, 6] type=INT8 scale=[0.037776194512844086] zp=[0]
+  tensor[32] 'compact_values' shape=[1, 1800, 6] type=FLOAT32
+  tensor[33] '/Constant_9_output_0_int32_gather_op7' shape=[] type=INT32
+  tensor[34] '/Gather_5_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[35] '/Gather_5_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02881852351129055] zp=[0]
+  tensor[36] '/Constant_8_output_0_int32_gather_op6' shape=[] type=INT32
+  tensor[37] '/Gather_4_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[38] '/Gather_4_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.0263220202177763] zp=[0]
+  tensor[39] '/Constant_7_output_0_int32_gather_op5' shape=[] type=INT32
+  tensor[40] '/Gather_3_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[41] '/Gather_3_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.02819562889635563] zp=[0]
+  tensor[42] '/Constant_6_output_0_int32_gather_op4' shape=[] type=INT32
+  tensor[43] '/Gather_2_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[44] '/Gather_2_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.026440665125846863] zp=[0]
+  tensor[45] '/Constant_4_output_0_int32_gather_op3' shape=[] type=INT32
+  tensor[46] '/Gather_1_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[47] '/Gather_1_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.037776194512844086] zp=[0]
+  tensor[48] '/Constant_output_0_int32_gather_op2' shape=[] type=INT32
+  tensor[49] '/Gather_output_0' shape=[1, 1800] type=FLOAT32
+  tensor[50] '/Gather_output_0_DequantizeLinear_Output' shape=[1, 1800] type=INT8 scale=[0.028659837320446968] zp=[0]
+  tensor[51] 'ethos_u_command_stream' shape=[928] type=UINT8
+  tensor[52] 'read_only' shape=[9526576] type=UINT8
+  tensor[53] 'scratch' shape=[2372448] type=UINT8
+  tensor[54] '/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.013645906001329422] zp=[0]
+  tensor[55] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[56] 'perm' shape=[3] type=INT32
+  tensor[57] '/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_' shape=[1, 32, 900] type=FLOAT32
+  tensor[58] 'axes4' shape=[1] type=INT32
+  tensor[59] '/cvf/cvf.2/ReduceMean_output_00' shape=[1, 32, 1] type=FLOAT32
+  tensor[60] 'new_shape' shape=[3] type=INT32
+  tensor[61] '/cvf/cvf.2/ReduceMean_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[62] '/cvf/cvf.2/Sub_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[63] '/cvf/cvf.2/Mul_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[64] 'perm1' shape=[3] type=INT32
+  tensor[65] '/cvf/cvf.2/Mul_output_0_transposed_' shape=[1, 32, 900] type=FLOAT32
+  tensor[66] 'axes6' shape=[1] type=INT32
+  tensor[67] '/cvf/cvf.2/ReduceMean_1_output_00' shape=[1, 32, 1] type=FLOAT32
+  tensor[68] 'new_shape' shape=[3] type=INT32
+  tensor[69] '/cvf/cvf.2/ReduceMean_1_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[72] '/cvf/cvf.2/Sqrt_output_0' shape=[1, 1, 32] type=FLOAT32
+  tensor[73] '/cvf/cvf.2/Div_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[77] '/cvf/cvf.2/Add_1_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[87] '/cvf/cvf.3/Add_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[88] 'one' shape=[1] type=FLOAT32
+  tensor[89] '/cvf/cvf.3/Mul_2_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[108] '/cvf/cvf.3/Constant_10_output_00' shape=[1, 1, 1] type=FLOAT32
+  tensor[109] '/cvf/cvf.3/GreaterOrEqual_output_0' shape=[1, 900, 32] type=BOOL
+  tensor[115] '/cvf/cvf.3/Mul_11_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[116] 'paddings_1' shape=[3, 2] type=INT32
+  tensor[117] '/cvf/cvf.4/Pad_output_0' shape=[1, 906, 32] type=FLOAT32
+  tensor[118] '/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output' shape=[1, 906, 32] type=INT8 scale=[0.055356524884700775] zp=[0]
+  tensor[119] 'ethos_u_command_stream' shape=[792] type=UINT8
+  tensor[120] '/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 128] type=INT8 scale=[0.05620533972978592] zp=[0]
+  tensor[121] '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 128] type=FLOAT32
+  tensor[122] 'perm3' shape=[3] type=INT32
+  tensor[123] '/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_' shape=[1, 128, 900] type=FLOAT32
+  tensor[124] 'axes8' shape=[1] type=INT32
+  tensor[125] '/cvf/cvf.6/ReduceMean_output_00' shape=[1, 128, 1] type=FLOAT32
+  tensor[126] 'new_shape' shape=[3] type=INT32
+  tensor[127] '/cvf/cvf.6/ReduceMean_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[128] '/cvf/cvf.6/Sub_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[129] '/cvf/cvf.6/Mul_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[130] 'perm5' shape=[3] type=INT32
+  tensor[131] '/cvf/cvf.6/Mul_output_0_transposed_' shape=[1, 128, 900] type=FLOAT32
+  tensor[132] 'axes10' shape=[1] type=INT32
+  tensor[133] '/cvf/cvf.6/ReduceMean_1_output_00' shape=[1, 128, 1] type=FLOAT32
+  tensor[134] 'new_shape' shape=[3] type=INT32
+  tensor[135] '/cvf/cvf.6/ReduceMean_1_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[138] '/cvf/cvf.6/Sqrt_output_0' shape=[1, 1, 128] type=FLOAT32
+  tensor[139] '/cvf/cvf.6/Div_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[143] '/cvf/cvf.6/Add_1_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[153] '/cvf/cvf.7/Add_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[154] 'one0' shape=[1] type=FLOAT32
+  tensor[155] '/cvf/cvf.7/Mul_2_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[174] '/cvf/cvf.7/Constant_10_output_00' shape=[1, 1, 1] type=FLOAT32
+  tensor[175] '/cvf/cvf.7/GreaterOrEqual_output_0' shape=[1, 900, 128] type=BOOL
+  tensor[181] '/cvf/cvf.7/Mul_11_output_0' shape=[1, 900, 128] type=FLOAT32
+  tensor[182] 'paddings_3' shape=[3, 2] type=INT32
+  tensor[183] '/cvf/cvf.8/Pad_output_0' shape=[1, 910, 128] type=FLOAT32
+  tensor[184] '/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output' shape=[1, 910, 128] type=INT8 scale=[0.04851965978741646] zp=[0]
+  tensor[185] 'ethos_u_command_stream' shape=[728] type=UINT8
+  tensor[186] '/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.35608869791030884] zp=[0]
+  tensor[187] '/svf.5/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.19671890139579773] zp=[0]
+  tensor[188] '/svf.4/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.17539432644844055] zp=[0]
+  tensor[189] '/svf.3/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.49247631430625916] zp=[0]
+  tensor[190] '/svf.2/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.12326247990131378] zp=[0]
+  tensor[191] '/svf.1/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[1.171284556388855] zp=[0]
+  tensor[192] '/svf.0/Gemm_output_0_QuantizeLinear_Output' shape=[1, 900] type=INT8 scale=[0.18789717555046082] zp=[0]
+  tensor[193] '/cvf/cvf.8/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 6] type=FLOAT32
+  tensor[195] '/svf.5/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[196] 'new_shape' shape=[3] type=INT32
+  tensor[197] '/Unsqueeze_5_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[198] '/svf.4/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[199] 'new_shape' shape=[3] type=INT32
+  tensor[200] '/Unsqueeze_4_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[201] '/svf.3/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[202] 'new_shape' shape=[3] type=INT32
+  tensor[203] '/Unsqueeze_3_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[204] '/svf.2/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[205] 'new_shape' shape=[3] type=INT32
+  tensor[206] '/Unsqueeze_2_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[207] '/svf.1/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[208] 'new_shape' shape=[3] type=INT32
+  tensor[209] '/Unsqueeze_1_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[210] '/svf.0/Gemm_output_0_DequantizeLinear_Output' shape=[1, 900] type=FLOAT32
+  tensor[211] 'new_shape' shape=[3] type=INT32
+  tensor[212] '/Unsqueeze_output_0' shape=[1, 900, 1] type=FLOAT32
+  tensor[213] '/Concat_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[215] '/Add_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[216] '/Constant_23_output_0' shape=[] type=FLOAT32
+  tensor[217] '/Div_1_output_0' shape=[1, 900, 6] type=FLOAT32
+  tensor[218] 'x_mark' shape=[1, 900, 3] type=FLOAT32
+  tensor[219] '/Concat_1_output_0' shape=[1, 900, 16] type=FLOAT32
+  tensor[220] '/Transpose_2_output_0_DequantizeLinear_Output' shape=[1, 900, 16] type=INT8 scale=[0.5809819102287292] zp=[0]
+  tensor[221] 'ethos_u_command_stream' shape=[1128] type=UINT8
+  tensor[222] '/Relu_output_0_DequantizeLinear_Output_exclusive_for_tcn_dw_block_0_copy' shape=[1, 900, 32] type=INT8 scale=[0.23490256071090698] zp=[0]
+  tensor[223] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1111641526222229] zp=[0]
+  tensor[224] '/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[226] '/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[227] '/tcn_blocks.0/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[228] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+  tensor[229] 'ethos_u_command_stream' shape=[792] type=UINT8
+  tensor[230] '/tcn_blocks.0/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.2410353571176529] zp=[0]
+  tensor[231] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11245092749595642] zp=[0]
+  tensor[232] '/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[234] '/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[235] '/tcn_blocks.1/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[236] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+  tensor[237] 'ethos_u_command_stream' shape=[776] type=UINT8
+  tensor[238] '/tcn_blocks.1/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.26148852705955505] zp=[0]
+  tensor[239] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.11775314062833786] zp=[0]
+  tensor[240] '/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[242] '/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[243] '/tcn_blocks.2/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[244] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+  tensor[245] 'ethos_u_command_stream' shape=[1004] type=UINT8
+  tensor[246] '/tcn_blocks.2/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.3445577919483185] zp=[0]
+  tensor[247] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.12831193208694458] zp=[0]
+  tensor[248] '/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[250] '/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[251] '/tcn_blocks.3/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[252] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+  tensor[253] 'ethos_u_command_stream' shape=[776] type=UINT8
+  tensor[254] '/tcn_blocks.3/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.44952285289764404] zp=[0]
+  tensor[255] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1310039609670639] zp=[0]
+  tensor[256] '/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[258] '/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[259] '/tcn_blocks.4/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[260] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+  tensor[261] 'ethos_u_command_stream' shape=[792] type=UINT8
+  tensor[262] '/tcn_blocks.4/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.5538598895072937] zp=[0]
+  tensor[263] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13308443129062653] zp=[0]
+  tensor[264] '/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[266] '/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[267] '/tcn_blocks.5/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[268] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[269] 'ethos_u_command_stream' shape=[776] type=UINT8
+  tensor[270] '/tcn_blocks.5/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[271] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1375664323568344] zp=[0]
+  tensor[272] '/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[274] '/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[275] '/tcn_blocks.6/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[276] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[277] 'ethos_u_command_stream' shape=[792] type=UINT8
+  tensor[278] '/tcn_blocks.6/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.686407744884491] zp=[0]
+  tensor[279] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.13774767518043518] zp=[0]
+  tensor[280] '/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[282] '/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[283] '/tcn_blocks.7/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[284] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+  tensor[285] 'ethos_u_command_stream' shape=[988] type=UINT8
+  tensor[286] '/tcn_blocks.7/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.737893283367157] zp=[0]
+  tensor[287] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.1512395143508911] zp=[0]
+  tensor[288] '/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[290] '/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[291] '/tcn_blocks.8/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[292] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+  tensor[293] 'ethos_u_command_stream' shape=[792] type=UINT8
+  tensor[294] '/tcn_blocks.8/Relu_output_0_QuantizeLinear_Output_copy' shape=[1, 900, 32] type=INT8 scale=[0.8709135055541992] zp=[0]
+  tensor[295] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.14423802495002747] zp=[0]
+  tensor[296] '/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[298] '/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=FLOAT32
+  tensor[299] '/tcn_blocks.9/Relu_output_0' shape=[1, 900, 32] type=FLOAT32
+  tensor[300] '/tcn_blocks.9/Relu_output_0_DequantizeLinear_Output' shape=[1, 900, 32] type=INT8 scale=[0.9981051087379456] zp=[0]
+  tensor[301] 'ethos_u_command_stream' shape=[368] type=UINT8
+  tensor[302] '/tcn_out/Conv_output_0_QuantizeLinear_Output' shape=[1, 900, 6] type=INT8 scale=[0.07694506645202637] zp=[0]
+  tensor[303] 'reconstructed_values' shape=[1, 900, 6] type=FLOAT32
+
+==========================================================================================
+PRE_VELA_VS_VELA_SUMMARY
+PRE_VELA operators= 303 unique_operator_types= 27 ethos_indices= []
+VELA operators= 197 unique_operator_types= 26 ethos_indices= [30, 72, 114, 135, 141, 147, 153, 159, 165, 171, 177, 183, 189, 195]
+
+OPERATOR_COUNT_DIFFERENCES:
+  CONV_2D: pre_vela=27 vela=0
+  DEPTHWISE_CONV_2D: pre_vela=20 vela=0
+  FULLY_CONNECTED: pre_vela=7 vela=1
+  MIRROR_PAD: pre_vela=5 vela=3
+  RELU: pre_vela=21 vela=10
+  RESHAPE: pre_vela=65 vela=11
+  ethos-u: pre_vela=0 vela=14
+
+INPUT_TENSOR_INDICES:
+  pre_vela: [0, 1, 2, 3, 4]
+  vela:     [10, 6, 218, 0, 32]
+OUTPUT_TENSOR_INDICES:
+  pre_vela: [304]
+  vela:     [303]
+
+GRAPH_COMPARISON_FINISHED
+
+GRAPH_AUDIT_FINISHED
+
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample317_vela_graph_20261125_085736.log
+MODEL_FILES_MODIFIED=NO
+FLASH_PERFORMED=NO
+Press ENTER to close this terminal...
