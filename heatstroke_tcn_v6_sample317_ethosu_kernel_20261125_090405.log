@@ -1,0 +1,1608 @@
+======================================================
+TCN V6 SAMPLE317 ETHOS-U KERNEL SOURCE AUDIT
+Wed Nov 25 09:04:05 AM HKT 2026
+======================================================
+
+========== 1. RESOLVER REGISTRATION ==========
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc:231:    printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:5:#include "tensorflow/lite/micro/kernels/ethosu.h"
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:70:    // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:72:        tflite::Register_ETHOSU();
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:125:    const char* ethos_name = tflite::GetString_ETHOSU();
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:130:        printk("TCN_V6_RESOLVER: custom ethos-u registration not found\n");
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc:136:    printk("TCN_V6_RESOLVER: builtin_expected=25 custom=ethos-u status=%s\n",
+
+========== 2. ETHOS-U SOURCE SEARCH ==========
+SEARCH_ROOT=/home/user/sdk-alif/optional/modules/lib/tflite-micro
+SEARCH_ROOT=/home/user/sdk-alif/alif
+SEARCH_ROOT=/home/user/sdk-alif/modules/hal/ethos_u
+SEARCH_ROOT=/home/user/sdk-alif/modules/alif-mlek
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/python_ops_resolver.cc:53:  AddEthosU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party/xtensa/examples/pytorch_to_tflite/pytorch_op_resolver.cc:46:  TF_LITE_ENSURE_STATUS(resolver.AddEthosU());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc:279:    const bool tcn_v6_is_ethosu = (registration->builtin_code == BuiltinOperator_CUSTOM && registration->custom_name != nullptr && std::strcmp(registration->custom_name, "ethos-u") == 0);
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/cortex_m_corstone_300/system_setup.cc:17:#include <ethosu_driver.h>
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/cortex_m_corstone_300/system_setup.cc:38:void ethosu_inference_begin(struct ethosu_driver* drv, void* userArg) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/cortex_m_corstone_300/system_setup.cc:52:void ethosu_inference_end(struct ethosu_driver* drv, void* userArg) {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/cortex_m_corstone_300/system_setup.cc:114:struct ethosu_driver ethosu0_driver;
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/network_tester/network_tester_test.cc:97:  resolver.AddEthosU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:274:  TfLiteStatus AddEthosU() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_mutable_op_resolver.h:275:    TFLMRegistration* registration = tflite::Register_ETHOSU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tools/benchmarking/op_resolver.h:58:  TF_LITE_ENSURE_STATUS(op_resolver.AddEthosU());
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/benchmarks/person_detection_benchmark.cc:65:  op_resolver->AddEthosU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h:22:TFLMRegistration* Register_ETHOSU();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc:23:TFLMRegistration* Register_ETHOSU() { return nullptr; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:16:#include <ethosu_driver.h>
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:163:  struct ethosu_driver *drv = ethosu_reserve_driver();
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:167:  result = ethosu_invoke_v3(
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:200:TFLMRegistration* Register_ETHOSU() {
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc:205:const char* GetString_ETHOSU() { return "ethos-u"; }
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/micro_ops.h:64:TFLMRegistration* Register_ETHOSU();
+/home/user/sdk-alif/alif/include/ethosu/models/keyword_spotting_cnn_small_int8/u55/model_u55_256.h:9: * vela cnn_s_quantized.tflite --accelerator-config=ethos-u55-256 --optimise Performance
+/home/user/sdk-alif/alif/include/ethosu/models/keyword_spotting_cnn_small_int8/u85/model_u85_256.h:23: * Vela optimisation: vela --config Arm/vela.ini --accelerator-config ethos-u85-256 --system-config Ethos_U85_SYS_DRAM_Mid --memory-mode Shared_Sram cnn_s_quantized.tflite
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/tflm_transformer/src/inference_process_bert.cpp:122:	resolver.AddEthosU();
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/mfcc/Model.hpp:95:        bool ContainsEthosUOperator() const;
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/KWSModel.cpp:37:	m_resolver.AddEthosU();
+/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/main.cpp:56:executorch_delegate_EthosUBackend_registered(void);
+/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/main.cpp:322:  if (executorch_delegate_EthosUBackend_registered() != Error::Ok) {
+/home/user/sdk-alif/alif/lib/ethosu_utils/inference_process.cpp:122:	resolver.AddEthosU();
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:26:#include "ethosu_driver.h"
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:331:void ETHOSU_PMU_Enable(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:336:void ETHOSU_PMU_Disable(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:343:void ETHOSU_PMU_Set_EVTYPER(struct ethosu_driver *drv, uint32_t num, enum ethosu_pmu_event_type type);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:356:enum ethosu_pmu_event_type ETHOSU_PMU_Get_EVTYPER(struct ethosu_driver *drv, uint32_t num);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:361:void ETHOSU_PMU_CYCCNT_Reset(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:366:void ETHOSU_PMU_EVCNTR_ALL_Reset(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:375:void ETHOSU_PMU_CNTR_Enable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:384:void ETHOSU_PMU_CNTR_Disable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:396:uint32_t ETHOSU_PMU_CNTR_Status(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:407:uint64_t ETHOSU_PMU_Get_CCNTR(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:416:void ETHOSU_PMU_Set_CCNTR(struct ethosu_driver *drv, uint64_t val);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:423:uint32_t ETHOSU_PMU_Get_EVCNTR(struct ethosu_driver *drv, uint32_t num);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:431:void ETHOSU_PMU_Set_EVCNTR(struct ethosu_driver *drv, uint32_t num, uint32_t val);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:439:uint32_t ETHOSU_PMU_Get_CNTR_OVS(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:448:void ETHOSU_PMU_Set_CNTR_OVS(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:457:void ETHOSU_PMU_Set_CNTR_IRQ_Enable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:466:void ETHOSU_PMU_Set_CNTR_IRQ_Disable(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:476:uint32_t ETHOSU_PMU_Get_IRQ_Enable(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:485:void ETHOSU_PMU_CNTR_Increment(struct ethosu_driver *drv, uint32_t mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:492:void ETHOSU_PMU_PMCCNTR_CFG_Set_Start_Event(struct ethosu_driver *drv, enum ethosu_pmu_event_type start_event);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:499:void ETHOSU_PMU_PMCCNTR_CFG_Set_Stop_Event(struct ethosu_driver *drv, enum ethosu_pmu_event_type stop_event);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:504:uint32_t ETHOSU_PMU_Get_QREAD(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h:509:uint32_t ETHOSU_PMU_Get_STATUS(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:80:struct ethosu_driver
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:83:    struct ethosu_driver *next;
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:94:struct ethosu_driver_version
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:116:void ethosu_irq_handler(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:145: * ethosu_driver.c.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:160: * ethosu_driver.c.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:210: * @param user_arg  User argument provided to ethosu_invoke_*()
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:212:void ethosu_inference_begin(struct ethosu_driver *drv, void *user_arg);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:218: * @param user_arg  User argument provided to ethosu_invoke_*()
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:220:void ethosu_inference_end(struct ethosu_driver *drv, void *user_arg);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:255:void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:268:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:280:void ethosu_deinit(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:288:int ethosu_soft_reset(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:298:int ethosu_request_power(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:306:void ethosu_release_power(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:313:void ethosu_get_driver_version(struct ethosu_driver_version *ver);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:321:void ethosu_get_hw_info(struct ethosu_driver *drv, struct ethosu_hw_info *hw);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:336:int ethosu_invoke_v3(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:344:#define ethosu_invoke(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr)                \
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:345:    ethosu_invoke_v3(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, 0)
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:351: * @see ethosu_invoke_v3 for documentation.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:353:int ethosu_invoke_async(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:364: * (This function is only intended to be used in conjuction with ethosu_invoke_async)
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:370:int ethosu_wait(struct ethosu_driver *drv, bool block);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:378:struct ethosu_driver *ethosu_reserve_driver(void);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:385:void ethosu_release_driver(struct ethosu_driver *drv);
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:390: * @see ethosu_invoke_v3 for documentation.
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:392:static inline int ethosu_invoke_v2(const void *custom_data_ptr,
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:398:    struct ethosu_driver *drv = ethosu_reserve_driver();
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:403:    int result = ethosu_invoke_v3(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, 0);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:23:#include "ethosu_driver.h"
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:85:void ETHOSU_PMU_Enable(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:94:void ETHOSU_PMU_Disable(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:106:void ETHOSU_PMU_Set_EVTYPER(struct ethosu_driver *drv, uint32_t num, enum ethosu_pmu_event_type type)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:120:enum ethosu_pmu_event_type ETHOSU_PMU_Get_EVTYPER(struct ethosu_driver *drv, uint32_t num)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:129:void ETHOSU_PMU_CYCCNT_Reset(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:138:void ETHOSU_PMU_EVCNTR_ALL_Reset(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:147:void ETHOSU_PMU_CNTR_Enable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:153:void ETHOSU_PMU_CNTR_Disable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:159:uint32_t ETHOSU_PMU_CNTR_Status(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:166:uint64_t ETHOSU_PMU_Get_CCNTR(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:176:void ETHOSU_PMU_Set_CCNTR(struct ethosu_driver *drv, uint64_t val)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:196:uint32_t ETHOSU_PMU_Get_EVCNTR(struct ethosu_driver *drv, uint32_t num)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:205:void ETHOSU_PMU_Set_EVCNTR(struct ethosu_driver *drv, uint32_t num, uint32_t val)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:212:uint32_t ETHOSU_PMU_Get_CNTR_OVS(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:218:void ETHOSU_PMU_Set_CNTR_OVS(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:224:void ETHOSU_PMU_Set_CNTR_IRQ_Enable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:230:void ETHOSU_PMU_Set_CNTR_IRQ_Disable(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:236:uint32_t ETHOSU_PMU_Get_IRQ_Enable(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:243:void ETHOSU_PMU_CNTR_Increment(struct ethosu_driver *drv, uint32_t mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:272:void ETHOSU_PMU_PMCCNTR_CFG_Set_Start_Event(struct ethosu_driver *drv, enum ethosu_pmu_event_type start_event)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:288:void ETHOSU_PMU_PMCCNTR_CFG_Set_Stop_Event(struct ethosu_driver *drv, enum ethosu_pmu_event_type stop_event)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:304:uint32_t ETHOSU_PMU_Get_QREAD(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c:311:uint32_t ETHOSU_PMU_Get_STATUS(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:22:#include "ethosu_driver.h"
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:121:static struct ethosu_driver *registered_drivers = NULL;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:238:void __attribute__((weak)) ethosu_inference_begin(struct ethosu_driver *drv, void *user_arg)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:244:void __attribute__((weak)) ethosu_inference_end(struct ethosu_driver *drv, void *user_arg)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:253:static void ethosu_register_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:265:static int ethosu_deregister_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:267:    struct ethosu_driver *curr;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:268:    struct ethosu_driver **prev;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:299:static void ethosu_reset_job(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:304:static int handle_optimizer_config(struct ethosu_driver *drv, struct opt_cfg_s const *opt_cfg_p)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:316:static int handle_command_stream(struct ethosu_driver *drv, const uint8_t *cmd_stream, const int cms_length)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:383:void __attribute__((weak)) ethosu_irq_handler(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:401:void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:407:int ethosu_init(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:470:void ethosu_deinit(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:476:int ethosu_soft_reset(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:493:int ethosu_request_power(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:510:void ethosu_release_power(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:526:void ethosu_get_driver_version(struct ethosu_driver_version *ver)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:534:void ethosu_get_hw_info(struct ethosu_driver *drv, struct ethosu_hw_info *hw)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:540:int ethosu_wait(struct ethosu_driver *drv, bool block)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:634:int ethosu_invoke_async(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:739:int ethosu_invoke_v3(struct ethosu_driver *drv,
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:747:    if (ethosu_invoke_async(
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:756:struct ethosu_driver *ethosu_reserve_driver(void)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:758:    struct ethosu_driver *drv = NULL;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:786:void ethosu_release_driver(struct ethosu_driver *drv)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c:33:#include "ethosu_driver.h"          /* Arm Ethos-U driver header */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c:25:extern struct ethosu_driver ethosu_drv;    /* Default Arm Ethos-U NPU device driver object */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c:208:void ethosu_inference_begin(struct ethosu_driver* drv, void* userArg)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c:216:void ethosu_inference_end(struct ethosu_driver* drv, void* userArg)
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:24:#include "ethosu_driver.h"          /* Arm Ethos-U driver header */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:49:struct ethosu_driver ethosu_drv; /* Default Ethos-U device driver */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:72:    /* Register the EthosU IRQ handler in our vector table.
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:73:     * Note, this handler comes from the EthosU driver */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:79:    debug("EthosU IRQ#: %u, Handler: 0x%p\n",
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c:124:    struct ethosu_driver_version driver_version;
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-315/peripheral_irqs.h:46:#define NPU0_IRQn                          (16)  /* NPU0 i.e., EthosU_IRQn */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps4/include/sse-320/peripheral_irqs.h:46:#define NPU0_IRQn                          (16)  /* NPU0 i.e., EthosU_IRQn */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-300/peripheral_irqs.h:73:#define EthosU_IRQn                (56)   /* Ethos-Uxx Interrupt */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/mps3/include/sse-310/peripheral_irqs.h:40:#define EthosU_IRQn                (16)   /* Ethos-Uxx Interrupt */
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c:61:#include "ethosu_driver.h"
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/simple/include/peripheral_irqs.h:25:#define EthosU_IRQn                (56)   /* Ethos-Uxx Interrupt */
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/YoloFastestModel.cc:39:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp:89:    bool ContainsEthosUOperator() const override;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc:55:    mutableAllOpResolver.AddEthosU();
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/VisualWakeWordModel.cc:36:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/Wav2LetterModel.cc:35:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:34:std::string InferNpuMemoryModeFromEthosUOp(const tflite::Model* model)
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:53:        if (custom && (std::strcmp(custom->c_str(), "ethos-u") == 0)) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:302:    if (this->ContainsEthosUOperator()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:303:        const std::string mode = InferNpuMemoryModeFromEthosUOp(this->m_backendData.m_pModel);
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:331:bool TflmModel::ContainsEthosUOperator() const
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc:346:            ("ethos-u" == std::string(opcode->custom_code()->c_str()))) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroNetKwsModel.cc:36:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/RNNoiseModel.cc:44:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MobileNetModel.cc:36:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/AdModel.cc:35:    if (kTfLiteOk == this->m_opResolver.AddEthosU()) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/iface/Model.hpp:87:    virtual bool ContainsEthosUOperator() const = 0;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:342:    this->m_hasEthosUDelegate = false;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:410:            if (ContainsSubstring(backend->id()->c_str(), "EthosU")) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:411:                this->m_hasEthosUDelegate = true;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:420:    if (this->m_hasEthosUDelegate) {
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:453:bool EtModel::ContainsEthosUOperator() const
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.cc:459:    return this->m_hasEthosUDelegate;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.hpp:102:    bool ContainsEthosUOperator() const override;
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/executorch/EtModel.hpp:134:    bool m_hasEthosUDelegate{false}; /**< Indicates whether the model has NPU delegate. */
+
+========== 3. BUILD COMPILE DATABASE ETHOS SOURCES ==========
+--- BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610 ---
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/src/Main.cc
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/src/MainLoop.cc
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/src/TcnV6Model.cc
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/generated/src/symmetric394_int8mask_cast_vela.tflite.cc
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/cpp/abi/cpp_dtors.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/heap/heap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/cbprintf_packaged.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/printk.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/sem.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/thread_entry.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/cbprintf_complete.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/assert.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/mpsc_pbuf.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/reboot.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/dec.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/hex.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/rb.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/timeutil.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/bitarray.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/ring_buffer.c
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/zephyr/misc/generated/configs.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/soc_common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/startup.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_core.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_mgmt.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_cache.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_msg.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_output.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/backends/log_backend_uart.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/mem_mgmt/mem_attr.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/tracing/tracing_none.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_util.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/sau_tcm_ns_setup.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/tgu.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/system.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/mram_rw.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/offsets/offsets.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/misc/empty_file.c
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/zephyr/isr_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/common/sw_isr_common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/common/isr_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/fatal.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/nmi.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/nmi_on_reset.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/__aeabi_atexit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/tls.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/exc_exit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fault.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fault_s.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/reset.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/scb.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/thread_abort.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/vector_table.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/swap_helper.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/irq_manage.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/prep_c.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/thread.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cpu_idle.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/irq_init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/isr_wrapper.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/__aeabi_read_tp.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cache.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cmse/arm_core_cmse.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_core_mpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/assert.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/cbprintf.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/chk_fail.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/errno_wrap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/exit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/locks.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/stdio.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/common/source/stdlib/abort.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/common/source/stdlib/malloc.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_alif_ensemble.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/console/uart_console.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_page_layout.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_mram_alif.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_ospi_is25wx.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/gpio/gpio_dw.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/ipm/ipm_arm_mhuv2.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/pinctrl/common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/pinctrl/pinctrl_alif.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/serial/uart_ns16550.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/timer/sys_clock_init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/timer/cortex_m_systick.c
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/python_ops_resolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/fft_flexbuffers_generated_data.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/rfft.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window_flexbuffers_generated_data.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_float.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int16.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int32.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/window.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_float.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int16.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int32.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/core/api/error_reporter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/schema/schema_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/debug_log.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helper_custom_ops.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_time.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_profiler.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/flatbuffer_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/mock_micro_graph.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_log.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_op_resolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/system_setup.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/micro_error_reporter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/quantization_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/portable_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_ctypes.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/comparisons.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/portable_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/kernel_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/flatbuffer_conversions.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/arg_min_max.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/assign_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_matmul.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_to_space_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_args.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_to.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/call_once.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ceil.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/comparisons.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/topk_int8.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depth_to_space.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/div.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elementwise.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/embedding_lookup.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/exp.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/expand_dims.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fill.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_div.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_mod.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/if.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2norm.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2_pool_2d.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/log_softmax.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/maximum_minimum.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/micro_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/neg.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pack.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pad.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/read_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_bilinear.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_nearest_neighbor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/round.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/select.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/shape.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/slice.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_batch_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_depth.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split_v.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squared_difference.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squeeze.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/tanh.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unpack.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/var_handle.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/while.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/zeros_like.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_fast_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vinverse_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal2.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ospi/src/ospi.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ospi/src/ospi_hal.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/math/PlatformMath.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/YoloFastestModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/AdModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroNetKwsModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/Wav2LetterModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/VisualWakeWordModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmTensor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TensorFlowLiteMicro.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/RNNoiseModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MobileNetModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TestModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/Classifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/ImageUtils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/Mfcc.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/AudioRenderUtils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/AsrClassifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/ConformerMelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/ConformerProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/OutputDecode.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterMfcc.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterPreprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterPostprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/kws/KwsProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/kws/KwsClassifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/noise_reduction/RNNoiseProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/noise_reduction/RNNoiseFeatureProcessor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/img_class/ImgClassProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/object_detection/DetectorPreProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/object_detection/DetectorPostProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/vww/VisualWakeWordProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/ad/AdProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/ad/AdMelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/main_weak.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/banner.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/busy_wait.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/device.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/errno.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/fatal.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/init_static.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/kheap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mem_slab.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/float.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/version.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/idle.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mailbox.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/msg_q.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mutex.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/queue.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/sem.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/stack.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/system_work_q.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/work.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/condvar.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/priority_queues.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/thread.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/sched.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/pipe.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timeslicing.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/xip.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timeout.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timer.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/events.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mempool.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/dynamic_disabled.c
+ETHOS_RELATED_COMPILED_SOURCE_COUNT: 599
+--- BUILD=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555 ---
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_alignment_diag_20261124_223555/src/Main.cc
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_alignment_diag_20261124_223555/src/MainLoop.cc
+COMPILED_SOURCE: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_alignment_diag_20261124_223555/src/TcnV6Model.cc
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/generated/src/symmetric394_int8mask_cast_vela.tflite.cc
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/cpp/abi/cpp_dtors.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/heap/heap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/cbprintf_packaged.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/printk.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/sem.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/thread_entry.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/cbprintf_complete.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/assert.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/mpsc_pbuf.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/os/reboot.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/dec.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/hex.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/rb.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/timeutil.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/bitarray.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/utils/ring_buffer.c
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/zephyr/misc/generated/configs.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/soc_common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/startup.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/mpu_regions.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_core.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_mgmt.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_cache.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_msg.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/log_output.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/logging/backends/log_backend_uart.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/mem_mgmt/mem_attr.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/subsys/tracing/tracing_none.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_util.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/sau_tcm_ns_setup.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/tgu.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/system.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/common/src/mram_rw.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/offsets/offsets.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/misc/empty_file.c
+COMPILED_SOURCE: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/zephyr/isr_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/common/sw_isr_common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/common/isr_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/fatal.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/nmi.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/nmi_on_reset.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/__aeabi_atexit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/tls.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/exc_exit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fault.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fault_s.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/fpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/reset.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/scb.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/thread_abort.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/vector_table.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/swap_helper.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/irq_manage.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/prep_c.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/thread.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cpu_idle.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/irq_init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/isr_wrapper.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/__aeabi_read_tp.S
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cache.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/cortex_m/cmse/arm_core_cmse.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_core_mpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/arch/arm/core/mpu/arm_mpu.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/assert.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/cbprintf.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/chk_fail.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/errno_wrap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/exit.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/locks.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/picolibc/stdio.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/common/source/stdlib/abort.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/lib/libc/common/source/stdlib/malloc.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/clock_control/clock_control_alif_ensemble.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/console/uart_console.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_page_layout.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_mram_alif.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/flash/flash_ospi_is25wx.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/gpio/gpio_dw.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/ipm/ipm_arm_mhuv2.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/pinctrl/common.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/pinctrl/pinctrl_alif.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/serial/uart_ns16550.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/timer/sys_clock_init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/drivers/timer/cortex_m_systick.c
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/python/tflite_micro/python_ops_resolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/fft_flexbuffers_generated_data.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/rfft.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/micro/kernels/window_flexbuffers_generated_data.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_float.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int16.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/rfft_int32.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/window.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_float.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int16.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/signal/src/kiss_fft_wrappers/kiss_fft_int32.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/core/api/error_reporter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/compiler/mlir/lite/schema/schema_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/array.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/c/common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/debug_log.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/hexdump.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/fake_micro_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_helpers.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocation_info.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helpers.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/test_helper_custom_ops.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/recording_micro_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_time.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_profiler.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/flatbuffer_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/mock_micro_graph.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_context.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_log.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_op_resolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_resource_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/system_setup.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/recording_single_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/tflite_bridge/micro_error_reporter.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/linear_memory_planner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/quantization_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/portable_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_ctypes.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/comparisons.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/internal/reference/portable_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/kernels/kernel_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/flatbuffer_conversions.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/core/api/tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/activations_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/add_n.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/arg_min_max.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/assign_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_matmul.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/batch_to_space_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_args.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/broadcast_to.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/call_once.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cast.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ceil.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/circular_buffer_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/comparisons.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/concatenation.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/conv_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/cumsum.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/topk_int8.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/decompress_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depth_to_space.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/depthwise_conv_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/dequantize_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/detection_postprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/div.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elementwise.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/elu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/embedding_lookup.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/exp.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/expand_dims.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fill.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_div.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/floor_mod.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/fully_connected_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/gather_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/hard_swish_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/if.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_runner.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/kernel_util.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2norm.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/l2_pool_2d.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/leaky_relu_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logical_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/logistic_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/lstm_eval_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/log_softmax.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/maximum_minimum.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/micro_tensor_utils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mirror_pad.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/mul_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/neg.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pack.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pad.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/pooling_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/prelu_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/quantize_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/read_variable.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reduce_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/reshape_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_bilinear.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/resize_nearest_neighbor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/round.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/select.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/shape.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/slice.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/softmax_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_batch_nd.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/space_to_depth.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/split_v.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squared_difference.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/squeeze.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/strided_slice_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/sub_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/svdf_common.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/tanh.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/transpose_conv.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unidirectional_sequence_lstm.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/unpack.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/var_handle.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/while.cc
+COMPILED_SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/zeros_like.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_abs_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_add_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_clip_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_dot_prod_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_mult_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_negate_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_offset_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_scale_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_shift_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_sub_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_and_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_or_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_not_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/BasicMathFunctions/arm_xor_u8.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_common_tables_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_const_structs_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/CommonTables/arm_mve_tables_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_fast_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_conj_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mag_squared_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_cmplx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/ComplexMathFunctions/arm_cmplx_mult_real_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_cos_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sin_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_sqrt_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vlog_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vexp_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_vinverse_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_divide_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/FastMathFunctions/arm_atan2_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q7.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mse_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_mean_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_power_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_rms_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_std_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_var_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_entropy_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_kullback_leibler_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_logsumexp_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_max_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_min_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmax_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_absmin_no_idx_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/StatisticsFunctions/arm_accumulate_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal2.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_bitreversal_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix2_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_dct4_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix4_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f64.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_rfft_fast_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_cfft_radix8_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f32.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q31.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_q15.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_init_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/lib/cmsis-dsp/Source/TransformFunctions/arm_mfcc_f16.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ospi/src/ospi.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ospi/src/ospi_hal.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/math/PlatformMath.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/YoloFastestModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/AdModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroNetKwsModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/Wav2LetterModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/VisualWakeWordModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmTensor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TensorFlowLiteMicro.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/RNNoiseModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MobileNetModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TestModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/MicroMutableAllOpsResolver.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/Classifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/ImageUtils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/MelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/Mfcc.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/common/AudioRenderUtils.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/AsrClassifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/ConformerMelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/ConformerProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/OutputDecode.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterMfcc.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterPreprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/asr/Wav2LetterPostprocess.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/kws/KwsProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/kws/KwsClassifier.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/noise_reduction/RNNoiseProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/noise_reduction/RNNoiseFeatureProcessor.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/img_class/ImgClassProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/object_detection/DetectorPreProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/object_detection/DetectorPostProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/vww/VisualWakeWordProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/ad/AdProcessing.cc
+COMPILED_SOURCE: /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/use_case/ad/AdMelSpectrogram.cc
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/main_weak.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/banner.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/busy_wait.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/device.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/errno.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/fatal.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/init.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/init_static.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/kheap.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mem_slab.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/float.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/version.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/idle.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mailbox.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/msg_q.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mutex.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/queue.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/sem.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/stack.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/system_work_q.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/work.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/condvar.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/priority_queues.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/thread.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/sched.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/pipe.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timeslicing.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/xip.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timeout.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/timer.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/events.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/mempool.c
+COMPILED_SOURCE: /home/user/sdk-alif/zephyr/kernel/dynamic_disabled.c
+ETHOS_RELATED_COMPILED_SOURCE_COUNT: 599
+
+========== 4. TFLM STATIC LIBRARY SYMBOLS ==========
+--- LIBRARY=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a ---
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:python_ops_resolver.cc.obj:         U tflite::Register_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:python_ops_resolver.cc.obj:         U tflite::GetString_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:micro_interpreter_graph.cc.obj:00000000 b tflite::MicroInterpreterGraph::InvokeSubgraph(int)::tcn_v6_ethosu_call_count
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:micro_interpreter_graph.cc.obj:00000000 b tflite::MicroInterpreterGraph::InvokeSubgraph(int)::tcn_v6_ethosu_call_cycles
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_d2lz
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_read_tp
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_uldivmod
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __cxa_guard_acquire
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __cxa_guard_release
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U errno
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_invoke_v3
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_release_driver
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_reserve_driver
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t k_uptime_get
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U printk
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U strtoll
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tcn_v6_ethosu_irq_count_get
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U MicroPrintf(char const*, ...)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b guard variable for tflite::Register_ETHOSU()::r
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U z_impl_k_uptime_ticks
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flatbuffers::StringToInt(char const*, int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W long long flexbuffers::ReadSizedScalar<long long, signed char, short, int, long long>(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W unsigned long long flexbuffers::ReadSizedScalar<unsigned long long, unsigned char, unsigned short, unsigned int, unsigned long long>(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 n flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Init(TfLiteContext*, char const*, unsigned int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Prepare(TfLiteContext*, TfLiteNode*)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tflite::MicroContext::AllocateTempInputTensor(TfLiteNode const*, int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 T tflite::Register_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 T tflite::GetString_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tflite::micro::RegisterOp(void* (*)(TfLiteContext*, char const*, unsigned int), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), void (*)(TfLiteContext*, void*), void (*)(TfLiteContext*, void*))
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Reference::AsInt64() const
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Reference::Indirect() const
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         w TLS init function for errno
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_invocation_index
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_invoke_ms
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_irq_delta
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::Register_ETHOSU()::r
+--- LIBRARY=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a ---
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:python_ops_resolver.cc.obj:         U tflite::Register_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:python_ops_resolver.cc.obj:         U tflite::GetString_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:micro_interpreter_graph.cc.obj:00000000 b tflite::MicroInterpreterGraph::InvokeSubgraph(int)::tcn_v6_ethosu_call_count
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:micro_interpreter_graph.cc.obj:00000000 b tflite::MicroInterpreterGraph::InvokeSubgraph(int)::tcn_v6_ethosu_call_cycles
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_d2lz
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_read_tp
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __aeabi_uldivmod
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __cxa_guard_acquire
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U __cxa_guard_release
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U errno
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_invoke_v3
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_release_driver
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_reserve_driver
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t k_uptime_get
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U printk
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U strtoll
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tcn_v6_ethosu_irq_count_get
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U MicroPrintf(char const*, ...)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b guard variable for tflite::Register_ETHOSU()::r
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U z_impl_k_uptime_ticks
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flatbuffers::StringToInt(char const*, int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W long long flexbuffers::ReadSizedScalar<long long, signed char, short, int, long long>(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W unsigned long long flexbuffers::ReadSizedScalar<unsigned long long, unsigned char, unsigned short, unsigned int, unsigned long long>(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 n flexbuffers::Sized::Sized(unsigned char const*, unsigned char)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Init(TfLiteContext*, char const*, unsigned int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Prepare(TfLiteContext*, TfLiteNode*)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tflite::MicroContext::AllocateTempInputTensor(TfLiteNode const*, int)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 T tflite::Register_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 T tflite::GetString_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U tflite::micro::RegisterOp(void* (*)(TfLiteContext*, char const*, unsigned int), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), TfLiteStatus (*)(TfLiteContext*, TfLiteNode*), void (*)(TfLiteContext*, void*), void (*)(TfLiteContext*, void*))
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Reference::AsInt64() const
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 W flexbuffers::Reference::Indirect() const
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         w TLS init function for errno
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_invocation_index
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_invoke_ms
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_irq_delta
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_alignment_diag_20261124_223555/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::Register_ETHOSU()::r
+
+========== 5. MODEL / APP ETHOS REGISTRATION REFERENCES ==========
+--- FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/MainLoop.cc ---
+203:    if (!model.PrepareResolver()) {
+204:        printk("TCN_V6_ERROR: resolver preparation failed\n");
+231:    printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+232:           model.ContainsEthosUOperator() ? 1U : 0U);
+--- FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/src/TcnV6Model.cc ---
+5:#include "tensorflow/lite/micro/kernels/ethosu.h"
+9:const tflite::MicroOpResolver& TcnV6Model::GetOpResolver()
+11:    return m_resolver;
+14:bool TcnV6Model::PrepareResolver()
+22:    // resolver is not populated twice.
+23:    if (m_resolverAttempted) {
+24:        return m_resolverOk;
+27:    m_resolverAttempted = true;
+34:            printk("TCN_V6_RESOLVER: Add%s failed: %d\n",               \
+41:    TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+42:    TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+43:    TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+44:    TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+45:    TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+46:    TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+47:TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+48:    TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+49:    TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+50:    TCN6_ADD_OP("FullyConnected", m_resolver.AddFullyConnected());
+51:    TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+52:    TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+53:TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+54:    TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+55:    TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+56:    TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+57:    TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+58:    TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+59:    TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+60:    TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+61:    TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+62:    TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+63:    TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+64:    TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+65:    TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+69:    // AddEthosU() in this SDK can return kTfLiteOk even when the
+70:    // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+71:    TFLMRegistration* native_ethos_registration =
+72:        tflite::Register_ETHOSU();
+74:    if (native_ethos_registration == nullptr ||
+75:        native_ethos_registration->invoke == nullptr) {
+76:        printk("TCN_V6_RESOLVER: native Ethos-U registration/invoke missing\n");
+79:        const TfLiteStatus status = m_resolver.AddEthosU();
+81:            printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+117:        const TFLMRegistration* registration = m_resolver.FindOp(op);
+119:            printk("TCN_V6_RESOLVER: missing builtin registration %d\n",
+125:    const char* ethos_name = tflite::GetString_ETHOSU();
+126:    const TFLMRegistration* ethos =
+127:        (ethos_name != nullptr) ? m_resolver.FindOp(ethos_name) : nullptr;
+129:    if (ethos == nullptr || ethos->invoke == nullptr) {
+130:        printk("TCN_V6_RESOLVER: custom ethos-u registration not found\n");
+134:    m_resolverOk = ok;
+136:    printk("TCN_V6_RESOLVER: builtin_expected=25 custom=ethos-u status=%s\n",
+137:           m_resolverOk ? "PASS" : "FAIL");
+139:    return m_resolverOk;
+--- FILE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_int8mask_fc_resolver/CMakeLists.txt ---
+22:# MLEK's Zephyr port is a nested module and must be registered explicitly.
+26:# This model was compiled for Ethos-U55-128 (Vela H128).
+27:set(ETHOS_U_NPU_CONFIG_ID "H128")
+28:set(ETHOS_U_NPU_MEMORY_MODE "Shared_Sram")
+29:set(CONFIG_ARM_ETHOS_U55_128 y
+30:    CACHE INTERNAL "Select Ethos-U55-128 for V6" FORCE)
+73:message(STATUS "Ethos-U config: ${ETHOS_U_NPU_CONFIG_ID}")
+74:message(STATUS "Ethos-U memory mode: ${ETHOS_U_NPU_MEMORY_MODE}")
+
+========== 6. ETHOS-U KERNEL SOURCE CANDIDATES ==========
+/home/user/sdk-alif/alif/include/ethosu/models/bert_tiny/u85/input.c
+/home/user/sdk-alif/alif/include/ethosu/models/bert_tiny/u85/input.h
+/home/user/sdk-alif/alif/include/ethosu/models/keyword_spotting_cnn_small_int8/u55/input.h
+/home/user/sdk-alif/alif/include/ethosu/models/keyword_spotting_cnn_small_int8/u85/input.h
+/home/user/sdk-alif/alif/samples/modules/executorch/kws_ethosu/src/kws_input.h
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.cpp
+/home/user/sdk-alif/alif/samples/modules/tflite-micro/alif_inference/src/LiveMicInput.h
+/home/user/sdk-alif/alif/subsys/modules/ethosu/shell/src/ethosu_shell.cpp
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/ops/mkldnn_linear_backward_input_compositeexplicitautograd_dispatch.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/ops/mkldnn_linear_backward_input.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/ops/mkldnn_linear_backward_input_native.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/ATen/ops/mkldnn_linear_backward_input_ops.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/serialize/input-archive.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/autograd/input_buffer.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/autograd/input_metadata.h
+/home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/lib/python3.12/site-packages/torch/include/torch/csrc/jit/runtime/static/ProcessedNodeInputs.h
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_profiler.c
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_mem_config.h
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_npu_init.h
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_profiler.h
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu_ta/ethosu_ta_init.c
+/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu_ta/include/ethosu_ta_init.h
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_types.h
+/home/user/sdk-alif/modules/hal/ethos_u/include/pmu_ethosu.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu55_interface.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu65_interface.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_config_u55.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_config_u65.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_config_u85.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_interface.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_log.h
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_pmu.c
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/examples/network_tester/input_data.h
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.h
+
+========== 7. RESULT ==========
+ETHOSU_KERNEL_SOURCE_AUDIT_FINISHED
+
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample317_ethosu_kernel_20261125_090405.log
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+FLASH_PERFORMED=NO
+Press ENTER to close this terminal...
