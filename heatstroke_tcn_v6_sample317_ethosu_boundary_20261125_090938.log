@@ -1,0 +1,447 @@
+======================================================
+SAMPLE317 FIRST ETHOS-U NODE REFERENCE EXTRACTION
+Wed Nov 25 09:09:38 AM HKT 2026
+======================================================
+
+========== 1. FILES AND CHECKSUMS ==========
+8f0560876be0deb8511cb200e5971eeefc57cab329534c457e742958cf45d048  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/symmetric394_int8mask_cast.tflite
+0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+2f8581e04c17b5aa6b78cb3b6d0e0f438721cd49c8eb63eadab6caaa51ac3488  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/sample317_combined_firmware_validation_20261124_175211/sample317_inputs_and_reference.npz
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+d9a837807c1c4018c845ae1ed1306ef8d3182eecb598203c38a72c57ef94155a  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc
+2b571f66279eccbba8152e4e1a3b771cbaf58703e149aaf1728ccdecd82abf5e  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+
+========== 2. EXTRACT NON-VELA TENSORS 132 AND 135 ==========
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568978.422870   60393 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568978.423060   60393 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795568978.452277   60393 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795568979.155791   60393 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795568979.155984   60393 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:457: UserWarning:     Warning: tf.lite.Interpreter is deprecated and is scheduled for deletion in
+    TF 2.20. Please use the LiteRT interpreter from the ai_edge_litert package.
+    See the [migration guide](https://ai.google.dev/edge/litert/migration)
+    for details.
+    
+  warnings.warn(_INTERPRETER_DELETION_WARNING)
+/home/user/onnx2tflite_env/lib/python3.12/site-packages/tensorflow/lite/python/interpreter.py:465: UserWarning: Warning: Enabling `experimental_preserve_all_tensors` with the BUILTIN or AUTO op resolver is intended for debugging purposes only. Be aware that this can significantly increase memory usage by storing all intermediate tensors. If you encounter memory problems or are not actively debugging, consider disabling this option.
+  warnings.warn(
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+INPUT_COUNT: 5
+INPUT_PASS: x_values index=0 shape=(1, 900, 6) dtype=float32
+INPUT_PASS: missing_mask index=1 shape=(1, 900, 6) dtype=int8
+INPUT_PASS: x_mark index=2 shape=(1, 900, 3) dtype=float32
+INPUT_PASS: worker_features_18 index=3 shape=(1, 18) dtype=float32
+INPUT_PASS: compact_values index=4 shape=(1, 1800, 6) dtype=float32
+NON_VELA_INFERENCE=PASS
+
+FIRST_ETHOS_INPUT:
+  tensor_index: 132
+  tensor_name: /cvf/cvf.0/Pad_output_0_DequantizeLinear_Output
+  shape: (1, 902, 6)
+  dtype: int8
+  scale: 0.0377761945128
+  zero_point: 0
+  element_count: 5412
+  crc32: 0x725A35A4
+  int8_min: -28
+  int8_max: 23
+  int8_mean: -0.232261641
+  dequant_min: -1.0577334463596344
+  dequant_max: 0.868852473795414
+  dequant_mean: -0.008773960920666115
+  saturated_minus128: 0
+  saturated_plus127: 0
+
+FIRST_ETHOS_OUTPUT:
+  tensor_index: 135
+  tensor_name: /cvf/cvf.1/Conv_output_0_QuantizeLinear_Output
+  shape: (1, 900, 32)
+  dtype: int8
+  scale: 0.0136459060013
+  zero_point: 0
+  element_count: 28800
+  crc32: 0x5373101F
+  int8_min: -35
+  int8_max: 25
+  int8_mean: 0.367743056
+  dequant_min: -0.47760671004652977
+  dequant_max: 0.34114765003323555
+  dequant_mean: 0.005018187168752774
+  saturated_minus128: 0
+  saturated_plus127: 0
+
+REFERENCE_HEADER_CREATED=YES
+REFERENCE_HEADER_BYTES: 133033
+REFERENCE_HEADER_SHA256: 6548dc64743944e6bc187bf43b80eb709ceba0afb8279c240ddcabf41d5baed7
+REFERENCE_INPUT_CRC32: 0x725A35A4
+REFERENCE_OUTPUT_CRC32: 0x5373101F
+HOST_BOUNDARY_EXTRACTION=PASS
+
+========== 3. ACTIVE ETHOS-U KERNEL SOURCE ==========
+ACTIVE_KERNEL=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+     1	/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include <ethosu_driver.h>
+    17	#include <zephyr/kernel.h>
+    18	#include <zephyr/sys/printk.h>
+    19	#include <stdint.h>
+    20	
+    21	#include "flatbuffers/flexbuffers.h"
+    22	#include "tensorflow/lite/c/common.h"
+    23	#include "tensorflow/lite/micro/kernels/kernel_util.h"
+    24	#include "tensorflow/lite/micro/micro_context.h"
+    25	#include "tensorflow/lite/micro/micro_log.h"
+    26	
+    27	extern "C" uint32_t tcn_v6_ethosu_irq_count_get(void);
+    28	
+    29	namespace tflite {
+    30	namespace {
+    31	
+    32	constexpr uint8_t CO_TYPE_ETHOSU = 1;
+    33	
+    34	struct OpData {
+    35	  int cms_data_size;
+    36	  int base_addr_idx;
+    37	  int base_addr_size_idx;
+    38	};
+    39	
+    40	void* Init(TfLiteContext* context, const char* buffer, size_t length) {
+    41	  TFLITE_DCHECK(context->AllocatePersistentBuffer != nullptr);
+    42	  return context->AllocatePersistentBuffer(context, sizeof(OpData));
+    43	}
+    44	
+    45	TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
+    46	  TFLITE_DCHECK(context != nullptr);
+    47	  TF_LITE_ENSURE(context, node->inputs->size > 0);
+    48	  TFLITE_DCHECK(node->user_data != nullptr);
+    49	  TF_LITE_ENSURE(context, node->custom_initial_data_size > 0);
+    50	
+    51	  OpData* data = static_cast<OpData*>(node->user_data);
+    52	  int num_base_addr = node->inputs->size + node->outputs->size;
+    53	
+    54	  // Request arrays for the base address pointers and sizes.
+    55	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    56	      context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+    57	  TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+    58	      context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+    59	
+    60	  // Get command stream data size.
+    61	  MicroContext* micro_context = GetMicroContext(context);
+    62	  TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+    63	  data->cms_data_size = tensor->bytes;
+    64	  micro_context->DeallocateTempTfLiteTensor(tensor);
+    65	  return kTfLiteOk;
+    66	}
+    67	
+    68	TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+    69	  // TCN V6 runtime profiling counters.
+    70	  static uint32_t tcn_v6_npu_invocation_index = 0;
+    71	  static uint32_t tcn_v6_npu_cumulative_invoke_ms = 0;
+    72	  static uint32_t tcn_v6_npu_cumulative_irq_delta = 0;
+    73	
+    74	  TFLITE_DCHECK(node->user_data != nullptr);
+    75	  TFLITE_DCHECK(context != nullptr);
+    76	  TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+    77	
+    78	  // Get base addresses.
+    79	  TfLiteEvalTensor* tensor;
+    80	  int i = 0;
+    81	  int num_tensors = 0;
+    82	  void* cms_data;
+    83	  uint8_t co_type;
+    84	  int result;
+    85	  const OpData* data = static_cast<const OpData*>(node->user_data);
+    86	  uint64_t* base_addrs = static_cast<uint64_t*>(
+    87	      context->GetScratchBuffer(context, data->base_addr_idx));
+    88	  size_t* base_addrs_size = static_cast<size_t*>(
+    89	      context->GetScratchBuffer(context, data->base_addr_size_idx));
+    90	
+    91	  const uint8_t* custom_data =
+    92	      static_cast<uint8_t const*>(node->custom_initial_data);
+    93	  auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+    94	  co_type = root.AsInt8();
+    95	  if (co_type != CO_TYPE_ETHOSU) {
+    96	    MicroPrintf("CO_TYPE != ETHOSU");
+    97	    return kTfLiteError;
+    98	  }
+    99	
+   100	  // Get command stream data address.
+   101	  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+   102	  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+   103	
+   104	  // Get addresses to weights/scratch/input data.
+   105	  for (i = 1; i < node->inputs->size; ++i) {
+   106	    tensor = context->GetEvalTensor(context, node->inputs->data[i]);
+   107	    base_addrs[num_tensors] =
+   108	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   109	    size_t byte_size = 1;
+   110	    for (int k = 0; k < tensor->dims->size; k++) {
+   111	      byte_size = byte_size * tensor->dims->data[k];
+   112	    }
+   113	    base_addrs_size[num_tensors] = byte_size;
+   114	    num_tensors++;
+   115	  }
+   116	
+   117	  // Get addresses to output data.
+   118	  for (i = 0; i < node->outputs->size; ++i) {
+   119	    tensor = context->GetEvalTensor(context, node->outputs->data[i]);
+   120	    base_addrs[num_tensors] =
+   121	        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(tensor->data.uint8));
+   122	    size_t byte_size = 1;
+   123	    for (int k = 0; k < tensor->dims->size; k++) {
+   124	      byte_size = byte_size * tensor->dims->data[k];
+   125	    }
+   126	    base_addrs_size[num_tensors] = byte_size;
+   127	    num_tensors++;
+   128	  }
+   129	
+   130	  // When Vela optimizes a tflite file it will assign the tensors like this:
+   131	  //
+   132	  // +-------+------------------------+  +--------+-------------+
+   133	  // | INPUT | Description            |  | OUTPUT | Description |
+   134	  // +-------+------------------------+  +--------+-------------+
+   135	  // |     0 | Ethos-U command stream |  |   0..m | Outputs     |
+   136	  // |     1 | TFLM model             |  +--------+-------------+
+   137	  // |     2 | TFLM arena             |
+   138	  // |     3 | Ethos-U fast scratch   |
+   139	  // |  4..n | Inputs                 |
+   140	  // +-------+------------------------+
+   141	  //
+   142	  // This code will assign the NPU base addresses like this:
+   143	  //
+   144	  // +--------------+----------------------+
+   145	  // | Base address | Description          |
+   146	  // +--------------+----------------------+
+   147	  // |            0 | TFLM model           |
+   148	  // |            1 | TFLM arena           |
+   149	  // |            2 | Ethos-U fast scratch |
+   150	  // |         3..n | Input tensors        |
+   151	  // |         n..m | Output tensors       |
+   152	  // +--------------+----------------------+
+   153	  //
+   154	  // The number of base address will be limited to 8.
+   155	  //
+   156	  // NOTE! The command stream produced by Vela will access the IFM and OFM
+   157	  // buffers using base address 1. This means that it is not possible to point
+   158	  // the input and output tensors outside of the TFLM arena.
+   159	  num_tensors = std::min(num_tensors, 8);
+   160	
+   161	  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+   162	  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+   163	  struct ethosu_driver *drv = ethosu_reserve_driver();
+   164	  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+   165	  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+   166	  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+   167	  result = ethosu_invoke_v3(
+   168	      drv, cms_data, data->cms_data_size, base_addrs,
+   169	      base_addrs_size, num_tensors,
+   170	      GetMicroContext(context)->external_context());
+   171	  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+   172	  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+   173	  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+   174	  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+   175	  ethosu_release_driver(drv);
+   176	  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+   177	  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+   178	  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+   179	  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+   180	         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+   181	         "invoke_ms=%u release_ms=%u irq_before=%u "
+   182	         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+   183	         "cumulative_irq_delta=%u\n",
+   184	         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+   185	         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+   186	         tcn_v6_invoke_ms, tcn_v6_release_ms,
+   187	         tcn_v6_irq_before, tcn_v6_irq_after,
+   188	         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+   189	         tcn_v6_npu_cumulative_irq_delta);
+   190	
+   191	  if (-1 == result) {
+   192	    return kTfLiteError;
+   193	  } else {
+   194	    return kTfLiteOk;
+   195	  }
+   196	}
+   197	
+   198	}  // namespace
+   199	
+   200	TFLMRegistration* Register_ETHOSU() {
+   201	  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+   202	  return &r;
+   203	}
+   204	
+   205	const char* GetString_ETHOSU() { return "ethos-u"; }
+   206	
+   207	}  // namespace tflite
+
+========== 4. GENERIC ETHOS-U STUB ==========
+STUB=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethosu.cc
+     1	/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	//
+    17	// This is a stub file for non-Ethos platforms
+    18	//
+    19	#include "tensorflow/lite/micro/micro_common.h"
+    20	
+    21	namespace tflite {
+    22	
+    23	TFLMRegistration* Register_ETHOSU() { return nullptr; }
+    24	
+    25	const char* GetString_ETHOSU() { return ""; }
+    26	
+    27	}  // namespace tflite
+
+========== 5. INTERPRETER ETHOS-U INVOCATION PROFILER ==========
+GRAPH=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/micro_interpreter_graph.cc
+   245	  int previous_subgraph_idx = current_subgraph_index_;
+   246	  uint32_t previous_operator_idx = current_operator_index_;
+   247	  current_subgraph_index_ = subgraph_idx;
+   248	
+   249	  if (static_cast<size_t>(subgraph_idx) >= subgraphs_->size()) {
+   250	    MicroPrintf("Accessing subgraph %d but only %d subgraphs found",
+   251	                subgraph_idx, subgraphs_->size());
+   252	    return kTfLiteError;
+   253	  }
+   254	  uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
+   255	  for (current_operator_index_ = 0; current_operator_index_ < operators_size;
+   256	       ++current_operator_index_) {
+   257	    TfLiteNode* node = &(subgraph_allocations_[subgraph_idx]
+   258	                             .node_and_registrations[current_operator_index_]
+   259	                             .node);
+   260	    const TFLMRegistration* registration =
+   261	        subgraph_allocations_[subgraph_idx]
+   262	            .node_and_registrations[current_operator_index_]
+   263	            .registration;
+   264	
+   265	// This ifdef is needed (even though ScopedMicroProfiler itself is a no-op with
+   266	// -DTF_LITE_STRIP_ERROR_STRINGS) because the function OpNameFromRegistration is
+   267	// only defined for builds with the error strings.
+   268	#if !defined(TF_LITE_STRIP_ERROR_STRINGS)
+   269	    ScopedMicroProfiler scoped_profiler(
+   270	        OpNameFromRegistration(registration),
+   271	        reinterpret_cast<MicroProfilerInterface*>(context_->profiler));
+   272	#endif
+   273	
+   274	    TFLITE_DCHECK(registration->invoke);
+   275	    const uint32_t tcn_v6_op_start_cycles = k_cycle_get_32();
+   276	    TfLiteStatus invoke_status = registration->invoke(context_, node);
+   277	    const uint32_t tcn_v6_op_cycles = k_cycle_get_32() - tcn_v6_op_start_cycles;
+   278	    const char* tcn_v6_op_name = OpNameFromRegistration(registration);
+   279	    const bool tcn_v6_is_ethosu = (registration->builtin_code == BuiltinOperator_CUSTOM && registration->custom_name != nullptr && std::strcmp(registration->custom_name, "ethos-u") == 0);
+   280	    tcn_v6_last_invoke_status = invoke_status;
+   281	    if (tcn_v6_is_ethosu) {
+   282	      tcn_v6_ethosu_call_cycles += tcn_v6_op_cycles;
+   283	      ++tcn_v6_ethosu_call_count;
+   284	    } else {
+   285	      tcn_v6_cpu_kernel_cycles += tcn_v6_op_cycles;
+   286	      ++tcn_v6_cpu_kernel_count;
+   287	    }
+   288	    int tcn_v6_min_slot = 0;
+   289	    for (int j = 1; j < 8; ++j) {
+   290	      if (tcn_v6_top[j].cycles < tcn_v6_top[tcn_v6_min_slot].cycles) {
+   291	        tcn_v6_min_slot = j;
+   292	      }
+   293	    }
+   294	    if (tcn_v6_op_cycles > tcn_v6_top[tcn_v6_min_slot].cycles) {
+   295	      tcn_v6_top[tcn_v6_min_slot] = {current_operator_index_, tcn_v6_op_cycles, tcn_v6_op_name, tcn_v6_is_ethosu};
+   296	    }
+   297	#ifdef USE_TFLM_COMPRESSION
+   298	    GetMicroContext(context_)->ResetDecompressionMemoryAllocations();
+   299	#endif  // USE_TFLM_COMPRESSION
+   300	
+   301	    // All TfLiteTensor structs used in the kernel are allocated from temp
+   302	    // memory in the allocator. This creates a chain of allocations in the
+   303	    // temp section. The call below resets the chain of allocations to
+   304	    // prepare for the next call.
+   305	    allocator_->ResetTempAllocations();
+   306	
+   307	    if (invoke_status == kTfLiteError) {
+   308	      MicroPrintf("Node %s (number %d) failed to invoke with status %d",
+   309	                  OpNameFromRegistration(registration), current_operator_index_,
+   310	                  invoke_status);
+   311	      return kTfLiteError;
+   312	    } else if (invoke_status != kTfLiteOk) {
+   313	      return invoke_status;
+   314	    }
+   315	  }
+   316	
+   317	  if (subgraph_idx == 0) {
+   318	    const int64_t tcn_v6_graph_elapsed_ms =
+   319	        k_uptime_get() - tcn_v6_graph_start_ms;
+   320	
+   321	    const uint64_t tcn_v6_operator_total_cycles =
+   322	        tcn_v6_cpu_kernel_cycles + tcn_v6_ethosu_call_cycles;
+   323	
+   324	    const uint32_t tcn_v6_cpu_pct_x100 =
+   325	        tcn_v6_operator_total_cycles == 0
+   326	            ? 0
+   327	            : static_cast<uint32_t>(
+   328	                  (tcn_v6_cpu_kernel_cycles * 10000ULL) /
+   329	                  tcn_v6_operator_total_cycles);
+   330	
+   331	    const uint32_t tcn_v6_ethosu_pct_x100 =
+   332	        tcn_v6_operator_total_cycles == 0
+   333	            ? 0
+   334	            : static_cast<uint32_t>(
+   335	                  (tcn_v6_ethosu_call_cycles * 10000ULL) /
+   336	                  tcn_v6_operator_total_cycles);
+   337	
+   338	    printk("TCN_V6_OPERATOR_PROFILE_SUMMARY: "
+   339	           "cpu_kernel_ops=%u ethosu_custom_ops=%u "
+   340	           "cpu_cycles_hi=%u cpu_cycles_lo=%u "
+
+========== 6. BUILD DATABASE CONFIRMATION ==========
+ACTIVE_KERNEL_COMPILE_COMMANDS: 1
+SOURCE: /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+OBJECT: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/CMakeFiles/modules__tflite-micro.dir/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc.obj
+
+========== 7. COMPILED KERNEL SYMBOLS ==========
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:         U ethosu_invoke_v3
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b guard variable for tflite::Register_ETHOSU()::r
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 t tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 T tflite::Register_ETHOSU()
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_invocation_index
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_invoke_ms
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::(anonymous namespace)::Eval(TfLiteContext*, TfLiteNode*)::tcn_v6_npu_cumulative_irq_delta
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_validation_py312_20261124_220610/modules/tflite-micro/libmodules__tflite-micro.a:ethosu.cc.obj:00000000 b tflite::Register_ETHOSU()::r
+
+BOUNDARY_REFERENCE_AND_KERNEL_SOURCE_AUDIT=FINISHED
+
+BOUNDARY_EXTRACTION_EXIT=0
+REFERENCE_HEADER=/home/user/sdk-alif/beeinventor/test_heatstroke/log/sample317_ethosu_first_node_reference_20261125_090938.hpp
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_sample317_ethosu_boundary_20261125_090938.log
+MODEL_FILES_MODIFIED=NO
+SDK_MODIFIED=NO
+FIRMWARE_MODIFIED=NO
+FLASH_PERFORMED=NO
+Press ENTER to close this terminal...
