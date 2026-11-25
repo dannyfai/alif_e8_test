@@ -1,0 +1,577 @@
+======================================================
+SAMPLE317 VELA OFFLINE MEMORY PLAN AUDIT
+Timestamp=20261125_152640
+======================================================
+
+========== 1. VELA MODEL IDENTITY ==========
+MODEL=/home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+MODEL_SIZE=9684208
+MODEL_SHA256=0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+
+========== 2. COMPLETE LIFETIME MARKING IMPLEMENTATION ==========
+     1	/* Copyright 2023 The TensorFlow Authors. All Rights Reserved.
+     2	
+     3	Licensed under the Apache License, Version 2.0 (the "License");
+     4	you may not use this file except in compliance with the License.
+     5	You may obtain a copy of the License at
+     6	
+     7	    http://www.apache.org/licenses/LICENSE-2.0
+     8	
+     9	Unless required by applicable law or agreed to in writing, software
+    10	distributed under the License is distributed on an "AS IS" BASIS,
+    11	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    12	See the License for the specific language governing permissions and
+    13	limitations under the License.
+    14	==============================================================================*/
+    15	
+    16	#include "tensorflow/lite/micro/micro_allocation_info.h"
+    17	
+    18	#include <algorithm>
+    19	
+    20	#include "tensorflow/lite/c/c_api_types.h"
+    21	#include "tensorflow/lite/kernels/internal/compatibility.h"
+    22	#include "tensorflow/lite/kernels/kernel_util.h"
+    23	#include "tensorflow/lite/micro/memory_helpers.h"
+    24	#include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+    25	#include "tensorflow/lite/micro/micro_log.h"
+    26	
+    27	namespace tflite {
+    28	
+    29	namespace {
+    30	constexpr char kOfflineMemAllocMetadata[] = "OfflineMemoryAllocation";
+    31	constexpr int kUninitializedLifetime = -1;
+    32	}  // namespace
+    33	
+    34	// Mark the given Allocation info as first created at the specified allocation
+    35	// scope count. Only the first creation must be recorded since the allocation
+    36	// scope count monotonically increases throughout the lifetime marking process.
+    37	void AllocationInfoBuilder::UpdateFirstCreated(AllocationInfo* current,
+    38	                                               int allocation_scope_count) {
+    39	  TFLITE_DCHECK(current->first_created <= allocation_scope_count);
+    40	  if (current->first_created == kUninitializedLifetime) {
+    41	    current->first_created = allocation_scope_count;
+    42	  }
+    43	}
+    44	
+    45	// Mark the given AllocationInfo as last used at the specified allocation scope
+    46	// count. Update the last used marker every time, since the allocation scope
+    47	// count monotonically increases through the lifetime marking process.
+    48	void AllocationInfoBuilder::UpdateLastUsed(AllocationInfo* current,
+    49	                                           int allocation_scope_count) {
+    50	  TFLITE_DCHECK(current->last_used <= allocation_scope_count);
+    51	  current->last_used = allocation_scope_count;
+    52	}
+    53	
+    54	TfLiteStatus AllocationInfoBuilder::MarkSubgraphLifetimesIfNecessary(
+    55	    const Operator* op, internal::ScratchBufferRequest* scratch_buffer_requests,
+    56	    ScratchBufferHandle* scratch_buffer_handles,
+    57	    SubgraphAllocations* allocations) {
+    58	  int first_subgraph_index = -1;
+    59	  int second_subgraph_index = -1;
+    60	  const OperatorCode* opcode =
+    61	      model_->operator_codes()->Get(op->opcode_index());
+    62	  switch (opcode->builtin_code()) {
+    63	    case BuiltinOperator_IF: {
+    64	      first_subgraph_index =
+    65	          op->builtin_options_as_IfOptions()->then_subgraph_index();
+    66	      second_subgraph_index =
+    67	          op->builtin_options_as_IfOptions()->else_subgraph_index();
+    68	      break;
+    69	    }
+    70	    case BuiltinOperator_CALL_ONCE: {
+    71	      first_subgraph_index =
+    72	          op->builtin_options_as_CallOnceOptions()->init_subgraph_index();
+    73	      break;
+    74	    }
+    75	    case BuiltinOperator_WHILE: {
+    76	      first_subgraph_index =
+    77	          op->builtin_options_as_WhileOptions()->cond_subgraph_index();
+    78	      second_subgraph_index =
+    79	          op->builtin_options_as_WhileOptions()->body_subgraph_index();
+    80	      break;
+    81	    }
+    82	    default: {
+    83	      break;
+    84	    }
+    85	  }
+    86	  if (first_subgraph_index != -1) {
+    87	    // Enter a new allocation scope for each subgraph.
+    88	    allocation_scope_count_++;
+    89	    TF_LITE_ENSURE_STATUS(
+    90	        MarkAllocationLifetimes(first_subgraph_index, scratch_buffer_requests,
+    91	                                scratch_buffer_handles, allocations));
+    92	  }
+    93	  if (second_subgraph_index != -1) {
+    94	    // Enter a new allocation scope for each subgraph.
+    95	    allocation_scope_count_++;
+    96	    TF_LITE_ENSURE_STATUS(
+    97	        MarkAllocationLifetimes(second_subgraph_index, scratch_buffer_requests,
+    98	                                scratch_buffer_handles, allocations));
+    99	  }
+   100	  return kTfLiteOk;
+   101	}
+   102	
+   103	TfLiteStatus AllocationInfoBuilder::CreateAllocationInfo(
+   104	    int scratch_buffer_request_count) {
+   105	  size_t subgraph_offsets_length = model_->subgraphs()->size() * sizeof(size_t);
+   106	  info_.subgraph_offsets =
+   107	      reinterpret_cast<size_t*>(non_persistent_allocator_->AllocateTemp(
+   108	          subgraph_offsets_length, alignof(size_t)));
+   109	  if (info_.subgraph_offsets == nullptr) {
+   110	    MicroPrintf(
+   111	        "Failed to allocate memory for memory planning, %d bytes required",
+   112	        subgraph_offsets_length);
+   113	    return kTfLiteError;
+   114	  }
+   115	  size_t tensor_count = 0;
+   116	  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+   117	       subgraph_idx++) {
+   118	    // Add all tensors in each subgraph to the AllocationInfo array. Even weight
+   119	    // tensors are added but marked with needs_allocating = false. Including all
+   120	    // tensors in the graph here simplifies logic.
+   121	    info_.subgraph_offsets[subgraph_idx] = tensor_count;
+   122	    tensor_count += model_->subgraphs()->Get(subgraph_idx)->tensors()->size();
+   123	  }
+   124	  info_.tensor_count = tensor_count;
+   125	
+   126	  // Scratch buffer allocations follow tensor allocations, so the scratch offset
+   127	  // is equal to the number of tensor allocations.
+   128	  info_.scratch_offset = tensor_count;
+   129	  info_.allocation_info_count = tensor_count + scratch_buffer_request_count;
+   130	  info_.scratch_buffer_count = scratch_buffer_request_count;
+   131	  size_t bytes = sizeof(AllocationInfo) * info_.allocation_info_count;
+   132	
+   133	  // Allocate an array of AllocationInfo structs from the temp section. This
+   134	  // struct will be used by AllocationInfoBuilder to find buffer usage.
+   135	  info_.allocation_info = reinterpret_cast<AllocationInfo*>(
+   136	      non_persistent_allocator_->AllocateTemp(bytes, alignof(AllocationInfo)));
+   137	  if (info_.allocation_info == nullptr) {
+   138	    MicroPrintf(
+   139	        "Failed to allocate memory for memory planning, %d bytes required",
+   140	        bytes);
+   141	    return kTfLiteError;
+   142	  }
+   143	  return kTfLiteOk;
+   144	}
+   145	
+   146	TfLiteStatus AllocationInfoBuilder::FreeAllocationInfo() {
+   147	  non_persistent_allocator_->DeallocateTemp(
+   148	      reinterpret_cast<uint8_t*>(info_.allocation_info));
+   149	  non_persistent_allocator_->DeallocateTemp(
+   150	      reinterpret_cast<uint8_t*>(info_.subgraph_offsets));
+   151	  return kTfLiteOk;
+   152	}
+   153	
+   154	TfLiteStatus AllocationInfoBuilder::ValidateSubgraph(
+   155	    const SubGraph* subgraph, TfLiteEvalTensor* eval_tensors) {
+   156	  uint32_t operators_size = NumSubgraphOperators(subgraph);
+   157	
+   158	  for (uint32_t i = 0; i < operators_size; i++) {
+   159	    const auto op = subgraph->operators()->Get(i);
+   160	    for (size_t n = 0;
+   161	         op->intermediates() != nullptr && n < op->intermediates()->size();
+   162	         n++) {
+   163	      const int tensor_index = op->intermediates()->Get(n);
+   164	      size_t tensor_size = -1;
+   165	      TF_LITE_ENSURE_STATUS(TfLiteEvalTensorByteLength(
+   166	          &eval_tensors[tensor_index], &tensor_size));
+   167	      if (tensor_size != 0) {
+   168	        MicroPrintf(
+   169	            "Does not support intermediate tensor with non-zero size: %d",
+   170	            tensor_size);
+   171	        return kTfLiteError;
+   172	      }
+   173	    }
+   174	  }
+   175	  return kTfLiteOk;
+   176	}
+   177	
+   178	TfLiteStatus AllocationInfoBuilder::InitializeAllocationInfo(
+   179	    const int32_t* offline_offsets, SubgraphAllocations* allocations) {
+   180	  AllocationInfo* allocation_info = info_.allocation_info;
+   181	  // Initialize allocation info for every tensor in every subgraph.
+   182	  int offline_index = 0;
+   183	  for (size_t subgraph_idx = 0; subgraph_idx < model_->subgraphs()->size();
+   184	       subgraph_idx++) {
+   185	    const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+   186	    TfLiteEvalTensor* eval_tensors = allocations[subgraph_idx].tensors;
+   187	    AllocationInfo* subgraph_allocation_info =
+   188	        &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+   189	
+   190	    // Ensure constraints are met.
+   191	    TF_LITE_ENSURE_STATUS(ValidateSubgraph(subgraph, eval_tensors));
+   192	
+   193	    for (size_t i = 0; i < subgraph->tensors()->size(); ++i) {
+   194	      AllocationInfo* current = &subgraph_allocation_info[i];
+   195	      current->output_ptr = &(eval_tensors[i].data.data);
+   196	
+   197	      TF_LITE_ENSURE_STATUS(
+   198	          TfLiteEvalTensorByteLength(&eval_tensors[i], &current->bytes));
+   199	
+   200	      current->first_created = kUninitializedLifetime;
+   201	      current->last_used = kUninitializedLifetime;
+   202	      current->needs_allocating =
+   203	          (eval_tensors[i].data.data == nullptr) &&
+   204	          (!subgraph->tensors()->Get(i)->is_variable()) &&
+   205	          (current->bytes != 0);
+   206	      if (offline_offsets) {
+   207	        current->offline_offset = offline_offsets[offline_index++];
+   208	
+   209	        // Mark offline planned variable tensors so they can get an offline
+   210	        // offset and be handled offline.
+   211	        if (subgraph->tensors()->Get(i)->is_variable() &&
+   212	            current->offline_offset != kOnlinePlannedBuffer) {
+   213	          current->needs_allocating = true;
+   214	        }
+   215	      } else {
+   216	        current->offline_offset = kOnlinePlannedBuffer;
+   217	      }
+   218	    }
+   219	  }
+   220	  // Initialize allocation info for every scratch buffer.
+   221	  AllocationInfo* scratch_allocation_info =
+   222	      &allocation_info[info_.scratch_offset];
+   223	  for (size_t i = 0; i < info_.scratch_buffer_count; i++) {
+   224	    AllocationInfo* current = &scratch_allocation_info[i];
+   225	    current->first_created = kUninitializedLifetime;
+   226	    current->last_used = kUninitializedLifetime;
+   227	    current->needs_allocating = true;
+   228	    current->offline_offset = kOnlinePlannedBuffer;
+   229	  }
+   230	  return kTfLiteOk;
+   231	}
+   232	
+   233	TfLiteStatus AllocationInfoBuilder::MarkAllocationLifetimes(
+   234	    int subgraph_idx, internal::ScratchBufferRequest* scratch_buffer_requests,
+   235	    ScratchBufferHandle* scratch_buffer_handles,
+   236	    SubgraphAllocations* allocations) {
+   237	  const SubGraph* subgraph = model_->subgraphs()->Get(subgraph_idx);
+   238	
+   239	  AllocationInfo* allocation_info = info_.allocation_info;
+   240	  // Each subgraph's tensor allocations are in a contiguous block starting at
+   241	  // subgraph_offsets_[subgraph index] with one entry per tensor.
+   242	  AllocationInfo* subgraph_allocation_info =
+   243	      &allocation_info[info_.subgraph_offsets[subgraph_idx]];
+   244	
+   245	  uint32_t operators_size = NumSubgraphOperators(subgraph);
+   246	  // Mark all inputs as created at the start of the subgraph invocation.
+   247	  for (size_t i = 0;
+   248	       subgraph->inputs() != nullptr && i < subgraph->inputs()->size(); ++i) {
+   249	    const int tensor_index = subgraph->inputs()->Get(i);
+   250	    AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+   251	    UpdateFirstCreated(current, allocation_scope_count_);
+   252	    // This will ensure that the tensors that are inputs to the subgraphs
+   253	    // but not used in any ops also have a reasonable lifetime.
+   254	    UpdateLastUsed(current, allocation_scope_count_);
+   255	  }
+   256	
+   257	  for (uint32_t i = 0; i < operators_size; i++) {
+   258	    // Each operator has a new allocation scope.
+   259	    allocation_scope_count_++;
+   260	    const auto* op = subgraph->operators()->Get(i);
+   261	    // Figure out when the first creation and use of each tensor is.
+   262	    for (size_t n = 0; op->outputs() != nullptr && n < op->outputs()->size();
+   263	         ++n) {
+   264	      const int tensor_index = op->outputs()->Get(n);
+   265	      AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+   266	      UpdateFirstCreated(current, allocation_scope_count_);
+   267	    }
+   268	
+   269	    // Keep track of scope count before any subgraphs, so that scratch buffers'
+   270	    // lifetime within a control flow op properly overlaps with all subgraphs.
+   271	    int start_allocation_scope_count = allocation_scope_count_;
+   272	
+   273	    // Control flow operators can invoke subgraphs. Plan these subgraphs
+   274	    // before continuing on to the rest of the graph.
+   275	    MarkSubgraphLifetimesIfNecessary(op, scratch_buffer_requests,
+   276	                                     scratch_buffer_handles, allocations);
+   277	
+   278	    // Figure out when the last use of each tensor is.
+   279	    for (size_t n = 0; op->inputs() != nullptr && n < op->inputs()->size();
+   280	         ++n) {
+   281	      const int tensor_index = op->inputs()->Get(n);
+   282	      // Optional bias tensors can have an index of -1 when they are omitted.
+   283	      if (tensor_index >= 0) {
+   284	        AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+   285	        // No need to update creation since it is either marked by the subgraph
+   286	        // or producer op, or it is not part of the memory plan (weight, bias
+   287	        // tensor).
+   288	        UpdateLastUsed(current, allocation_scope_count_);
+   289	      }
+   290	    }
+   291	    for (size_t n = 0; op->outputs() != nullptr && n < op->outputs()->size();
+   292	         ++n) {
+   293	      const int tensor_index = op->outputs()->Get(n);
+   294	      AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+   295	      UpdateLastUsed(current, allocation_scope_count_);
+   296	    }
+   297	
+   298	    // Mark thse lifetime of scratch buffers belonging to the current node. This
+   299	    // operation is O(N * M) where N is the total number of visited nodes and M
+   300	    // is the total number of scratch buffers.
+   301	    // TODO(b/217794030): Optimize this memory planning code.
+   302	    AllocationInfo* scratch_allocation_info =
+   303	        &allocation_info[info_.scratch_offset];
+   304	    for (size_t scratch_idx = 0; scratch_idx < info_.scratch_buffer_count;
+   305	         scratch_idx++) {
+   306	      internal::ScratchBufferRequest request =
+   307	          scratch_buffer_requests[scratch_idx];
+   308	      AllocationInfo* current = &scratch_allocation_info[scratch_idx];
+   309	      if (request.node_idx == static_cast<int>(i) &&
+   310	          request.subgraph_idx == static_cast<int>(subgraph_idx)) {
+   311	        ScratchBufferHandle* current_handle =
+   312	            &(scratch_buffer_handles[scratch_idx]);
+   313	        current->output_ptr = reinterpret_cast<void**>(&current_handle->data);
+   314	        current->bytes = request.bytes;
+   315	        UpdateFirstCreated(current, start_allocation_scope_count);
+   316	        UpdateLastUsed(current, allocation_scope_count_);
+   317	      }
+   318	    }
+   319	  }
+   320	
+   321	  // Mark all outputs as persistent to the end of the subgraph invocation.
+   322	  for (size_t i = 0;
+   323	       subgraph->outputs() != nullptr && i < subgraph->outputs()->size(); ++i) {
+   324	    const int tensor_index = subgraph->outputs()->Get(i);
+   325	    AllocationInfo* current = &subgraph_allocation_info[tensor_index];
+   326	    // Make sure to assign the First created value of the subgraph output
+   327	    // This will handle the case where the subgraph is empty. This helps
+   328	    // ensure all tensors have valid lifetimes before those are used by the
+   329	    // memory planner.
+   330	    UpdateFirstCreated(current, allocation_scope_count_);
+   331	    UpdateLastUsed(current, allocation_scope_count_);
+   332	  }
+   333	  return kTfLiteOk;
+   334	}
+   335	
+   336	// Get offline tensors allocation plan. See
+   337	// micro/docs/memory_management.md for more info.
+   338	TfLiteStatus AllocationInfoBuilder::GetOfflinePlannedOffsets(
+   339	    const int32_t** offline_planner_offsets) {
+   340	  if (model_->metadata()) {
+   341	    for (size_t i = 0; i < model_->metadata()->size(); ++i) {
+   342	      auto metadata = model_->metadata()->Get(i);
+   343	
+   344	      if (metadata->name()) {
+   345	        const size_t metadata_name_size = metadata->name()->size();
+   346	
+   347	        if ((strncmp(metadata->name()->c_str(), kOfflineMemAllocMetadata,
+   348	                     std::min(metadata_name_size,
+   349	                              strlen(kOfflineMemAllocMetadata))) == 0) &&
+   350	            metadata_name_size == strlen(kOfflineMemAllocMetadata)) {
+   351	          const flatbuffers::Vector<flatbuffers::Offset<Buffer>>* buffers =
+   352	              model_->buffers();
+   353	          auto* buffer = (*buffers)[metadata->buffer()];
+   354	          auto* array = buffer->data();
+   355	          const uint32_t* metadata_buffer =
+   356	              reinterpret_cast<const uint32_t*>(array->data());
+   357	          const size_t nbr_tensors = static_cast<size_t>(metadata_buffer[2]);
+   358	          *offline_planner_offsets =
+   359	              reinterpret_cast<const int32_t*>(&metadata_buffer[3]);
+   360	
+   361	          if (info_.tensor_count != nbr_tensors) {
+   362	            MicroPrintf(
+   363	                "Nbr of offline buffer offsets (%d) in metadata "
+   364	                "not equal nbr tensors (%d)\n",
+   365	                nbr_tensors, info_.tensor_count);
+
+========== 3. OFFLINE MEMORY METADATA DECODER ==========
+   330	    UpdateFirstCreated(current, allocation_scope_count_);
+   331	    UpdateLastUsed(current, allocation_scope_count_);
+   332	  }
+   333	  return kTfLiteOk;
+   334	}
+   335	
+   336	// Get offline tensors allocation plan. See
+   337	// micro/docs/memory_management.md for more info.
+   338	TfLiteStatus AllocationInfoBuilder::GetOfflinePlannedOffsets(
+   339	    const int32_t** offline_planner_offsets) {
+   340	  if (model_->metadata()) {
+   341	    for (size_t i = 0; i < model_->metadata()->size(); ++i) {
+   342	      auto metadata = model_->metadata()->Get(i);
+   343	
+   344	      if (metadata->name()) {
+   345	        const size_t metadata_name_size = metadata->name()->size();
+   346	
+   347	        if ((strncmp(metadata->name()->c_str(), kOfflineMemAllocMetadata,
+   348	                     std::min(metadata_name_size,
+   349	                              strlen(kOfflineMemAllocMetadata))) == 0) &&
+   350	            metadata_name_size == strlen(kOfflineMemAllocMetadata)) {
+   351	          const flatbuffers::Vector<flatbuffers::Offset<Buffer>>* buffers =
+   352	              model_->buffers();
+   353	          auto* buffer = (*buffers)[metadata->buffer()];
+   354	          auto* array = buffer->data();
+   355	          const uint32_t* metadata_buffer =
+   356	              reinterpret_cast<const uint32_t*>(array->data());
+   357	          const size_t nbr_tensors = static_cast<size_t>(metadata_buffer[2]);
+   358	          *offline_planner_offsets =
+   359	              reinterpret_cast<const int32_t*>(&metadata_buffer[3]);
+   360	
+   361	          if (info_.tensor_count != nbr_tensors) {
+   362	            MicroPrintf(
+   363	                "Nbr of offline buffer offsets (%d) in metadata "
+   364	                "not equal nbr tensors (%d)\n",
+   365	                nbr_tensors, info_.tensor_count);
+   366	            return kTfLiteError;
+   367	          }
+   368	        }
+   369	      }
+   370	    }
+   371	  }
+   372	  return kTfLiteOk;
+   373	}
+   374	
+   375	}  // namespace tflite
+
+========== 4. ALLOCATOR PLAN AND COMMIT ==========
+  1110	}
+  1111	
+  1112	TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
+  1113	    const Model* model, SubgraphAllocations* allocations,
+  1114	    ScratchBufferHandle* scratch_buffer_handles) {
+  1115	  size_t head_usage = 0;
+  1116	  // Create static memory plan
+  1117	  // 1. Calculate AllocationInfo to know the lifetime of each tensor/buffer.
+  1118	  // 2. Add them into the planner (such as the GreedyMemoryPlanner).
+  1119	  // 3. Static memory planning using the planner.
+  1120	  // 4. Set tensor/buffer pointers based on the offsets from the previous step.
+  1121	  //
+  1122	  // Note that AllocationInfo is only needed for creating the plan. It will be
+  1123	  // allocated from the temp section and cleaned up at the bottom of this
+  1124	  // function.
+  1125	
+  1126	  // Use the AllocationInfoBuilder class to help determine where buffers are
+  1127	  // used in the subgraph.
+  1128	  AllocationInfoBuilder builder(model, non_persistent_buffer_allocator_);
+  1129	  TF_LITE_ENSURE_STATUS(
+  1130	      builder.CreateAllocationInfo(scratch_buffer_request_count_));
+  1131	
+  1132	  const int32_t* offline_planner_offsets = nullptr;
+  1133	  TF_LITE_ENSURE_STATUS(
+  1134	      builder.GetOfflinePlannedOffsets(&offline_planner_offsets));
+  1135	
+  1136	  // We allocate buffers for variable tensors here since the offline planner
+  1137	  // offsets are conviently available here.
+  1138	  for (size_t subgraph_idx = 0; subgraph_idx < model->subgraphs()->size();
+  1139	       subgraph_idx++) {
+  1140	    const SubGraph* subgraph = model->subgraphs()->Get(subgraph_idx);
+  1141	    TFLITE_DCHECK(subgraph != nullptr);
+  1142	    TF_LITE_ENSURE_STATUS(AllocateVariables(
+  1143	        subgraph, allocations[subgraph_idx].tensors, offline_planner_offsets));
+  1144	  }
+  1145	
+  1146	  TF_LITE_ENSURE_STATUS(
+  1147	      builder.InitializeAllocationInfo(offline_planner_offsets, allocations));
+  1148	
+  1149	  internal::ScratchBufferRequest* scratch_buffer_requests =
+  1150	      GetScratchBufferRequests();
+  1151	  TF_LITE_ENSURE_STATUS(builder.MarkAllocationLifetimes(
+  1152	      0, scratch_buffer_requests, scratch_buffer_handles, allocations));
+  1153	  int allocation_info_count = builder.AllocationCount();
+  1154	  AllocationInfo* allocation_info = builder.Finish();
+  1155	
+  1156	  // Remaining arena size that memory planner can use for calculating offsets.
+  1157	  size_t remaining_arena_size =
+  1158	      non_persistent_buffer_allocator_->GetAvailableMemory(
+  1159	          MicroArenaBufferAlignment());
+  1160	  uint8_t* planner_arena = non_persistent_buffer_allocator_->AllocateTemp(
+  1161	      remaining_arena_size, MicroArenaBufferAlignment());
+  1162	
+  1163	  if (planner_arena == nullptr) {
+  1164	    return kTfLiteError;
+  1165	  }
+  1166	
+  1167	  memory_planner_->Init(planner_arena, remaining_arena_size);
+  1168	  TF_LITE_ENSURE_STATUS(
+  1169	      CreatePlan(memory_planner_, allocation_info, allocation_info_count));
+  1170	
+  1171	  // Commit the plan.
+  1172	  TF_LITE_ENSURE_STATUS(
+  1173	      CommitPlan(memory_planner_,
+  1174	                 non_persistent_buffer_allocator_->GetOverlayMemoryAddress(),
+  1175	                 allocation_info, allocation_info_count));
+  1176	
+  1177	  // Reset all temp allocations used above:
+  1178	  builder.FreeAllocationInfo();
+  1179	  non_persistent_buffer_allocator_->DeallocateTemp(planner_arena);
+  1180	  TF_LITE_ENSURE_STATUS(
+  1181	      non_persistent_buffer_allocator_->ResetTempAllocations());
+  1182	  TF_LITE_ENSURE_STATUS(
+  1183	      non_persistent_buffer_allocator_->DeallocateResizableBuffer(
+  1184	          scratch_buffer_head_));
+  1185	
+  1186	#ifdef TF_LITE_SHOW_MEMORY_USE
+  1187	  memory_planner_->PrintMemoryPlan();
+  1188	#endif
+  1189	  head_usage = memory_planner_->GetMaximumMemorySize();
+  1190	
+  1191	  // The head is used to store memory plans for one model at a time during the
+  1192	  // model preparation stage, and is re-purposed to store scratch buffer handles
+  1193	  // during model invocation. The head must be as large as the greater of the
+  1194	  // largest model memory plan's size and the total space required for all
+  1195	  // scratch buffer handles.
+
+========== 5. GET EVAL TENSOR MAPPING ==========
+    90	}
+    91	
+    92	uint8_t* MicroInterpreterContext::AllocateTempBuffer(size_t size,
+    93	                                                     size_t alignment) {
+    94	  TFLITE_DCHECK(state_ == InterpreterState::kPrepare);
+    95	  return allocator_.AllocateTempBuffer(size, alignment);
+    96	}
+    97	
+    98	void MicroInterpreterContext::DeallocateTempBuffer(uint8_t* buffer) {
+    99	  TFLITE_DCHECK(state_ == InterpreterState::kPrepare);
+   100	  allocator_.DeallocateTempBuffer(buffer);
+   101	}
+   102	
+   103	TfLiteEvalTensor* MicroInterpreterContext::GetEvalTensor(int tensor_idx) {
+   104	  return &graph_.GetAllocations()[graph_.GetCurrentSubgraphIndex()]
+   105	              .tensors[tensor_idx];
+   106	}
+   107	
+   108	void MicroInterpreterContext::SetScratchBufferHandles(
+   109	    ScratchBufferHandle* scratch_buffer_handles) {
+   110	  scratch_buffer_handles_ = scratch_buffer_handles;
+   111	}
+   112	
+
+========== 6. VELA MODEL METADATA CONTENT ==========
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795591601.391283   13671 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795591601.395353   13671 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795591601.815286   13671 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795591603.163019   13671 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795591603.165785   13671 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL_SHA256 = 0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+MODEL_BYTES = 9684208
+METADATA_COUNT = 1
+BUFFER_COUNT = 87
+METADATA[0]: name='OfflineMemoryAllocation' buffer_index=86
+  payload_bytes = 1228
+  OFFLINE_MEMORY_ALLOCATION=FOUND
+  INT32_VALUE_COUNT = 307
+  FIRST_32_INT32_VALUES = [0, 1, 304, 10800, -1, -1, 19808, -1, 10800, 14400, 36000, -1, 153040, 109840, 14400, 131440, -1, -1, 57600, -1, 57632, -1, 57664, -1, 57632, 174640, -1, 57664, 57696, 109840, 153040, 109840]
+  OFFSET_HEADER_CANDIDATE_SIZE = 3 (confirm interpretation using decoder source above)
+  RAW_TENSOR31_INDEX_CANDIDATE = 184672
+  RAW_TENSOR54_INDEX_CANDIDATE = 184672
+  RAW_VALUE_AT_INDEX31 = 109840
+  RAW_VALUE_AT_INDEX54 = -1
+MODEL_METADATA_AUDIT=FINISHED
+
+========== 7. RESULT ==========
+VELA_OFFLINE_MEMORY_AUDIT_FINISHED
+
+======================================================
+AUDIT_EXIT=0
+MODEL_MODIFIED=NO
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FLASH_PERFORMED=NO
+OSPI1_REPROGRAMMED=NO
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_vela_offline_memory_20261125_152640.log
+======================================================
+Press ENTER to close this terminal...
