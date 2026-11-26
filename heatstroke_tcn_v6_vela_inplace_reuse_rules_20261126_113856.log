@@ -1,0 +1,363 @@
+======================================================
+TCN V6 VELA IN-PLACE REUSE RULE AUDIT
+Timestamp=20261126_113856
+======================================================
+VELA_VERSION = 5.0.0
+VELA_ROOT = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela
+
+======================================================
+FILE = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/live_range.py
+
+----- FUNCTION LiveRange.add_tensor, lines 54-63 -----
+    54:     def add_tensor(self, tens):
+    55:         if self.size == 0:
+    56:             self.size = tens.storage_size()
+    57:             self.name = tens.name  # LiveRange will be named after the first tensor added
+    58:         else:
+    59:             assert (
+    60:                 self.size >= tens.storage_size()
+    61:             ), "Tensors assigned to the same LiveRange need to fit the size of the LiveRange."
+    62: 
+    63:         self.tensors.append(tens)
+
+----- FUNCTION LiveRange.mark_usage, lines 65-72 -----
+    65:     def mark_usage(self, op_time, op_length=1):
+    66:         op_time_start = max(op_time, 0)
+    67:         op_time_end = op_time + op_length
+    68:         if op_time_end < op_time_start:
+    69:             return
+    70: 
+    71:         self.start_time = min(self.start_time, op_time_start)
+    72:         self.end_time = max(self.end_time, op_time_end)
+
+----- FUNCTION LiveRange.overlaps_ranges, lines 78-79 -----
+    78:     def overlaps_ranges(self, other):
+    79:         return max(self.start_time, other.start_time) < min(self.end_time, other.end_time)
+
+----- FUNCTION LiveRangeGraph.get_or_create_range, lines 124-135 -----
+   124:     def get_or_create_range(self, tens, alignment=Tensor.AllocationQuantum):
+   125:         # Return the live range of the tensor (or any of its clones)
+   126:         for existing_tensor, rng in self.ranges.items():
+   127:             if tens.equivalent(existing_tensor):
+   128:                 rng.set_alignment(alignment)
+   129:                 return rng
+   130: 
+   131:         # No live range found for the tensor, create a new one
+   132:         rng = LiveRange(tens, alignment)
+   133:         self.ranges[tens] = rng
+   134:         self.lrs.append(rng)
+   135:         return rng
+
+----- FUNCTION LiveRangeGraph.fuse_ranges, lines 137-142 -----
+   137:     def fuse_ranges(self, in_tens, out_tens):
+   138:         live_range = self.get_or_create_range(in_tens)
+   139:         assert out_tens not in self.ranges, out_tens
+   140:         live_range.add_tensor(out_tens)
+   141:         self.ranges[out_tens] = live_range
+   142:         return live_range
+
+----- FUNCTION ofm_can_reuse_ifm, lines 223-225 -----
+   223: def ofm_can_reuse_ifm(sched_op, target_mem_area=None, target_mem_type_set=None):
+   224:     ifm = _get_ifm_to_fuse(sched_op, target_mem_area, target_mem_type_set)
+   225:     return ifm is not None
+
+----- FUNCTION extract_live_ranges_from_cascaded_passes, lines 234-306 -----
+   234: def extract_live_ranges_from_cascaded_passes(
+   235:     sg,
+   236:     target_mem_area,
+   237:     target_mem_type_set,
+   238:     lr_graph=None,
+   239:     cpu_tensor_alignment=Tensor.AllocationQuantum,
+   240:     verbose_progress: bool = False,
+   241: ):
+   242:     if lr_graph is None:
+   243:         lr_graph = LiveRangeGraph()
+   244: 
+   245:     if sg in lr_graph.processed_subgraphs:
+   246:         # if subgraph has been processed already, return the lr_graph as is
+   247:         return lr_graph
+   248: 
+   249:     for index, cps in enumerate(sg.cascaded_passes):
+   250:         progress_print(verbose_progress, "Processing cascaded pass", index, sg.cascaded_passes)
+   251:         cps.time = lr_graph.current_time
+   252: 
+   253:         time_for_pass = cps.time
+   254: 
+   255:         for tens in cps.inputs:
+   256:             if tensor_should_be_ignored(tens, target_mem_area, target_mem_type_set):
+   257:                 continue
+   258:             rng = lr_graph.get_or_create_range(tens, cpu_tensor_alignment)
+   259:             rng.mark_usage(time_for_pass)
+   260: 
+   261:         op = cps.passes[0].ops[0] if cps.passes[0].ops else None
+   262:         op_subgraph = op.attrs.get("subgraph", None) if op else None
+   263: 
+   264:         if op_subgraph is not None and MemType.Permanent_CPU not in target_mem_type_set:
+   265:             if op.type == Op.CustomNpuOp:
+   266:                 # If the primary-op is an NpuOp that means this is where an Npu subgraph
+   267:                 # is called. Go into said subgraph and extract live ranges before continuing.
+   268:                 # Use default allocation alignment of 16 for Npu tensors
+   269:                 lr_graph = extract_live_ranges_from_schedule(
+   270:                     op_subgraph, target_mem_area, target_mem_type_set, lr_graph
+   271:                 )
+   272:             else:
+   273:                 # The op has one or more subgraphs in it (a typical op is the While op)
+   274:                 # Go into all subgraphs and extract live ranges before continuing.
+   275:                 for op_sg in op_subgraph:
+   276:                     lr_graph = extract_live_ranges_from_cascaded_passes(
+   277:                         op_sg, target_mem_area, target_mem_type_set, lr_graph, cpu_tensor_alignment
+   278:                     )
+   279:             # Set the new time after handling the Npu subgraph
+   280:             # current time is updated in subgraph path so do not tick the time
+   281:             time_for_pass = lr_graph.current_time
+   282:             cps.time = time_for_pass
+   283:         else:
+   284:             lr_graph.current_time += 2
+   285: 
+   286:         for tens in cps.intermediates + cps.outputs:
+   287:             if tensor_should_be_ignored(tens, target_mem_area, target_mem_type_set):
+   288:                 continue
+   289:             rng = lr_graph.get_or_create_range(tens, cpu_tensor_alignment)
+   290:             rng.mark_usage(time_for_pass)
+   291: 
+   292:     time_to_set = lr_graph.current_time
+   293:     for tens in sg.output_tensors:
+   294:         if tensor_should_be_ignored(tens, target_mem_area, target_mem_type_set):
+   295:             continue
+   296:         rng = lr_graph.get_or_create_range(tens, cpu_tensor_alignment)
+   297:         rng.mark_usage(time_to_set)
+   298: 
+   299:     # Variable tensor live-range is for entire inference
+   300:     for tens, rng in lr_graph.ranges.items():
+   301:         if tens.is_variable:
+   302:             rng.mark_usage(0, time_to_set + 1)
+   303: 
+   304:     # Add subgraph to set of processed subgraphs
+   305:     lr_graph.processed_subgraphs.add(sg)
+   306:     return lr_graph
+
+----- FUNCTION extract_live_ranges_from_schedule, lines 331-401 -----
+   331: def extract_live_ranges_from_schedule(sg, target_mem_area, target_mem_type_set, lr_graph, verbose_progress=False):
+   332:     time_for_cascade = {}
+   333:     for index, sched_op in enumerate(sg.sched_ops):
+   334:         progress_print(verbose_progress, "Processing SchedulerOp", index, sg.sched_ops)
+   335:         op_info = sg.schedule.cost_map[sched_op]
+   336:         cascade = op_info.cascade
+   337:         cascade_info = sg.schedule.cascades.get(cascade, None)
+   338: 
+   339:         if cascade_info is None:
+   340:             # Op is not part of a cascade, check if the ifm can be overwritten by the ofm
+   341:             merge_elementwise_op_ranges(sg, sched_op, lr_graph, target_mem_area, target_mem_type_set)
+   342: 
+   343:         time_to_set = time_for_cascade.get(cascade, lr_graph.current_time)
+   344: 
+   345:         op_info.time_index = time_to_set
+   346: 
+   347:         # Mark usage for all tensors related to this Pass
+   348:         ps = sched_op.parent_ps
+   349:         for tens in ps.inputs + ps.outputs + ps.intermediates:
+   350:             if (
+   351:                 target_mem_area == MemArea.Sram
+   352:                 and cascade_info
+   353:                 and tens == ps.ifm_tensor
+   354:                 and sched_op in cascade_info.buffers
+   355:             ):
+   356:                 # This tensor is a rolling buffer in a cascade and the size of the LiveRange needs to be modified
+   357:                 # for enabling temporal memory snapshots without modifying the original Tensor
+   358:                 rng = lr_graph.get_or_create_range(tens)
+   359:                 rng.set_buffer_size(cascade_info.buffers[sched_op].elements() * sched_op.ifm.dtype.size_in_bytes())
+   360:             elif (
+   361:                 tens.purpose == TensorPurpose.Weights
+   362:                 or tens.purpose == TensorPurpose.FSBias
+   363:                 or tens.mem_type not in target_mem_type_set
+   364:                 or tens.mem_area != target_mem_area
+   365:             ):
+   366:                 continue
+   367: 
+   368:             else:
+   369:                 rng = lr_graph.get_or_create_range(tens)
+   370: 
+   371:             rng.mark_usage(time_to_set)
+   372: 
+   373:         for idx, weight_tens in enumerate(op_info.buffered_weight_tensors):
+   374:             if weight_tens.mem_type in target_mem_type_set and weight_tens.mem_area == target_mem_area:
+   375:                 rng = lr_graph.get_or_create_range(weight_tens)
+   376:                 start_time = time_to_set
+   377:                 length = 1
+   378:                 if weight_tens.pre_buffer:
+   379:                     start_time -= 1
+   380:                     length += 1
+   381:                 if len(op_info.buffered_weight_tensors) > 1:
+   382:                     last_idx = len(op_info.ofm_depth_slices) % len(op_info.buffered_weight_tensors)
+   383:                     # Double buffering: reduce end time of the buffer that is not used last
+   384:                     if last_idx != idx:
+   385:                         length -= 1
+   386:                 rng.mark_usage(start_time, length)
+   387: 
+   388:         if time_to_set == lr_graph.current_time:
+   389:             lr_graph.current_time += 2
+   390: 
+   391:         if cascade != 0:
+   392:             time_for_cascade[cascade] = time_to_set
+   393: 
+   394:     time_to_set = lr_graph.current_time
+   395:     for tens in sg.output_tensors:
+   396:         if tens.mem_type not in target_mem_type_set or tens.mem_area != target_mem_area:
+   397:             continue
+   398:         rng = lr_graph.get_or_create_range(tens)
+   399:         rng.mark_usage(time_to_set)
+   400: 
+   401:     return lr_graph
+
+======================================================
+FILE = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/scheduler.py
+
+----- FUNCTION Scheduler.avoid_nhcwb16_for_ofm, lines 446-483 -----
+   446:     def avoid_nhcwb16_for_ofm(self, tens, ps, arch):
+   447:         """For elementwise ops when ifm is in nhwc format and not brick format aligned (16),
+   448:         then if the ofm can overwrite the ifm it is better to enforce ofm format to nhwc in
+   449:         order to reduce memory transactions"""
+   450: 
+   451:         op = ps.primary_op
+   452:         if not op.type.is_elementwise_op():
+   453:             return False
+   454: 
+   455:         depth = op.ofm_shapes[0][-1]
+   456:         if (depth % 16) == 0:
+   457:             return False
+   458: 
+   459:         # Check if overwriting the inputs can be allowed
+   460:         OpShapeTens = namedtuple("OpShapeTens", ["op_shape", "tens"])
+   461:         outp = OpShapeTens(op.ofm_shapes[0], op.ofm)
+   462:         inps = []
+   463:         if op.ifm is not None:
+   464:             inps.append(OpShapeTens(op.ifm_shapes[0], op.ifm))
+   465:         if op.ifm2 is not None:
+   466:             inps.append(OpShapeTens(op.ifm_shapes[1], op.ifm2))
+   467: 
+   468:         # Find an input tensor that can be overwritten by the output
+   469:         for inp in inps:
+   470:             if (
+   471:                 # check op input and output shapes allow overlapping
+   472:                 inp.op_shape == outp.op_shape
+   473:                 # check input tensor is valid
+   474:                 and inp.tens is not None
+   475:                 and inp.tens.shape != []
+   476:                 # check input and output tensors are compatible
+   477:                 and inp.tens.format == outp.tens.format
+   478:                 and inp.tens.dtype == outp.tens.dtype
+   479:             ):
+   480:                 if inp.tens.format == TensorFormat.NHWC:
+   481:                     return True
+   482: 
+   483:         return False
+
+======================================================
+ALL REUSE / LIVE-RANGE CALL SITES
+
+FILE=cascade_builder.py
+    19: from .live_range import ofm_can_reuse_ifm
+   122: if ofm_can_reuse_ifm(sched_op):
+
+FILE=live_range.py
+   137: def fuse_ranges(self, in_tens, out_tens):
+   223: def ofm_can_reuse_ifm(sched_op, target_mem_area=None, target_mem_type_set=None):
+   231: lr_graph.fuse_ranges(ifm, sched_op.parent_op.ofm)
+   234: def extract_live_ranges_from_cascaded_passes(
+   269: lr_graph = extract_live_ranges_from_schedule(
+   276: lr_graph = extract_live_ranges_from_cascaded_passes(
+   331: def extract_live_ranges_from_schedule(sg, target_mem_area, target_mem_type_set, lr_graph, verbose_progress=False):
+
+FILE=scheduler.py
+    62: from .live_range import ofm_can_reuse_ifm
+   578: live_range.extract_live_ranges_from_schedule(self.sg, mem_area, mem_type_set, lr_graph, verbose_progress)
+  1023: ofm_size = 0 if ofm_can_reuse_ifm(sched_op) else sched_op.ofm_size_in_bytes()
+  1170: live_range.extract_live_ranges_from_schedule(self.sg, mem_area, mem_type_set, lr_graph, verbose_progress)
+  1288: live_range.extract_live_ranges_from_schedule(
+  1453: # extract_live_ranges_from_cascaded_passes will start from the root sg and
+  1457: live_range.extract_live_ranges_from_cascaded_passes(
+
+FILE=tensor_allocation.py
+   208: lrs = live_range.extract_live_ranges_from_cascaded_passes(
+
+======================================================
+FILE = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/tensor_allocation.py
+
+----- FUNCTION linear_allocate_live_ranges, lines 39-67 -----
+    39: def linear_allocate_live_ranges(live_ranges, alloc_granularity=Tensor.AllocationQuantum):
+    40:     # Allocates using increasing addresses. Duplicate constant tensors will be allocated to the same address
+    41:     total_sz = 0
+    42:     allocated_tensors = []
+    43: 
+    44:     # just assign increasing addresses, except for duplicates
+    45:     for tens, lr in live_ranges.ranges.items():
+    46:         if tens in allocated_tensors:
+    47:             continue
+    48: 
+    49:         address = total_sz
+    50:         if tens.weight_compression_config is not None:
+    51:             for allocated_tens in allocated_tensors:
+    52:                 if allocated_tens.weight_compression_config == tens.weight_compression_config:
+    53:                     assert allocated_tens.scale_compression_config == tens.scale_compression_config
+    54:                     address = allocated_tens.address
+    55:                     break
+    56:         if tens.purpose == TensorPurpose.LUT:
+    57:             for allocated_tens in allocated_tensors:
+    58:                 if allocated_tens.equivalent(tens):
+    59:                     address = allocated_tens.address
+    60:                     break
+    61:         lr.set_address(address)
+    62:         allocated_tensors += lr.tensors
+    63:         if address == total_sz:
+    64:             total_sz += numeric_util.round_up(int(math.ceil(lr.size)), alloc_granularity)
+    65: 
+    66:     verify_alignment(live_ranges, alloc_granularity)
+    67:     return total_sz
+
+----- FUNCTION hillclimb_allocate_live_ranges, lines 70-81 -----
+    70: def hillclimb_allocate_live_ranges(
+    71:     live_ranges: LiveRangeGraph, alloc_granularity: int, max_iterations: int, mem_limit: int
+    72: ) -> int:
+    73:     # Allocates using the hill climb allocator
+    74:     addresses = hillclimb_allocation.allocate_live_ranges(live_ranges.lrs, max_iterations, mem_limit)
+    75:     # The result is a list containing the allocated addresses
+    76:     total_sz = 0
+    77:     for lr, address in zip(live_ranges.lrs, addresses):
+    78:         total_sz = max(total_sz, address + lr.size)
+    79:         lr.set_address(address)
+    80:     verify_allocation(live_ranges, alloc_granularity)
+    81:     return total_sz
+
+----- FUNCTION verify_allocation, lines 93-110 -----
+    93: def verify_allocation(live_ranges: LiveRangeGraph, alignment: int):
+    94:     verify_alignment(live_ranges, alignment)
+    95:     nr_time_slots = 1 + max(lr.end_time for lr in live_ranges.lrs)
+    96:     # Contains active live ranges at each timestamp
+    97:     lrs_at_time: List[List[LiveRange]] = [[] for i in range(nr_time_slots)]
+    98:     for lr in live_ranges.lrs:
+    99:         for t in range(lr.start_time, lr.end_time + 1):
+   100:             lrs_at_time[t].append(lr)
+   101:     for t in range(nr_time_slots):
+   102:         lrs_new_items = [lr for lr in lrs_at_time[t] if t == 0 or lr not in lrs_at_time[t - 1]]
+   103:         for m in lrs_new_items:
+   104:             for n in lrs_at_time[t]:
+   105:                 overlap, tens_n, tens_m = n.overlaps_address(m)
+   106:                 if overlap and not (tens_n.equivalent(tens_m) and tens_n.address == tens_m.address):
+   107:                     raise AllocationError(
+   108:                         f"Overlapping buffers: {n.name}: {tens_n.address} -> {tens_n.address + n.size}"
+   109:                         f" and {m.name}: {tens_m.address} -> {tens_m.address + m.size}"
+   110:                     )
+
+VELA_INPLACE_REUSE_RULE_AUDIT=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_vela_inplace_reuse_rules_20261126_113856.log
+MODEL_MODIFIED=NO
+VELA_SOURCE_MODIFIED=NO
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
