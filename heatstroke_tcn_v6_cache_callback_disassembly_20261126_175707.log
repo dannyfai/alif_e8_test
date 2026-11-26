@@ -1,0 +1,523 @@
+======================================================
+TCN V6 LINKED CACHE CALLBACK DISASSEMBLY
+Timestamp=20261126_175707
+======================================================
+ELF=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf
+OBJDUMP=/usr/bin/arm-none-eabi-objdump
+
+========== ELF HASH ==========
+2b94407d078f3dd17ed23ccae2db0c9b098fdf32c532f1937ea6efecb6f0fb77  /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf
+
+========== RELEVANT SYMBOL TABLE ==========
+  1767: 8000f07d    68 FUNC    LOCAL  DEFAULT    3 ethosu_area_needs_invalidate_dcache.localalias
+  4510: 8001ae91     4 FUNC    WEAK   DEFAULT    3 ethosu_area_needs_flush_dcache
+  4530: 8000f0c1   164 FUNC    GLOBAL DEFAULT    3 ethosu_flush_dcache
+  4753: 8000f07d    68 FUNC    WEAK   DEFAULT    3 ethosu_area_needs_invalidate_dcache
+  4859: 8000f165   164 FUNC    GLOBAL DEFAULT    3 ethosu_invalidate_dcache
+
+========== FUNCTION DISASSEMBLY BY SYMBOL ==========
+
+----- ethosu_area_needs_flush_dcache -----
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+8001ae90 <ethosu_area_needs_flush_dcache>:
+8001ae90:	f7f4 b8f4 	b.w	8000f07c <ethosu_area_needs_invalidate_dcache>
+
+----- ethosu_area_needs_invalidate_dcache -----
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+8000f07c <ethosu_area_needs_invalidate_dcache>:
+8000f07c:	4602      	mov	r2, r0
+8000f07e:	b1b0      	cbz	r0, 8000f0ae <ethosu_area_needs_invalidate_dcache+0x32>
+8000f080:	4608      	mov	r0, r1
+8000f082:	b1b9      	cbz	r1, 8000f0b4 <ethosu_area_needs_invalidate_dcache+0x38>
+8000f084:	3901      	subs	r1, #1
+8000f086:	188b      	adds	r3, r1, r2
+8000f088:	f5b3 2f80 	cmp.w	r3, #262144	@ 0x40000
+8000f08c:	d311      	bcc.n	8000f0b2 <ethosu_area_needs_invalidate_dcache+0x36>
+8000f08e:	f1b2 5f00 	cmp.w	r2, #536870912	@ 0x20000000
+8000f092:	d302      	bcc.n	8000f09a <ethosu_area_needs_invalidate_dcache+0x1e>
+8000f094:	4908      	ldr	r1, [pc, #32]	@ (8000f0b8 <ethosu_area_needs_invalidate_dcache+0x3c>)
+8000f096:	428b      	cmp	r3, r1
+8000f098:	d90b      	bls.n	8000f0b2 <ethosu_area_needs_invalidate_dcache+0x36>
+8000f09a:	4908      	ldr	r1, [pc, #32]	@ (8000f0bc <ethosu_area_needs_invalidate_dcache+0x40>)
+8000f09c:	428b      	cmp	r3, r1
+8000f09e:	bf94      	ite	ls
+8000f0a0:	2300      	movls	r3, #0
+8000f0a2:	2301      	movhi	r3, #1
+8000f0a4:	2a00      	cmp	r2, #0
+8000f0a6:	bfb4      	ite	lt
+8000f0a8:	4618      	movlt	r0, r3
+8000f0aa:	2001      	movge	r0, #1
+8000f0ac:	4770      	bx	lr
+8000f0ae:	2001      	movs	r0, #1
+8000f0b0:	4770      	bx	lr
+8000f0b2:	2000      	movs	r0, #0
+8000f0b4:	4770      	bx	lr
+8000f0b6:	bf00      	nop
+8000f0b8:	2003ffff 	.word	0x2003ffff
+8000f0bc:	8057ffff 	.word	0x8057ffff
+
+----- ethosu_flush_dcache -----
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+8000f0c0 <ethosu_flush_dcache>:
+8000f0c0:	b570      	push	{r4, r5, r6, lr}
+8000f0c2:	460d      	mov	r5, r1
+8000f0c4:	4604      	mov	r4, r0
+8000f0c6:	2800      	cmp	r0, #0
+8000f0c8:	d047      	beq.n	8000f15a <ethosu_flush_dcache+0x9a>
+8000f0ca:	f00b fee1 	bl	8001ae90 <ethosu_area_needs_flush_dcache>
+8000f0ce:	2800      	cmp	r0, #0
+8000f0d0:	d043      	beq.n	8000f15a <ethosu_flush_dcache+0x9a>
+8000f0d2:	f5b5 3f00 	cmp.w	r5, #131072	@ 0x20000
+8000f0d6:	d81e      	bhi.n	8000f116 <ethosu_flush_dcache+0x56>
+8000f0d8:	b1e5      	cbz	r5, 8000f114 <ethosu_flush_dcache+0x54>
+8000f0da:	f004 031f 	and.w	r3, r4, #31
+8000f0de:	1959      	adds	r1, r3, r5
+8000f0e0:	f3bf 8f4f 	dsb	sy
+8000f0e4:	4620      	mov	r0, r4
+8000f0e6:	43c3      	mvns	r3, r0
+8000f0e8:	440c      	add	r4, r1
+8000f0ea:	4423      	add	r3, r4
+8000f0ec:	3920      	subs	r1, #32
+8000f0ee:	095b      	lsrs	r3, r3, #5
+8000f0f0:	3120      	adds	r1, #32
+8000f0f2:	f103 0e01 	add.w	lr, r3, #1
+8000f0f6:	bfd8      	it	le
+8000f0f8:	f04f 0e01 	movle.w	lr, #1
+8000f0fc:	f04e e001 	dls	lr, lr
+8000f100:	4a17      	ldr	r2, [pc, #92]	@ (8000f160 <ethosu_flush_dcache+0xa0>)
+8000f102:	f8c2 0268 	str.w	r0, [r2, #616]	@ 0x268
+8000f106:	3020      	adds	r0, #32
+8000f108:	f00f c805 	le	lr, 8000f102 <ethosu_flush_dcache+0x42>
+8000f10c:	f3bf 8f4f 	dsb	sy
+8000f110:	f3bf 8f6f 	isb	sy
+8000f114:	bd70      	pop	{r4, r5, r6, pc}
+8000f116:	2300      	movs	r3, #0
+8000f118:	4a11      	ldr	r2, [pc, #68]	@ (8000f160 <ethosu_flush_dcache+0xa0>)
+8000f11a:	f8c2 3084 	str.w	r3, [r2, #132]	@ 0x84
+8000f11e:	f3bf 8f4f 	dsb	sy
+8000f122:	f643 74e0 	movw	r4, #16352	@ 0x3fe0
+8000f126:	f8d2 3080 	ldr.w	r3, [r2, #128]	@ 0x80
+8000f12a:	f3c3 00c9 	ubfx	r0, r3, #3, #10
+8000f12e:	f3c3 334e 	ubfx	r3, r3, #13, #15
+8000f132:	015b      	lsls	r3, r3, #5
+8000f134:	f100 0e01 	add.w	lr, r0, #1
+8000f138:	4601      	mov	r1, r0
+8000f13a:	f04e e001 	dls	lr, lr
+8000f13e:	ea03 0604 	and.w	r6, r3, r4
+8000f142:	ea46 7581 	orr.w	r5, r6, r1, lsl #30
+8000f146:	f8c2 526c 	str.w	r5, [r2, #620]	@ 0x26c
+8000f14a:	3901      	subs	r1, #1
+8000f14c:	f00f c807 	le	lr, 8000f142 <ethosu_flush_dcache+0x82>
+8000f150:	3b20      	subs	r3, #32
+8000f152:	f113 0f20 	cmn.w	r3, #32
+8000f156:	d1ed      	bne.n	8000f134 <ethosu_flush_dcache+0x74>
+8000f158:	e7d8      	b.n	8000f10c <ethosu_flush_dcache+0x4c>
+8000f15a:	f3bf 8f4f 	dsb	sy
+8000f15e:	e7d9      	b.n	8000f114 <ethosu_flush_dcache+0x54>
+8000f160:	e000ed00 	.word	0xe000ed00
+
+----- ethosu_invalidate_dcache -----
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+8000f164 <ethosu_invalidate_dcache>:
+8000f164:	b570      	push	{r4, r5, r6, lr}
+8000f166:	460d      	mov	r5, r1
+8000f168:	4604      	mov	r4, r0
+8000f16a:	2800      	cmp	r0, #0
+8000f16c:	d047      	beq.n	8000f1fe <ethosu_invalidate_dcache+0x9a>
+8000f16e:	f7ff ff85 	bl	8000f07c <ethosu_area_needs_invalidate_dcache>
+8000f172:	2800      	cmp	r0, #0
+8000f174:	d043      	beq.n	8000f1fe <ethosu_invalidate_dcache+0x9a>
+8000f176:	f5b5 3f00 	cmp.w	r5, #131072	@ 0x20000
+8000f17a:	d81e      	bhi.n	8000f1ba <ethosu_invalidate_dcache+0x56>
+8000f17c:	b1e5      	cbz	r5, 8000f1b8 <ethosu_invalidate_dcache+0x54>
+8000f17e:	f004 031f 	and.w	r3, r4, #31
+8000f182:	1959      	adds	r1, r3, r5
+8000f184:	f3bf 8f4f 	dsb	sy
+8000f188:	4620      	mov	r0, r4
+8000f18a:	43c3      	mvns	r3, r0
+8000f18c:	440c      	add	r4, r1
+8000f18e:	4423      	add	r3, r4
+8000f190:	3920      	subs	r1, #32
+8000f192:	095b      	lsrs	r3, r3, #5
+8000f194:	3120      	adds	r1, #32
+8000f196:	f103 0e01 	add.w	lr, r3, #1
+8000f19a:	bfd8      	it	le
+8000f19c:	f04f 0e01 	movle.w	lr, #1
+8000f1a0:	f04e e001 	dls	lr, lr
+8000f1a4:	4a17      	ldr	r2, [pc, #92]	@ (8000f204 <ethosu_invalidate_dcache+0xa0>)
+8000f1a6:	f8c2 025c 	str.w	r0, [r2, #604]	@ 0x25c
+8000f1aa:	3020      	adds	r0, #32
+8000f1ac:	f00f c805 	le	lr, 8000f1a6 <ethosu_invalidate_dcache+0x42>
+8000f1b0:	f3bf 8f4f 	dsb	sy
+8000f1b4:	f3bf 8f6f 	isb	sy
+8000f1b8:	bd70      	pop	{r4, r5, r6, pc}
+8000f1ba:	2300      	movs	r3, #0
+8000f1bc:	4a11      	ldr	r2, [pc, #68]	@ (8000f204 <ethosu_invalidate_dcache+0xa0>)
+8000f1be:	f8c2 3084 	str.w	r3, [r2, #132]	@ 0x84
+8000f1c2:	f3bf 8f4f 	dsb	sy
+8000f1c6:	f643 74e0 	movw	r4, #16352	@ 0x3fe0
+8000f1ca:	f8d2 3080 	ldr.w	r3, [r2, #128]	@ 0x80
+8000f1ce:	f3c3 00c9 	ubfx	r0, r3, #3, #10
+8000f1d2:	f3c3 334e 	ubfx	r3, r3, #13, #15
+8000f1d6:	015b      	lsls	r3, r3, #5
+8000f1d8:	f100 0e01 	add.w	lr, r0, #1
+8000f1dc:	4601      	mov	r1, r0
+8000f1de:	f04e e001 	dls	lr, lr
+8000f1e2:	ea03 0604 	and.w	r6, r3, r4
+8000f1e6:	ea46 7581 	orr.w	r5, r6, r1, lsl #30
+8000f1ea:	f8c2 5274 	str.w	r5, [r2, #628]	@ 0x274
+8000f1ee:	3901      	subs	r1, #1
+8000f1f0:	f00f c807 	le	lr, 8000f1e6 <ethosu_invalidate_dcache+0x82>
+8000f1f4:	3b20      	subs	r3, #32
+8000f1f6:	f113 0f20 	cmn.w	r3, #32
+8000f1fa:	d1ed      	bne.n	8000f1d8 <ethosu_invalidate_dcache+0x74>
+8000f1fc:	e7d8      	b.n	8000f1b0 <ethosu_invalidate_dcache+0x4c>
+8000f1fe:	f3bf 8f4f 	dsb	sy
+8000f202:	e7d9      	b.n	8000f1b8 <ethosu_invalidate_dcache+0x54>
+8000f204:	e000ed00 	.word	0xe000ed00
+
+========== RAW ADDRESS-RANGE DISASSEMBLY ==========
+--- callback implementation: 0x8000F070..0x8000F210 ---
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section text:
+
+8000f070 <alif_hal_ospi_xip_enable+0x34>:
+8000f070:	bd70      	pop	{r4, r5, r6, pc}
+8000f072:	f06f 0066 	mvn.w	r0, #102	@ 0x66
+8000f076:	e7fb      	b.n	8000f070 <alif_hal_ospi_xip_enable+0x34>
+8000f078:	200000c0 	.word	0x200000c0
+
+8000f07c <ethosu_area_needs_invalidate_dcache>:
+8000f07c:	4602      	mov	r2, r0
+8000f07e:	b1b0      	cbz	r0, 8000f0ae <ethosu_area_needs_invalidate_dcache+0x32>
+8000f080:	4608      	mov	r0, r1
+8000f082:	b1b9      	cbz	r1, 8000f0b4 <ethosu_area_needs_invalidate_dcache+0x38>
+8000f084:	3901      	subs	r1, #1
+8000f086:	188b      	adds	r3, r1, r2
+8000f088:	f5b3 2f80 	cmp.w	r3, #262144	@ 0x40000
+8000f08c:	d311      	bcc.n	8000f0b2 <ethosu_area_needs_invalidate_dcache+0x36>
+8000f08e:	f1b2 5f00 	cmp.w	r2, #536870912	@ 0x20000000
+8000f092:	d302      	bcc.n	8000f09a <ethosu_area_needs_invalidate_dcache+0x1e>
+8000f094:	4908      	ldr	r1, [pc, #32]	@ (8000f0b8 <ethosu_area_needs_invalidate_dcache+0x3c>)
+8000f096:	428b      	cmp	r3, r1
+8000f098:	d90b      	bls.n	8000f0b2 <ethosu_area_needs_invalidate_dcache+0x36>
+8000f09a:	4908      	ldr	r1, [pc, #32]	@ (8000f0bc <ethosu_area_needs_invalidate_dcache+0x40>)
+8000f09c:	428b      	cmp	r3, r1
+8000f09e:	bf94      	ite	ls
+8000f0a0:	2300      	movls	r3, #0
+8000f0a2:	2301      	movhi	r3, #1
+8000f0a4:	2a00      	cmp	r2, #0
+8000f0a6:	bfb4      	ite	lt
+8000f0a8:	4618      	movlt	r0, r3
+8000f0aa:	2001      	movge	r0, #1
+8000f0ac:	4770      	bx	lr
+8000f0ae:	2001      	movs	r0, #1
+8000f0b0:	4770      	bx	lr
+8000f0b2:	2000      	movs	r0, #0
+8000f0b4:	4770      	bx	lr
+8000f0b6:	bf00      	nop
+8000f0b8:	2003ffff 	.word	0x2003ffff
+8000f0bc:	8057ffff 	.word	0x8057ffff
+
+8000f0c0 <ethosu_flush_dcache>:
+8000f0c0:	b570      	push	{r4, r5, r6, lr}
+8000f0c2:	460d      	mov	r5, r1
+8000f0c4:	4604      	mov	r4, r0
+8000f0c6:	2800      	cmp	r0, #0
+8000f0c8:	d047      	beq.n	8000f15a <ethosu_flush_dcache+0x9a>
+8000f0ca:	f00b fee1 	bl	8001ae90 <ethosu_area_needs_flush_dcache>
+8000f0ce:	2800      	cmp	r0, #0
+8000f0d0:	d043      	beq.n	8000f15a <ethosu_flush_dcache+0x9a>
+8000f0d2:	f5b5 3f00 	cmp.w	r5, #131072	@ 0x20000
+8000f0d6:	d81e      	bhi.n	8000f116 <ethosu_flush_dcache+0x56>
+8000f0d8:	b1e5      	cbz	r5, 8000f114 <ethosu_flush_dcache+0x54>
+8000f0da:	f004 031f 	and.w	r3, r4, #31
+8000f0de:	1959      	adds	r1, r3, r5
+8000f0e0:	f3bf 8f4f 	dsb	sy
+8000f0e4:	4620      	mov	r0, r4
+8000f0e6:	43c3      	mvns	r3, r0
+8000f0e8:	440c      	add	r4, r1
+8000f0ea:	4423      	add	r3, r4
+8000f0ec:	3920      	subs	r1, #32
+8000f0ee:	095b      	lsrs	r3, r3, #5
+8000f0f0:	3120      	adds	r1, #32
+8000f0f2:	f103 0e01 	add.w	lr, r3, #1
+8000f0f6:	bfd8      	it	le
+8000f0f8:	f04f 0e01 	movle.w	lr, #1
+8000f0fc:	f04e e001 	dls	lr, lr
+8000f100:	4a17      	ldr	r2, [pc, #92]	@ (8000f160 <ethosu_flush_dcache+0xa0>)
+8000f102:	f8c2 0268 	str.w	r0, [r2, #616]	@ 0x268
+8000f106:	3020      	adds	r0, #32
+8000f108:	f00f c805 	le	lr, 8000f102 <ethosu_flush_dcache+0x42>
+8000f10c:	f3bf 8f4f 	dsb	sy
+8000f110:	f3bf 8f6f 	isb	sy
+8000f114:	bd70      	pop	{r4, r5, r6, pc}
+8000f116:	2300      	movs	r3, #0
+8000f118:	4a11      	ldr	r2, [pc, #68]	@ (8000f160 <ethosu_flush_dcache+0xa0>)
+8000f11a:	f8c2 3084 	str.w	r3, [r2, #132]	@ 0x84
+8000f11e:	f3bf 8f4f 	dsb	sy
+8000f122:	f643 74e0 	movw	r4, #16352	@ 0x3fe0
+8000f126:	f8d2 3080 	ldr.w	r3, [r2, #128]	@ 0x80
+8000f12a:	f3c3 00c9 	ubfx	r0, r3, #3, #10
+8000f12e:	f3c3 334e 	ubfx	r3, r3, #13, #15
+8000f132:	015b      	lsls	r3, r3, #5
+8000f134:	f100 0e01 	add.w	lr, r0, #1
+8000f138:	4601      	mov	r1, r0
+8000f13a:	f04e e001 	dls	lr, lr
+8000f13e:	ea03 0604 	and.w	r6, r3, r4
+8000f142:	ea46 7581 	orr.w	r5, r6, r1, lsl #30
+8000f146:	f8c2 526c 	str.w	r5, [r2, #620]	@ 0x26c
+8000f14a:	3901      	subs	r1, #1
+8000f14c:	f00f c807 	le	lr, 8000f142 <ethosu_flush_dcache+0x82>
+8000f150:	3b20      	subs	r3, #32
+8000f152:	f113 0f20 	cmn.w	r3, #32
+8000f156:	d1ed      	bne.n	8000f134 <ethosu_flush_dcache+0x74>
+8000f158:	e7d8      	b.n	8000f10c <ethosu_flush_dcache+0x4c>
+8000f15a:	f3bf 8f4f 	dsb	sy
+8000f15e:	e7d9      	b.n	8000f114 <ethosu_flush_dcache+0x54>
+8000f160:	e000ed00 	.word	0xe000ed00
+
+8000f164 <ethosu_invalidate_dcache>:
+8000f164:	b570      	push	{r4, r5, r6, lr}
+8000f166:	460d      	mov	r5, r1
+8000f168:	4604      	mov	r4, r0
+8000f16a:	2800      	cmp	r0, #0
+8000f16c:	d047      	beq.n	8000f1fe <ethosu_invalidate_dcache+0x9a>
+8000f16e:	f7ff ff85 	bl	8000f07c <ethosu_area_needs_invalidate_dcache>
+8000f172:	2800      	cmp	r0, #0
+8000f174:	d043      	beq.n	8000f1fe <ethosu_invalidate_dcache+0x9a>
+8000f176:	f5b5 3f00 	cmp.w	r5, #131072	@ 0x20000
+8000f17a:	d81e      	bhi.n	8000f1ba <ethosu_invalidate_dcache+0x56>
+8000f17c:	b1e5      	cbz	r5, 8000f1b8 <ethosu_invalidate_dcache+0x54>
+8000f17e:	f004 031f 	and.w	r3, r4, #31
+8000f182:	1959      	adds	r1, r3, r5
+8000f184:	f3bf 8f4f 	dsb	sy
+8000f188:	4620      	mov	r0, r4
+8000f18a:	43c3      	mvns	r3, r0
+8000f18c:	440c      	add	r4, r1
+8000f18e:	4423      	add	r3, r4
+8000f190:	3920      	subs	r1, #32
+8000f192:	095b      	lsrs	r3, r3, #5
+8000f194:	3120      	adds	r1, #32
+8000f196:	f103 0e01 	add.w	lr, r3, #1
+8000f19a:	bfd8      	it	le
+8000f19c:	f04f 0e01 	movle.w	lr, #1
+8000f1a0:	f04e e001 	dls	lr, lr
+8000f1a4:	4a17      	ldr	r2, [pc, #92]	@ (8000f204 <ethosu_invalidate_dcache+0xa0>)
+8000f1a6:	f8c2 025c 	str.w	r0, [r2, #604]	@ 0x25c
+8000f1aa:	3020      	adds	r0, #32
+8000f1ac:	f00f c805 	le	lr, 8000f1a6 <ethosu_invalidate_dcache+0x42>
+8000f1b0:	f3bf 8f4f 	dsb	sy
+8000f1b4:	f3bf 8f6f 	isb	sy
+8000f1b8:	bd70      	pop	{r4, r5, r6, pc}
+8000f1ba:	2300      	movs	r3, #0
+8000f1bc:	4a11      	ldr	r2, [pc, #68]	@ (8000f204 <ethosu_invalidate_dcache+0xa0>)
+8000f1be:	f8c2 3084 	str.w	r3, [r2, #132]	@ 0x84
+8000f1c2:	f3bf 8f4f 	dsb	sy
+8000f1c6:	f643 74e0 	movw	r4, #16352	@ 0x3fe0
+8000f1ca:	f8d2 3080 	ldr.w	r3, [r2, #128]	@ 0x80
+8000f1ce:	f3c3 00c9 	ubfx	r0, r3, #3, #10
+8000f1d2:	f3c3 334e 	ubfx	r3, r3, #13, #15
+8000f1d6:	015b      	lsls	r3, r3, #5
+8000f1d8:	f100 0e01 	add.w	lr, r0, #1
+8000f1dc:	4601      	mov	r1, r0
+8000f1de:	f04e e001 	dls	lr, lr
+8000f1e2:	ea03 0604 	and.w	r6, r3, r4
+8000f1e6:	ea46 7581 	orr.w	r5, r6, r1, lsl #30
+8000f1ea:	f8c2 5274 	str.w	r5, [r2, #628]	@ 0x274
+8000f1ee:	3901      	subs	r1, #1
+8000f1f0:	f00f c807 	le	lr, 8000f1e6 <ethosu_invalidate_dcache+0x82>
+8000f1f4:	3b20      	subs	r3, #32
+8000f1f6:	f113 0f20 	cmn.w	r3, #32
+8000f1fa:	d1ed      	bne.n	8000f1d8 <ethosu_invalidate_dcache+0x74>
+8000f1fc:	e7d8      	b.n	8000f1b0 <ethosu_invalidate_dcache+0x4c>
+8000f1fe:	f3bf 8f4f 	dsb	sy
+8000f202:	e7d9      	b.n	8000f1b8 <ethosu_invalidate_dcache+0x54>
+8000f204:	e000ed00 	.word	0xe000ed00
+
+8000f208 <callback_for_send_msg>:
+8000f208:	4801      	ldr	r0, [pc, #4]	@ (8000f210 <callback_for_send_msg+0x8>)
+8000f20a:	f000 bd83 	b.w	8000fd14 <z_impl_k_sem_give>
+8000f20e:	bf00      	nop
+
+--- four-byte flush precheck: 0x8001AE90..0x8001AE98 ---
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section text:
+
+8001ae90 <ethosu_area_needs_flush_dcache>:
+8001ae90:	f7f4 b8f4 	b.w	8000f07c <ethosu_area_needs_invalidate_dcache>
+
+8001ae94 <ethosu_address_remap>:
+8001ae94:	f100 4360 	add.w	r3, r0, #3758096384	@ 0xe0000000
+
+========== MAP OWNERSHIP ==========
+12450- .text          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12451- .data          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12452- .bss           0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12453: .text.ethosu_flush_dcache
+12454-                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12455: .text.ethosu_invalidate_dcache
+12456-                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12457- .text.ethosu_mutex_create
+12458-                0x0000000000000000        0x8 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+--
+17845- .text.alif_hal_ospi_xip_enable
+17846-                0x000000008000f03c       0x40 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+17847-                0x000000008000f03c                alif_hal_ospi_xip_enable
+17848: .text.ethosu_area_needs_invalidate_dcache
+17849-                0x000000008000f07c       0x44 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17850:                0x000000008000f07c                ethosu_area_needs_invalidate_dcache
+17851: .text.ethosu_flush_dcache
+17852-                0x000000008000f0c0       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17853:                0x000000008000f0c0                ethosu_flush_dcache
+17854: .text.ethosu_invalidate_dcache
+17855-                0x000000008000f164       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17856:                0x000000008000f164                ethosu_invalidate_dcache
+17857- .text.callback_for_send_msg
+17858-                0x000000008000f208        0xc modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+17859- .text.k_mutex_lock.constprop.0
+--
+19492- .text.ospi_irq_handler
+19493-                0x000000008001acec      0x1a4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+19494-                0x000000008001acec                ospi_irq_handler
+19495: .text.ethosu_area_needs_flush_dcache
+19496-                0x000000008001ae90        0x4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+19497:                0x000000008001ae90                ethosu_area_needs_flush_dcache
+19498- .text.ethosu_address_remap
+19499-                0x000000008001ae94       0x20 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+19500-                0x000000008001ae94                ethosu_address_remap
+
+========== CALLBACK SOURCE ==========
+    34	static bool area_needs_invalidate_or_flush(const void *p, size_t bytes)
+    35	{
+    36		if (bytes == 0) {
+    37			return false;
+    38		}
+    39	
+    40		uintptr_t base = (uintptr_t)p;
+    41		uintptr_t limit = base + bytes - 1;
+    42		size_t nn_flush_size = ARRAY_SIZE(no_need_to_invalidate_or_flush_areas);
+    43	
+    44		for (size_t i = 0; i < nn_flush_size; i++) {
+    45			if (base >= no_need_to_invalidate_or_flush_areas[i].base &&
+    46			    limit <= no_need_to_invalidate_or_flush_areas[i].limit) {
+    47				return false;
+    48			}
+    49		}
+    50	
+    51		return true;
+    52	}
+    53	
+    54	bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+    55	{
+    56		/* Passing NULL as p argument expects the whole cache to be flushed. */
+    57		if (!p) {
+    58			return true;
+    59		}
+    60	
+    61		return area_needs_invalidate_or_flush(p, bytes);
+    62	}
+    63	
+    64	bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+    65	{
+    66		/* Passing NULL as p argument expects the whole cache to be flushed. */
+    67		if (!p) {
+    68			return true;
+    69		}
+    70	
+    71		return area_needs_invalidate_or_flush(p, bytes);
+    72	}
+    73	
+    74	uint64_t ethosu_address_remap(uint64_t address, int index)
+    75	{
+    76		(void)index;
+    77	
+    78		/* Double cast to avoid build warning about pointer/integer size mismatch */
+    79		return local_to_global((void *) (uint32_t) address);
+    80	}
+    81	
+    82	void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+    83	{
+    84		if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+    85			if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+    86				/*
+    87				 * For small ranges, do what we were told, but if excessively big,
+    88				 * faster to do a full cache operation
+    89				 */
+    90				SCB_CleanDCache_by_Addr(p, bytes);
+    91			} else {
+    92				SCB_CleanDCache();
+    93			}
+    94		} else {
+    95			__DSB();
+    96		}
+    97	}
+    98	
+    99	void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+   100	{
+   101		if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+   102			if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+   103				/*
+   104				 * For small ranges, do what we were told, but if excessively big,
+   105				 * faster to do a full cache operation
+   106				 */
+   107				SCB_InvalidateDCache_by_Addr(p, bytes);
+   108			} else {
+   109				/*
+   110				 * Not safe to globally invalidate without cleaning
+   111				 * unless we know there are no write-back areas in the system
+   112				 */
+   113				SCB_CleanInvalidateDCache();
+   114			}
+   115		} else {
+   116			__DSB();
+   117		}
+   118	}
+f47577a6c6b1276d54b1f427ed134d79a96390e20a0d33074c17b93fdccd45a7  /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+
+CACHE_CALLBACK_DISASSEMBLY=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cache_callback_disassembly_20261126_175707.log
+MODEL_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+SDK_SOURCE_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
