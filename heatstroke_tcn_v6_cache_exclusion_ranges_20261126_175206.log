@@ -1,0 +1,162 @@
+======================================================
+TCN V6 CACHE EXCLUSION RANGE AUDIT
+Timestamp=20261126_175206
+======================================================
+
+========== SOURCE HASHES ==========
+f47577a6c6b1276d54b1f427ed134d79a96390e20a0d33074c17b93fdccd45a7  /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+227f7f247c163427f0531e43f42436eeccb202d2e5545f83af1626db10f5c5a0  /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+
+========== ACTIVE ALIF CALLBACK: COMPLETE SOURCE ==========
+     1	/* SPDX-License-Identifier: Apache-2.0
+     2	 *
+     3	 * Copyright (C) 2024 Alif Semiconductor.
+     4	 */
+     5	
+     6	#include <stdint.h>
+     7	#include <soc_memory_map.h>
+     8	#include <cmsis_core.h>
+     9	
+    10	#define GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE (128 * 1024)
+    11	
+    12	typedef struct address_range {
+    13		uintptr_t base;
+    14		uintptr_t limit;
+    15	} address_range_t;
+    16	
+    17	static const address_range_t no_need_to_invalidate_or_flush_areas[] = {
+    18		/* TCM is never cached */
+    19		{
+    20			.base = DT_REG_ADDR(DT_NODELABEL(itcm)),
+    21			.limit = DT_REG_ADDR(DT_NODELABEL(itcm)) + DT_REG_SIZE(DT_NODELABEL(itcm)) - 1,
+    22		},
+    23		{
+    24			.base = DT_REG_ADDR(DT_NODELABEL(dtcm)),
+    25			.limit = DT_REG_ADDR(DT_NODELABEL(dtcm)) + DT_REG_SIZE(DT_NODELABEL(dtcm)) - 1,
+    26		},
+    27		/* MRAM should never change while running */
+    28		{
+    29			.base = CONFIG_FLASH_BASE_ADDRESS,
+    30			.limit = CONFIG_FLASH_BASE_ADDRESS + (CONFIG_FLASH_SIZE * 1024) - 1,
+    31		}};
+    32	
+    33	
+    34	static bool area_needs_invalidate_or_flush(const void *p, size_t bytes)
+    35	{
+    36		if (bytes == 0) {
+    37			return false;
+    38		}
+    39	
+    40		uintptr_t base = (uintptr_t)p;
+    41		uintptr_t limit = base + bytes - 1;
+    42		size_t nn_flush_size = ARRAY_SIZE(no_need_to_invalidate_or_flush_areas);
+    43	
+    44		for (size_t i = 0; i < nn_flush_size; i++) {
+    45			if (base >= no_need_to_invalidate_or_flush_areas[i].base &&
+    46			    limit <= no_need_to_invalidate_or_flush_areas[i].limit) {
+    47				return false;
+    48			}
+    49		}
+    50	
+    51		return true;
+    52	}
+    53	
+    54	bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+    55	{
+    56		/* Passing NULL as p argument expects the whole cache to be flushed. */
+    57		if (!p) {
+    58			return true;
+    59		}
+    60	
+    61		return area_needs_invalidate_or_flush(p, bytes);
+    62	}
+    63	
+    64	bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+    65	{
+    66		/* Passing NULL as p argument expects the whole cache to be flushed. */
+    67		if (!p) {
+    68			return true;
+    69		}
+    70	
+    71		return area_needs_invalidate_or_flush(p, bytes);
+    72	}
+    73	
+    74	uint64_t ethosu_address_remap(uint64_t address, int index)
+    75	{
+    76		(void)index;
+    77	
+    78		/* Double cast to avoid build warning about pointer/integer size mismatch */
+    79		return local_to_global((void *) (uint32_t) address);
+    80	}
+    81	
+    82	void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+    83	{
+    84		if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+    85			if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+    86				/*
+    87				 * For small ranges, do what we were told, but if excessively big,
+    88				 * faster to do a full cache operation
+    89				 */
+    90				SCB_CleanDCache_by_Addr(p, bytes);
+    91			} else {
+    92				SCB_CleanDCache();
+    93			}
+    94		} else {
+    95			__DSB();
+    96		}
+    97	}
+    98	
+    99	void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+   100	{
+   101		if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+   102			if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+   103				/*
+   104				 * For small ranges, do what we were told, but if excessively big,
+   105				 * faster to do a full cache operation
+   106				 */
+   107				SCB_InvalidateDCache_by_Addr(p, bytes);
+   108			} else {
+   109				/*
+   110				 * Not safe to globally invalidate without cleaning
+   111				 * unless we know there are no write-back areas in the system
+   112				 */
+   113				SCB_CleanInvalidateDCache();
+   114			}
+   115		} else {
+   116			__DSB();
+   117		}
+   118	}
+
+========== CACHE / SCRATCH CONSTANT DEFINITIONS ==========
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:56:#define SCRATCH_BASE_ADDR_INDEX 1
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:448:    ethosu_set_basep_cache_mask(drv, (1 << SCRATCH_BASE_ADDR_INDEX), (1 << SCRATCH_BASE_ADDR_INDEX));
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:10:#define GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE (128 * 1024)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:17:static const address_range_t no_need_to_invalidate_or_flush_areas[] = {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:34:static bool area_needs_invalidate_or_flush(const void *p, size_t bytes)
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:42:	size_t nn_flush_size = ARRAY_SIZE(no_need_to_invalidate_or_flush_areas);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:44:	for (size_t i = 0; i < nn_flush_size; i++) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:45:		if (base >= no_need_to_invalidate_or_flush_areas[i].base &&
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:46:		    limit <= no_need_to_invalidate_or_flush_areas[i].limit) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:61:	return area_needs_invalidate_or_flush(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:71:	return area_needs_invalidate_or_flush(p, bytes);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:85:		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:102:		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+
+========== RUNTIME ARENA ADDRESS ==========
+Arena base = 0x02010000
+Arena size = 2372448 bytes
+Arena end  = 0x022524A0
+D-cache line = 32 bytes
+
+CACHE_EXCLUSION_AUDIT=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cache_exclusion_ranges_20261126_175206.log
+MODEL_MODIFIED=NO
+SDK_SOURCE_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
