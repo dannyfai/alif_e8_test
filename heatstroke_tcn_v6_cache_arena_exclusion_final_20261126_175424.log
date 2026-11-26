@@ -1,0 +1,106 @@
+======================================================
+TCN V6 CACHE ARENA EXCLUSION FINAL AUDIT
+Timestamp=20261126_175424
+======================================================
+
+========== ARENA RANGE ==========
+ARENA_BASE=0x02010000
+ARENA_SIZE=2372448
+ARENA_LIMIT_INCLUSIVE=0x225335F
+
+========== GENERATED ITCM / DTCM MACROS ==========
+14606:#define DT_N_NODELABEL_dtcm   DT_N_S_soc_S_dtcm_20000000
+25647:#define DT_N_NODELABEL_itcm   DT_N_S_soc_S_itcm_0
+
+========== DEVICE TREE ITCM / DTCM NODES ==========
+2944-			quality-factor = < 0x4b >;
+2945-			status = "disabled";
+2946-		};
+2947:		itcm: itcm@0 {
+2948-			compatible = "alif,itcm";
+2949-			reg = < 0x0 0x40000 >;
+2950-			global_base = < 0x58000000 >;
+2951-			zephyr,memory-region = "ITCM";
+2952-		};
+2953:		dtcm: dtcm@20000000 {
+2954-			compatible = "alif,dtcm";
+2955-			reg = < 0x20000000 0x40000 >;
+2956-			global_base = < 0x58800000 >;
+2957-			zephyr,memory-region = "DTCM";
+2958-		};
+2959-		spi4: lpspi@43000000 {
+2960-			compatible = "snps,designware-spi";
+2961-			#address-cells = < 0x1 >;
+2962-			#size-cells = < 0x0 >;
+2963-			pinctrl-0 = < &pinctrl_lpspi >;
+2964-			pinctrl-1 = < &pinctrl_lpspi_sleep >;
+2965-			pinctrl-names = "default", "sleep";
+
+========== FLASH CONFIGURATION ==========
+CONFIG_FLASH_SIZE=5632
+CONFIG_FLASH_BASE_ADDRESS=0x80000000
+
+========== CALCULATED EXCLUSION OVERLAP ==========
+ITCM_BASE=None
+ITCM_SIZE=None
+DTCM_BASE=None
+DTCM_SIZE=None
+FLASH_BASE=2147483648
+FLASH_SIZE_KB=5632
+FLASH_RANGE=[0x80000000,0x8057FFFF] OVERLAP=False FULLY_CONTAINED=False
+ARENA_FULLY_WITHIN_EXCLUSION=False
+ARENA_REQUIRES_CALLBACK_CACHE_MAINTENANCE=True
+
+========== LINKED PRECHECK SYMBOLS ==========
+  1767: 8000f07d    68 FUNC    LOCAL  DEFAULT    3 ethosu_area_needs_invalidate_dcache.localalias
+  4510: 8001ae91     4 FUNC    WEAK   DEFAULT    3 ethosu_area_needs_flush_dcache
+  4530: 8000f0c1   164 FUNC    GLOBAL DEFAULT    3 ethosu_flush_dcache
+  4753: 8000f07d    68 FUNC    WEAK   DEFAULT    3 ethosu_area_needs_invalidate_dcache
+  4859: 8000f165   164 FUNC    GLOBAL DEFAULT    3 ethosu_invalidate_dcache
+
+========== LINKER MAP OBJECT OWNERSHIP ==========
+12451- .data          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12452- .bss           0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12453: .text.ethosu_flush_dcache
+12454-                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12455: .text.ethosu_invalidate_dcache
+12456-                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12457- .text.ethosu_mutex_create
+--
+17846-                0x000000008000f03c       0x40 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi_hal.c.obj)
+17847-                0x000000008000f03c                alif_hal_ospi_xip_enable
+17848: .text.ethosu_area_needs_invalidate_dcache
+17849-                0x000000008000f07c       0x44 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17850:                0x000000008000f07c                ethosu_area_needs_invalidate_dcache
+17851: .text.ethosu_flush_dcache
+17852-                0x000000008000f0c0       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17853:                0x000000008000f0c0                ethosu_flush_dcache
+17854: .text.ethosu_invalidate_dcache
+17855-                0x000000008000f164       0xa4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+17856:                0x000000008000f164                ethosu_invalidate_dcache
+17857- .text.callback_for_send_msg
+17858-                0x000000008000f208        0xc modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+--
+19493-                0x000000008001acec      0x1a4 modules/alif/drivers/ospi/lib..__modules__hal__alif__drivers__ospi.a(ospi.c.obj)
+19494-                0x000000008001acec                ospi_irq_handler
+19495: .text.ethosu_area_needs_flush_dcache
+19496-                0x000000008001ae90        0x4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+19497:                0x000000008001ae90                ethosu_area_needs_flush_dcache
+19498- .text.ethosu_address_remap
+19499-                0x000000008001ae94       0x20 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+
+========== ACTIVE CALLBACK HASH ==========
+f47577a6c6b1276d54b1f427ed134d79a96390e20a0d33074c17b93fdccd45a7  /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+
+CACHE_ARENA_EXCLUSION_FINAL_AUDIT=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cache_arena_exclusion_final_20261126_175424.log
+MODEL_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+SDK_SOURCE_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
