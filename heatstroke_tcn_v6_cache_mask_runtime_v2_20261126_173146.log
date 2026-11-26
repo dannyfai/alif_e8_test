@@ -1,0 +1,1320 @@
+======================================================
+TCN V6 CACHE MASK / CALLBACK SOURCE AUDIT V2
+Timestamp=20261126_173146
+======================================================
+
+========== DRIVER SOURCE HASH ==========
+227f7f247c163427f0531e43f42436eeccb202d2e5545f83af1626db10f5c5a0  /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+
+========== DRIVER CACHE INITIALIZATION ==========
+   390	    }
+   391	
+   392	    drv->job.state  = ETHOSU_JOB_DONE;
+   393	    drv->job.result = ethosu_dev_handle_interrupt(&drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+   394	    ethosu_semaphore_give(drv->semaphore);
+   395	}
+   396	
+   397	/******************************************************************************
+   398	 * Functions API
+   399	 ******************************************************************************/
+   400	
+   401	void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask)
+   402	{
+   403	    drv->basep_flush_mask      = flush_mask;
+   404	    drv->basep_invalidate_mask = invalidate_mask;
+   405	}
+   406	
+   407	int ethosu_init(struct ethosu_driver *drv,
+   408	                void *const base_address,
+   409	                const void *fast_memory,
+   410	                const size_t fast_memory_size,
+   411	                uint32_t secure_enable,
+   412	                uint32_t privilege_enable)
+   413	{
+   414	    LOG_INFO("Initializing NPU: base_address=%p, fast_memory=%p, fast_memory_size=%zu, secure=%" PRIu32
+   415	             ", privileged=%" PRIu32,
+   416	             base_address,
+   417	             fast_memory,
+   418	             fast_memory_size,
+   419	             secure_enable,
+   420	             privilege_enable);
+   421	
+   422	    if (!ethosu_mutex)
+   423	    {
+   424	        ethosu_mutex = ethosu_mutex_create();
+   425	        if (!ethosu_mutex)
+   426	        {
+   427	            LOG_ERR("Failed to create global driver mutex");
+   428	            return -1;
+   429	        }
+   430	    }
+   431	
+   432	    if (!ethosu_semaphore)
+   433	    {
+   434	        ethosu_semaphore = ethosu_semaphore_create();
+   435	        if (!ethosu_semaphore)
+   436	        {
+   437	            LOG_ERR("Failed to create global driver semaphore");
+   438	            return -1;
+   439	        }
+   440	    }
+   441	
+   442	    drv->fast_memory           = (uintptr_t)fast_memory;
+   443	    drv->fast_memory_size      = fast_memory_size;
+   444	    drv->power_request_counter = 0;
+   445	
+   446	    // Set default cache flush/clean and invalidate base pointer masks to invalidate the scratch
+   447	    // base pointer where Vela for TFLM is placing the scratch buffer (tensor arena)
+   448	    ethosu_set_basep_cache_mask(drv, (1 << SCRATCH_BASE_ADDR_INDEX), (1 << SCRATCH_BASE_ADDR_INDEX));
+   449	
+   450	    // Initialize the device and set requested security state and privilege mode
+   451	    if (!ethosu_dev_init(&drv->dev, base_address, secure_enable, privilege_enable))
+   452	    {
+   453	        LOG_ERR("Failed to initialize Ethos-U device");
+   454	        return -1;
+   455	    }
+   456	
+   457	    drv->semaphore = ethosu_semaphore_create();
+   458	    if (!drv->semaphore)
+   459	    {
+   460	        LOG_ERR("Failed to create driver semaphore");
+   461	        return -1;
+   462	    }
+   463	
+   464	    ethosu_reset_job(drv);
+   465	    ethosu_register_driver(drv);
+   466	
+   467	    return 0;
+   468	}
+   469	
+   470	void ethosu_deinit(struct ethosu_driver *drv)
+   471	{
+   472	    ethosu_deregister_driver(drv);
+   473	    ethosu_semaphore_destroy(drv->semaphore);
+   474	}
+   475	
+   476	int ethosu_soft_reset(struct ethosu_driver *drv)
+   477	{
+   478	    // Soft reset the NPU
+   479	    if (ethosu_dev_soft_reset(&drv->dev) != ETHOSU_SUCCESS)
+   480	    {
+   481	        LOG_ERR("Failed to soft-reset NPU");
+   482	        return -1;
+   483	    }
+   484	
+   485	    // Update power and clock gating after the soft reset
+   486	    ethosu_dev_set_clock_and_power(&drv->dev,
+   487	                                   drv->power_request_counter > 0 ? ETHOSU_CLOCK_Q_DISABLE : ETHOSU_CLOCK_Q_ENABLE,
+   488	                                   drv->power_request_counter > 0 ? ETHOSU_POWER_Q_DISABLE : ETHOSU_POWER_Q_ENABLE);
+   489	
+   490	    return 0;
+   491	}
+   492	
+   493	int ethosu_request_power(struct ethosu_driver *drv)
+   494	{
+   495	    // Check if this is the first power request, increase counter
+   496	    if (drv->power_request_counter++ == 0)
+   497	    {
+   498	        // Always reset to a known state. Changes to requested
+   499	        // security state/privilege mode if necessary.
+   500	        if (ethosu_soft_reset(drv))
+   501	        {
+   502	            LOG_ERR("Failed to request power for Ethos-U");
+   503	            drv->power_request_counter--;
+   504	            return -1;
+   505	        }
+   506	    }
+   507	    return 0;
+   508	}
+   509	
+   510	void ethosu_release_power(struct ethosu_driver *drv)
+
+========== DRIVER FLUSH / INVALIDATE PATHS ==========
+   320	    LOG_INFO("handle_command_stream: cmd_stream=%p, cms_length %d", cmd_stream, cms_length);
+   321	
+   322	    if (0 != ((ptrdiff_t)cmd_stream & MASK_16_BYTE_ALIGN))
+   323	    {
+   324	        LOG_ERR("Command stream addr %p not aligned to 16 bytes", cmd_stream);
+   325	        return -1;
+   326	    }
+   327	
+   328	    // Verify minimum 16 byte alignment for base address'
+   329	    for (int i = 0; i < drv->job.num_base_addr; i++)
+   330	    {
+   331	        if (0 != (drv->job.base_addr[i] & MASK_16_BYTE_ALIGN))
+   332	        {
+   333	            LOG_ERR("Base addr %d: 0x%" PRIx64 "not aligned to 16 bytes", i, drv->job.base_addr[i]);
+   334	            return -1;
+   335	        }
+   336	    }
+   337	
+   338	    // DEPRECATION WARNING:
+   339	    // It is advised against letting the driver handle flushing/cleaning of the cache, as this will
+   340	    // be done for every invokation. It is up to the application code to ensure cache coherency
+   341	    // before invoking an inference.
+   342	    //
+   343	    // The cache flush call below will flush/clean every base pointer marked in the flush mask.
+   344	    // Typically only the scratch tensor contains RW data shared between the CPU and NPU, and needs
+   345	    // to be flushed/cleaned before invoking an inference.
+   346	    //
+   347	    // It is recommended to not implement/override the default empty ethosu_flush_dcache() weak
+   348	    // function.
+   349	    //
+   350	    // NOTE: It is required that any base pointer marked for cache flush/clean is aligned to the
+   351	    // cache line size.
+   352	
+   353	    // Flush/clean the cache for base pointers marked in the mask
+   354	    for (int i = 0; i < drv->job.num_base_addr; i++)
+   355	    {
+   356	        if (drv->basep_flush_mask & (1 << i))
+   357	        {
+   358	            ethosu_flush_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+   359	        }
+   360	    }
+   361	
+   362	    // Request power gating disabled during inference run
+   363	    if (ethosu_request_power(drv))
+   364	    {
+   365	        LOG_ERR("Failed to request power");
+   366	        return -1;
+   367	    }
+   368	
+   369	    drv->job.state = ETHOSU_JOB_RUNNING;
+   370	
+   530	    ver->minor = ETHOSU_DRIVER_VERSION_MINOR;
+   531	    ver->patch = ETHOSU_DRIVER_VERSION_PATCH;
+   532	}
+   533	
+   534	void ethosu_get_hw_info(struct ethosu_driver *drv, struct ethosu_hw_info *hw)
+   535	{
+   536	    assert(hw != NULL);
+   537	    ethosu_dev_get_hw_info(&drv->dev, hw);
+   538	}
+   539	
+   540	int ethosu_wait(struct ethosu_driver *drv, bool block)
+   541	{
+   542	    int ret = 0;
+   543	
+   544	    switch (drv->job.state)
+   545	    {
+   546	    case ETHOSU_JOB_IDLE:
+   547	        LOG_ERR("Inference job not running...");
+   548	        ret = -2;
+   549	        break;
+   550	    case ETHOSU_JOB_RUNNING:
+   551	        if (!block)
+   552	        {
+   553	            // Inference still running, do not block
+   554	            ret = 1;
+   555	            break;
+   556	        }
+   557	        // fall through
+   558	    case ETHOSU_JOB_DONE:
+   559	        // Invalidate cache for base pointers marked to be invalidated, typically the
+   560	        // scratch tensor base pointer containing the tensor arena.
+   561	        // NOTE: Requires the base pointers to be cache line size aligned.
+   562	        for (int i = 0; i < drv->job.num_base_addr; i++)
+   563	        {
+   564	            if (drv->basep_invalidate_mask & (1 << i))
+   565	            {
+   566	                ethosu_invalidate_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+   567	            }
+   568	        }
+   569	
+   570	        // Wait for interrupt in blocking mode. In non-blocking mode
+   571	        // the interrupt has already triggered
+   572	        ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+   573	        if (ret < 0)
+   574	        {
+   575	            drv->job.result = ETHOSU_JOB_RESULT_TIMEOUT;
+   576	
+   577	            // There's a race where the NPU interrupt can have fired between semaphore
+   578	            // timing out and setting the result above (checked in interrupt handler).
+   579	            // By checking if the job state has been changed (only set to DONE by interrupt
+   580	            // handler), we know if the interrupt handler has run, if so decrement the
+
+========== LOCATE ALIF ETHOS-U CALLBACK SOURCE ==========
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+
+========== CACHE FUNCTION DEFINITIONS AND CONFIGURATION ==========
+
+FILE=/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_cpu_cache.c
+       ...
+   38:     UNUSED(p);
+   39:     UNUSED(bytes);
+   40: #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+   41:     return SCB->CCR & SCB_CCR_DC_Msk;
+   42: #else
+   43:     return false;
+   44: #endif
+   45: 
+   46: }
+   47: 
+   48: bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const uint32_t *p, size_t bytes)
+   49: {
+   50:     UNUSED(p);
+   51:     UNUSED(bytes);
+   52: #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+   53:     return SCB->CCR & SCB_CCR_DC_Msk;
+   54: #else
+   55:     return false;
+   56: #endif
+   57: }
+   58: 
+   59: 
+   60: void ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+   61: {
+   62:     bool need_flush = false;
+   63:     for (int i = 0; i < num_base_addr; i++) {
+   64:         if (ethosu_area_needs_flush_dcache((void *)base_addr[i], base_addr_size[i])) {
+   65:             need_flush = true;
+   66:             break;
+   67:         }
+   68:     }
+   69: 
+   70:     if (need_flush) {
+   71: 
+   72:         /**
+   73:          * @note We could choose to call the `SCB_CleanDCache_by_Addr` function
+   74:          *       here, but the sizes which this function is called for, can
+   75:          *       cause unnecessary delays. It's worth noting that this function
+   76:          *       is called from the Arm Ethos-U NPU drive repeatedly for each
+   77:          *       region it accesses. This could even be RO memory which does
+       ...
+   87:          */
+   88: 
+   89:         /** Clean the cache */
+   90:         trace("Cleaning data cache\n");
+   91:         SCB_CleanDCache();
+   92:     } else {
+   93:         __DSB();
+   94:     }
+   95: }
+   96: 
+   97: void ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+   98: {
+   99:     bool need_flush = false;
+  100:     for (int i = 0; i < num_base_addr; i++) {
+  101:         if (ethosu_area_needs_invalidate_dcache((void *)base_addr[i], base_addr_size[i])) {
+  102:             need_flush = true;
+  103:             break;
+  104:         }
+  105:     }
+  106: 
+  107:     if (need_flush) {
+  108:         /**
+  109:          * See note in ethosu_flush_dcache function for why we clean the whole
+  110:          * cache instead of calling it for specific addresses.
+  111:          **/
+  112:         trace("Invalidating data cache\n");
+  113:         /* Not safe to simply invalidate without cleaning unless we know there are no write-back areas in the system */
+  114:         SCB_CleanInvalidateDCache();
+  115: 
+  116:     } else {
+  117:         __DSB();
+  118:     }
+  119: }
+
+FILE=/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/ethosu_npu_init.c
+       ...
+  101:     void* const ethosu_base_address = (void *)(ETHOS_U_BASE_ADDR);
+  102:     info("Initialising Ethos-U device@0x%" PRIx32 "\n", (uint32_t)(ETHOS_U_BASE_ADDR));
+  103: 
+  104:     if (get_cache_arena_size() > 0) {
+  105:         info("Using Dedicated_Sram memory mode; fast cache size: %zu\n",
+  106:              get_cache_arena_size());
+  107:     } else {
+  108:         info("Using Sram_Only/Shared_Sram memory mode\n");
+  109:     }
+  110: 
+  111:     if (0 != (err = ethosu_init(&ethosu_drv,         /* Ethos-U driver device pointer */
+  112:                                 ethosu_base_address, /* Ethos-U NPU's base address. */
+  113:                                 get_cache_arena(),   /* Pointer to fast mem area - NULL for U55. */
+  114:                                 get_cache_arena_size(), /* Fast mem region size. */
+  115:                                 ETHOS_U_SEC_ENABLED,    /* Security enable. */
+  116:                                 ETHOS_U_PRIV_ENABLED))) /* Privilege enable. */ {
+  117:         printf_err("Failed to initialise Ethos-U device\n");
+  118:         return err;
+  119:     }
+  120: 
+  121:     info("Ethos-U device initialised\n");
+  122: 
+  123:     /* Get Ethos-U version */
+  124:     struct ethosu_driver_version driver_version;
+  125:     struct ethosu_hw_info hw_info;
+  126: 
+  127:     ethosu_get_driver_version(&driver_version);
+  128:     ethosu_get_hw_info(&ethosu_drv, &hw_info);
+
+FILE=/home/user/sdk-alif/modules/alif-mlek/source/hal/source/components/npu/include/ethosu_cpu_cache.h
+       ...
+   28:  */
+   29: #ifndef ETHOSU_CPU_CACHE
+   30: #define ETHOSU_CPU_CACHE
+   31: 
+   32: #include <stdint.h>
+   33: #include <stddef.h>
+   34: #include <stdbool.h>
+   35: 
+   36: 
+   37: /**
+   38:  * @brief   Precheck hook for ethosu_flush_dcache. Default weak implementation
+   39:  *          returns true if the data cache is enabled. Can be overridden to
+   40:  *          skip flush/clean for certain regions (eg TCM, or write-through cached areas).
+   41:  * @param[in]   p       Pointer to the start address.
+   42:  * @param[in]   bytes   Number of bytes to flush beginning at start address.
+   43:  * @return      true if a flush/clean is required
+   44:  */
+   45: bool ethosu_area_needs_flush_dcache(const uint32_t *p, size_t bytes);
+   46: 
+   47: /**
+   48:  * @brief   Precheck hook for ethosu_invalidate_dcache. Default weak implementation
+   49:  *          returns true if the data cache is enabled. Can be overridden to
+   50:  *          skip invalidates for certain regions (eg TCM).
+   51:  * @param[in]   p       Pointer to the start address (or NULL).
+   52:  * @param[in]   bytes   Number of bytes to flush beginning at start address.
+   53:  * @return      true if an invalidate is required
+   54:  */
+   55: bool ethosu_area_needs_invalidate_dcache(const uint32_t *p, size_t bytes);
+   56: 
+   57: /**
+   58:  * @brief   Clears all the cache state members.
+   59:  */
+   60: void ethosu_clear_cache_states(void);
+   61: 
+   62: /**
+   63:  * @brief   Flush/clean the data cache by address and size. Passing NULL as base_addr argument
+   64:  *          expects the whole cache to be flushed.
+   65:  * @param[in]   base_addr        Array of 32 byte aligned base addresses.
+   66:  * @param[in]   base_addr_size   Array with size per each base addr entry.
+   67:  * @param[in]   num_base_addr    Number of base addr entries.
+   68:  */
+   69: void ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+   70: 
+   71: 
+   72: /**
+   73:  * @brief   Invalidate the data cache by address and size. Passing NULL as base_addr argument
+   74:  *          expects the whole cache to be invalidated.
+   75:  * @param[in]   base_addr        Array of 32 byte aligned base addresses.
+   76:  * @param[in]   base_addr_size   Array with size per each base addr entry.
+   77:  * @param[in]   num_base_addr    Number of base addr entries.
+   78:  */
+   79: void ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+   80: 
+   81: 
+   82: #endif /* ETHOSU_CPU_CACHE */
+
+FILE=/home/user/sdk-alif/modules/alif-mlek/source/hal/source/platform/alif/source/platform_drivers.c
+       ...
+  612: 
+  613: #ifndef BOARD_OSPI_RAM_BASE
+  614: #define BOARD_OSPI_RAM_BASE     0xA0000000
+  615: #define BOARD_OSPI_RAM_SIZE     0x20000000
+  616: #endif
+  617: #ifndef BOARD_OSPI_FLASH_BASE
+  618: #define BOARD_OSPI_FLASH_BASE   0xC0000000
+  619: #define BOARD_OSPI_FLASH_SIZE   0x20000000
+  620: #endif
+  621: 
+  622: bool ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+  623: {
+  624:     /* API says null pointer can be passed */
+  625:     if (!p) {
+  626:         return true;
+  627:     }
+  628:     /* We know we have a cache and assume the cache is on */
+  629:     return check_need_to_invalidate(p, bytes);
+  630: }
+  631: 
+  632: bool ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+  633: {
+  634: #ifdef OSPI_RAM_SUPPORT
+  635:     if (!p) {
+  636:         return true;
+  637:     }
+  638:     uintptr_t area_start = (uintptr_t) p;
+  639:     uintptr_t area_end = area_start + bytes;
+
+FILE=/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+       ...
+   44: 	for (size_t i = 0; i < nn_flush_size; i++) {
+   45: 		if (base >= no_need_to_invalidate_or_flush_areas[i].base &&
+   46: 		    limit <= no_need_to_invalidate_or_flush_areas[i].limit) {
+   47: 			return false;
+   48: 		}
+   49: 	}
+   50: 
+   51: 	return true;
+   52: }
+   53: 
+   54: bool __attribute__((weak)) ethosu_area_needs_invalidate_dcache(const void *p, size_t bytes)
+   55: {
+   56: 	/* Passing NULL as p argument expects the whole cache to be flushed. */
+   57: 	if (!p) {
+   58: 		return true;
+   59: 	}
+   60: 
+   61: 	return area_needs_invalidate_or_flush(p, bytes);
+   62: }
+   63: 
+   64: bool __attribute__((weak)) ethosu_area_needs_flush_dcache(const void *p, size_t bytes)
+   65: {
+   66: 	/* Passing NULL as p argument expects the whole cache to be flushed. */
+   67: 	if (!p) {
+   68: 		return true;
+   69: 	}
+   70: 
+   71: 	return area_needs_invalidate_or_flush(p, bytes);
+   72: }
+   73: 
+   74: uint64_t ethosu_address_remap(uint64_t address, int index)
+   75: {
+   76: 	(void)index;
+   77: 
+   78: 	/* Double cast to avoid build warning about pointer/integer size mismatch */
+   79: 	return local_to_global((void *) (uint32_t) address);
+   80: }
+   81: 
+   82: void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+   83: {
+   84: 	if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+   85: 		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+   86: 			/*
+   87: 			 * For small ranges, do what we were told, but if excessively big,
+   88: 			 * faster to do a full cache operation
+   89: 			 */
+   90: 			SCB_CleanDCache_by_Addr(p, bytes);
+   91: 		} else {
+   92: 			SCB_CleanDCache();
+   93: 		}
+   94: 	} else {
+   95: 		__DSB();
+   96: 	}
+   97: }
+   98: 
+   99: void ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+  100: {
+  101: 	if (p && ethosu_area_needs_invalidate_dcache(p, bytes)) {
+  102: 		if (bytes <= GLOBAL_CLEAN_INVALIDATE_THRESHOLD_SIZE) {
+  103: 			/*
+  104: 			 * For small ranges, do what we were told, but if excessively big,
+  105: 			 * faster to do a full cache operation
+  106: 			 */
+  107: 			SCB_InvalidateDCache_by_Addr(p, bytes);
+  108: 		} else {
+  109: 			/*
+  110: 			 * Not safe to globally invalidate without cleaning
+  111: 			 * unless we know there are no write-back areas in the system
+  112: 			 */
+  113: 			SCB_CleanInvalidateDCache();
+  114: 		}
+  115: 	} else {
+  116: 		__DSB();
+  117: 	}
+  118: }
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h
+       ...
+   80: struct ethosu_driver
+   81: {
+   82:     struct ethosu_device dev;
+   83:     struct ethosu_driver *next;
+   84:     struct ethosu_job job;
+   85:     void *semaphore;
+   86:     uint64_t fast_memory;
+   87:     size_t fast_memory_size;
+   88:     uint32_t power_request_counter;
+   89:     bool reserved;
+   90:     uint8_t basep_flush_mask;
+   91:     uint8_t basep_invalidate_mask;
+   92: };
+   93: 
+   94: struct ethosu_driver_version
+   95: {
+   96:     uint8_t major;
+   97:     uint8_t minor;
+   98:     uint8_t patch;
+   99: };
+  100: 
+  101: enum ethosu_request_clients
+  102: {
+  103:     ETHOSU_PMU_REQUEST       = 0,
+  104:     ETHOSU_INFERENCE_REQUEST = 1,
+  105: };
+  106: 
+  107: /******************************************************************************
+  108:  * Prototypes (weak functions in driver)
+       ...
+  119:  * Flush/clean the data cache by address and size.
+  120:  * NOTE: It is not recommended to implement this, but let the application code
+  121:  *       make sure that any data needed by the NPU is flushed before invoking
+  122:  *       an inference.
+  123:  *
+  124:  * Addresses passed to this function must be 32 byte aligned.
+  125:  *
+  126:  * @param p         32 byte aligned address
+  127:  * @param bytes     Size of memory block in bytes
+  128:  */
+  129: void ethosu_flush_dcache(uint32_t *p, size_t bytes);
+  130: 
+  131: /**
+  132:  * Invalidate the data cache by address and size.
+  133:  * NOTE: The driver will only call this for the scratch/tensor arena base
+  134:  *       pointer.
+  135:  *
+  136:  * Addresses passed to this function must be 32 byte aligned.
+  137:  *
+  138:  * @param p         32 byte aligned address
+  139:  * @param bytes     Size in bytes
+  140:  */
+  141: void ethosu_invalidate_dcache(uint32_t *p, size_t bytes);
+  142: 
+  143: /**
+  144:  * Minimal mutex implementation for baremetal applications. See
+  145:  * ethosu_driver.c.
+  146:  *
+  147:  * @return Pointer to mutex handle
+  148:  */
+  149: void *ethosu_mutex_create(void);
+  150: 
+  151: /**
+  152:  * Destroy mutex.
+  153:  *
+  154:  * @param mutex     Pointer to mutex handle
+  155:  */
+  156: void ethosu_mutex_destroy(void *mutex);
+  157: 
+  158: /**
+       ...
+  245:  * Prototypes
+  246:  ******************************************************************************/
+  247: 
+  248: /**
+  249:  * Set cache mask for cache flush/clean and invalidation per base pointer.
+  250:  *
+  251:  * @param drv               Pointer to driver handle
+  252:  * @param flush_mask        Base pointer cache flush mask (bit 0 == basep 0)
+  253:  * @param invalidate_mask   Base pointer cache invalidation mask (bit 0 == basep 0)
+  254:  */
+  255: void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask);
+  256: 
+  257: /**
+  258:  * Initialize the Ethos-U driver.
+  259:  *
+  260:  * @param drv               Pointer to driver handle
+  261:  * @param base_address      NPU register base address
+  262:  * @param fast_memory       Fast memory area, used for Ethos-U65 with spilling
+  263:  * @param fast_memory_size  Size in bytes of fast memory area
+  264:  * @param secure_enable     Configure NPU in secure- or non-secure mode
+  265:  * @param privilege_enable  Configure NPU in privileged- or non-privileged mode
+  266:  * @return 0 on success, else negative error code
+  267:  */
+  268: int ethosu_init(struct ethosu_driver *drv,
+  269:                 void *const base_address,
+  270:                 const void *fast_memory,
+  271:                 const size_t fast_memory_size,
+  272:                 uint32_t secure_enable,
+  273:                 uint32_t privilege_enable);
+  274: 
+  275: /**
+  276:  * Deinitialize the Ethos-U driver.
+  277:  *
+  278:  * @param drv       Pointer to driver handle
+  279:  */
+  280: void ethosu_deinit(struct ethosu_driver *drv);
+  281: 
+  282: /**
+  283:  * Soft resets the Ethos-U device.
+  284:  *
+  285:  * @param drv       Pointer to driver handle
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+       ...
+  123: /******************************************************************************
+  124:  * Weak functions - Cache
+  125:  *
+  126:  * Default NOP operations. Override if available on the targeted device.
+  127:  ******************************************************************************/
+  128: 
+  129: /*
+  130:  * Flush/clean the data cache by address and size. Passing NULL as p argument
+  131:  * expects the whole cache to be flushed.
+  132:  */
+  133: void __attribute__((weak)) ethosu_flush_dcache(uint32_t *p, size_t bytes)
+  134: {
+  135:     UNUSED(p);
+  136:     UNUSED(bytes);
+  137: }
+  138: 
+  139: /*
+  140:  * Invalidate the data cache by address and size. Passing NULL as p argument
+  141:  * expects the whole cache to be invalidated.
+  142:  */
+  143: void __attribute__((weak)) ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+  144: {
+  145:     UNUSED(p);
+  146:     UNUSED(bytes);
+  147: }
+  148: 
+  149: /******************************************************************************
+  150:  * Weak functions - Semaphore/Mutex for multi NPU
+  151:  *
+  152:  * Following section handles the minimal sempahore and mutex implementation in
+  153:  * case of baremetal applications. Weak symbols will be overridden by RTOS
+  154:  * definitions and implement true thread-safety (in application layer).
+  155:  ******************************************************************************/
+  156: 
+  157: struct ethosu_semaphore_t
+  158: {
+  159:     uint8_t count;
+  160: };
+       ...
+  337: 
+  338:     // DEPRECATION WARNING:
+  339:     // It is advised against letting the driver handle flushing/cleaning of the cache, as this will
+  340:     // be done for every invokation. It is up to the application code to ensure cache coherency
+  341:     // before invoking an inference.
+  342:     //
+  343:     // The cache flush call below will flush/clean every base pointer marked in the flush mask.
+  344:     // Typically only the scratch tensor contains RW data shared between the CPU and NPU, and needs
+  345:     // to be flushed/cleaned before invoking an inference.
+  346:     //
+  347:     // It is recommended to not implement/override the default empty ethosu_flush_dcache() weak
+  348:     // function.
+  349:     //
+  350:     // NOTE: It is required that any base pointer marked for cache flush/clean is aligned to the
+  351:     // cache line size.
+  352: 
+  353:     // Flush/clean the cache for base pointers marked in the mask
+  354:     for (int i = 0; i < drv->job.num_base_addr; i++)
+  355:     {
+  356:         if (drv->basep_flush_mask & (1 << i))
+  357:         {
+  358:             ethosu_flush_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+  359:         }
+  360:     }
+  361: 
+  362:     // Request power gating disabled during inference run
+  363:     if (ethosu_request_power(drv))
+  364:     {
+  365:         LOG_ERR("Failed to request power");
+  366:         return -1;
+  367:     }
+  368: 
+  369:     drv->job.state = ETHOSU_JOB_RUNNING;
+  370: 
+  371:     // Inference begin callback
+  372:     ethosu_inference_begin(drv, drv->job.user_arg);
+  373: 
+  374:     // Execute the command stream
+  375:     ethosu_dev_run_command_stream(&drv->dev, cmd_stream, cms_bytes, drv->job.base_addr, drv->job.num_base_addr);
+       ...
+  391: 
+  392:     drv->job.state  = ETHOSU_JOB_DONE;
+  393:     drv->job.result = ethosu_dev_handle_interrupt(&drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+  394:     ethosu_semaphore_give(drv->semaphore);
+  395: }
+  396: 
+  397: /******************************************************************************
+  398:  * Functions API
+  399:  ******************************************************************************/
+  400: 
+  401: void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask)
+  402: {
+  403:     drv->basep_flush_mask      = flush_mask;
+  404:     drv->basep_invalidate_mask = invalidate_mask;
+  405: }
+  406: 
+  407: int ethosu_init(struct ethosu_driver *drv,
+  408:                 void *const base_address,
+  409:                 const void *fast_memory,
+  410:                 const size_t fast_memory_size,
+  411:                 uint32_t secure_enable,
+  412:                 uint32_t privilege_enable)
+  413: {
+  414:     LOG_INFO("Initializing NPU: base_address=%p, fast_memory=%p, fast_memory_size=%zu, secure=%" PRIu32
+  415:              ", privileged=%" PRIu32,
+  416:              base_address,
+  417:              fast_memory,
+  418:              fast_memory_size,
+  419:              secure_enable,
+  420:              privilege_enable);
+  421: 
+  422:     if (!ethosu_mutex)
+  423:     {
+  424:         ethosu_mutex = ethosu_mutex_create();
+       ...
+  438:             return -1;
+  439:         }
+  440:     }
+  441: 
+  442:     drv->fast_memory           = (uintptr_t)fast_memory;
+  443:     drv->fast_memory_size      = fast_memory_size;
+  444:     drv->power_request_counter = 0;
+  445: 
+  446:     // Set default cache flush/clean and invalidate base pointer masks to invalidate the scratch
+  447:     // base pointer where Vela for TFLM is placing the scratch buffer (tensor arena)
+  448:     ethosu_set_basep_cache_mask(drv, (1 << SCRATCH_BASE_ADDR_INDEX), (1 << SCRATCH_BASE_ADDR_INDEX));
+  449: 
+  450:     // Initialize the device and set requested security state and privilege mode
+  451:     if (!ethosu_dev_init(&drv->dev, base_address, secure_enable, privilege_enable))
+  452:     {
+  453:         LOG_ERR("Failed to initialize Ethos-U device");
+  454:         return -1;
+  455:     }
+  456: 
+  457:     drv->semaphore = ethosu_semaphore_create();
+  458:     if (!drv->semaphore)
+  459:     {
+  460:         LOG_ERR("Failed to create driver semaphore");
+  461:         return -1;
+  462:     }
+  463: 
+  464:     ethosu_reset_job(drv);
+  465:     ethosu_register_driver(drv);
+       ...
+  554:             ret = 1;
+  555:             break;
+  556:         }
+  557:         // fall through
+  558:     case ETHOSU_JOB_DONE:
+  559:         // Invalidate cache for base pointers marked to be invalidated, typically the
+  560:         // scratch tensor base pointer containing the tensor arena.
+  561:         // NOTE: Requires the base pointers to be cache line size aligned.
+  562:         for (int i = 0; i < drv->job.num_base_addr; i++)
+  563:         {
+  564:             if (drv->basep_invalidate_mask & (1 << i))
+  565:             {
+  566:                 ethosu_invalidate_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+  567:             }
+  568:         }
+  569: 
+  570:         // Wait for interrupt in blocking mode. In non-blocking mode
+  571:         // the interrupt has already triggered
+  572:         ret = ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+  573:         if (ret < 0)
+  574:         {
+  575:             drv->job.result = ETHOSU_JOB_RESULT_TIMEOUT;
+  576: 
+  577:             // There's a race where the NPU interrupt can have fired between semaphore
+  578:             // timing out and setting the result above (checked in interrupt handler).
+  579:             // By checking if the job state has been changed (only set to DONE by interrupt
+  580:             // handler), we know if the interrupt handler has run, if so decrement the
+  581:             // semaphore count by one (given in interrupt handler).
+  582:             if (drv->job.state == ETHOSU_JOB_DONE)
+  583:             {
+
+FILE=/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/include/ethosu_driver.h
+       ...
+  117: 
+  118: /**
+  119:  * Flush/clean the data cache by address and size. Passing NULL as p argument
+  120:  * expects the whole cache to be flushed.
+  121:  *
+  122:  * Addresses passed to this function must be 16 byte aligned.
+  123:  *
+  124:  * @param p         16 byte aligned address
+  125:  * @param bytes     Size of memory block in bytes
+  126:  */
+  127: void ethosu_flush_dcache(uint32_t *p, size_t bytes);
+  128: 
+  129: /**
+  130:  * Invalidate the data cache by address and size. Passing NULL as p argument
+  131:  * expects the whole cache to be invalidated.
+  132:  *
+  133:  * Addresses passed to this function must be 16 byte aligned.
+  134:  *
+  135:  * @param p         16 byte aligned address
+  136:  * @param bytes     Size in bytes
+  137:  */
+  138: void ethosu_invalidate_dcache(uint32_t *p, size_t bytes);
+  139: 
+  140: /**
+  141:  * Minimal mutex implementation for baremetal applications. See
+  142:  * ethosu_driver.c.
+  143:  *
+  144:  * @return Pointer to mutex handle
+  145:  */
+  146: void *ethosu_mutex_create(void);
+  147: 
+  148: /**
+  149:  * Destroy mutex.
+  150:  *
+  151:  * @param mutex     Pointer to mutex handle
+  152:  */
+  153: void ethosu_mutex_destroy(void *mutex);
+  154: 
+  155: /**
+       ...
+  234:  * Initialize the Ethos-U driver.
+  235:  *
+  236:  * @param drv               Pointer to driver handle
+  237:  * @param base_address      NPU register base address
+  238:  * @param fast_memory       Fast memory area, used for Ethos-U65 with spilling
+  239:  * @param fast_memory_size  Size in bytes of fast memory area
+  240:  * @param secure_enable     Configure NPU in secure- or non-secure mode
+  241:  * @param privilege_enable  Configure NPU in privileged- or non-privileged mode
+  242:  * @return 0 on success, else negative error code
+  243:  */
+  244: int ethosu_init(struct ethosu_driver *drv,
+  245:                 void *const base_address,
+  246:                 const void *fast_memory,
+  247:                 const size_t fast_memory_size,
+  248:                 uint32_t secure_enable,
+  249:                 uint32_t privilege_enable);
+  250: 
+  251: /**
+  252:  * Deinitialize the Ethos-U driver.
+  253:  *
+  254:  * @param drv       Pointer to driver handle
+  255:  */
+  256: void ethosu_deinit(struct ethosu_driver *drv);
+  257: 
+  258: /**
+  259:  * Soft resets the Ethos-U device.
+  260:  *
+  261:  * @param drv       Pointer to driver handle
+
+FILE=/home/user/sdk-alif/modules/hal/infineon/mtb-dsl-pse8xxgp/pdl/drivers/third_party/COMPONENT_U55/src/ethosu_driver.c
+       ...
+  122: /******************************************************************************
+  123:  * Weak functions - Cache
+  124:  *
+  125:  * Default NOP operations. Override if available on the targeted device.
+  126:  ******************************************************************************/
+  127: 
+  128: /*
+  129:  * Flush/clean the data cache by address and size. Passing NULL as p argument
+  130:  * expects the whole cache to be flushed.
+  131:  */
+  132: void __attribute__((weak)) ethosu_flush_dcache(uint32_t *p, size_t bytes)
+  133: {
+  134:   if (p)
+  135:     SCB_CleanDCache_by_Addr(p, bytes);
+  136:   else
+  137:     SCB_CleanDCache();
+  138: }
+  139: 
+  140: /*
+  141:  * Invalidate the data cache by address and size. Passing NULL as p argument
+  142:  * expects the whole cache to be invalidated.
+  143:  */
+  144: void __attribute__((weak)) ethosu_invalidate_dcache(uint32_t *p, size_t bytes)
+  145: {
+  146: 
+  147:   if (p)
+  148:     SCB_InvalidateDCache_by_Addr(p, bytes);
+  149:   else
+  150:     SCB_InvalidateDCache();
+  151: }
+  152: 
+  153: /******************************************************************************
+  154:  * Weak functions - Semaphore/Mutex for multi NPU
+  155:  *
+  156:  * Following section handles the minimal sempahore and mutex implementation in
+  157:  * case of baremetal applications. Weak symbols will be overridden by RTOS
+  158:  * definitions and implement true thread-safety (in application layer).
+  159:  ******************************************************************************/
+  160: 
+  161: struct ethosu_semaphore_t
+       ...
+  340:         }
+  341:     }
+  342: 
+  343:     // Flush the cache if available on CPU.
+  344:     // The upcasting to uin32_t* is ok since the pointer never is dereferenced.
+  345:     // The base_addr_size is null if invoking from prior to invoke_V2, in that case
+  346:     // the whole cache is being flushed.
+  347: 
+  348:     if (drv->job.base_addr_size != NULL)
+  349:     {
+  350:         ethosu_flush_dcache((uint32_t *)cmd_stream_ptr, cms_bytes);
+  351:         for (int i = 0; i < drv->job.num_base_addr; i++)
+  352:         {
+  353:             ethosu_flush_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+  354:         }
+  355:     }
+  356:     else
+  357:     {
+  358:         ethosu_flush_dcache(NULL, 0);
+  359:     }
+  360: 
+  361:     // Request power gating disabled during inference run
+  362:     if (ethosu_request_power(drv))
+  363:     {
+  364:         LOG_ERR("Failed to request power");
+  365:         return -1;
+  366:     }
+  367: 
+  368:     drv->job.state = ETHOSU_JOB_RUNNING;
+  369: 
+  370:     // Inference begin callback
+  371:     ethosu_inference_begin(drv, drv->job.user_arg);
+  372: 
+  373:     // Execute the command stream
+  374:     ethosu_dev_run_command_stream(drv->dev, cmd_stream, cms_bytes, drv->job.base_addr, drv->job.num_base_addr);
+  375: 
+       ...
+  392: 
+  393:     drv->job.state  = ETHOSU_JOB_DONE;
+  394:     drv->job.result = ethosu_dev_handle_interrupt(drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+  395:     ethosu_semaphore_give(drv->semaphore);
+  396: }
+  397: 
+  398: /******************************************************************************
+  399:  * Functions API
+  400:  ******************************************************************************/
+  401: 
+  402: int ethosu_init(struct ethosu_driver *drv,
+  403:                 void *const base_address,
+  404:                 const void *fast_memory,
+  405:                 const size_t fast_memory_size,
+  406:                 uint32_t secure_enable,
+  407:                 uint32_t privilege_enable)
+  408: {
+  409:     LOG_INFO("Initializing NPU: base_address=%p, fast_memory=%p, fast_memory_size=%zu, secure=%" PRIu32
+  410:              ", privileged=%" PRIu32,
+  411:              base_address,
+  412:              fast_memory,
+  413:              fast_memory_size,
+  414:              secure_enable,
+  415:              privilege_enable);
+  416: 
+  417:     if (!ethosu_mutex)
+  418:     {
+  419:         ethosu_mutex = ethosu_mutex_create();
+       ...
+  601:             ret = -1;
+  602:         }
+  603:         else
+  604:         {
+  605:             // Invalidate cache
+  606:             if (drv->job.base_addr_size != NULL)
+  607:             {
+  608:                 for (int i = 0; i < drv->job.num_base_addr; i++)
+  609:                 {
+  610:                     if ((uint32_t *)(uintptr_t)drv->job.base_addr[i] != NULL)
+  611:                       ethosu_invalidate_dcache((uint32_t *)(uintptr_t)drv->job.base_addr[i], drv->job.base_addr_size[i]);
+  612:                 }
+  613:             }
+  614:             else
+  615:             {
+  616:                 ethosu_invalidate_dcache(NULL, 0);
+  617:             }
+  618: 
+  619:             LOG_DEBUG("Inference finished successfully...");
+  620:             ret = 0;
+  621:         }
+  622: 
+  623:         // Reset internal job (state resets to IDLE)
+  624:         ethosu_reset_job(drv);
+  625:         break;
+  626: 
+  627:     default:
+  628:         LOG_ERR("Unexpected job state");
+  629:         ethosu_reset_job(drv);
+  630:         ret = -1;
+  631:         break;
+  632:     }
+  633: 
+
+FILE=/home/user/sdk-alif/modules/lib/executorch/backends/arm/third-party/ethos-u-core-driver/include/ethosu_driver.h
+       ...
+  115: 
+  116: /**
+  117:  * Flush/clean the data cache
+  118:  *
+  119:  * Addresses passed to this function must be aligned to cache line size.
+  120:  *
+  121:  * @param base_addr         Array of 32 byte aligned base addresses
+  122:  * @param base_addr_size    Array with size per each base addr entry
+  123:  * @param num_base_addr     Number of base addr entries
+  124:  */
+  125: void ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+  126: 
+  127: /**
+  128:  * Invalidate the data cache
+  129:  *
+  130:  * Addresses passed to this function must be aligned to cache line size.
+  131:  *
+  132:  * @param base_addr         Array of 32 byte aligned base addresses
+  133:  * @param base_addr_size    Array with size per each base addr entry
+  134:  * @param num_base_addr     Number of base addr entries
+  135:  */
+  136: void ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr);
+  137: 
+  138: /**
+  139:  * Minimal mutex implementation for baremetal applications. See
+  140:  * ethosu_driver.c.
+  141:  *
+  142:  * @return Pointer to mutex handle
+  143:  */
+  144: void *ethosu_mutex_create(void);
+  145: 
+  146: /**
+  147:  * Destroy mutex.
+  148:  *
+  149:  * @param mutex     Pointer to mutex handle
+  150:  */
+  151: void ethosu_mutex_destroy(void *mutex);
+  152: 
+  153: /**
+       ...
+  244:  * Initialize the Ethos-U driver.
+  245:  *
+  246:  * @param drv               Pointer to driver handle
+  247:  * @param base_address      NPU register base address
+  248:  * @param fast_memory       Fast memory area, used for Ethos-U65 with spilling
+  249:  * @param fast_memory_size  Size in bytes of fast memory area
+  250:  * @param secure_enable     Configure NPU in secure- or non-secure mode
+  251:  * @param privilege_enable  Configure NPU in privileged- or non-privileged mode
+  252:  * @return 0 on success, else negative error code
+  253:  */
+  254: int ethosu_init(struct ethosu_driver *drv,
+  255:                 void *const base_address,
+  256:                 const void *fast_memory,
+  257:                 const size_t fast_memory_size,
+  258:                 uint32_t secure_enable,
+  259:                 uint32_t privilege_enable);
+  260: 
+  261: /**
+  262:  * Deinitialize the Ethos-U driver.
+  263:  *
+  264:  * @param drv       Pointer to driver handle
+  265:  */
+  266: void ethosu_deinit(struct ethosu_driver *drv);
+  267: 
+  268: /**
+  269:  * Soft resets the Ethos-U device.
+  270:  *
+  271:  * @param drv       Pointer to driver handle
+
+FILE=/home/user/sdk-alif/modules/lib/executorch/backends/arm/third-party/ethos-u-core-driver/src/ethosu_driver.c
+       ...
+  123: /******************************************************************************
+  124:  * Weak functions - Cache
+  125:  *
+  126:  * Default NOP operations. Override if available on the targeted device.
+  127:  ******************************************************************************/
+  128: 
+  129: /*
+  130:  * Flush/clean the data cache
+  131:  */
+  132: void __attribute__((weak))
+  133: ethosu_flush_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+  134: {
+  135:     /*
+  136:      * for (int i = 0; i < num_base_addr; i++)
+  137:      * {
+  138:      *     // Check alignment to cache line size
+  139:      *     if (base_addr[i] & MASK_32_BYTE_ALIGN) != 0)
+  140:      *     {
+  141:      *         LOG_ERR("Base addr %d: 0x%" PRIx64 "not aligned to 32 bytes", i, base_addr[i]);
+  142:      *         return;
+  143:      *     }
+  144:      *     flush_dcache((uint32_t *)(uintptr_t)base_addr[i], base_addr_size[i]);
+  145:      * }
+  146:      */
+  147:     UNUSED(base_addr);
+  148:     UNUSED(base_addr_size);
+  149:     UNUSED(num_base_addr);
+  150: }
+  151: 
+  152: /*
+  153:  * Invalidate the data cache
+  154:  */
+  155: void __attribute__((weak))
+  156: ethosu_invalidate_dcache(const uint64_t *base_addr, const size_t *base_addr_size, int num_base_addr)
+  157: {
+  158:     /*
+  159:      * On 32bit systems, to avoid sign expansion, each base_addr must be cast
+  160:      * like this ((uint32_t *)(uintptr_t)base_addr[idx])
+  161:      *
+  162:      * for (int i = 0; i < num_base_addr; i++)
+  163:      * {
+  164:      *     // Check alignment to cache line size
+  165:      *     if (base_addr[i] & MASK_32_BYTE_ALIGN) != 0)
+  166:      *     {
+  167:      *         LOG_ERR("Base addr %d: 0x%" PRIx64 "not aligned to 32 bytes", i, base_addr[i]);
+  168:      *         return;
+  169:      *     }
+  170:      *     invalidate_dcache((uint32_t *)(uintptr_t)base_addr[i], base_addr_size[i]);
+  171:      * }
+  172:      */
+  173:     UNUSED(base_addr);
+       ...
+  358:     for (int i = 0; i < drv->job.num_base_addr; i++)
+  359:     {
+  360:         if (0 != (drv->job.base_addr[i] & MASK_16_BYTE_ALIGN))
+  361:         {
+  362:             LOG_ERR("Base addr %d: 0x%" PRIx64 "not aligned to 16 bytes", i, drv->job.base_addr[i]);
+  363:             return -1;
+  364:         }
+  365:     }
+  366: 
+  367:     // Flush/clean the data cache
+  368:     ethosu_flush_dcache(drv->job.base_addr, drv->job.base_addr_size, drv->job.num_base_addr);
+  369: 
+  370:     // Request power gating disabled during inference run
+  371:     if (ethosu_request_power(drv))
+  372:     {
+  373:         LOG_ERR("Failed to request power");
+  374:         return -1;
+  375:     }
+  376: 
+  377:     drv->job.state = ETHOSU_JOB_RUNNING;
+  378: 
+  379:     // Inference begin callback
+  380:     ethosu_inference_begin(drv, drv->job.user_arg);
+  381: 
+  382:     // Execute the command stream
+  383:     ethosu_dev_run_command_stream(&drv->dev, cmd_stream, cms_bytes, drv->job.base_addr, drv->job.num_base_addr);
+  384: 
+  385:     return 0;
+       ...
+  400: 
+  401:     drv->job.state  = ETHOSU_JOB_DONE;
+  402:     drv->job.result = ethosu_dev_handle_interrupt(&drv->dev) ? ETHOSU_JOB_RESULT_OK : ETHOSU_JOB_RESULT_ERROR;
+  403:     ethosu_semaphore_give(drv->semaphore);
+  404: }
+  405: 
+  406: /******************************************************************************
+  407:  * Functions API
+  408:  ******************************************************************************/
+  409: 
+  410: int ethosu_init(struct ethosu_driver *drv,
+  411:                 void *const base_address,
+  412:                 const void *fast_memory,
+  413:                 const size_t fast_memory_size,
+  414:                 uint32_t secure_enable,
+  415:                 uint32_t privilege_enable)
+  416: {
+  417:     LOG_INFO("Initializing NPU: base_address=%p, fast_memory=%p, fast_memory_size=%zu, secure=%" PRIu32
+  418:              ", privileged=%" PRIu32,
+  419:              base_address,
+  420:              fast_memory,
+  421:              fast_memory_size,
+  422:              secure_enable,
+  423:              privilege_enable);
+  424: 
+  425:     if (!ethosu_mutex)
+  426:     {
+  427:         ethosu_mutex = ethosu_mutex_create();
+       ...
+  568:             // handler), we know if the interrupt handler has run, if so decrement the
+  569:             // semaphore count by one (given in interrupt handler).
+  570:             if (drv->job.state == ETHOSU_JOB_DONE)
+  571:             {
+  572:                 drv->job.result = ETHOSU_JOB_RESULT_TIMEOUT; // Reset back to timeout
+  573:                 ethosu_semaphore_take(drv->semaphore, ETHOSU_SEMAPHORE_WAIT_INFERENCE);
+  574:             }
+  575:         }
+  576: 
+  577:         // Invalidate cache
+  578:         ethosu_invalidate_dcache(drv->job.base_addr, drv->job.base_addr_size, drv->job.num_base_addr);
+  579: 
+  580:         // Inference done callback - always called even in case of timeout
+  581:         ethosu_inference_end(drv, drv->job.user_arg);
+  582: 
+  583:         // Release power gating disabled requirement
+  584:         ethosu_release_power(drv);
+  585: 
+  586:         // Check NPU and interrupt status
+  587:         if (drv->job.result)
+  588:         {
+  589:             if (drv->job.result == ETHOSU_JOB_RESULT_ERROR)
+  590:             {
+  591:                 LOG_ERR("NPU error(s) occured during inference.");
+  592:                 ethosu_dev_print_err_status(&drv->dev);
+  593:             }
+  594:             else
+  595:             {
+
+FILE=/home/user/sdk-alif/zephyr/drivers/misc/ethos_u/ethos_u.c
+       ...
+  169: 			LOG_ERR("Failed to enable NPU clock");
+  170: 			return -EIO;
+  171: 		}
+  172: 	}
+  173: 
+  174: 	ethosu_get_driver_version(&version);
+  175: 
+  176: 	LOG_DBG("Version. major=%u, minor=%u, patch=%u", version.major, version.minor,
+  177: 		version.patch);
+  178: 
+  179: 	if (ethosu_init(drv, config->base_addr, NULL, 0, config->secure_enable,
+  180: 			config->privilege_enable)) {
+  181: 		LOG_ERR("Failed to initialize NPU with ethosu_init().");
+  182: 		return -EINVAL;
+  183: 	}
+  184: 
+  185: 	config->irq_config();
+  186: 
+  187: 	return 0;
+  188: }
+  189: 
+  190: #if defined(CONFIG_PM_DEVICE)
+  191: /**
+  192:  * @brief Ethos-U PM device action handler
+  193:  *
+  194:  * Handles power management state transitions for the Ethos-U device.
+  195:  * Coordinates with power domain via PM framework.
+  196:  *
+  197:  * @param dev Ethos-U device struct
+  198:  * @param action PM device action
+       ...
+  234: 
+  235: 		/*
+  236: 		 * Disable the NPU IRQ before freeing the driver semaphore so a
+  237: 		 * stale/pending interrupt cannot call ethosu_semaphore_give() on
+  238: 		 * freed memory.
+  239: 		 */
+  240: 		irq_disable(config->irqn);
+  241: 
+  242: 		/*
+  243: 		 * Symmetric teardown: deregister the handle and free the driver
+  244: 		 * semaphore so the next RESUME's ethosu_init() starts from a clean
+  245: 		 * state. Retained SRAM would otherwise make
+  246: 		 * ethosu_register_driver() splice the driver onto itself.
+  247: 		 */
+  248: 		ethosu_deinit(drv);
+  249: 		return 0;
+  250: 
+  251: 	case PM_DEVICE_ACTION_TURN_OFF:
+  252: 	case PM_DEVICE_ACTION_TURN_ON:
+  253: 		break;
+  254: 
+  255: 	default:
+  256: 		ret = -ENOTSUP;
+  257: 		break;
+  258: 	}
+  259: 
+  260: 	return ret;
+  261: }
+
+CACHE_SOURCE_MATCH_COUNT=56
+SCANNED_SOURCE_FILE_COUNT=100227
+
+========== DRIVER CACHE MASK API ==========
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:90:    uint8_t basep_flush_mask;
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:91:    uint8_t basep_invalidate_mask;
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:255:void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:356:        if (drv->basep_flush_mask & (1 << i))
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:401:void ethosu_set_basep_cache_mask(struct ethosu_driver *drv, uint8_t flush_mask, uint8_t invalidate_mask)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:403:    drv->basep_flush_mask      = flush_mask;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:404:    drv->basep_invalidate_mask = invalidate_mask;
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:448:    ethosu_set_basep_cache_mask(drv, (1 << SCRATCH_BASE_ADDR_INDEX), (1 << SCRATCH_BASE_ADDR_INDEX));
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c:564:            if (drv->basep_invalidate_mask & (1 << i))
+
+CACHE_MASK_RUNTIME_AUDIT_V2=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cache_mask_runtime_v2_20261126_173146.log
+MODEL_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+SDK_SOURCE_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
