@@ -1,0 +1,1793 @@
+======================================================
+TCN V6 VELA COP1 DISASSEMBLER AUDIT
+Timestamp=20261126_104309
+======================================================
+
+========== VELA VERSION ==========
+5.0.0
+227f7f247c163427f0531e43f42436eeccb202d2e5545f83af1626db10f5c5a0  /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+f91cbf3f2bce6185d21e67e9aca067eacb42064a3c16ea96bf1f1288a64ca5c3  /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu55_interface.h
+
+========== EXACT DRIVER COP1 PARSER ==========
+    45	 * Defines
+    46	 ******************************************************************************/
+    47	
+    48	#define UNUSED(x) ((void)x)
+    49	
+    50	#define BYTES_IN_32_BITS 4
+    51	#define MASK_16_BYTE_ALIGN (0xF)
+    52	#define OPTIMIZER_CONFIG_LENGTH_32_BIT_WORD 2
+    53	#define DRIVER_ACTION_LENGTH_32_BIT_WORD 1
+    54	#define ETHOSU_FOURCC ('1' << 24 | 'P' << 16 | 'O' << 8 | 'C') // "Custom Operator Payload 1"
+    55	
+    56	#define SCRATCH_BASE_ADDR_INDEX 1
+    57	#define FAST_MEMORY_BASE_ADDR_INDEX 2
+    58	
+    59	/******************************************************************************
+    60	 * Types
+    61	 ******************************************************************************/
+    62	
+    63	// Driver actions
+    64	enum DRIVER_ACTION_e
+    65	{
+    66	    RESERVED         = 0,
+    67	    OPTIMIZER_CONFIG = 1,
+    68	    COMMAND_STREAM   = 2,
+    69	    NOP              = 5,
+    70	};
+    71	
+    72	// Custom operator payload data struct
+    73	struct cop_data_s
+    74	{
+    75	    union
+    76	    {
+    77	        // Driver action data
+    78	        struct
+    79	        {
+    80	            uint8_t driver_action_command; // (valid values in DRIVER_ACTION_e)
+    81	            uint8_t reserved;
+    82	
+    83	            // Driver action data
+    84	            union
+    85	            {
+    86	                // DA_CMD_OPT_CFG
+    87	                struct
+    88	                {
+    89	                    uint16_t rel_nbr : 4;
+    90	                    uint16_t patch_nbr : 4;
+   640	                        void *user_arg)
+   641	{
+   642	    assert(custom_data_ptr != NULL);
+   643	    assert(base_addr != NULL);
+   644	    assert(base_addr_size != NULL);
+   645	
+   646	    const struct cop_data_s *data_ptr = custom_data_ptr;
+   647	    const struct cop_data_s *data_end = (struct cop_data_s *)((ptrdiff_t)custom_data_ptr + custom_data_size);
+   648	
+   649	    // Make sure an inference is not already running
+   650	    if (drv->job.state != ETHOSU_JOB_IDLE)
+   651	    {
+   652	        LOG_ERR("Inference already running, or waiting to be cleared...");
+   653	        return -1;
+   654	    }
+   655	
+   656	    drv->job.state            = ETHOSU_JOB_IDLE;
+   657	    drv->job.custom_data_ptr  = custom_data_ptr;
+   658	    drv->job.custom_data_size = custom_data_size;
+   659	    drv->job.base_addr        = base_addr;
+   660	    drv->job.base_addr_size   = base_addr_size;
+   661	    drv->job.num_base_addr    = num_base_addr;
+   662	    drv->job.user_arg         = user_arg;
+   663	
+   664	    // First word in custom_data_ptr should contain "Custom Operator Payload 1"
+   665	    if (data_ptr->word != ETHOSU_FOURCC)
+   666	    {
+   667	        LOG_ERR("Custom Operator Payload: %" PRIu32 " is not correct, expected %x", data_ptr->word, ETHOSU_FOURCC);
+   668	        goto err;
+   669	    }
+   670	
+   671	    // Custom data length must be a multiple of 32 bits
+   672	    if ((custom_data_size % BYTES_IN_32_BITS) != 0)
+   673	    {
+   674	        LOG_ERR("custom_data_size=0x%x not a multiple of 4", (unsigned)custom_data_size);
+   675	        goto err;
+   676	    }
+   677	
+   678	    data_ptr++;
+   679	
+   680	    // Adjust base address to fast memory area
+   681	    if (drv->fast_memory != 0 && num_base_addr > FAST_MEMORY_BASE_ADDR_INDEX)
+   682	    {
+   683	        if (base_addr_size[FAST_MEMORY_BASE_ADDR_INDEX] > drv->fast_memory_size)
+   684	        {
+   685	            LOG_ERR("Fast memory area too small. fast_memory_size=%zu, base_addr_size=%zu",
+   686	                    drv->fast_memory_size,
+   687	                    base_addr_size[FAST_MEMORY_BASE_ADDR_INDEX]);
+   688	            goto err;
+   689	        }
+   690	
+   691	        base_addr[FAST_MEMORY_BASE_ADDR_INDEX] = drv->fast_memory;
+   692	    }
+   693	
+   694	    // Parse Custom Operator Payload data
+   695	    while (data_ptr < data_end)
+   696	    {
+   697	        switch (data_ptr->driver_action_command)
+   698	        {
+   699	        case OPTIMIZER_CONFIG:
+   700	            LOG_DEBUG("OPTIMIZER_CONFIG");
+   701	            struct opt_cfg_s const *opt_cfg_p = (const struct opt_cfg_s *)data_ptr;
+   702	
+   703	            if (handle_optimizer_config(drv, opt_cfg_p) < 0)
+   704	            {
+   705	                goto err;
+   706	            }
+   707	            data_ptr += DRIVER_ACTION_LENGTH_32_BIT_WORD + OPTIMIZER_CONFIG_LENGTH_32_BIT_WORD;
+   708	            break;
+   709	        case COMMAND_STREAM:
+   710	            // Vela only supports putting one COMMAND_STREAM per op
+   711	            LOG_DEBUG("COMMAND_STREAM");
+   712	            const uint8_t *command_stream = (const uint8_t *)(data_ptr + 1);
+   713	            int cms_length                = (data_ptr->reserved << 16) | data_ptr->length;
+   714	
+   715	            if (handle_command_stream(drv, command_stream, cms_length) < 0)
+   716	            {
+   717	                goto err;
+   718	            }
+   719	            data_ptr += DRIVER_ACTION_LENGTH_32_BIT_WORD + cms_length;
+   720	            break;
+   721	        case NOP:
+   722	            LOG_DEBUG("NOP");
+   723	            data_ptr += DRIVER_ACTION_LENGTH_32_BIT_WORD;
+   724	            break;
+   725	        default:
+   726	            LOG_ERR("UNSUPPORTED driver_action_command: %u", data_ptr->driver_action_command);
+   727	            goto err;
+   728	            break;
+   729	        }
+   730	    }
+   731	
+   732	    return 0;
+   733	err:
+   734	    LOG_ERR("Failed to invoke inference.");
+   735	    ethosu_reset_job(drv);
+   736	    return -1;
+   737	}
+   738	
+   739	int ethosu_invoke_v3(struct ethosu_driver *drv,
+   740	                     const void *custom_data_ptr,
+
+========== VELA PACKAGE / DECODER API DISCOVERY ==========
+VELA_PACKAGE = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela
+VELA_INIT = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/__init__.py
+VELA_EXECUTABLE = /home/user/zephyrproject/.py3.12_venv/bin/vela
+DIST_VERSION = 5.0.0
+ENTRY_POINT = vela -> ethosu.vela.vela:main
+
+========== PACKAGE MODULES ==========
+compiler_driver package=False
+driver_actions package=False
+extract_npu_subgraphs package=False
+high_level_command_stream package=False
+high_level_command_stream_generator package=False
+high_level_command_to_npu_op package=False
+npu_performance package=False
+npu_serialisation package=False
+register_command_stream_generator package=False
+register_command_stream_util package=False
+vela package=False
+
+========== SOURCE SEARCH ==========
+PYTHON_SOURCE_FILES = 284
+
+FILE=api.py LINES=576
+  467:     from .architecture_features import ArchitectureFeatures
+  468:     from .architecture_features import Block
+  469:     from .architecture_features import create_default_arch
+  470:     from .architecture_allocator import try_block_config
+  471:     from .register_command_stream_generator import resampling_mode_map
+  472:     from .register_command_stream_util import to_kernel
+  473:     from .operation import NpuBlockType
+  474: 
+  475:     is_partkernel = False
+  476:     if isinstance(npu_op, NpuConv2DOperation):
+  477:         block_type = NpuBlockType.ConvolutionMxN
+  478:         is_partkernel = npu_op.block_traversal == NpuBlockTraversal.PART_KERNEL_FIRST
+  479:     elif isinstance(npu_op, NpuConvDepthWiseOperation):
+  480:         block_type = NpuBlockType.ConvolutionDepthWise
+---
+  545:     assert len(valid_block_configs) > 0
+  546:     return valid_block_configs
+  547: 
+  548: 
+  549: def npu_generate_register_command_stream(npu_op_list: List[NpuOperation], accelerator: NpuAccelerator) -> List[int]:
+  550:     """
+  551:     Public facing API for generating an Ethos-U register command stream.
+  552:     Calculates dependencies between commands and inserts wait operations if needed.
+  553: 
+  554:     :param npu_op_list: List[NpuOperation] list of high level NPU operations
+  555:     :param accelerator: NpuAccelerator enum to pick the correct accelerator
+  556:     :return register commands, as a list of 32-bit integers
+  557:     """
+  558:     from . import register_command_stream_generator
+  559: 
+  560:     return register_command_stream_generator.generate_register_command_stream(npu_op_list, accelerator)
+  561: 
+  562: 
+  563: def npu_create_driver_payload(register_command_stream: List[int], accelerator: NpuAccelerator) -> bytes:
+  564:     """
+  565:     Public facing API for generating driver payload, containing a driver header
+  566:     and the given Ethos-U register command stream.
+  567:     Returns the payload, in little endian format, which must be placed in memory on a 16-byte aligned
+  568:     address.
+  569: 
+  570:     :param register_command_stream: List[int] register commands, as a list of 32-bit integers
+  571:     :param accelerator: NpuAccelerator enum to pick the correct accelerator
+  572:     :return driver payload, as a byte array
+  573:     """
+  574:     from . import driver_actions
+  575: 
+  576:     return driver_actions.npu_create_driver_payload(register_command_stream, accelerator)
+---
+
+FILE=compiler_driver.py LINES=283
+   19: import time
+   20: 
+   21: from . import extract_npu_subgraphs
+   22: from . import graph_optimiser
+   23: from . import high_level_command_stream_generator
+   24: from . import high_level_command_to_npu_op
+   25: from . import live_range
+   26: from . import lut
+   27: from . import mark_tensors
+   28: from . import npu_performance
+   29: from . import npu_serialisation
+   30: from . import pass_packing
+   31: from . import scheduler
+---
+   57:         verbose_packing=False,
+   58:         verbose_tensor_purpose=False,
+   59:         verbose_tensor_format=False,
+   60:         verbose_allocation=False,
+   61:         verbose_high_level_command_stream=False,
+   62:         verbose_register_command_stream=False,
+   63:         verbose_operators=False,
+   64:         verbose_weights=False,
+   65:         verbose_cycle_estimate=False,
+   66:         verbose_performance=False,
+   67:         verbose_progress=False,
+   68:         show_cpu_operations=False,
+   69:         tensor_allocator=TensorAllocator.Greedy,
+   70:         timing=False,
+---
+   79:         self.verbose_packing = verbose_packing
+   80:         self.verbose_tensor_purpose = verbose_tensor_purpose
+   81:         self.verbose_tensor_format = verbose_tensor_format
+   82:         self.verbose_allocation = verbose_allocation
+   83:         self.verbose_high_level_command_stream = verbose_high_level_command_stream
+   84:         self.verbose_register_command_stream = verbose_register_command_stream
+   85:         self.verbose_operators = verbose_operators
+   86:         self.verbose_weights = verbose_weights
+   87:         self.verbose_cycle_estimate = verbose_cycle_estimate
+   88:         self.verbose_performance = verbose_performance
+   89:         self.verbose_progress = verbose_progress
+   90:         self.show_cpu_operations = show_cpu_operations
+   91:         self.tensor_allocator = tensor_allocator
+   92:         self.timing = timing
+---
+  241: 
+  242:     progress_print(verbose_progress, "Generating command stream")
+  243:     # Generate command streams and serialise Npu-ops into tensors
+  244:     for sg in npu_subgraphs:
+  245:         high_level_command_stream_generator.generate_high_level_command_stream_for_schedule(
+  246:             nng, sg, arch, options.verbose_high_level_command_stream
+  247:         )
+  248:         lut.optimize_high_level_cmd_stream(sg, arch)
+  249:         high_level_command_to_npu_op.generate_register_command_stream_for_sg(
+  250:             nng, sg, arch, options.verbose_register_command_stream
+  251:         )
+  252:         scratch_tens, scratch_fast_tens, flash_tens = npu_serialisation.serialise_npu_subgraph_into_tensors(
+  253:             sg, arch, scratch_tens, scratch_fast_tens, flash_tens
+  254:         )
+  255: 
+  256:     # Create list of CPU subgraphs with same order as the list of all subgraphs
+  257:     cpu_subgraphs = [sg for sg in nng.subgraphs if sg.placement == PassPlacement.Cpu]
+  258:     for sg in cpu_subgraphs:
+---
+
+FILE=driver_actions.py LINES=145
+  118:     assert data is not None
+  119:     data.append(make_da_tag(DACommands.DumpSHRAM, 0, 0))
+  120: 
+  121: 
+  122: def create_driver_payload(register_command_stream: List[int], arch: ArchitectureFeatures) -> bytes:
+  123:     """Creates driver header and includes the given command"""
+  124:     # Prepare driver actions for this command tensor
+  125:     da_list: List[int] = []
+  126:     emit_fourcc(da_list, "COP1")
+  127:     emit_config(da_list, 0, 1, arch)
+  128:     if len(register_command_stream) >= 1 << 24:
+  129:         raise VelaError(
+  130:             "The command stream exceeds the driver size limit of 64 MiB. "
+  131:             f"The current stream size is {4*len(register_command_stream)/2**20:.2F} MiB"
+  132:         )
+  133: 
+  134:     emit_cmd_stream_header(da_list, len(register_command_stream))
+  135: 
+  136:     # Append command stream words
+  137:     da_list.extend(register_command_stream)
+  138:     # Convert to bytes, in little endian format
+  139:     return struct.pack("<{0}I".format(len(da_list)), *da_list)
+  140: 
+  141: 
+  142: def npu_create_driver_payload(register_command_stream: List[int], accelerator: NpuAccelerator) -> bytes:
+  143:     """Internal implementation of the public facing API to create driver payload"""
+  144:     arch = create_default_arch(Accelerator.from_npu_accelerator(accelerator))
+  145:     return create_driver_payload(register_command_stream, arch)
+---
+
+FILE=ethos_u55_regs/ethos_u55_regs.py LINES=3513
+  633:     NPU_SET_IFM2_IB_START = 0x18D
+  634:     NPU_SET_IFM2_REGION = 0x18F
+  635: 
+  636: class cmd1(Enum):
+  637:     NPU_SET_IFM_BASE0 = 0x000
+  638:     NPU_SET_IFM_BASE1 = 0x001
+  639:     NPU_SET_IFM_BASE2 = 0x002
+  640:     NPU_SET_IFM_BASE3 = 0x003
+  641:     NPU_SET_IFM_STRIDE_X = 0x004
+  642:     NPU_SET_IFM_STRIDE_Y = 0x005
+  643:     NPU_SET_IFM_STRIDE_C = 0x006
+  644:     NPU_SET_OFM_BASE0 = 0x010
+  645:     NPU_SET_OFM_BASE1 = 0x011
+  646:     NPU_SET_OFM_BASE2 = 0x012
+  647:     NPU_SET_OFM_BASE3 = 0x013
+  648:     NPU_SET_OFM_STRIDE_X = 0x014
+  649:     NPU_SET_OFM_STRIDE_Y = 0x015
+  650:     NPU_SET_OFM_STRIDE_C = 0x016
+  651:     NPU_SET_WEIGHT_BASE = 0x020
+  652:     NPU_SET_WEIGHT_LENGTH = 0x021
+  653:     NPU_SET_SCALE_BASE = 0x022
+  654:     NPU_SET_SCALE_LENGTH = 0x023
+  655:     NPU_SET_OFM_SCALE = 0x024
+---
+ 2906:     def set_cmd_code(self, value): cmd_code = value
+ 2907:     def get_param(self): return param
+ 2908:     def set_param(self, value): param = value
+ 2909: 
+ 2910: class npu_set_ifm_base0_t(Structure):
+ 2911:     _fields_ = [
+ 2912:         ("cmd_code", c_uint32, 10),
+ 2913:         ("must_be_zero", c_uint32, 4),
+ 2914:         ("payload_size", c_uint32, 2),
+ 2915:         ("reserved0", c_uint32, 16),
+ 2916:         ("data", c_uint32, 32),
+ 2917:     ]
+ 2918:     def valid(self): return cmd_code==cmd1.NPU_SET_IFM_BASE0 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 2919:     def get_cmd_code(self): return cmd_code
+ 2920:     def set_cmd_code(self, value): cmd_code = value
+ 2921:     def get_data(self): return data
+ 2922:     def set_data(self, value): data = value
+ 2923:     def get_payload_size(self): return payload_size
+ 2924:     def set_payload_size(self, value): payload_size = value
+ 2925: 
+ 2926: class npu_set_ifm_base1_t(Structure):
+ 2927:     _fields_ = [
+ 2928:         ("cmd_code", c_uint32, 10),
+ 2929:         ("must_be_zero", c_uint32, 4),
+ 2930:         ("payload_size", c_uint32, 2),
+ 2931:         ("reserved0", c_uint32, 16),
+ 2932:         ("data", c_uint32, 32),
+ 2933:     ]
+ 2934:     def valid(self): return cmd_code==cmd1.NPU_SET_IFM_BASE1 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 2935:     def get_cmd_code(self): return cmd_code
+ 2936:     def set_cmd_code(self, value): cmd_code = value
+ 2937:     def get_data(self): return data
+ 2938:     def set_data(self, value): data = value
+ 2939:     def get_payload_size(self): return payload_size
+ 2940:     def set_payload_size(self, value): payload_size = value
+ 2941: 
+ 2942: class npu_set_ifm_base2_t(Structure):
+ 2943:     _fields_ = [
+ 2944:         ("cmd_code", c_uint32, 10),
+ 2945:         ("must_be_zero", c_uint32, 4),
+ 2946:         ("payload_size", c_uint32, 2),
+ 2947:         ("reserved0", c_uint32, 16),
+ 2948:         ("data", c_uint32, 32),
+ 2949:     ]
+ 2950:     def valid(self): return cmd_code==cmd1.NPU_SET_IFM_BASE2 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 2951:     def get_cmd_code(self): return cmd_code
+ 2952:     def set_cmd_code(self, value): cmd_code = value
+ 2953:     def get_data(self): return data
+ 2954:     def set_data(self, value): data = value
+ 2955:     def get_payload_size(self): return payload_size
+ 2956:     def set_payload_size(self, value): payload_size = value
+ 2957: 
+ 2958: class npu_set_ifm_base3_t(Structure):
+ 2959:     _fields_ = [
+ 2960:         ("cmd_code", c_uint32, 10),
+ 2961:         ("must_be_zero", c_uint32, 4),
+ 2962:         ("payload_size", c_uint32, 2),
+ 2963:         ("reserved0", c_uint32, 16),
+ 2964:         ("data", c_uint32, 32),
+ 2965:     ]
+ 2966:     def valid(self): return cmd_code==cmd1.NPU_SET_IFM_BASE3 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 2967:     def get_cmd_code(self): return cmd_code
+ 2968:     def set_cmd_code(self, value): cmd_code = value
+ 2969:     def get_data(self): return data
+ 2970:     def set_data(self, value): data = value
+ 2971:     def get_payload_size(self): return payload_size
+ 2972:     def set_payload_size(self, value): payload_size = value
+ 2973: 
+ 2974: class npu_set_ifm_stride_x_t(Structure):
+---
+ 3018:     def set_data(self, value): data = value
+ 3019:     def get_payload_size(self): return payload_size
+ 3020:     def set_payload_size(self, value): payload_size = value
+ 3021: 
+ 3022: class npu_set_ofm_base0_t(Structure):
+ 3023:     _fields_ = [
+ 3024:         ("cmd_code", c_uint32, 10),
+ 3025:         ("must_be_zero", c_uint32, 4),
+ 3026:         ("payload_size", c_uint32, 2),
+ 3027:         ("reserved0", c_uint32, 16),
+ 3028:         ("data", c_uint32, 32),
+ 3029:     ]
+ 3030:     def valid(self): return cmd_code==cmd1.NPU_SET_OFM_BASE0 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 3031:     def get_cmd_code(self): return cmd_code
+ 3032:     def set_cmd_code(self, value): cmd_code = value
+ 3033:     def get_data(self): return data
+ 3034:     def set_data(self, value): data = value
+ 3035:     def get_payload_size(self): return payload_size
+ 3036:     def set_payload_size(self, value): payload_size = value
+ 3037: 
+ 3038: class npu_set_ofm_base1_t(Structure):
+ 3039:     _fields_ = [
+ 3040:         ("cmd_code", c_uint32, 10),
+ 3041:         ("must_be_zero", c_uint32, 4),
+ 3042:         ("payload_size", c_uint32, 2),
+ 3043:         ("reserved0", c_uint32, 16),
+ 3044:         ("data", c_uint32, 32),
+ 3045:     ]
+ 3046:     def valid(self): return cmd_code==cmd1.NPU_SET_OFM_BASE1 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 3047:     def get_cmd_code(self): return cmd_code
+ 3048:     def set_cmd_code(self, value): cmd_code = value
+ 3049:     def get_data(self): return data
+ 3050:     def set_data(self, value): data = value
+ 3051:     def get_payload_size(self): return payload_size
+ 3052:     def set_payload_size(self, value): payload_size = value
+ 3053: 
+ 3054: class npu_set_ofm_base2_t(Structure):
+ 3055:     _fields_ = [
+ 3056:         ("cmd_code", c_uint32, 10),
+ 3057:         ("must_be_zero", c_uint32, 4),
+ 3058:         ("payload_size", c_uint32, 2),
+ 3059:         ("reserved0", c_uint32, 16),
+ 3060:         ("data", c_uint32, 32),
+ 3061:     ]
+ 3062:     def valid(self): return cmd_code==cmd1.NPU_SET_OFM_BASE2 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 3063:     def get_cmd_code(self): return cmd_code
+ 3064:     def set_cmd_code(self, value): cmd_code = value
+ 3065:     def get_data(self): return data
+ 3066:     def set_data(self, value): data = value
+ 3067:     def get_payload_size(self): return payload_size
+ 3068:     def set_payload_size(self, value): payload_size = value
+ 3069: 
+ 3070: class npu_set_ofm_base3_t(Structure):
+ 3071:     _fields_ = [
+ 3072:         ("cmd_code", c_uint32, 10),
+ 3073:         ("must_be_zero", c_uint32, 4),
+ 3074:         ("payload_size", c_uint32, 2),
+ 3075:         ("reserved0", c_uint32, 16),
+ 3076:         ("data", c_uint32, 32),
+ 3077:     ]
+ 3078:     def valid(self): return cmd_code==cmd1.NPU_SET_OFM_BASE3 and must_be_zero==0 and payload_size>=1 and payload_size<=2;
+ 3079:     def get_cmd_code(self): return cmd_code
+ 3080:     def set_cmd_code(self, value): cmd_code = value
+ 3081:     def get_data(self): return data
+ 3082:     def set_data(self, value): data = value
+ 3083:     def get_payload_size(self): return payload_size
+ 3084:     def set_payload_size(self, value): payload_size = value
+ 3085: 
+ 3086: class npu_set_ofm_stride_x_t(Structure):
+---
+
+FILE=high_level_command_stream_generator.py LINES=262
+   16: #
+   17: # Description:
+   18: # Generate a high-level command stream from a schedule
+   19: from .architecture_allocator import is_nearest
+   20: from .high_level_command_stream import Box
+   21: from .high_level_command_stream import DMA
+   22: from .high_level_command_stream import NOP
+   23: from .high_level_command_stream import NpuStripe
+   24: from .numeric_util import round_up_divide
+   25: from .operation import create_activation_function
+   26: from .operation import NpuBlockType
+   27: from .operation import Op
+   28: from .shape4d import Shape4D
+   29: from .tensor import TensorPurpose
+   30: 
+   31: 
+---
+   43:     if src_addr != dst_addr or src_tensor.mem_area != dst_tensor.mem_area:
+   44:         yield DMA(ps, src_tensor, dst_tensor, box)
+   45:     else:
+   46:         # Source and destination is the same so no need for a DMA transaction
+   47:         # Create a NOP for visibility when printing the high_level_command_stream
+   48:         yield NOP(ps, src_tensor, dst_tensor)
+   49: 
+   50: 
+   51: def generate_high_level_command_stream_for_schedule(nng, sg, arch, verbose_high_level_command_stream):
+   52:     res = []
+   53:     # sg.sched_ops are ordered by execution
+   54:     processed_cascades = set()
+   55:     for sched_op in sg.sched_ops:
+   56:         op_info = sg.schedule.cost_map[sched_op]
+   57:         if op_info.cascade in processed_cascades:
+   58:             # This cascade has already been processed
+   59:             continue
+---
+   67:             # Start from the last Op in the cascade
+   68:             res += list(generate_high_level_commands_for_sched_op(sg.sched_ops[cascade_info.end], sg.schedule))
+   69:             processed_cascades.add(op_info.cascade)
+   70: 
+   71:     sg.high_level_command_stream = res
+   72:     if verbose_high_level_command_stream:
+   73:         sg.print_high_level_command_stream()
+   74: 
+   75: 
+   76: def generate_high_level_commands_for_sched_op(sched_op, schedule):
+   77:     op_info = schedule.cost_map[sched_op]
+   78:     cascade_info = schedule.cascades.get(op_info.cascade)
+   79:     npu_block_type = sched_op.parent_ps.npu_block_type
+   80:     block_config = op_info.block_config
+   81:     ps = sched_op.parent_ps
+---
+
+FILE=high_level_command_to_npu_op.py LINES=743
+   50: from .data_type import DataType
+   51: from .debug_database import DebugDatabase
+   52: from .errors import UnsupportedFeatureError
+   53: from .ethos_u55_regs.ethos_u55_regs import resampling_mode
+   54: from .high_level_command_stream import Box
+   55: from .high_level_command_stream import Command
+   56: from .high_level_command_stream import DMA
+   57: from .high_level_command_stream import NOP
+   58: from .high_level_command_stream import NpuStripe
+   59: from .numeric_util import quantise_float32
+   60: from .numeric_util import round_up
+   61: from .operation import NpuBlockType
+   62: from .operation import Op
+   63: from .operation import Operation
+   64: from .operation import Padding
+   65: from .operation import RoundingMode
+   66: from .register_command_stream_generator import generate_command_stream
+   67: from .register_command_stream_util import BASE_PTR_INDEX_MEM2MEM
+   68: from .register_command_stream_util import to_npu_acc_type
+   69: from .register_command_stream_util import to_npu_kernel
+   70: from .register_command_stream_util import UNARY_ELEMWISE_OPS
+   71: from .shape4d import Shape4D
+   72: from .tensor import MemType
+   73: from .tensor import Tensor
+   74: from .tensor import TensorFormat
+   75: from .tensor import TensorPurpose
+   76: from .weight_compressor import NpuWeightTensor
+   77: from .weight_compressor import WeightKey
+   78: 
+---
+  710:         npu_op.name = cmd.ps.primary_op.name
+  711:     return npu_op
+  712: 
+  713: 
+  714: def generate_register_command_stream_for_sg(nng, sg, arch, verbose=False):
+  715:     """Generates command stream for the subgraph, adds it to sg.register_command_stream"""
+  716:     # Convert high level command stream to list of NpuOperation
+  717:     npu_op_list = []
+  718:     npu_op_to_cmd = dict()  # map from npu op to high level command
+  719:     for cmd in sg.high_level_command_stream:
+  720:         if isinstance(cmd, NpuStripe) and cmd.ps.npu_block_type == NpuBlockType.Default:
+  721:             print("Warning: Skipping register command stream generation for", cmd.ps)
+  722:         elif isinstance(cmd, NOP):
+  723:             # NOP should not generate anything
+  724:             continue
+  725:         else:
+  726:             npu_op = convert_command_to_npu_op(cmd, arch)
+  727:             npu_op_list.append(npu_op)
+  728:             npu_op_to_cmd[npu_op] = cmd
+  729:     mem_limits = get_mem_limits_for_regions(arch)
+  730:     # Generate register commands
+  731:     if len(sg.high_level_command_stream) > 0:
+  732:         stream_id = DebugDatabase.add_stream(sg)
+  733:         sg.generated_stream_id = stream_id
+  734: 
+  735:         def add_to_debug_db(npu_op: NpuOperation, offset: int):
+  736:             """Adds info to the debug database"""
+  737:             if not isinstance(npu_op, NpuDmaOperation):
+  738:                 cmd = npu_op_to_cmd[npu_op]
+  739:                 DebugDatabase.add_command(stream_id, offset, cmd.ps.primary_op)
+  740: 
+  741:         sg.register_command_stream = generate_command_stream(
+  742:             npu_op_list, arch, verbose, mem_limits, add_to_debug_db, npu_op_to_cmd
+  743:         )
+---
+
+FILE=lut.py LINES=325
+   23: from . import fp_math
+   24: from . import numeric_util
+   25: from .data_type import DataType
+   26: from .debug_database import DebugDatabase
+   27: from .high_level_command_stream import DMA
+   28: from .high_level_command_stream import NpuStripe
+   29: from .numeric_util import round_away_zero
+   30: from .operation import Op
+   31: from .scaling import quantise_scale
+   32: from .tensor import create_const_tensor
+   33: from .tensor import create_equivalence_id
+   34: from .tensor import QuantizationParameters
+   35: from .tensor import TensorPurpose
+   36: 
+---
+  108:     cmd_stream = []  # will contain existing command stream minus unneeded DMA operations
+  109:     lut_state = LUTState()
+  110:     lut_start = arch.shram_lut_address
+  111:     lut_end = lut_start + arch.shram_lut_size
+  112:     for cmd in sg.high_level_command_stream:
+  113:         if isinstance(cmd, NpuStripe) and cmd.ps.lut_tensor is None and arch.shram_reserved_unused_banks == 0:
+  114:             # The command overwrites the last 2 banks containing the LUT; next LUT operation will require DMA
+  115:             # TODO: check the command's SHRAM usage in more detail to determine if the LUT is overwritten or not
+  116:             lut_state = LUTState()
+  117:         if not isinstance(cmd, DMA) or cmd.out_tensor.purpose != TensorPurpose.LUT:
+  118:             # Non-LUT operation; leave untouched
+  119:             cmd_stream.append(cmd)
+  120:             continue
+---
+  135:         lut_tens.address = address
+  136:         cmd.ps.primary_op.activation.lut_index = (address - lut_start) // arch.shram_lut_slot_size
+  137:         lut_state = lut_state.put(lut_tens)
+  138:         cmd_stream.append(cmd)
+  139:     sg.high_level_command_stream = cmd_stream
+  140: 
+  141: 
+  142: def convert_to_lut(op, lut_values, lut_name):
+  143:     # Rewrite the operation by Add with scalar 0 + LUT activation
+  144:     ifm = op.ifm
+  145:     ofm = op.ofm
+  146:     if ifm is None:
+  147:         return op
+---
+
+FILE=nn_graph.py LINES=617
+  156:         self.virtual_outputs = []
+  157:         self.passes = []
+  158:         self.cascaded_passes = []
+  159:         self.name = name
+  160:         self.high_level_command_stream = []
+  161:         self.placement = placement
+  162:         self.command_stream_tensor = None
+  163:         self.flash_tensor = None
+  164:         # Scratch information locally used in the scheduler
+  165:         self.schedule = None
+  166:         self.sched_ops = []
+  167: 
+  168:         self.generated_stream_id = None
+  169: 
+  170:         self.memory_used = {}
+---
+  540:                     )
+  541:                 )
+  542:             print()
+  543: 
+  544:     def print_high_level_command_stream(self):
+  545:         print("print_high_level_command_stream()", self.name)
+  546:         for idx, cmd in enumerate(self.high_level_command_stream):
+  547:             print("%3d %s" % (idx, cmd))
+  548: 
+  549: 
+  550: class Graph:
+  551:     def __init__(self, name="<unnamed>", batch_size=1):
+  552:         self.name = name
+  553:         self.batch_size = batch_size
+  554:         self.subgraphs = []
+---
+  611:     def print_cascaded_passes_with_tensor_sizes(self):
+  612:         for sg in self.subgraphs:
+  613:             sg.print_cascaded_passes_with_tensor_sizes()
+  614: 
+  615:     def print_high_level_command_stream(self):
+  616:         for sg in self.subgraphs:
+  617:             sg.print_high_level_command_stream()
+---
+
+FILE=npu_serialisation.py LINES=164
+   66: 
+   67:     flash_size = sg.memory_used.get(flash_area, 0)
+   68:     scratch_size = sg.memory_used.get(scratch_area, 0)
+   69: 
+   70:     payload_bytes = driver_actions.create_driver_payload(sg.register_command_stream, arch)
+   71: 
+   72:     command_stream_size_bytes = len(payload_bytes)
+   73: 
+   74:     if flash_tens == scratch_tens is None:
+   75:         # First Npu subgraph, create scratch and flash tensors
+   76:         sg.scratch_tensor = make_memory_tensor(
+   77:             sg.name + "_scratch", scratch_area, MemType.Scratch, scratch_size, False, arch
+   78:         )
+   79:         sg.scratch_tensor.purpose = TensorPurpose.Scratch
+   80:         sg.flash_tensor = make_memory_tensor(
+---
+  109: 
+  110:         if sched_op.parent_op.activation_lut:
+  111:             copy_ifm_values_to_memory_tensor(sg.flash_tensor, sched_op.parent_ps.lut_tensor)
+  112: 
+  113:     sg.command_stream_tensor = make_memory_tensor(
+  114:         sg.name + "_command_stream", flash_area, MemType.Permanent_CPU, command_stream_size_bytes, True, arch
+  115:     )
+  116:     sg.command_stream_tensor.values = np.frombuffer(payload_bytes, dtype=np.uint8)
+  117: 
+  118:     return sg.scratch_tensor, sg.scratch_fast_tensor, sg.flash_tensor
+  119: 
+  120: 
+  121: def add_const_tens_to_startup_cascaded_pass(startup_cps, tens):
+  122:     op = Operation(Op.Const, tens.name + "_const")
+  123:     op.set_output_tensor(tens)
+  124:     startup_cps.passes[0].ops.insert(0, op)
+---
+  142:                     for tens in [
+  143:                         callee.scratch_fast_tensor,
+  144:                         callee.scratch_tensor,
+  145:                         callee.flash_tensor,
+  146:                         callee.command_stream_tensor,
+  147:                     ]:
+  148:                         op.inputs.insert(0, tens)
+  149:                         ps.inputs.insert(0, tens)
+  150:                         cps.inputs.insert(0, tens)
+  151:                         if tens != callee.scratch_tensor and tens != callee.scratch_fast_tensor:
+  152:                             add_const_tens_to_startup_cascaded_pass(startup_cps, tens)
+  153:                         sz += tens.storage_size()
+  154: 
+---
+
+FILE=rawdata_writer.py LINES=168
+  140: def write_rawdata_output_from_model(filename, model):
+  141:     filename_sg = f"{filename}_vela.npz"
+  142:     np.savez(
+  143:         filename_sg,
+  144:         cmd_data=model.command_stream,
+  145:         weight_data=model.read_only.data,
+  146:         weight_region=model.read_only.region,
+  147:         scratch_shape=[model.scratch.size],
+  148:         scratch_region=model.scratch.region,
+  149:         scratch_size=model.scratch.size,
+  150:         scratch_fast_shape=[model.scratch_fast.size],
+  151:         scratch_fast_region=model.scratch_fast.region,
+  152:         scratch_fast_size=model.scratch_fast.size,
+---
+
+FILE=register_command_stream_generator.py LINES=1134
+   76: from .numeric_util import round_up_to_int
+   77: from .operation import ExplicitScaling
+   78: from .operation import NpuBlockType
+   79: from .range_set import MemoryAccessSet
+   80: from .register_command_stream_util import BASE_PTR_INDEX_MEM2MEM
+   81: from .register_command_stream_util import calc_blockdep
+   82: from .register_command_stream_util import check_addresses
+   83: from .register_command_stream_util import check_alignment
+   84: from .register_command_stream_util import check_dma_op
+   85: from .register_command_stream_util import check_length
+   86: from .register_command_stream_util import check_strides
+   87: from .register_command_stream_util import get_dma_memory_accesses
+   88: from .register_command_stream_util import get_op_memory_accesses
+   89: from .register_command_stream_util import get_strides
+   90: from .register_command_stream_util import get_wait_dependency
+   91: from .register_command_stream_util import get_zero_point
+   92: from .register_command_stream_util import has_ifm2
+   93: from .register_command_stream_util import quantise
+   94: from .register_command_stream_util import shape3d_to_block
+   95: from .register_command_stream_util import to_kernel
+   96: from .register_command_stream_util import UNARY_ELEMWISE_OPS
+   97: from .register_command_stream_util import Watermark
+   98: 
+   99: 
+  100: class RegisterMachine:
+  101:     def __init__(self):
+  102:         self.n_banks = 1
+  103:         self.registers = [defaultdict(lambda: None) for _ in range(self.n_banks)]
+  104:         self.bank_idx = 0
+  105: 
+---
+  444:     """Generates general IFM registers"""
+  445:     emit.cmd0_with_param(cmd0.NPU_SET_IFM_REGION, ifm.region)
+  446:     generate_addresses(
+  447:         emit,
+  448:         [cmd1.NPU_SET_IFM_BASE0, cmd1.NPU_SET_IFM_BASE1, cmd1.NPU_SET_IFM_BASE2, cmd1.NPU_SET_IFM_BASE3],
+  449:         ifm.tiles.addresses,
+  450:         ifm.layout,
+  451:         ifm.data_type.size_in_bytes(),
+  452:         arch,
+  453:     )
+  454:     generate_tiles(
+  455:         emit, [cmd0.NPU_SET_IFM_HEIGHT0_M1, cmd0.NPU_SET_IFM_HEIGHT1_M1, cmd0.NPU_SET_IFM_WIDTH0_M1], ifm.tiles
+  456:     )
+---
+  482:     """Generates general OFM registers"""
+  483:     emit.cmd0_with_param(cmd0.NPU_SET_OFM_REGION, ofm.region)
+  484:     generate_addresses(
+  485:         emit,
+  486:         [cmd1.NPU_SET_OFM_BASE0, cmd1.NPU_SET_OFM_BASE1, cmd1.NPU_SET_OFM_BASE2, cmd1.NPU_SET_OFM_BASE3],
+  487:         ofm.tiles.addresses,
+  488:         ofm.layout,
+  489:         ofm.data_type.size_in_bytes(),
+  490:         arch,
+  491:     )
+  492:     generate_tiles(
+  493:         emit, [cmd0.NPU_SET_OFM_HEIGHT0_M1, cmd0.NPU_SET_OFM_HEIGHT1_M1, cmd0.NPU_SET_OFM_WIDTH0_M1], ofm.tiles
+  494:     )
+---
+ 1038:     else:
+ 1039:         assert 0, "Unsupported operation"
+ 1040: 
+ 1041: 
+ 1042: def generate_command_stream(
+ 1043:     npu_op_list: List[NpuOperation],
+ 1044:     arch: ArchitectureFeatures,
+ 1045:     verbose: bool,
+ 1046:     mem_limits: Dict[int, int],
+ 1047:     add_to_debug_db=None,
+ 1048:     npu_op_to_cmd=None,
+ 1049: ) -> List[int]:
+ 1050:     """
+---
+ 1115:         print(f"Command stream length = {emit.size_in_bytes()} bytes")
+ 1116:     return res
+ 1117: 
+ 1118: 
+ 1119: def generate_register_command_stream(npu_op_list: List[NpuOperation], npu_accelerator: NpuAccelerator) -> List[int]:
+ 1120:     """
+ 1121:     Internal implementation of the public facing API for generating an Ethos-U register command stream.
+ 1122:     Calculates dependencies between commands and inserts wait operations if needed.
+ 1123: 
+ 1124:     :param npu_op_list: List[NpuOperation] list of high level NPU operations
+ 1125:     :param accelerator: architecture_features.Accelerator enum to pick the correct Ethos-U accelerator
+ 1126:     :return Ethos-U instructions, as a list of 32-bit integers
+ 1127:     """
+---
+ 1130:     mem_limits = dict()
+ 1131:     for region in range(0, 8):
+ 1132:         mem_limits[region] = arch.max_address_offset
+ 1133:     mem_limits[BASE_PTR_INDEX_MEM2MEM] = arch.shram_size_bytes
+ 1134:     return generate_command_stream(npu_op_list, arch, verbose=False, mem_limits=mem_limits)
+---
+
+FILE=vela.py LINES=1313
+   99: 
+  100:     if enable_debug_db:
+  101:         file_offsets = calculate_operator_file_offsets(output_tfl_filename)
+  102:         for idx, offset in enumerate(sorted(file_offsets)):
+  103:             sg = find_subgraph_with_command_stream_order(nng, idx)
+  104:             if sg is not None:
+  105:                 DebugDatabase.set_stream_offset(sg, offset)
+  106:         debug_filename = output_basename + "_debug.xml"
+  107:         DebugDatabase.write(debug_filename, input_name, output_tfl_filename)
+  108: 
+  109:     if compiler_options.timing:
+  110:         stop = time.time()
+  111:         print("Compiler driver took %f s" % (stop - start))
+---
+  172:     if enable_debug_db:
+  173:         stats_writer.write_regor_db(compiled_model.opt_database, output_basename)
+  174: 
+  175: 
+  176: def find_subgraph_with_command_stream_order(nng, idx):
+  177:     for sg in nng.subgraphs:
+  178:         if sg.generated_stream_id == idx:
+  179:             return sg
+  180:     return None
+  181: 
+  182: 
+  183: def calculate_operator_file_offsets(name: str):
+  184:     # Read the vela optimized TFLite file
+---
+  749: 
+  750: def get_compiler_config(
+  751:     enable_debug_db: bool,
+  752:     verbose_all: bool,
+  753:     verbose_high_level_command_stream: bool,
+  754:     verbose_register_command_stream: bool,
+  755:     optimize: str,
+  756:     arena_cache_size: int,
+  757:     verbose_schedule: bool,
+  758:     verbose_allocation: bool,
+  759:     verbose_graph: bool,
+  760:     verbose_quantization: bool,
+  761:     verbose_packing: bool,
+  762:     verbose_performance: bool,
+---
+  766:     disable_fwd: bool,
+  767:     disable_cascading: bool,
+  768:     disable_buffering: bool,
+  769:     disable_ifm_reuse: bool,
+  770:     cop_format: str,
+  771:     separate_io_regions: bool,
+  772:     cpu_tensor_alignment: int,
+  773:     tensor_allocator: str,
+  774: ) -> str:
+  775:     """Build compiler config file."""
+  776:     config = "\n[compiler]\n"
+  777:     if verbose_high_level_command_stream:
+  778:         config += "verbose_high_level_command_stream=true\n"
+  779:     if verbose_register_command_stream:
+  780:         config += "verbose_register_command_stream=true\n"
+  781:     if verbose_performance or show_cpu_operations or enable_debug_db:
+  782:         config += "enable_db=true\n"
+  783:     if output_format == "raw":
+  784:         config += "output_format=Raw\n"
+  785:     else:
+  786:         config += "output_format=TFLite\n"
+  787:     config += f"cop_format={cop_format}\n"
+  788: 
+  789:     config += "\n[scheduler]\n"
+  790:     config += f"optimize={optimize}\n"
+  791:     config += f"arena_size_limit={arena_cache_size}\n"
+  792:     if verbose_schedule:
+  793:         config += "verbose=true\n"
+  794:     if verbose_allocation:
+  795:         config += "verbose_allocation=true\n"
+---
+  804:         config += "WeightBuffering|"
+  805:     if disable_ifm_reuse:
+  806:         config += "ReuseIFM|"
+  807:     config = config.rstrip("|") + "\n"
+  808:     if separate_io_regions:
+  809:         config += "separate_io_regions=true\n"
+  810:     config += f"cpu_tensor_alignment={cpu_tensor_alignment}\n"
+  811:     config += f"tensor_allocator={tensor_allocator}\n"
+  812: 
+  813:     config += "\n[graph]\n"
+  814:     if verbose_graph:
+  815:         config += "verbose=true\n"
+  816:     if verbose_quantization:
+  817:         config += "verbose_quantization=true\n"
+---
+  956:     parser.add_argument("--verbose-tensor-format", action="store_true", help="Enable tensor format debug")
+  957:     parser.add_argument("--verbose-schedule", action="store_true", help="Enable schedule debug")
+  958:     parser.add_argument("--verbose-allocation", action="store_true", help="Enable tensor allocation debug")
+  959:     parser.add_argument(
+  960:         "--verbose-high-level-command-stream", action="store_true", help="Enable high level command stream debug"
+  961:     )
+  962:     parser.add_argument(
+  963:         "--verbose-register-command-stream", action="store_true", help="Enable register command stream debug"
+  964:     )
+  965:     parser.add_argument(
+  966:         "--verbose-operators", action="deprecated_store_true", help="[DEPRECATED] Enable operator list debug"
+  967:     )
+  968:     parser.add_argument("--verbose-weights", action="store_true", help="Enable weights information debug")
+---
+ 1114: 
+ 1115:     if args.network is None:
+ 1116:         parser.error("the following argument is required: NETWORK")
+ 1117: 
+ 1118:     if args.cop_format == "COP1" and args.separate_io_regions:
+ 1119:         parser.error("Driver actions format 'COP2' is required for --separate-io-regions")
+ 1120: 
+ 1121:     def _parse_config(config):
+ 1122:         # Make sure the correct separator is used depending on OS
+ 1123:         config = os.path.normpath(config)
+ 1124: 
+ 1125:         if os.path.splitext(config)[1] != ".ini":
+ 1126:             raise InputFileError(config, "Configuration files must use the .ini extension")
+---
+ 1220: 
+ 1221:         options = get_compiler_config(
+ 1222:             args.enable_debug_db,
+ 1223:             args.verbose_all,
+ 1224:             args.verbose_high_level_command_stream,
+ 1225:             args.verbose_register_command_stream,
+ 1226:             args.optimise,
+ 1227:             # TODO MLBEDSW-8191: Clean up arena_cache_size selection
+ 1228:             # arch.arena_cache_size will use value from CLI option if available, otherwise from config file
+ 1229:             arch.arena_cache_size,
+ 1230:             args.verbose_schedule,
+ 1231:             args.verbose_allocation,
+ 1232:             args.verbose_graph,
+ 1233:             args.verbose_quantization,
+---
+ 1239:             args.disable_fwd,
+ 1240:             args.disable_cascading,
+ 1241:             args.disable_buffering,
+ 1242:             args.disable_ifm_reuse,
+ 1243:             args.cop_format,
+ 1244:             args.separate_io_regions,
+ 1245:             args.cpu_tensor_alignment,
+ 1246:             args.tensor_allocator,
+ 1247:         )
+ 1248: 
+ 1249:         process_regor(
+ 1250:             arch,
+ 1251:             args.network,
+ 1252:             accelerator,
+---
+ 1268:             verbose_packing=args.verbose_packing,
+ 1269:             verbose_tensor_purpose=args.verbose_tensor_purpose,
+ 1270:             verbose_tensor_format=args.verbose_tensor_format,
+ 1271:             verbose_allocation=args.verbose_allocation,
+ 1272:             verbose_high_level_command_stream=args.verbose_high_level_command_stream,
+ 1273:             verbose_register_command_stream=args.verbose_register_command_stream,
+ 1274:             verbose_operators=args.verbose_operators,
+ 1275:             verbose_weights=args.verbose_weights,
+ 1276:             verbose_cycle_estimate=args.verbose_cycle_estimate,
+ 1277:             verbose_performance=args.verbose_performance,
+ 1278:             verbose_progress=args.verbose_progress,
+ 1279:             show_cpu_operations=args.show_cpu_operations,
+ 1280:             tensor_allocator=args.tensor_allocator,
+ 1281:             timing=args.timing,
+---
+
+SOURCE_MATCHES = 134
+
+========== IMPORT CANDIDATES ==========
+
+MODULE=ethosu.vela.register_command_stream_util FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/register_command_stream_util.py
+RELEVANT_CALLABLES = []
+
+MODULE=ethosu.vela.register_command_stream_generator FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/register_command_stream_generator.py
+RELEVANT_CALLABLES = ['RegisterMachine', 'CommandStreamEmitter', 'generate_shram_registers', 'generate_registers_for_op', 'generate_command_stream', 'generate_register_command_stream']
+
+MODULE=ethosu.vela.high_level_command_to_npu_op FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/high_level_command_to_npu_op.py
+RELEVANT_CALLABLES = ['Command', 'generate_command_stream', 'convert_command_to_npu_op', 'generate_register_command_stream_for_sg']
+
+MODULE=ethosu.vela.vela FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/vela.py
+RELEVANT_CALLABLES = ['ConfigParser', 'find_subgraph_with_command_stream_order']
+
+MODULE=ethosu.vela.api FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/api.py
+RELEVANT_CALLABLES = ['npu_generate_register_command_stream']
+
+MODULE=ethosu.vela.ethos_u55_regs FOUND=True
+ORIGIN = /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/ethos_u55_regs/__init__.py
+RELEVANT_CALLABLES = []
+
+MODULE=ethosu.vela.npu_command FOUND=False
+
+VELA_API_DISCOVERY=FINISHED
+
+========== REGISTER OPCODE / OFM STRUCT DEFINITIONS ==========
+
+--- ethosu55_interface.h:469-547 ---
+  469:     NPU_SET_IFM_ZERO_POINT    = 265,
+  470:     NPU_SET_IFM_WIDTH0_M1     = 266,
+  471:     NPU_SET_IFM_HEIGHT0_M1    = 267,
+  472:     NPU_SET_IFM_HEIGHT1_M1    = 268,
+  473:     NPU_SET_IFM_IB_END        = 269,
+  474:     NPU_SET_IFM_REGION        = 271,
+  475:     NPU_SET_OFM_WIDTH_M1      = 273,
+  476:     NPU_SET_OFM_HEIGHT_M1     = 274,
+  477:     NPU_SET_OFM_DEPTH_M1      = 275,
+  478:     NPU_SET_OFM_PRECISION     = 276,
+  479:     NPU_SET_OFM_BLK_WIDTH_M1  = 277,
+  480:     NPU_SET_OFM_BLK_HEIGHT_M1 = 278,
+  481:     NPU_SET_OFM_BLK_DEPTH_M1  = 279,
+  482:     NPU_SET_OFM_ZERO_POINT    = 280,
+  483:     NPU_SET_OFM_WIDTH0_M1     = 282,
+  484:     NPU_SET_OFM_HEIGHT0_M1    = 283,
+  485:     NPU_SET_OFM_HEIGHT1_M1    = 284,
+  486:     NPU_SET_OFM_REGION        = 287,
+  487:     NPU_SET_KERNEL_WIDTH_M1   = 288,
+  488:     NPU_SET_KERNEL_HEIGHT_M1  = 289,
+  489:     NPU_SET_KERNEL_STRIDE     = 290,
+  490:     NPU_SET_ACC_FORMAT        = 292,
+  491:     NPU_SET_ACTIVATION        = 293,
+  492:     NPU_SET_ACTIVATION_MIN    = 294,
+  493:     NPU_SET_ACTIVATION_MAX    = 295,
+  494:     NPU_SET_WEIGHT_REGION     = 296,
+  495:     NPU_SET_SCALE_REGION      = 297,
+  496:     NPU_SET_AB_START          = 301,
+  497:     NPU_SET_BLOCKDEP          = 303,
+  498:     NPU_SET_DMA0_SRC_REGION   = 304,
+  499:     NPU_SET_DMA0_DST_REGION   = 305,
+  500:     NPU_SET_DMA0_SIZE0        = 306,
+  501:     NPU_SET_DMA0_SIZE1        = 307,
+  502:     NPU_SET_IFM2_BROADCAST    = 384,
+  503:     NPU_SET_IFM2_SCALAR       = 385,
+  504:     NPU_SET_IFM2_PRECISION    = 389,
+  505:     NPU_SET_IFM2_ZERO_POINT   = 393,
+  506:     NPU_SET_IFM2_WIDTH0_M1    = 394,
+  507:     NPU_SET_IFM2_HEIGHT0_M1   = 395,
+  508:     NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  509:     NPU_SET_IFM2_IB_START     = 397,
+  510:     NPU_SET_IFM2_REGION       = 399,
+  511: };
+  512: 
+  513: enum class cmd1_opcode : uint16_t
+  514: {
+  515:     NPU_SET_IFM_BASE0     = 0,
+  516:     NPU_SET_IFM_BASE1     = 1,
+  517:     NPU_SET_IFM_BASE2     = 2,
+  518:     NPU_SET_IFM_BASE3     = 3,
+  519:     NPU_SET_IFM_STRIDE_X  = 4,
+  520:     NPU_SET_IFM_STRIDE_Y  = 5,
+  521:     NPU_SET_IFM_STRIDE_C  = 6,
+  522:     NPU_SET_OFM_BASE0     = 16,
+  523:     NPU_SET_OFM_BASE1     = 17,
+  524:     NPU_SET_OFM_BASE2     = 18,
+  525:     NPU_SET_OFM_BASE3     = 19,
+  526:     NPU_SET_OFM_STRIDE_X  = 20,
+  527:     NPU_SET_OFM_STRIDE_Y  = 21,
+  528:     NPU_SET_OFM_STRIDE_C  = 22,
+  529:     NPU_SET_WEIGHT_BASE   = 32,
+  530:     NPU_SET_WEIGHT_LENGTH = 33,
+  531:     NPU_SET_SCALE_BASE    = 34,
+  532:     NPU_SET_SCALE_LENGTH  = 35,
+  533:     NPU_SET_OFM_SCALE     = 36,
+  534:     NPU_SET_OPA_SCALE     = 37,
+  535:     NPU_SET_OPB_SCALE     = 38,
+  536:     NPU_SET_DMA0_SRC      = 48,
+  537:     NPU_SET_DMA0_DST      = 49,
+  538:     NPU_SET_DMA0_LEN      = 50,
+  539:     NPU_SET_IFM2_BASE0    = 128,
+  540:     NPU_SET_IFM2_BASE1    = 129,
+  541:     NPU_SET_IFM2_BASE2    = 130,
+  542:     NPU_SET_IFM2_BASE3    = 131,
+  543:     NPU_SET_IFM2_STRIDE_X = 132,
+  544:     NPU_SET_IFM2_STRIDE_Y = 133,
+  545:     NPU_SET_IFM2_STRIDE_C = 134,
+  546:     NPU_SET_USER_DEFINED0 = 160,
+  547:     NPU_SET_USER_DEFINED1 = 161,
+
+--- ethosu55_interface.h:551-590 ---
+  551:     NPU_SET_USER_DEFINED5 = 165,
+  552:     NPU_SET_USER_DEFINED6 = 166,
+  553:     NPU_SET_USER_DEFINED7 = 167,
+  554: };
+  555: 
+  556: enum class cmd_ctrl : uint8_t
+  557: {
+  558:     CMD0_CTRL = 0,
+  559:     CMD1_CTRL = 1,
+  560: };
+  561: 
+  562: enum class custom_dma_cs : uint8_t
+  563: {
+  564:     DISABLE = 0,
+  565:     ENABLE  = 1,
+  566: };
+  567: 
+  568: enum class custom_dma : uint8_t
+  569: {
+  570:     NOT_IMPLEMENTED = 0,
+  571:     IMPLEMENTED     = 1,
+  572: };
+  573: 
+  574: enum class dma_fault_src : uint8_t
+  575: {
+  576:     AXI_M0 = 0,
+  577:     AXI_M1 = 1,
+  578: };
+  579: 
+  580: enum class dma_region_mode : uint8_t
+  581: {
+  582:     EXTERNAL = 0,
+  583:     INTERNAL = 1,
+  584: };
+  585: 
+  586: enum class dma_stride_mode : uint8_t
+  587: {
+  588:     D1 = 0,
+  589: };
+  590: 
+
+--- ethosu55_interface.h:899-989 ---
+  899:     CMD0_OPCODE_NPU_SET_IFM_ZERO_POINT    = 265,
+  900:     CMD0_OPCODE_NPU_SET_IFM_WIDTH0_M1     = 266,
+  901:     CMD0_OPCODE_NPU_SET_IFM_HEIGHT0_M1    = 267,
+  902:     CMD0_OPCODE_NPU_SET_IFM_HEIGHT1_M1    = 268,
+  903:     CMD0_OPCODE_NPU_SET_IFM_IB_END        = 269,
+  904:     CMD0_OPCODE_NPU_SET_IFM_REGION        = 271,
+  905:     CMD0_OPCODE_NPU_SET_OFM_WIDTH_M1      = 273,
+  906:     CMD0_OPCODE_NPU_SET_OFM_HEIGHT_M1     = 274,
+  907:     CMD0_OPCODE_NPU_SET_OFM_DEPTH_M1      = 275,
+  908:     CMD0_OPCODE_NPU_SET_OFM_PRECISION     = 276,
+  909:     CMD0_OPCODE_NPU_SET_OFM_BLK_WIDTH_M1  = 277,
+  910:     CMD0_OPCODE_NPU_SET_OFM_BLK_HEIGHT_M1 = 278,
+  911:     CMD0_OPCODE_NPU_SET_OFM_BLK_DEPTH_M1  = 279,
+  912:     CMD0_OPCODE_NPU_SET_OFM_ZERO_POINT    = 280,
+  913:     CMD0_OPCODE_NPU_SET_OFM_WIDTH0_M1     = 282,
+  914:     CMD0_OPCODE_NPU_SET_OFM_HEIGHT0_M1    = 283,
+  915:     CMD0_OPCODE_NPU_SET_OFM_HEIGHT1_M1    = 284,
+  916:     CMD0_OPCODE_NPU_SET_OFM_REGION        = 287,
+  917:     CMD0_OPCODE_NPU_SET_KERNEL_WIDTH_M1   = 288,
+  918:     CMD0_OPCODE_NPU_SET_KERNEL_HEIGHT_M1  = 289,
+  919:     CMD0_OPCODE_NPU_SET_KERNEL_STRIDE     = 290,
+  920:     CMD0_OPCODE_NPU_SET_ACC_FORMAT        = 292,
+  921:     CMD0_OPCODE_NPU_SET_ACTIVATION        = 293,
+  922:     CMD0_OPCODE_NPU_SET_ACTIVATION_MIN    = 294,
+  923:     CMD0_OPCODE_NPU_SET_ACTIVATION_MAX    = 295,
+  924:     CMD0_OPCODE_NPU_SET_WEIGHT_REGION     = 296,
+  925:     CMD0_OPCODE_NPU_SET_SCALE_REGION      = 297,
+  926:     CMD0_OPCODE_NPU_SET_AB_START          = 301,
+  927:     CMD0_OPCODE_NPU_SET_BLOCKDEP          = 303,
+  928:     CMD0_OPCODE_NPU_SET_DMA0_SRC_REGION   = 304,
+  929:     CMD0_OPCODE_NPU_SET_DMA0_DST_REGION   = 305,
+  930:     CMD0_OPCODE_NPU_SET_DMA0_SIZE0        = 306,
+  931:     CMD0_OPCODE_NPU_SET_DMA0_SIZE1        = 307,
+  932:     CMD0_OPCODE_NPU_SET_IFM2_BROADCAST    = 384,
+  933:     CMD0_OPCODE_NPU_SET_IFM2_SCALAR       = 385,
+  934:     CMD0_OPCODE_NPU_SET_IFM2_PRECISION    = 389,
+  935:     CMD0_OPCODE_NPU_SET_IFM2_ZERO_POINT   = 393,
+  936:     CMD0_OPCODE_NPU_SET_IFM2_WIDTH0_M1    = 394,
+  937:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT0_M1   = 395,
+  938:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  939:     CMD0_OPCODE_NPU_SET_IFM2_IB_START     = 397,
+  940:     CMD0_OPCODE_NPU_SET_IFM2_REGION       = 399,
+  941: };
+  942: 
+  943: enum cmd1_opcode
+  944: {
+  945:     CMD1_OPCODE_NPU_SET_IFM_BASE0     = 0,
+  946:     CMD1_OPCODE_NPU_SET_IFM_BASE1     = 1,
+  947:     CMD1_OPCODE_NPU_SET_IFM_BASE2     = 2,
+  948:     CMD1_OPCODE_NPU_SET_IFM_BASE3     = 3,
+  949:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_X  = 4,
+  950:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y  = 5,
+  951:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_C  = 6,
+  952:     CMD1_OPCODE_NPU_SET_OFM_BASE0     = 16,
+  953:     CMD1_OPCODE_NPU_SET_OFM_BASE1     = 17,
+  954:     CMD1_OPCODE_NPU_SET_OFM_BASE2     = 18,
+  955:     CMD1_OPCODE_NPU_SET_OFM_BASE3     = 19,
+  956:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_X  = 20,
+  957:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y  = 21,
+  958:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_C  = 22,
+  959:     CMD1_OPCODE_NPU_SET_WEIGHT_BASE   = 32,
+  960:     CMD1_OPCODE_NPU_SET_WEIGHT_LENGTH = 33,
+  961:     CMD1_OPCODE_NPU_SET_SCALE_BASE    = 34,
+  962:     CMD1_OPCODE_NPU_SET_SCALE_LENGTH  = 35,
+  963:     CMD1_OPCODE_NPU_SET_OFM_SCALE     = 36,
+  964:     CMD1_OPCODE_NPU_SET_OPA_SCALE     = 37,
+  965:     CMD1_OPCODE_NPU_SET_OPB_SCALE     = 38,
+  966:     CMD1_OPCODE_NPU_SET_DMA0_SRC      = 48,
+  967:     CMD1_OPCODE_NPU_SET_DMA0_DST      = 49,
+  968:     CMD1_OPCODE_NPU_SET_DMA0_LEN      = 50,
+  969:     CMD1_OPCODE_NPU_SET_IFM2_BASE0    = 128,
+  970:     CMD1_OPCODE_NPU_SET_IFM2_BASE1    = 129,
+  971:     CMD1_OPCODE_NPU_SET_IFM2_BASE2    = 130,
+  972:     CMD1_OPCODE_NPU_SET_IFM2_BASE3    = 131,
+  973:     CMD1_OPCODE_NPU_SET_IFM2_STRIDE_X = 132,
+  974:     CMD1_OPCODE_NPU_SET_IFM2_STRIDE_Y = 133,
+  975:     CMD1_OPCODE_NPU_SET_IFM2_STRIDE_C = 134,
+  976:     CMD1_OPCODE_NPU_SET_USER_DEFINED0 = 160,
+  977:     CMD1_OPCODE_NPU_SET_USER_DEFINED1 = 161,
+  978:     CMD1_OPCODE_NPU_SET_USER_DEFINED2 = 162,
+  979:     CMD1_OPCODE_NPU_SET_USER_DEFINED3 = 163,
+  980:     CMD1_OPCODE_NPU_SET_USER_DEFINED4 = 164,
+  981:     CMD1_OPCODE_NPU_SET_USER_DEFINED5 = 165,
+  982:     CMD1_OPCODE_NPU_SET_USER_DEFINED6 = 166,
+  983:     CMD1_OPCODE_NPU_SET_USER_DEFINED7 = 167,
+  984: };
+  985: 
+  986: enum cmd_ctrl
+  987: {
+  988:     CMD_CTRL_CMD0_CTRL = 0,
+  989:     CMD_CTRL_CMD1_CTRL = 1,
+
+--- ethosu55_interface.h:1586-1641 ---
+ 1586:     "CMD0_OPCODE_NPU_SET_IFM_WIDTH0_M1",
+ 1587:     "CMD0_OPCODE_NPU_SET_IFM_HEIGHT0_M1",
+ 1588:     "CMD0_OPCODE_NPU_SET_IFM_HEIGHT1_M1",
+ 1589:     "CMD0_OPCODE_NPU_SET_IFM_IB_END",
+ 1590:     "****",
+ 1591:     "CMD0_OPCODE_NPU_SET_IFM_REGION",
+ 1592:     "****",
+ 1593:     "CMD0_OPCODE_NPU_SET_OFM_WIDTH_M1",
+ 1594:     "CMD0_OPCODE_NPU_SET_OFM_HEIGHT_M1",
+ 1595:     "CMD0_OPCODE_NPU_SET_OFM_DEPTH_M1",
+ 1596:     "CMD0_OPCODE_NPU_SET_OFM_PRECISION",
+ 1597:     "CMD0_OPCODE_NPU_SET_OFM_BLK_WIDTH_M1",
+ 1598:     "CMD0_OPCODE_NPU_SET_OFM_BLK_HEIGHT_M1",
+ 1599:     "CMD0_OPCODE_NPU_SET_OFM_BLK_DEPTH_M1",
+ 1600:     "CMD0_OPCODE_NPU_SET_OFM_ZERO_POINT",
+ 1601:     "****",
+ 1602:     "CMD0_OPCODE_NPU_SET_OFM_WIDTH0_M1",
+ 1603:     "CMD0_OPCODE_NPU_SET_OFM_HEIGHT0_M1",
+ 1604:     "CMD0_OPCODE_NPU_SET_OFM_HEIGHT1_M1",
+ 1605:     "****",
+ 1606:     "****",
+ 1607:     "CMD0_OPCODE_NPU_SET_OFM_REGION",
+ 1608:     "CMD0_OPCODE_NPU_SET_KERNEL_WIDTH_M1",
+ 1609:     "CMD0_OPCODE_NPU_SET_KERNEL_HEIGHT_M1",
+ 1610:     "CMD0_OPCODE_NPU_SET_KERNEL_STRIDE",
+ 1611:     "****",
+ 1612:     "CMD0_OPCODE_NPU_SET_ACC_FORMAT",
+ 1613:     "CMD0_OPCODE_NPU_SET_ACTIVATION",
+ 1614:     "CMD0_OPCODE_NPU_SET_ACTIVATION_MIN",
+ 1615:     "CMD0_OPCODE_NPU_SET_ACTIVATION_MAX",
+ 1616:     "CMD0_OPCODE_NPU_SET_WEIGHT_REGION",
+ 1617:     "CMD0_OPCODE_NPU_SET_SCALE_REGION",
+ 1618:     "****",
+ 1619:     "****",
+ 1620:     "****",
+ 1621:     "CMD0_OPCODE_NPU_SET_AB_START",
+ 1622:     "****",
+ 1623:     "CMD0_OPCODE_NPU_SET_BLOCKDEP",
+ 1624:     "CMD0_OPCODE_NPU_SET_DMA0_SRC_REGION",
+ 1625:     "CMD0_OPCODE_NPU_SET_DMA0_DST_REGION",
+ 1626:     "CMD0_OPCODE_NPU_SET_DMA0_SIZE0",
+ 1627:     "CMD0_OPCODE_NPU_SET_DMA0_SIZE1",
+ 1628:     "****",
+ 1629:     "****",
+ 1630:     "****",
+ 1631:     "****",
+ 1632:     "****",
+ 1633:     "****",
+ 1634:     "****",
+ 1635:     "****",
+ 1636:     "****",
+ 1637:     "****",
+ 1638:     "****",
+ 1639:     "****",
+ 1640:     "****",
+ 1641:     "****",
+
+--- ethosu55_interface.h:1718-1776 ---
+ 1718:     "****",
+ 1719:     "CMD0_OPCODE_NPU_SET_IFM2_REGION",
+ 1720: };
+ 1721: 
+ 1722: static const char *cmd1_opcode_str[] = {
+ 1723:     "CMD1_OPCODE_NPU_SET_IFM_BASE0",
+ 1724:     "CMD1_OPCODE_NPU_SET_IFM_BASE1",
+ 1725:     "CMD1_OPCODE_NPU_SET_IFM_BASE2",
+ 1726:     "CMD1_OPCODE_NPU_SET_IFM_BASE3",
+ 1727:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_X",
+ 1728:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y",
+ 1729:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_C",
+ 1730:     "****",
+ 1731:     "****",
+ 1732:     "****",
+ 1733:     "****",
+ 1734:     "****",
+ 1735:     "****",
+ 1736:     "****",
+ 1737:     "****",
+ 1738:     "****",
+ 1739:     "CMD1_OPCODE_NPU_SET_OFM_BASE0",
+ 1740:     "CMD1_OPCODE_NPU_SET_OFM_BASE1",
+ 1741:     "CMD1_OPCODE_NPU_SET_OFM_BASE2",
+ 1742:     "CMD1_OPCODE_NPU_SET_OFM_BASE3",
+ 1743:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_X",
+ 1744:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y",
+ 1745:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_C",
+ 1746:     "****",
+ 1747:     "****",
+ 1748:     "****",
+ 1749:     "****",
+ 1750:     "****",
+ 1751:     "****",
+ 1752:     "****",
+ 1753:     "****",
+ 1754:     "****",
+ 1755:     "CMD1_OPCODE_NPU_SET_WEIGHT_BASE",
+ 1756:     "CMD1_OPCODE_NPU_SET_WEIGHT_LENGTH",
+ 1757:     "CMD1_OPCODE_NPU_SET_SCALE_BASE",
+ 1758:     "CMD1_OPCODE_NPU_SET_SCALE_LENGTH",
+ 1759:     "CMD1_OPCODE_NPU_SET_OFM_SCALE",
+ 1760:     "CMD1_OPCODE_NPU_SET_OPA_SCALE",
+ 1761:     "CMD1_OPCODE_NPU_SET_OPB_SCALE",
+ 1762:     "****",
+ 1763:     "****",
+ 1764:     "****",
+ 1765:     "****",
+ 1766:     "****",
+ 1767:     "****",
+ 1768:     "****",
+ 1769:     "****",
+ 1770:     "****",
+ 1771:     "CMD1_OPCODE_NPU_SET_DMA0_SRC",
+ 1772:     "CMD1_OPCODE_NPU_SET_DMA0_DST",
+ 1773:     "CMD1_OPCODE_NPU_SET_DMA0_LEN",
+ 1774:     "****",
+ 1775:     "****",
+ 1776:     "****",
+
+--- ethosu55_interface.h:17346-17388 ---
+17346:             op                            = "NPU_SET_IFM_IB_END";
+17347:             v.disassemble(fields);
+17348:             break;
+17349:         }
+17350:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17351:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM_REGION):
+17352:         {
+17353:             const npu_set_ifm_region_t &v = *reinterpret_cast<const npu_set_ifm_region_t *>(in);
+17354:             op                            = "NPU_SET_IFM_REGION";
+17355:             v.disassemble(fields);
+17356:             break;
+17357:         }
+17358:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17359:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_WIDTH_M1):
+17360:         {
+17361:             const npu_set_ofm_width_m1_t &v = *reinterpret_cast<const npu_set_ofm_width_m1_t *>(in);
+17362:             op                              = "NPU_SET_OFM_WIDTH_M1";
+17363:             v.disassemble(fields);
+17364:             break;
+17365:         }
+17366:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17367:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_HEIGHT_M1):
+17368:         {
+17369:             const npu_set_ofm_height_m1_t &v = *reinterpret_cast<const npu_set_ofm_height_m1_t *>(in);
+17370:             op                               = "NPU_SET_OFM_HEIGHT_M1";
+17371:             v.disassemble(fields);
+17372:             break;
+17373:         }
+17374:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17375:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_DEPTH_M1):
+17376:         {
+17377:             const npu_set_ofm_depth_m1_t &v = *reinterpret_cast<const npu_set_ofm_depth_m1_t *>(in);
+17378:             op                              = "NPU_SET_OFM_DEPTH_M1";
+17379:             v.disassemble(fields);
+17380:             break;
+17381:         }
+17382:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17383:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_PRECISION):
+17384:         {
+17385:             const npu_set_ofm_precision_t &v = *reinterpret_cast<const npu_set_ofm_precision_t *>(in);
+17386:             op                               = "NPU_SET_OFM_PRECISION";
+17387:             v.disassemble(fields);
+17388:             break;
+
+--- ethosu55_interface.h:17442-17484 ---
+17442:             op                                = "NPU_SET_OFM_HEIGHT1_M1";
+17443:             v.disassemble(fields);
+17444:             break;
+17445:         }
+17446:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17447:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_REGION):
+17448:         {
+17449:             const npu_set_ofm_region_t &v = *reinterpret_cast<const npu_set_ofm_region_t *>(in);
+17450:             op                            = "NPU_SET_OFM_REGION";
+17451:             v.disassemble(fields);
+17452:             break;
+17453:         }
+17454:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17455:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_KERNEL_WIDTH_M1):
+17456:         {
+17457:             const npu_set_kernel_width_m1_t &v = *reinterpret_cast<const npu_set_kernel_width_m1_t *>(in);
+17458:             op                                 = "NPU_SET_KERNEL_WIDTH_M1";
+17459:             v.disassemble(fields);
+17460:             break;
+17461:         }
+17462:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17463:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_KERNEL_HEIGHT_M1):
+17464:         {
+17465:             const npu_set_kernel_height_m1_t &v = *reinterpret_cast<const npu_set_kernel_height_m1_t *>(in);
+17466:             op                                  = "NPU_SET_KERNEL_HEIGHT_M1";
+17467:             v.disassemble(fields);
+17468:             break;
+17469:         }
+17470:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17471:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_KERNEL_STRIDE):
+17472:         {
+17473:             const npu_set_kernel_stride_t &v = *reinterpret_cast<const npu_set_kernel_stride_t *>(in);
+17474:             op                               = "NPU_SET_KERNEL_STRIDE";
+17475:             v.disassemble(fields);
+17476:             break;
+17477:         }
+17478:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) |
+17479:             static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_ACC_FORMAT):
+17480:         {
+17481:             const npu_set_acc_format_t &v = *reinterpret_cast<const npu_set_acc_format_t *>(in);
+17482:             op                            = "NPU_SET_ACC_FORMAT";
+17483:             v.disassemble(fields);
+17484:             break;
+
+--- ethosu55_interface.h:19632-19688 ---
+19632:         uint32_t reserved1 : 12;
+19633:         uint32_t custom_dma_cs : 1; //  Custom DMA select
+19634: #ifdef __cplusplus
+19635:       public:
+19636:         npu_set_ifm_region_t(uint32_t _region, NPU_NAMESPACE::custom_dma_cs _custom_dma_cs) :
+19637:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM_REGION)), reserved0(0),
+19638:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL)), region(_region & ((1U << 3) - 1)),
+19639:             reserved1(0), custom_dma_cs(static_cast<uint8_t>(_custom_dma_cs) & ((1U << 1) - 1))
+19640:         {
+19641:         }
+19642:         CONSTEXPR npu_set_ifm_region_t() :
+19643:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM_REGION)), reserved0(0),
+19644:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL)), region(0), reserved1(0), custom_dma_cs(0)
+19645:         {
+19646:         }
+19647:         CONSTEXPR bool valid() const
+19648:         {
+19649:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM_REGION) &&
+19650:                    control == static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL);
+19651:         }
+19652:         CONSTEXPR void init()
+19653:         {
+19654:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM_REGION);
+19655:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL);
+19656:         }
+19657:         operator uint32_t()
+19658:         {
+19659:             uint32_t word;
+19660:             std::memcpy(&word, this, sizeof(word));
+19661:             return word;
+19662:         }
+19663:         CONSTEXPR NPU_NAMESPACE::cmd0_opcode get_opcode() const
+19664:         {
+19665:             return static_cast<NPU_NAMESPACE::cmd0_opcode>(opcode);
+19666:         }
+19667:         CONSTEXPR npu_set_ifm_region_t &set_opcode(NPU_NAMESPACE::cmd0_opcode value)
+19668:         {
+19669:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+19670:             return *this;
+19671:         }
+19672:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+19673:         {
+19674:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+19675:         }
+19676:         CONSTEXPR npu_set_ifm_region_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+19677:         {
+19678:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+19679:             return *this;
+19680:         }
+19681:         CONSTEXPR uint32_t get_region() const
+19682:         {
+19683:             return static_cast<uint32_t>(region);
+19684:         }
+19685:         CONSTEXPR npu_set_ifm_region_t &set_region(uint32_t value)
+19686:         {
+19687:             region = static_cast<uint8_t>(value) & ((1U << 3) - 1);
+19688:             return *this;
+
+--- ethosu55_interface.h:20607-20663 ---
+20607:         uint32_t reserved1 : 12;
+20608:         uint32_t custom_dma_cs : 1; //  Custom DMA select
+20609: #ifdef __cplusplus
+20610:       public:
+20611:         npu_set_ofm_region_t(uint32_t _region, NPU_NAMESPACE::custom_dma_cs _custom_dma_cs) :
+20612:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_REGION)), reserved0(0),
+20613:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL)), region(_region & ((1U << 3) - 1)),
+20614:             reserved1(0), custom_dma_cs(static_cast<uint8_t>(_custom_dma_cs) & ((1U << 1) - 1))
+20615:         {
+20616:         }
+20617:         CONSTEXPR npu_set_ofm_region_t() :
+20618:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_REGION)), reserved0(0),
+20619:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL)), region(0), reserved1(0), custom_dma_cs(0)
+20620:         {
+20621:         }
+20622:         CONSTEXPR bool valid() const
+20623:         {
+20624:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_REGION) &&
+20625:                    control == static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL);
+20626:         }
+20627:         CONSTEXPR void init()
+20628:         {
+20629:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_OFM_REGION);
+20630:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL);
+20631:         }
+20632:         operator uint32_t()
+20633:         {
+20634:             uint32_t word;
+20635:             std::memcpy(&word, this, sizeof(word));
+20636:             return word;
+20637:         }
+20638:         CONSTEXPR NPU_NAMESPACE::cmd0_opcode get_opcode() const
+20639:         {
+20640:             return static_cast<NPU_NAMESPACE::cmd0_opcode>(opcode);
+20641:         }
+20642:         CONSTEXPR npu_set_ofm_region_t &set_opcode(NPU_NAMESPACE::cmd0_opcode value)
+20643:         {
+20644:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+20645:             return *this;
+20646:         }
+20647:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+20648:         {
+20649:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+20650:         }
+20651:         CONSTEXPR npu_set_ofm_region_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+20652:         {
+20653:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+20654:             return *this;
+20655:         }
+20656:         CONSTEXPR uint32_t get_region() const
+20657:         {
+20658:             return static_cast<uint32_t>(region);
+20659:         }
+20660:         CONSTEXPR npu_set_ofm_region_t &set_region(uint32_t value)
+20661:         {
+20662:             region = static_cast<uint8_t>(value) & ((1U << 3) - 1);
+20663:             return *this;
+
+--- ethosu55_interface.h:22852-22891 ---
+22852:         }
+22853: #endif
+22854: #endif
+22855:     };
+22856:     // IFM Tile 0 address
+22857:     struct npu_set_ifm_base0_t
+22858:     {
+22859: #ifdef __cplusplus
+22860:       private:
+22861: #endif
+22862:         uint32_t opcode : 10; //  opcode
+22863:         uint32_t reserved0 : 4;
+22864:         uint32_t control : 2; //  control
+22865:         uint32_t reserved1 : 16;
+22866:         uint32_t addr : 32; //  address offset
+22867: #ifdef __cplusplus
+22868:       public:
+22869:         npu_set_ifm_base0_t(uint32_t _addr) :
+22870:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+22871:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+22872:         {
+22873:         }
+22874:         CONSTEXPR npu_set_ifm_base0_t() :
+22875:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+22876:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+22877:         {
+22878:         }
+22879:         CONSTEXPR bool valid() const
+22880:         {
+22881:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0) && control >= 1 &&
+22882:                    control <= 2;
+22883:         }
+22884:         CONSTEXPR void init()
+22885:         {
+22886:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0);
+22887:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+22888:         }
+22889:         operator uint64_t()
+22890:         {
+22891:             uint64_t word;
+
+--- ethosu55_interface.h:23384-23423 ---
+23384:         }
+23385: #endif
+23386: #endif
+23387:     };
+23388:     // OFM Tile 0 address
+23389:     struct npu_set_ofm_base0_t
+23390:     {
+23391: #ifdef __cplusplus
+23392:       private:
+23393: #endif
+23394:         uint32_t opcode : 10; //  opcode
+23395:         uint32_t reserved0 : 4;
+23396:         uint32_t control : 2; //  control
+23397:         uint32_t reserved1 : 16;
+23398:         uint32_t addr : 32; //  address offset
+23399: #ifdef __cplusplus
+23400:       public:
+23401:         npu_set_ofm_base0_t(uint32_t _addr) :
+23402:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23403:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23404:         {
+23405:         }
+23406:         CONSTEXPR npu_set_ofm_base0_t() :
+23407:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23408:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23409:         {
+23410:         }
+23411:         CONSTEXPR bool valid() const
+23412:         {
+23413:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0) && control >= 1 &&
+23414:                    control <= 2;
+23415:         }
+23416:         CONSTEXPR void init()
+23417:         {
+23418:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0);
+23419:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23420:         }
+23421:         operator uint64_t()
+23422:         {
+23423:             uint64_t word;
+
+--- ethosu55_interface.h:23460-23499 ---
+23460:         }
+23461: #endif
+23462: #endif
+23463:     };
+23464:     // OFM Tile 1 address
+23465:     struct npu_set_ofm_base1_t
+23466:     {
+23467: #ifdef __cplusplus
+23468:       private:
+23469: #endif
+23470:         uint32_t opcode : 10; //  opcode
+23471:         uint32_t reserved0 : 4;
+23472:         uint32_t control : 2; //  control
+23473:         uint32_t reserved1 : 16;
+23474:         uint32_t addr : 32; //  address offset
+23475: #ifdef __cplusplus
+23476:       public:
+23477:         npu_set_ofm_base1_t(uint32_t _addr) :
+23478:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23479:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23480:         {
+23481:         }
+23482:         CONSTEXPR npu_set_ofm_base1_t() :
+23483:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23484:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23485:         {
+23486:         }
+23487:         CONSTEXPR bool valid() const
+23488:         {
+23489:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1) && control >= 1 &&
+23490:                    control <= 2;
+23491:         }
+23492:         CONSTEXPR void init()
+23493:         {
+23494:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1);
+23495:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23496:         }
+23497:         operator uint64_t()
+23498:         {
+23499:             uint64_t word;
+
+--- ethosu55_interface.h:25974-26022 ---
+25974:                                                               NPU_SET_IFM_DEPTH_M1) SEP FUNC(cmd0_opcode,              \
+25975:                                                                                              NPU_SET_IFM_PRECISION)    \
+25976:                 SEP FUNC(cmd0_opcode, NPU_SET_IFM_UPSCALE) SEP FUNC(cmd0_opcode, NPU_SET_IFM_ZERO_POINT) SEP FUNC(     \
+25977:                     cmd0_opcode, NPU_SET_IFM_WIDTH0_M1) SEP FUNC(cmd0_opcode, NPU_SET_IFM_HEIGHT0_M1)                  \
+25978:                     SEP FUNC(cmd0_opcode, NPU_SET_IFM_HEIGHT1_M1) SEP FUNC(cmd0_opcode, NPU_SET_IFM_IB_END) SEP FUNC(  \
+25979:                         cmd0_opcode, NPU_SET_IFM_REGION) SEP FUNC(cmd0_opcode, NPU_SET_OFM_WIDTH_M1)                   \
+25980:                         SEP FUNC(cmd0_opcode, NPU_SET_OFM_HEIGHT_M1) SEP FUNC(cmd0_opcode, NPU_SET_OFM_DEPTH_M1)       \
+25981:                             SEP FUNC(cmd0_opcode, NPU_SET_OFM_PRECISION) SEP FUNC(                                     \
+25982:                                 cmd0_opcode, NPU_SET_OFM_BLK_WIDTH_M1) SEP FUNC(cmd0_opcode,                           \
+25983:                                                                                 NPU_SET_OFM_BLK_HEIGHT_M1)             \
+25984:                                 SEP FUNC(cmd0_opcode, NPU_SET_OFM_BLK_DEPTH_M1) SEP FUNC(                              \
+25985:                                     cmd0_opcode, NPU_SET_OFM_ZERO_POINT) SEP FUNC(cmd0_opcode, NPU_SET_OFM_WIDTH0_M1)  \
+25986:                                     SEP FUNC(cmd0_opcode, NPU_SET_OFM_HEIGHT0_M1) SEP FUNC(                            \
+25987:                                         cmd0_opcode,                                                                   \
+25988:                                         NPU_SET_OFM_HEIGHT1_M1) SEP FUNC(cmd0_opcode, NPU_SET_OFM_REGION)              \
+25989:                                         SEP FUNC(cmd0_opcode, NPU_SET_KERNEL_WIDTH_M1) SEP FUNC(                       \
+25990:                                             cmd0_opcode,                                                               \
+25991:                                             NPU_SET_KERNEL_HEIGHT_M1) SEP FUNC(cmd0_opcode, NPU_SET_KERNEL_STRIDE)     \
+25992:                                             SEP FUNC(cmd0_opcode, NPU_SET_ACC_FORMAT) SEP FUNC(                        \
+25993:                                                 cmd0_opcode,                                                           \
+25994:                                                 NPU_SET_ACTIVATION) SEP FUNC(cmd0_opcode, NPU_SET_ACTIVATION_MIN)      \
+25995:                                                 SEP FUNC(cmd0_opcode, NPU_SET_ACTIVATION_MAX) SEP FUNC(                \
+25996:                                                     cmd0_opcode,                                                       \
+25997:                                                     NPU_SET_WEIGHT_REGION) SEP FUNC(cmd0_opcode, NPU_SET_SCALE_REGION) \
+25998:                                                     SEP FUNC(cmd0_opcode,                                              \
+25999:                                                              NPU_SET_AB_START) SEP FUNC(cmd0_opcode, NPU_SET_BLOCKDEP) \
+26000:                                                         SEP FUNC(cmd0_opcode, NPU_SET_DMA0_SRC_REGION) SEP FUNC(       \
+26001:                                                             cmd0_opcode,                                               \
+26002:                                                             NPU_SET_DMA0_DST_REGION) SEP FUNC(cmd0_opcode,             \
+26003:                                                                                               NPU_SET_DMA0_SIZE0)      \
+26004:                                                             SEP FUNC(cmd0_opcode, NPU_SET_DMA0_SIZE1) SEP FUNC(        \
+26005:                                                                 cmd0_opcode,                                           \
+26006:                                                                 NPU_SET_IFM2_BROADCAST)                                \
+26007:                                                                 SEP FUNC(cmd0_opcode, NPU_SET_IFM2_SCALAR) SEP FUNC(   \
+26008:                                                                     cmd0_opcode,                                       \
+26009:                                                                     NPU_SET_IFM2_PRECISION)                            \
+26010:                                                                     SEP FUNC(cmd0_opcode, NPU_SET_IFM2_ZERO_POINT)     \
+26011:                                                                         SEP FUNC(cmd0_opcode, NPU_SET_IFM2_WIDTH0_M1)  \
+26012:                                                                             SEP FUNC(cmd0_opcode,                      \
+26013:                                                                                      NPU_SET_IFM2_HEIGHT0_M1)          \
+26014:                                                                                 SEP FUNC(cmd0_opcode,                  \
+26015:                                                                                          NPU_SET_IFM2_HEIGHT1_M1)      \
+26016:                                                                                     SEP FUNC(cmd0_opcode,              \
+26017:                                                                                              NPU_SET_IFM2_IB_START)    \
+26018:                                                                                         SEP FUNC(cmd0_opcode,          \
+26019:                                                                                                  NPU_SET_IFM2_REGION)
+26020: 
+26021: #define EXPAND_CMD1_OPCODE(FUNC, SEP)                                                                                  \
+26022:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE0)                                                                               \
+
+REGISTER_HEADER_AUDIT=FINISHED
+
+========== SAFETY STATUS ==========
+MODEL_MODIFIED=NO
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+VELA_CONVERSION_PERFORMED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_vela_cop1_disassembler_20261126_104309.log
+Press ENTER to close this terminal...
