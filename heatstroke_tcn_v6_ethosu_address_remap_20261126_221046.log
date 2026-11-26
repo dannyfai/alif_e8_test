@@ -1,0 +1,147 @@
+======================================================
+TCN V6 ETHOS-U ADDRESS REMAPPING AUDIT
+Timestamp=20261126_221046
+======================================================
+
+========== ELF HASH / SYMBOL ==========
+2b94407d078f3dd17ed23ccae2db0c9b098fdf32c532f1937ea6efecb6f0fb77  /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf
+  3074: 8001ae95    32 FUNC    GLOBAL DEFAULT    3 ethosu_address_remap
+
+========== FULL LINKED ADDRESS REMAP DISASSEMBLY ==========
+
+/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_baseaddr_audit_20261126/zephyr/zephyr.elf:     file format elf32-littlearm
+
+
+Disassembly of section rom_start:
+
+Disassembly of section text:
+
+8001ae94 <ethosu_address_remap>:
+8001ae94:	f100 4360 	add.w	r3, r0, #3758096384	@ 0xe0000000
+8001ae98:	f5b3 2f80 	cmp.w	r3, #262144	@ 0x40000
+8001ae9c:	d203      	bcs.n	8001aea6 <ethosu_address_remap+0x12>
+8001ae9e:	f100 5062 	add.w	r0, r0, #947912704	@ 0x38800000
+8001aea2:	2100      	movs	r1, #0
+8001aea4:	4770      	bx	lr
+8001aea6:	f100 43b0 	add.w	r3, r0, #1476395008	@ 0x58000000
+8001aeaa:	f5b0 2f80 	cmp.w	r0, #262144	@ 0x40000
+8001aeae:	bf38      	it	cc
+8001aeb0:	4618      	movcc	r0, r3
+8001aeb2:	e7f6      	b.n	8001aea2 <ethosu_address_remap+0xe>
+
+========== LINKER MAP OWNERSHIP ==========
+12482-                0x0000000000000000        0x1 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_driver.c.obj)
+12483- .text          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12484- .data          0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12485- .bss           0x0000000000000000        0x0 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12486: .text.ethosu_address_remap
+12487-                0x0000000000000000        0x2 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12488- .text.ethosu_dev_get_hw_info
+12489-                0x0000000000000000       0x42 modules/hal_ethos_u/ethos-u-core-driver/libethosu_core_driver.a(ethosu_device_u55_u65.c.obj)
+12490- .text          0x0000000000000000        0x0 /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/../lib/gcc/../../picolibc/arm-zephyr-eabi/lib/thumb/v8-m.main+dp/hard/libstdc++.a(del_ops.o)
+--
+19494-                0x000000008001acec                ospi_irq_handler
+19495- .text.ethosu_area_needs_flush_dcache
+19496-                0x000000008001ae90        0x4 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+19497-                0x000000008001ae90                ethosu_area_needs_flush_dcache
+19498: .text.ethosu_address_remap
+19499-                0x000000008001ae94       0x20 modules/alif/drivers/ethos_u/lib..__modules__hal__alif__drivers__ethos_u.a(ethosu_callback.c.obj)
+19500:                0x000000008001ae94                ethosu_address_remap
+19501- .text.z_log_msg_simple_create_0
+19502-                0x000000008001aeb4        0x4 modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+19503- .text.z_log_msg_static_create.constprop.0
+19504-                0x000000008001aeb8        0x6 modules/alif/se_services/lib..__modules__hal__alif__se_services.a(se_service.c.obj)
+
+========== ACTIVE REMAP IMPLEMENTATION ==========
+    68			return true;
+    69		}
+    70	
+    71		return area_needs_invalidate_or_flush(p, bytes);
+    72	}
+    73	
+    74	uint64_t ethosu_address_remap(uint64_t address, int index)
+    75	{
+    76		(void)index;
+    77	
+    78		/* Double cast to avoid build warning about pointer/integer size mismatch */
+    79		return local_to_global((void *) (uint32_t) address);
+    80	}
+    81	
+    82	void ethosu_flush_dcache(uint32_t *p, size_t bytes)
+    83	{
+    84		if (p && ethosu_area_needs_flush_dcache(p, bytes)) {
+f47577a6c6b1276d54b1f427ed134d79a96390e20a0d33074c17b93fdccd45a7  /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c
+
+========== LOCAL-TO-GLOBAL SOURCE DEFINITIONS ==========
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:425:	global_address = local_to_global(ptr);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:659:	se_service_all_svc_d.update_stoc_svc_d.send_image_address = local_to_global(img_addr);
+/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/src/se_service.c:1108:	se_service_all_svc_d.boot_svc_d.send_nvds_src_addr = local_to_global(nvds_buff);
+/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/src/ethosu_callback.c:79:	return local_to_global((void *) (uint32_t) address);
+/home/user/sdk-alif/modules/hal/alif/drivers/isp/isp_wrapper/src/isp_api_wrapper.c:866:				POINTER_TO_UINT(local_to_global(buf->buffer));
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h:24:static inline uint32_t local_to_global(const volatile void *local_addr)
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h:52:static inline uint32_t local_to_global(const volatile void *local_addr)
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:57:	channel_cfg->src_addr = local_to_global(UINT_TO_POINTER(blk->source_address));
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:58:	channel_cfg->dst_addr = local_to_global(UINT_TO_POINTER(blk->dest_address));
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:426:	sys_write32(local_to_global(UINT_TO_POINTER(channel_cfg->dma_exec_addr)),
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:706:		local_to_global(UINT_TO_POINTER(cfg->head_block->source_address));
+/home/user/sdk-alif/zephyr/drivers/dma/dma_pl330.c:708:		local_to_global(UINT_TO_POINTER(cfg->head_block->dest_address));
+/home/user/sdk-alif/zephyr/drivers/audio/alif_pdm.c:455:	uint32_t slab_addr = (uint32_t)local_to_global(dst);
+/home/user/sdk-alif/zephyr/drivers/video/video_alif.c:404:		sys_write32(local_to_global(UINT_TO_POINTER(data->curr_vid_buf)),
+/home/user/sdk-alif/zephyr/drivers/video/video_alif.c:544:		sys_write32(local_to_global(UINT_TO_POINTER(data->curr_vid_buf)),
+/home/user/sdk-alif/zephyr/drivers/video/isp_pico.c:175:			planes[i] = POINTER_TO_UINT(local_to_global(vbuf->buffer));
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:62:#define TXDESC_PHYS_H(idx) phys_hi32((void *)local_to_global(&p->tx_descs[idx]))
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:63:#define TXDESC_PHYS_L(idx) phys_lo32((void *)local_to_global(&p->tx_descs[idx]))
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:64:#define RXDESC_PHYS_H(idx) phys_hi32((void *)local_to_global(&p->rx_descs[idx]))
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:65:#define RXDESC_PHYS_L(idx) phys_lo32((void *)local_to_global(&p->rx_descs[idx]))
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:189:		d->des0 = phys_lo32((void *)local_to_global(pinned->data));
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:190:		d->des1 = phys_hi32((void *)local_to_global(pinned->data));
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:395:		d->des0 = phys_lo32((void *)local_to_global(frag->data));
+/home/user/sdk-alif/zephyr/drivers/ethernet/eth_dwmac.c:396:		d->des1 = phys_hi32((void *)local_to_global(frag->data));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:135:				(uint32_t)local_to_global((void *)(params.param1));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:191:	trb_ptr->buf_ptr_low =  LOWER_32_BITS(local_to_global(&drv->setup_data));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:241:	trb_ptr->buf_ptr_low  =  LOWER_32_BITS(local_to_global((uint32_t *)bufferptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:291:	trb_ptr->buf_ptr_low  =  LOWER_32_BITS(local_to_global((uint32_t *)bufferptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:425:	trb_ptr->buf_ptr_low  = LOWER_32_BITS(local_to_global((uint32_t *)bufferptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:558:	trb_ptr->buf_ptr_low  = LOWER_32_BITS(local_to_global((uint32_t *)bufferptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:636:	trb_ptr->buf_ptr_low  = LOWER_32_BITS(local_to_global((uint32_t *)bufferptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:775:	trb_ptr->buf_ptr_low = LOWER_32_BITS(local_to_global(&drv->setup_data));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:1384:			trb_link->buf_ptr_low = LOWER_32_BITS(local_to_global(trb_ptr));
+/home/user/sdk-alif/zephyr/drivers/usb/udc/udc_dwc3.c:1467:	drv->regs->GEVNTADRLO0 = local_to_global((void *)LOWER_32_BITS(event_buf->buf));
+/home/user/sdk-alif/zephyr/drivers/sdhc/intel_emmc_host.c:428:		uint64_t buff = local_to_global(data->data);
+/home/user/sdk-alif/zephyr/drivers/sdhc/intel_emmc_host.c:459:		regs->adma_sys_addr1 = (uint32_t)((uintptr_t)local_to_global(emmc->desc_table) &
+/home/user/sdk-alif/zephyr/drivers/sdhc/intel_emmc_host.c:474:		regs->sdma_sysaddr = (uint32_t)local_to_global(data->data);
+/home/user/sdk-alif/zephyr/drivers/sdhc/sdhc_dwc.c:27:#define SDHC_DMA_ADDR(p) local_to_global(p)
+/home/user/sdk-alif/zephyr/drivers/display/display_cdc200.c:192:		sys_write32(local_to_global(UINT_TO_POINTER(layer->fb_addr)), regs + CDC_L1_CFB_ADDR);
+/home/user/sdk-alif/zephyr/drivers/display/display_cdc200.c:205:		sys_write32(local_to_global(UINT_TO_POINTER(layer->fb_addr)), regs + CDC_L2_CFB_ADDR);
+
+========== MEMORY MAP HEADER LOCATIONS ==========
+/home/user/sdk-alif/modules/hal/alif/common/include/soc_memory_map.h
+
+========== DRIVER ADDRESS REMAP CALL SITES ==========
+/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h:230:uint64_t ethosu_address_remap(uint64_t address, int index);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c:54:uint64_t __attribute__((weak)) ethosu_address_remap(uint64_t address, int index)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c:147:    uint64_t qbase          = ethosu_address_remap((uintptr_t)cmd_stream_ptr, -1);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u85.c:158:        uint64_t addr = ethosu_address_remap(base_addr[i], i);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:64:uint64_t __attribute__((weak)) ethosu_address_remap(uint64_t address, int index)
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:168:    uint64_t qbase          = ethosu_address_remap((uintptr_t)cmd_stream_ptr, -1);
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:181:        uint64_t addr = ethosu_address_remap(base_addr[i], i);
+
+========== RUNTIME POINTERS TO COMPARE ==========
+CPU activation arena base: 0x02010000
+Region 1 size:            2372448 bytes
+Tensor 31 CPU pointer:    0x0203D160
+Tensor 54 CPU pointer:    0x0203D160
+Tensor 31/54 arena offset: 0x2D160
+
+ADDRESS_REMAP_AUDIT=FINISHED
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_ethosu_address_remap_20261126_221046.log
+MODEL_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+SDK_SOURCE_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
