@@ -1,0 +1,212 @@
+======================================================
+TCN V6 U55 REGISTER READBACK BUILD
+Timestamp=20261126_224653
+======================================================
+DEVICE_SOURCE_SHA=54936729650cc261c5a15ea0d8de6ab1318f871cb962216168d149b643f7a453
+APP_MAINLOOP_SHA=019b427388c1c7bddabb13fda4bf262a39e96ec815f7e5b16539c1678571b6bc
+TEMPORARY_REGISTER_READBACK_INSERTED=YES
+
+========== TEMPORARY SOURCE DIFF ==========
+--- /tmp/ethosu_device_u55_backup.pX3KCm	2026-09-24 10:49:59.793670289 +0800
++++ /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c	2026-11-26 22:46:53.878170660 +0800
+@@ -21,6 +21,7 @@
+  ******************************************************************************/
+ 
+ #include "ethosu_interface.h"
++#include <zephyr/sys/printk.h>
+ 
+ #include "ethosu_device.h"
+ #include "ethosu_log.h"
+@@ -190,6 +191,22 @@
+ 
+     dev->reg->REGIONCFG.word = rcfg.word;
+ 
++    /* Temporary TCN V6 hardware register readback. */
++    __DSB();
++    printk("TCN_V6_U55_REGREAD: QBASE=0x%08lx QSIZE=%lu REGIONCFG=0x%08lx CMD=0x%08lx N=%d\n",
++           (unsigned long)dev->reg->QBASE.word[0],
++           (unsigned long)dev->reg->QSIZE.word,
++           (unsigned long)dev->reg->REGIONCFG.word,
++           (unsigned long)dev->reg->CMD.word,
++           num_base_addr);
++
++    for (int tcn_i = 0; tcn_i < num_base_addr; ++tcn_i) {
++        printk("TCN_V6_U55_BASEP: index=%d address=0x%08lx\n",
++               tcn_i,
++               (unsigned long)dev->reg->BASEP[tcn_i].word[0]);
++    }
++
++
+     cmd.word                        = dev->reg->CMD.word & NPU_CMD_PWR_CLK_MASK;
+     cmd.transition_to_running_state = 1;
+ 
+
+========== ISOLATED BUILD ==========
+-- west build: generating a build system
+Loading Zephyr default modules (Zephyr base).
+-- Application: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049
+-- CMake version: 3.31.10
+-- Found Python3: /home/user/zephyrproject/.py3.12_venv/bin/python3.12 (found suitable version "3.12.16", minimum required is "3.10") found components: Interpreter
+-- Cache files will be written to: /home/user/.cache/zephyr
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr)
+-- Found west (found suitable version "1.5.0", minimum required is "0.14.0")
+-- Board: alif_e8_dk, qualifiers: ae822fa0e5597xx0/rtss_he
+-- Snippet(s): ospi-flash
+-- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
+-- Found host-tools: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found toolchain: zephyr 0.17.0 (/home/user/zephyr-sdk-0.17.0)
+-- Found Dtc: /home/user/zephyr-sdk-0.17.0/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6")
+-- Found BOARD.dts: /home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he.dts
+-- Found devicetree overlay: /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/boards/alif_e8_common.overlay
+-- Found devicetree overlay: /home/user/sdk-alif/alif/snippets/ospi-flash/e8_ospi1.overlay
+-- Generated zephyr.dts: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/zephyr.dts
+-- Generated pickled edt: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/edt.pickle
+-- Generated devicetree_generated.h: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/dts.cmake
+Parsing /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/Kconfig
+Loaded configuration '/home/user/sdk-alif/zephyr/boards/alif/alif_e8_dk/alif_e8_dk_ae822fa0e5597xx0_rtss_he_defconfig'
+Merged configuration '/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/prj.conf'
+Merged configuration '/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049/boards/alif_e8_dk_ae822fa0e5597xx0_rtss_he.conf'
+Merged configuration '/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/misc/generated/extra_kconfig_options.conf'
+Configuration saved to '/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/.config'
+Kconfig header saved to '/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/include/generated/zephyr/autoconf.h'
+-- Found GnuLd: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd (found version "2.38")
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: /home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
+CMake Warning at /home/user/sdk-alif/zephyr/soc/alif/ensemble/common/debug_metadata.cmake:23 (message):
+  Alif SVD file not found:
+  /home/user/sdk-alif/tools/alif_ensemble-cmsis-dfp/Debug/SVD/AE822FA0E5597BS0_CM55_HE_View.svd
+Call Stack (most recent call first):
+  /home/user/sdk-alif/zephyr/soc/alif/ensemble/CMakeLists.txt:8 (include)
+
+
+-- *******************************************************
+-- PROJECT_NAME                           : ethosu_core_driver
+-- ETHOSU_TARGET_NPU_CONFIG               : ethos-u55-128
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- CMSIS_PATH                             : /home/user/sdk-alif/modules/hal/ethos_u/../cmsis
+-- ETHOSU_LOG_ENABLE                      : ON
+-- ETHOSU_LOG_SEVERITY                    : warning
+-- ETHOSU_INFERENCE_TIMEOUT               : Default (no timeout)
+-- *******************************************************
+-- Including default API config parameters...
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- MLEK log is disabled
+-- **************************************************
+-- Library:                mlek_log
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- **************************************************
+-- *******************************************************
+-- Library                    : arm_math
+-- CMAKE_SYSTEM_PROCESSOR     : arm
+-- *******************************************************
+-- Adding TensorFlow Lite Micro framework to the build...
+-- *******************************************************
+-- Library: ml_framework_tflm
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library: ml_framework_iface
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                common_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : asr_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : kws_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : noise_reduction_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : img_class_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : object_detection_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : vww_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library                                : ad_api
+-- CMAKE_SYSTEM_PROCESSOR                 : arm
+-- *******************************************************
+-- *******************************************************
+-- Library:                inference_runner_api
+-- CMAKE_SYSTEM_PROCESSOR: arm
+-- *******************************************************
+-- Created interface target: mlek::asr_impl
+-- Created interface target: mlek::kws_impl
+-- Created interface target: mlek::noise_reduction_impl
+-- Created interface target: mlek::img_class_impl
+-- Created interface target: mlek::object_detection_impl
+-- Created interface target: mlek::vww_impl
+-- Created interface target: mlek::ad_impl
+-- Created interface target: mlek::inference_runner_impl
+CMake Warning at /home/user/sdk-alif/zephyr/CMakeLists.txt:2224 (message):
+  
+
+        The CMake build type was set to 'Release', but the optimization flag was set to '-Os'.
+        This may be intentional and the warning can be turned off by setting the CMake variable 'NO_BUILD_TYPE_WARNING'
+
+
+-- Using existing python at /home/user/sdk-alif/modules/alif-mlek/resources_downloaded/env/bin/python3
+-- TCN V6 model: /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+-- TCN V6 model SHA256: 0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+-- Ethos-U config: H128
+-- Ethos-U memory mode: Shared_Sram
+-- Using /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+++ Converting symmetric394_int8mask_cast_vela.tflite to    symmetric394_int8mask_cast_vela.tflite.cc
+-- Configuring done (5.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126
+-- west build: building application
+[1/627] Preparing syscall dependency handling
+
+[2/627] Generating misc/generated/syscalls_subdirs.trigger
+[3/627] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[4/627] Generating include/generated/device-api-sections.ld, include/generated/device-api-sections.cmake
+[5/627] Generating include/generated/zephyr/syscall_dispatch.c, include/generated/zephyr/syscall_exports_llext.c, syscall_weakdefs_llext.c, include/generated/zephyr/syscall_list.h
+[6/627] Generating include/generated/zephyr/driver-validation.h
+[7/627] Generating include/generated/zephyr/kobj-types-enum.h, include/generated/zephyr/otype-to-str.h, include/generated/zephyr/otype-to-size.h
+[8/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj
+FAILED: [code=1] modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj 
+/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc -DAXI_LIMIT0_MAX_BEATS_BYTES=1 -DAXI_LIMIT0_MEM_TYPE=2 -DAXI_LIMIT1_MAX_BEATS_BYTES=1 -DAXI_LIMIT1_MEM_TYPE=2 -DAXI_LIMIT2_MAX_BEATS_BYTES=1 -DAXI_LIMIT2_MEM_TYPE=2 -DAXI_LIMIT3_MAX_BEATS_BYTES=1 -DAXI_LIMIT3_MEM_TYPE=2 -DETHOSU -DETHOSU55 -DETHOSU_ARCH=u55 -DETHOSU_LOG_ENABLE=1 -DETHOSU_LOG_SEVERITY=1 -DETHOSU_MACS=128 -DKERNEL -DK_HEAP_MEM_POOL_SIZE=65536 -DPICOLIBC_DOUBLE_PRINTF_SCANF -D__LINUX_ERRNO_EXTENSIONS__ -D__PROGRAM_START -D__ZEPHYR__=1 -I/home/user/sdk-alif/modules/hal/ethos_u/include -I/home/user/sdk-alif/modules/hal/ethos_u/src -I/home/user/sdk-alif/modules/hal/ethos_u/../cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/include/generated/zephyr -I/home/user/sdk-alif/zephyr/include -I/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/include/generated -I/home/user/sdk-alif/zephyr/soc/alif/ensemble -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/e8/. -I/home/user/sdk-alif/zephyr/soc/alif/common/. -I/home/user/sdk-alif/zephyr/soc/alif/ensemble/common -I/home/user/sdk-alif/alif/subsys/. -I/home/user/sdk-alif/alif/subsys/modules/ethosu/. -I/home/user/sdk-alif/alif/subsys/modules/testcommands/. -I/home/user/sdk-alif/alif/include -I/home/user/sdk-alif/modules/hal/cmsis/CMSIS/Core/Include -I/home/user/sdk-alif/zephyr/modules/cmsis/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/. -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/gemmlowp -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/flatbuffers/include -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/ruy -I/home/user/sdk-alif/optional/modules/lib/tflite-micro/third_party_static/kissfft -I/home/user/sdk-alif/modules/lib/cmsis-dsp/Include -I/home/user/sdk-alif/modules/hal/alif/common/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ospi/include -I/home/user/sdk-alif/modules/hal/alif/drivers/ethos_u/include -I/home/user/sdk-alif/modules/hal/alif/se_services/include -I/home/user/sdk-alif/modules/hal/alif/se_services/zephyr/include -isystem /home/user/sdk-alif/zephyr/lib/libc/common/include -O3 -DNDEBUG -Werror -fno-strict-aliasing -Os -imacros /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126/zephyr/include/generated/zephyr/autoconf.h -fno-common -g -gdwarf-4 -fdiagnostics-color=always -mcpu=cortex-m55 -mthumb -mabi=aapcs -mfpu=auto -mfloat-abi=hard -mfp16-format=ieee -mtp=soft --sysroot=/home/user/zephyr-sdk-0.17.0/arm-zephyr-eabi/arm-zephyr-eabi -imacros /home/user/sdk-alif/zephyr/include/zephyr/toolchain/zephyr_stdint.h -Wall -Wformat -Wformat-security -Wno-format-zero-length -Wdouble-promotion -Wno-pointer-sign -Wpointer-arith -Wexpansion-to-defined -Wno-unused-but-set-variable -Werror=implicit-int -fno-pic -fno-pie -fno-asynchronous-unwind-tables -ftls-model=local-exec -fno-reorder-functions --param=min-pagesize=0 -fno-defer-pop -fmacro-prefix-map=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_e8_sample317_validation_20261124_214049=CMAKE_SOURCE_DIR -fmacro-prefix-map=/home/user/sdk-alif/zephyr=ZEPHYR_BASE -fmacro-prefix-map=/home/user/sdk-alif=WEST_TOPDIR -ffunction-sections -fdata-sections -specs=picolibc.specs -std=c99 -MD -MT modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj -MF modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj.d -o modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_device_u55_u65.c.obj -c /home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c: In function 'ethosu_dev_run_command_stream':
+/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_device_u55_u65.c:195:5: error: implicit declaration of function '__DSB' [-Werror=implicit-function-declaration]
+  195 |     __DSB();
+      |     ^~~~~
+cc1: all warnings being treated as errors
+[9/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_pmu.c.obj
+[10/627] Building C object zephyr/CMakeFiles/offsets.dir/arch/arm/core/offsets/offsets.c.obj
+[11/627] Building C object modules/hal_ethos_u/ethos-u-core-driver/CMakeFiles/ethosu_core_driver.dir/src/ethosu_driver.c.obj
+[12/627] Generating include/generated/zephyr/version.h
+-- Zephyr version: 4.1.0 (/home/user/sdk-alif/zephyr), build: f7f3f548f357
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/user/zephyrproject/.py3.12_venv/bin/cmake --build /home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126
+SDK_DEVICE_SOURCE_RESTORED=YES
+SDK_DEVICE_SOURCE_SHA256=54936729650cc261c5a15ea0d8de6ab1318f871cb962216168d149b643f7a453
+
+SCRIPT_EXIT=1
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_u55_register_readback_20261126_224653.log
+BUILD_DIR=/home/user/sdk-alif/build_heatstroke_tcn_v6_sample317_u55_regreadback_20261126
+DIAGNOSTIC_FIRMWARE_BUILT=NO
+SDK_DEVICE_SOURCE_RESTORED=YES
+MODEL_MODIFIED=NO
+APP_SOURCE_MODIFIED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+Press ENTER to close this terminal...
