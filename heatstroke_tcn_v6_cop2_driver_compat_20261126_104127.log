@@ -1,0 +1,2869 @@
+======================================================
+TCN V6 COP2 / ETHOS-U DRIVER COMPATIBILITY AUDIT
+Timestamp=20261126_104127
+======================================================
+
+========== SEARCH ROOTS ==========
+FOUND /home/user/sdk-alif/modules/hal/ethos_u
+FOUND /home/user/sdk-alif/modules/hal/alif/drivers/ethos_u
+FOUND /home/user/sdk-alif/modules/hal/alif/drivers
+FOUND /home/user/sdk-alif/alif/subsys/modules/ethosu
+FOUND /home/user/sdk-alif/zephyr/modules
+FOUND /home/user/sdk-alif/optional/modules/lib
+
+========== ETHOS-U DRIVER SOURCE MATCHES ==========
+SOURCE_FILES_SCANNED = 1166
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/include/ethosu_driver.h
+SHA256 = 9e835128b0d1f0d38f0b31d12bf9acfa7b78ad7415f380003ad2b5400d95fe67
+LINES = 412
+--- lines 65-85 ---
+   65:     ETHOSU_JOB_RESULT_ERROR
+   66: };
+   67: 
+   68: struct ethosu_job
+   69: {
+   70:     volatile enum ethosu_job_state state;
+   71:     volatile enum ethosu_job_result result;
+   72:     const void *custom_data_ptr;
+   73:     int custom_data_size;
+   74:     const uint64_t *base_addr;
+   75:     const size_t *base_addr_size;
+   76:     int num_base_addr;
+   77:     void *user_arg;
+   78: };
+   79: 
+   80: struct ethosu_driver
+   81: {
+   82:     struct ethosu_device dev;
+   83:     struct ethosu_driver *next;
+   84:     struct ethosu_job job;
+   85:     void *semaphore;
+--- lines 320-367 ---
+  320:  */
+  321: void ethosu_get_hw_info(struct ethosu_driver *drv, struct ethosu_hw_info *hw);
+  322: 
+  323: /**
+  324:  * Invoke command stream.
+  325:  *
+  326:  * @param drv               Pointer to driver handle
+  327:  * @param custom_data_ptr   Custom data payload
+  328:  * @param custom_data_size  Size in bytes of custom data
+  329:  * @param base_addr         Array of base address pointers
+  330:  * @param base_addr_size    Size in bytes of each address in base_addr
+  331:  * @param num_base_addr     Number of elements in base_addr array
+  332:  * @param user_arg          User argument, will be passed to
+  333:  *                          ethosu_inference_begin() and ethosu_inference_end()
+  334:  * @return 0 on success, else negative error code
+  335:  */
+  336: int ethosu_invoke_v3(struct ethosu_driver *drv,
+  337:                      const void *custom_data_ptr,
+  338:                      const int custom_data_size,
+  339:                      uint64_t *const base_addr,
+  340:                      const size_t *base_addr_size,
+  341:                      const int num_base_addr,
+  342:                      void *user_arg);
+  343: 
+  344: #define ethosu_invoke(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr)                \
+  345:     ethosu_invoke_v3(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, 0)
+  346: 
+  347: /**
+  348:  * Invoke command stream using async interface.
+  349:  * Must be followed by call(s) to ethosu_wait() upon successful return.
+  350:  *
+  351:  * @see ethosu_invoke_v3 for documentation.
+  352:  */
+  353: int ethosu_invoke_async(struct ethosu_driver *drv,
+  354:                         const void *custom_data_ptr,
+  355:                         const int custom_data_size,
+  356:                         uint64_t *const base_addr,
+  357:                         const size_t *base_addr_size,
+  358:                         const int num_base_addr,
+  359:                         void *user_arg);
+  360: 
+  361: /**
+  362:  * Wait for inference to complete (block=true)
+  363:  * Poll status or finish up if inference is complete (block=false)
+  364:  * (This function is only intended to be used in conjuction with ethosu_invoke_async)
+  365:  *
+  366:  * @param drv       Pointer to driver handle
+  367:  * @param block     If call should block if inference is running
+--- lines 383-412 ---
+  383:  * @param drv       Pointer to driver handle
+  384:  */
+  385: void ethosu_release_driver(struct ethosu_driver *drv);
+  386: 
+  387: /**
+  388:  * Static inline for backwards-compatibility.
+  389:  *
+  390:  * @see ethosu_invoke_v3 for documentation.
+  391:  */
+  392: static inline int ethosu_invoke_v2(const void *custom_data_ptr,
+  393:                                    const int custom_data_size,
+  394:                                    uint64_t *const base_addr,
+  395:                                    const size_t *base_addr_size,
+  396:                                    const int num_base_addr)
+  397: {
+  398:     struct ethosu_driver *drv = ethosu_reserve_driver();
+  399:     if (!drv)
+  400:     {
+  401:         return -1;
+  402:     }
+  403:     int result = ethosu_invoke_v3(drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, 0);
+  404:     ethosu_release_driver(drv);
+  405:     return result;
+  406: }
+  407: 
+  408: #ifdef __cplusplus
+  409: }
+  410: #endif
+  411: 
+  412: #endif // ETHOSU_DRIVER_H
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu55_interface.h
+SHA256 = f91cbf3f2bce6185d21e67e9aca067eacb42064a3c16ea96bf1f1288a64ca5c3
+LINES = 26197
+--- lines 508-538 ---
+  508:     NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  509:     NPU_SET_IFM2_IB_START     = 397,
+  510:     NPU_SET_IFM2_REGION       = 399,
+  511: };
+  512: 
+  513: enum class cmd1_opcode : uint16_t
+  514: {
+  515:     NPU_SET_IFM_BASE0     = 0,
+  516:     NPU_SET_IFM_BASE1     = 1,
+  517:     NPU_SET_IFM_BASE2     = 2,
+  518:     NPU_SET_IFM_BASE3     = 3,
+  519:     NPU_SET_IFM_STRIDE_X  = 4,
+  520:     NPU_SET_IFM_STRIDE_Y  = 5,
+  521:     NPU_SET_IFM_STRIDE_C  = 6,
+  522:     NPU_SET_OFM_BASE0     = 16,
+  523:     NPU_SET_OFM_BASE1     = 17,
+  524:     NPU_SET_OFM_BASE2     = 18,
+  525:     NPU_SET_OFM_BASE3     = 19,
+  526:     NPU_SET_OFM_STRIDE_X  = 20,
+  527:     NPU_SET_OFM_STRIDE_Y  = 21,
+  528:     NPU_SET_OFM_STRIDE_C  = 22,
+  529:     NPU_SET_WEIGHT_BASE   = 32,
+  530:     NPU_SET_WEIGHT_LENGTH = 33,
+  531:     NPU_SET_SCALE_BASE    = 34,
+  532:     NPU_SET_SCALE_LENGTH  = 35,
+  533:     NPU_SET_OFM_SCALE     = 36,
+  534:     NPU_SET_OPA_SCALE     = 37,
+  535:     NPU_SET_OPB_SCALE     = 38,
+  536:     NPU_SET_DMA0_SRC      = 48,
+  537:     NPU_SET_DMA0_DST      = 49,
+  538:     NPU_SET_DMA0_LEN      = 50,
+--- lines 938-968 ---
+  938:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  939:     CMD0_OPCODE_NPU_SET_IFM2_IB_START     = 397,
+  940:     CMD0_OPCODE_NPU_SET_IFM2_REGION       = 399,
+  941: };
+  942: 
+  943: enum cmd1_opcode
+  944: {
+  945:     CMD1_OPCODE_NPU_SET_IFM_BASE0     = 0,
+  946:     CMD1_OPCODE_NPU_SET_IFM_BASE1     = 1,
+  947:     CMD1_OPCODE_NPU_SET_IFM_BASE2     = 2,
+  948:     CMD1_OPCODE_NPU_SET_IFM_BASE3     = 3,
+  949:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_X  = 4,
+  950:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y  = 5,
+  951:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_C  = 6,
+  952:     CMD1_OPCODE_NPU_SET_OFM_BASE0     = 16,
+  953:     CMD1_OPCODE_NPU_SET_OFM_BASE1     = 17,
+  954:     CMD1_OPCODE_NPU_SET_OFM_BASE2     = 18,
+  955:     CMD1_OPCODE_NPU_SET_OFM_BASE3     = 19,
+  956:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_X  = 20,
+  957:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y  = 21,
+  958:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_C  = 22,
+  959:     CMD1_OPCODE_NPU_SET_WEIGHT_BASE   = 32,
+  960:     CMD1_OPCODE_NPU_SET_WEIGHT_LENGTH = 33,
+  961:     CMD1_OPCODE_NPU_SET_SCALE_BASE    = 34,
+  962:     CMD1_OPCODE_NPU_SET_SCALE_LENGTH  = 35,
+  963:     CMD1_OPCODE_NPU_SET_OFM_SCALE     = 36,
+  964:     CMD1_OPCODE_NPU_SET_OPA_SCALE     = 37,
+  965:     CMD1_OPCODE_NPU_SET_OPB_SCALE     = 38,
+  966:     CMD1_OPCODE_NPU_SET_DMA0_SRC      = 48,
+  967:     CMD1_OPCODE_NPU_SET_DMA0_DST      = 49,
+  968:     CMD1_OPCODE_NPU_SET_DMA0_LEN      = 50,
+--- lines 1716-1755 ---
+ 1716:     "CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1",
+ 1717:     "CMD0_OPCODE_NPU_SET_IFM2_IB_START",
+ 1718:     "****",
+ 1719:     "CMD0_OPCODE_NPU_SET_IFM2_REGION",
+ 1720: };
+ 1721: 
+ 1722: static const char *cmd1_opcode_str[] = {
+ 1723:     "CMD1_OPCODE_NPU_SET_IFM_BASE0",
+ 1724:     "CMD1_OPCODE_NPU_SET_IFM_BASE1",
+ 1725:     "CMD1_OPCODE_NPU_SET_IFM_BASE2",
+ 1726:     "CMD1_OPCODE_NPU_SET_IFM_BASE3",
+ 1727:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_X",
+ 1728:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y",
+ 1729:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_C",
+ 1730:     "****",
+ 1731:     "****",
+ 1732:     "****",
+ 1733:     "****",
+ 1734:     "****",
+ 1735:     "****",
+ 1736:     "****",
+ 1737:     "****",
+ 1738:     "****",
+ 1739:     "CMD1_OPCODE_NPU_SET_OFM_BASE0",
+ 1740:     "CMD1_OPCODE_NPU_SET_OFM_BASE1",
+ 1741:     "CMD1_OPCODE_NPU_SET_OFM_BASE2",
+ 1742:     "CMD1_OPCODE_NPU_SET_OFM_BASE3",
+ 1743:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_X",
+ 1744:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y",
+ 1745:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_C",
+ 1746:     "****",
+ 1747:     "****",
+ 1748:     "****",
+ 1749:     "****",
+ 1750:     "****",
+ 1751:     "****",
+ 1752:     "****",
+ 1753:     "****",
+ 1754:     "****",
+ 1755:     "CMD1_OPCODE_NPU_SET_WEIGHT_BASE",
+--- lines 17640-17687 ---
+17640:         {
+17641:             const npu_set_ifm2_region_t &v = *reinterpret_cast<const npu_set_ifm2_region_t *>(in);
+17642:             op                             = "NPU_SET_IFM2_REGION";
+17643:             v.disassemble(fields);
+17644:             break;
+17645:         }
+17646:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17647:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0):
+17648:         {
+17649:             const npu_set_ifm_base0_t &v = *reinterpret_cast<const npu_set_ifm_base0_t *>(in);
+17650:             op                           = "NPU_SET_IFM_BASE0";
+17651:             v.disassemble(fields);
+17652:             break;
+17653:         }
+17654:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17655:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1):
+17656:         {
+17657:             const npu_set_ifm_base1_t &v = *reinterpret_cast<const npu_set_ifm_base1_t *>(in);
+17658:             op                           = "NPU_SET_IFM_BASE1";
+17659:             v.disassemble(fields);
+17660:             break;
+17661:         }
+17662:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17663:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2):
+17664:         {
+17665:             const npu_set_ifm_base2_t &v = *reinterpret_cast<const npu_set_ifm_base2_t *>(in);
+17666:             op                           = "NPU_SET_IFM_BASE2";
+17667:             v.disassemble(fields);
+17668:             break;
+17669:         }
+17670:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17671:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3):
+17672:         {
+17673:             const npu_set_ifm_base3_t &v = *reinterpret_cast<const npu_set_ifm_base3_t *>(in);
+17674:             op                           = "NPU_SET_IFM_BASE3";
+17675:             v.disassemble(fields);
+17676:             break;
+17677:         }
+17678:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17679:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_X):
+17680:         {
+17681:             const npu_set_ifm_stride_x_t &v = *reinterpret_cast<const npu_set_ifm_stride_x_t *>(in);
+17682:             op                              = "NPU_SET_IFM_STRIDE_X";
+17683:             v.disassemble(fields);
+17684:             break;
+17685:         }
+17686:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17687:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_Y):
+--- lines 17696-17743 ---
+17696:         {
+17697:             const npu_set_ifm_stride_c_t &v = *reinterpret_cast<const npu_set_ifm_stride_c_t *>(in);
+17698:             op                              = "NPU_SET_IFM_STRIDE_C";
+17699:             v.disassemble(fields);
+17700:             break;
+17701:         }
+17702:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17703:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0):
+17704:         {
+17705:             const npu_set_ofm_base0_t &v = *reinterpret_cast<const npu_set_ofm_base0_t *>(in);
+17706:             op                           = "NPU_SET_OFM_BASE0";
+17707:             v.disassemble(fields);
+17708:             break;
+17709:         }
+17710:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17711:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1):
+17712:         {
+17713:             const npu_set_ofm_base1_t &v = *reinterpret_cast<const npu_set_ofm_base1_t *>(in);
+17714:             op                           = "NPU_SET_OFM_BASE1";
+17715:             v.disassemble(fields);
+17716:             break;
+17717:         }
+17718:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17719:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2):
+17720:         {
+17721:             const npu_set_ofm_base2_t &v = *reinterpret_cast<const npu_set_ofm_base2_t *>(in);
+17722:             op                           = "NPU_SET_OFM_BASE2";
+17723:             v.disassemble(fields);
+17724:             break;
+17725:         }
+17726:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17727:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3):
+17728:         {
+17729:             const npu_set_ofm_base3_t &v = *reinterpret_cast<const npu_set_ofm_base3_t *>(in);
+17730:             op                           = "NPU_SET_OFM_BASE3";
+17731:             v.disassemble(fields);
+17732:             break;
+17733:         }
+17734:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17735:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_X):
+17736:         {
+17737:             const npu_set_ofm_stride_x_t &v = *reinterpret_cast<const npu_set_ofm_stride_x_t *>(in);
+17738:             op                              = "NPU_SET_OFM_STRIDE_X";
+17739:             v.disassemble(fields);
+17740:             break;
+17741:         }
+17742:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+17743:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_Y):
+--- lines 22850-23158 ---
+22850:         {
+22851:             fields.push_back(std::make_pair<std::string, std::string>("region", std::to_string(region)));
+22852:         }
+22853: #endif
+22854: #endif
+22855:     };
+22856:     // IFM Tile 0 address
+22857:     struct npu_set_ifm_base0_t
+22858:     {
+22859: #ifdef __cplusplus
+22860:       private:
+22861: #endif
+22862:         uint32_t opcode : 10; //  opcode
+22863:         uint32_t reserved0 : 4;
+22864:         uint32_t control : 2; //  control
+22865:         uint32_t reserved1 : 16;
+22866:         uint32_t addr : 32; //  address offset
+22867: #ifdef __cplusplus
+22868:       public:
+22869:         npu_set_ifm_base0_t(uint32_t _addr) :
+22870:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+22871:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+22872:         {
+22873:         }
+22874:         CONSTEXPR npu_set_ifm_base0_t() :
+22875:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+22876:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+22877:         {
+22878:         }
+22879:         CONSTEXPR bool valid() const
+22880:         {
+22881:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0) && control >= 1 &&
+22882:                    control <= 2;
+22883:         }
+22884:         CONSTEXPR void init()
+22885:         {
+22886:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0);
+22887:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+22888:         }
+22889:         operator uint64_t()
+22890:         {
+22891:             uint64_t word;
+22892:             std::memcpy(&word, this, sizeof(word));
+22893:             return word;
+22894:         }
+22895:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+22896:         {
+22897:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+22898:         }
+22899:         CONSTEXPR npu_set_ifm_base0_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+22900:         {
+22901:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+22902:             return *this;
+22903:         }
+22904:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+22905:         {
+22906:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+22907:         }
+22908:         CONSTEXPR npu_set_ifm_base0_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+22909:         {
+22910:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+22911:             return *this;
+22912:         }
+22913:         CONSTEXPR uint32_t get_addr() const
+22914:         {
+22915:             return static_cast<uint32_t>(addr);
+22916:         }
+22917:         CONSTEXPR npu_set_ifm_base0_t &set_addr(uint32_t value)
+22918:         {
+22919:             addr = value;
+22920:             return *this;
+22921:         }
+22922: #ifdef NPU_DISASSEMBLE
+22923:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+22924:         {
+22925:             std::stringstream saddr;
+22926:             saddr << std::hex << "0x" << get_addr();
+22927:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+22928:         }
+22929: #endif
+22930: #endif
+22931:     };
+22932:     // IFM Tile 1 address
+22933:     struct npu_set_ifm_base1_t
+22934:     {
+22935: #ifdef __cplusplus
+22936:       private:
+22937: #endif
+22938:         uint32_t opcode : 10; //  opcode
+22939:         uint32_t reserved0 : 4;
+22940:         uint32_t control : 2; //  control
+22941:         uint32_t reserved1 : 16;
+22942:         uint32_t addr : 32; //  address offset
+22943: #ifdef __cplusplus
+22944:       public:
+22945:         npu_set_ifm_base1_t(uint32_t _addr) :
+22946:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)), reserved0(0),
+22947:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+22948:         {
+22949:         }
+22950:         CONSTEXPR npu_set_ifm_base1_t() :
+22951:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)), reserved0(0),
+22952:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+22953:         {
+22954:         }
+22955:         CONSTEXPR bool valid() const
+22956:         {
+22957:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1) && control >= 1 &&
+22958:                    control <= 2;
+22959:         }
+22960:         CONSTEXPR void init()
+22961:         {
+22962:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1);
+22963:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+22964:         }
+22965:         operator uint64_t()
+22966:         {
+22967:             uint64_t word;
+22968:             std::memcpy(&word, this, sizeof(word));
+22969:             return word;
+22970:         }
+22971:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+22972:         {
+22973:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+22974:         }
+22975:         CONSTEXPR npu_set_ifm_base1_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+22976:         {
+22977:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+22978:             return *this;
+22979:         }
+22980:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+22981:         {
+22982:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+22983:         }
+22984:         CONSTEXPR npu_set_ifm_base1_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+22985:         {
+22986:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+22987:             return *this;
+22988:         }
+22989:         CONSTEXPR uint32_t get_addr() const
+22990:         {
+22991:             return static_cast<uint32_t>(addr);
+22992:         }
+22993:         CONSTEXPR npu_set_ifm_base1_t &set_addr(uint32_t value)
+22994:         {
+22995:             addr = value;
+22996:             return *this;
+22997:         }
+22998: #ifdef NPU_DISASSEMBLE
+22999:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23000:         {
+23001:             std::stringstream saddr;
+23002:             saddr << std::hex << "0x" << get_addr();
+23003:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23004:         }
+23005: #endif
+23006: #endif
+23007:     };
+23008:     // IFM Tile 2 address
+23009:     struct npu_set_ifm_base2_t
+23010:     {
+23011: #ifdef __cplusplus
+23012:       private:
+23013: #endif
+23014:         uint32_t opcode : 10; //  opcode
+23015:         uint32_t reserved0 : 4;
+23016:         uint32_t control : 2; //  control
+23017:         uint32_t reserved1 : 16;
+23018:         uint32_t addr : 32; //  address offset
+23019: #ifdef __cplusplus
+23020:       public:
+23021:         npu_set_ifm_base2_t(uint32_t _addr) :
+23022:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)), reserved0(0),
+23023:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23024:         {
+23025:         }
+23026:         CONSTEXPR npu_set_ifm_base2_t() :
+23027:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)), reserved0(0),
+23028:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23029:         {
+23030:         }
+23031:         CONSTEXPR bool valid() const
+23032:         {
+23033:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2) && control >= 1 &&
+23034:                    control <= 2;
+23035:         }
+23036:         CONSTEXPR void init()
+23037:         {
+23038:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2);
+23039:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23040:         }
+23041:         operator uint64_t()
+23042:         {
+23043:             uint64_t word;
+23044:             std::memcpy(&word, this, sizeof(word));
+23045:             return word;
+23046:         }
+23047:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23048:         {
+23049:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23050:         }
+23051:         CONSTEXPR npu_set_ifm_base2_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23052:         {
+23053:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23054:             return *this;
+23055:         }
+23056:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23057:         {
+23058:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23059:         }
+23060:         CONSTEXPR npu_set_ifm_base2_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23061:         {
+23062:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23063:             return *this;
+23064:         }
+23065:         CONSTEXPR uint32_t get_addr() const
+23066:         {
+23067:             return static_cast<uint32_t>(addr);
+23068:         }
+23069:         CONSTEXPR npu_set_ifm_base2_t &set_addr(uint32_t value)
+23070:         {
+23071:             addr = value;
+23072:             return *this;
+23073:         }
+23074: #ifdef NPU_DISASSEMBLE
+23075:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23076:         {
+23077:             std::stringstream saddr;
+23078:             saddr << std::hex << "0x" << get_addr();
+23079:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23080:         }
+23081: #endif
+23082: #endif
+23083:     };
+23084:     // IFM Tile 3 address
+23085:     struct npu_set_ifm_base3_t
+23086:     {
+23087: #ifdef __cplusplus
+23088:       private:
+23089: #endif
+23090:         uint32_t opcode : 10; //  opcode
+23091:         uint32_t reserved0 : 4;
+23092:         uint32_t control : 2; //  control
+23093:         uint32_t reserved1 : 16;
+23094:         uint32_t addr : 32; //  address offset
+23095: #ifdef __cplusplus
+23096:       public:
+23097:         npu_set_ifm_base3_t(uint32_t _addr) :
+23098:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)), reserved0(0),
+23099:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23100:         {
+23101:         }
+23102:         CONSTEXPR npu_set_ifm_base3_t() :
+23103:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)), reserved0(0),
+23104:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23105:         {
+23106:         }
+23107:         CONSTEXPR bool valid() const
+23108:         {
+23109:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3) && control >= 1 &&
+23110:                    control <= 2;
+23111:         }
+23112:         CONSTEXPR void init()
+23113:         {
+23114:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3);
+23115:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23116:         }
+23117:         operator uint64_t()
+23118:         {
+23119:             uint64_t word;
+23120:             std::memcpy(&word, this, sizeof(word));
+23121:             return word;
+23122:         }
+23123:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23124:         {
+23125:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23126:         }
+23127:         CONSTEXPR npu_set_ifm_base3_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23128:         {
+23129:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23130:             return *this;
+23131:         }
+23132:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23133:         {
+23134:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23135:         }
+23136:         CONSTEXPR npu_set_ifm_base3_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23137:         {
+23138:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23139:             return *this;
+23140:         }
+23141:         CONSTEXPR uint32_t get_addr() const
+23142:         {
+23143:             return static_cast<uint32_t>(addr);
+23144:         }
+23145:         CONSTEXPR npu_set_ifm_base3_t &set_addr(uint32_t value)
+23146:         {
+23147:             addr = value;
+23148:             return *this;
+23149:         }
+23150: #ifdef NPU_DISASSEMBLE
+23151:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23152:         {
+23153:             std::stringstream saddr;
+23154:             saddr << std::hex << "0x" << get_addr();
+23155:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23156:         }
+23157: #endif
+23158: #endif
+--- lines 23382-23690 ---
+23382:             saddr << std::hex << "0x" << get_addr();
+23383:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23384:         }
+23385: #endif
+23386: #endif
+23387:     };
+23388:     // OFM Tile 0 address
+23389:     struct npu_set_ofm_base0_t
+23390:     {
+23391: #ifdef __cplusplus
+23392:       private:
+23393: #endif
+23394:         uint32_t opcode : 10; //  opcode
+23395:         uint32_t reserved0 : 4;
+23396:         uint32_t control : 2; //  control
+23397:         uint32_t reserved1 : 16;
+23398:         uint32_t addr : 32; //  address offset
+23399: #ifdef __cplusplus
+23400:       public:
+23401:         npu_set_ofm_base0_t(uint32_t _addr) :
+23402:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23403:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23404:         {
+23405:         }
+23406:         CONSTEXPR npu_set_ofm_base0_t() :
+23407:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23408:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23409:         {
+23410:         }
+23411:         CONSTEXPR bool valid() const
+23412:         {
+23413:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0) && control >= 1 &&
+23414:                    control <= 2;
+23415:         }
+23416:         CONSTEXPR void init()
+23417:         {
+23418:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0);
+23419:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23420:         }
+23421:         operator uint64_t()
+23422:         {
+23423:             uint64_t word;
+23424:             std::memcpy(&word, this, sizeof(word));
+23425:             return word;
+23426:         }
+23427:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23428:         {
+23429:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23430:         }
+23431:         CONSTEXPR npu_set_ofm_base0_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23432:         {
+23433:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23434:             return *this;
+23435:         }
+23436:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23437:         {
+23438:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23439:         }
+23440:         CONSTEXPR npu_set_ofm_base0_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23441:         {
+23442:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23443:             return *this;
+23444:         }
+23445:         CONSTEXPR uint32_t get_addr() const
+23446:         {
+23447:             return static_cast<uint32_t>(addr);
+23448:         }
+23449:         CONSTEXPR npu_set_ofm_base0_t &set_addr(uint32_t value)
+23450:         {
+23451:             addr = value;
+23452:             return *this;
+23453:         }
+23454: #ifdef NPU_DISASSEMBLE
+23455:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23456:         {
+23457:             std::stringstream saddr;
+23458:             saddr << std::hex << "0x" << get_addr();
+23459:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23460:         }
+23461: #endif
+23462: #endif
+23463:     };
+23464:     // OFM Tile 1 address
+23465:     struct npu_set_ofm_base1_t
+23466:     {
+23467: #ifdef __cplusplus
+23468:       private:
+23469: #endif
+23470:         uint32_t opcode : 10; //  opcode
+23471:         uint32_t reserved0 : 4;
+23472:         uint32_t control : 2; //  control
+23473:         uint32_t reserved1 : 16;
+23474:         uint32_t addr : 32; //  address offset
+23475: #ifdef __cplusplus
+23476:       public:
+23477:         npu_set_ofm_base1_t(uint32_t _addr) :
+23478:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23479:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23480:         {
+23481:         }
+23482:         CONSTEXPR npu_set_ofm_base1_t() :
+23483:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23484:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23485:         {
+23486:         }
+23487:         CONSTEXPR bool valid() const
+23488:         {
+23489:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1) && control >= 1 &&
+23490:                    control <= 2;
+23491:         }
+23492:         CONSTEXPR void init()
+23493:         {
+23494:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1);
+23495:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23496:         }
+23497:         operator uint64_t()
+23498:         {
+23499:             uint64_t word;
+23500:             std::memcpy(&word, this, sizeof(word));
+23501:             return word;
+23502:         }
+23503:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23504:         {
+23505:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23506:         }
+23507:         CONSTEXPR npu_set_ofm_base1_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23508:         {
+23509:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23510:             return *this;
+23511:         }
+23512:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23513:         {
+23514:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23515:         }
+23516:         CONSTEXPR npu_set_ofm_base1_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23517:         {
+23518:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23519:             return *this;
+23520:         }
+23521:         CONSTEXPR uint32_t get_addr() const
+23522:         {
+23523:             return static_cast<uint32_t>(addr);
+23524:         }
+23525:         CONSTEXPR npu_set_ofm_base1_t &set_addr(uint32_t value)
+23526:         {
+23527:             addr = value;
+23528:             return *this;
+23529:         }
+23530: #ifdef NPU_DISASSEMBLE
+23531:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23532:         {
+23533:             std::stringstream saddr;
+23534:             saddr << std::hex << "0x" << get_addr();
+23535:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23536:         }
+23537: #endif
+23538: #endif
+23539:     };
+23540:     // OFM Tile 2 address
+23541:     struct npu_set_ofm_base2_t
+23542:     {
+23543: #ifdef __cplusplus
+23544:       private:
+23545: #endif
+23546:         uint32_t opcode : 10; //  opcode
+23547:         uint32_t reserved0 : 4;
+23548:         uint32_t control : 2; //  control
+23549:         uint32_t reserved1 : 16;
+23550:         uint32_t addr : 32; //  address offset
+23551: #ifdef __cplusplus
+23552:       public:
+23553:         npu_set_ofm_base2_t(uint32_t _addr) :
+23554:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)), reserved0(0),
+23555:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23556:         {
+23557:         }
+23558:         CONSTEXPR npu_set_ofm_base2_t() :
+23559:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)), reserved0(0),
+23560:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23561:         {
+23562:         }
+23563:         CONSTEXPR bool valid() const
+23564:         {
+23565:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2) && control >= 1 &&
+23566:                    control <= 2;
+23567:         }
+23568:         CONSTEXPR void init()
+23569:         {
+23570:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2);
+23571:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23572:         }
+23573:         operator uint64_t()
+23574:         {
+23575:             uint64_t word;
+23576:             std::memcpy(&word, this, sizeof(word));
+23577:             return word;
+23578:         }
+23579:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23580:         {
+23581:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23582:         }
+23583:         CONSTEXPR npu_set_ofm_base2_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23584:         {
+23585:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23586:             return *this;
+23587:         }
+23588:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23589:         {
+23590:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23591:         }
+23592:         CONSTEXPR npu_set_ofm_base2_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23593:         {
+23594:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23595:             return *this;
+23596:         }
+23597:         CONSTEXPR uint32_t get_addr() const
+23598:         {
+23599:             return static_cast<uint32_t>(addr);
+23600:         }
+23601:         CONSTEXPR npu_set_ofm_base2_t &set_addr(uint32_t value)
+23602:         {
+23603:             addr = value;
+23604:             return *this;
+23605:         }
+23606: #ifdef NPU_DISASSEMBLE
+23607:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23608:         {
+23609:             std::stringstream saddr;
+23610:             saddr << std::hex << "0x" << get_addr();
+23611:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23612:         }
+23613: #endif
+23614: #endif
+23615:     };
+23616:     // OFM Tile 3 address
+23617:     struct npu_set_ofm_base3_t
+23618:     {
+23619: #ifdef __cplusplus
+23620:       private:
+23621: #endif
+23622:         uint32_t opcode : 10; //  opcode
+23623:         uint32_t reserved0 : 4;
+23624:         uint32_t control : 2; //  control
+23625:         uint32_t reserved1 : 16;
+23626:         uint32_t addr : 32; //  address offset
+23627: #ifdef __cplusplus
+23628:       public:
+23629:         npu_set_ofm_base3_t(uint32_t _addr) :
+23630:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)), reserved0(0),
+23631:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(_addr)
+23632:         {
+23633:         }
+23634:         CONSTEXPR npu_set_ofm_base3_t() :
+23635:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)), reserved0(0),
+23636:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), reserved1(0), addr(0)
+23637:         {
+23638:         }
+23639:         CONSTEXPR bool valid() const
+23640:         {
+23641:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3) && control >= 1 &&
+23642:                    control <= 2;
+23643:         }
+23644:         CONSTEXPR void init()
+23645:         {
+23646:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3);
+23647:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23648:         }
+23649:         operator uint64_t()
+23650:         {
+23651:             uint64_t word;
+23652:             std::memcpy(&word, this, sizeof(word));
+23653:             return word;
+23654:         }
+23655:         CONSTEXPR NPU_NAMESPACE::cmd1_opcode get_opcode() const
+23656:         {
+23657:             return static_cast<NPU_NAMESPACE::cmd1_opcode>(opcode);
+23658:         }
+23659:         CONSTEXPR npu_set_ofm_base3_t &set_opcode(NPU_NAMESPACE::cmd1_opcode value)
+23660:         {
+23661:             opcode = static_cast<uint16_t>(value) & ((1U << 10) - 1);
+23662:             return *this;
+23663:         }
+23664:         CONSTEXPR NPU_NAMESPACE::cmd_ctrl get_control() const
+23665:         {
+23666:             return static_cast<NPU_NAMESPACE::cmd_ctrl>(control);
+23667:         }
+23668:         CONSTEXPR npu_set_ofm_base3_t &set_control(NPU_NAMESPACE::cmd_ctrl value)
+23669:         {
+23670:             control = static_cast<uint8_t>(value) & ((1U << 2) - 1);
+23671:             return *this;
+23672:         }
+23673:         CONSTEXPR uint32_t get_addr() const
+23674:         {
+23675:             return static_cast<uint32_t>(addr);
+23676:         }
+23677:         CONSTEXPR npu_set_ofm_base3_t &set_addr(uint32_t value)
+23678:         {
+23679:             addr = value;
+23680:             return *this;
+23681:         }
+23682: #ifdef NPU_DISASSEMBLE
+23683:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23684:         {
+23685:             std::stringstream saddr;
+23686:             saddr << std::hex << "0x" << get_addr();
+23687:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23688:         }
+23689: #endif
+23690: #endif
+--- lines 26015-26040 ---
+26015:                                                                                          NPU_SET_IFM2_HEIGHT1_M1)      \
+26016:                                                                                     SEP FUNC(cmd0_opcode,              \
+26017:                                                                                              NPU_SET_IFM2_IB_START)    \
+26018:                                                                                         SEP FUNC(cmd0_opcode,          \
+26019:                                                                                                  NPU_SET_IFM2_REGION)
+26020: 
+26021: #define EXPAND_CMD1_OPCODE(FUNC, SEP)                                                                                  \
+26022:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE0)                                                                               \
+26023:     SEP FUNC(cmd1_opcode, NPU_SET_IFM_BASE1) SEP FUNC(cmd1_opcode, NPU_SET_IFM_BASE2) SEP FUNC(                        \
+26024:         cmd1_opcode, NPU_SET_IFM_BASE3) SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_X)                                    \
+26025:         SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_Y) SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_C) SEP FUNC(              \
+26026:             cmd1_opcode, NPU_SET_OFM_BASE0) SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE1)                                   \
+26027:             SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE2) SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE3) SEP FUNC(                \
+26028:                 cmd1_opcode, NPU_SET_OFM_STRIDE_X) SEP FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_Y)                         \
+26029:                 SEP FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_C) SEP FUNC(cmd1_opcode, NPU_SET_WEIGHT_BASE) SEP FUNC(       \
+26030:                     cmd1_opcode, NPU_SET_WEIGHT_LENGTH) SEP FUNC(cmd1_opcode, NPU_SET_SCALE_BASE)                      \
+26031:                     SEP FUNC(cmd1_opcode, NPU_SET_SCALE_LENGTH) SEP FUNC(cmd1_opcode, NPU_SET_OFM_SCALE) SEP FUNC(     \
+26032:                         cmd1_opcode, NPU_SET_OPA_SCALE) SEP FUNC(cmd1_opcode, NPU_SET_OPB_SCALE)                       \
+26033:                         SEP FUNC(cmd1_opcode, NPU_SET_DMA0_SRC) SEP FUNC(cmd1_opcode, NPU_SET_DMA0_DST) SEP FUNC(      \
+26034:                             cmd1_opcode, NPU_SET_DMA0_LEN) SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE0)                   \
+26035:                             SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE1) SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE2)        \
+26036:                                 SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE3) SEP FUNC(cmd1_opcode, NPU_SET_IFM2_STRIDE_X) \
+26037:                                     SEP FUNC(cmd1_opcode, NPU_SET_IFM2_STRIDE_Y)                                       \
+26038:                                         SEP FUNC(cmd1_opcode, NPU_SET_IFM2_STRIDE_C)                                   \
+26039:                                             SEP FUNC(cmd1_opcode, NPU_SET_USER_DEFINED0)                               \
+26040:                                                 SEP FUNC(cmd1_opcode, NPU_SET_USER_DEFINED1)                           \
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu65_interface.h
+SHA256 = d9549cd8b9f305c12f7663a748a813fa1c4e46ff81098705059e9f64326b1672
+LINES = 26060
+--- lines 521-551 ---
+  521:     NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  522:     NPU_SET_IFM2_IB_START     = 397,
+  523:     NPU_SET_IFM2_REGION       = 399,
+  524: };
+  525: 
+  526: enum class cmd1_opcode : uint16_t
+  527: {
+  528:     NPU_SET_IFM_BASE0      = 0,
+  529:     NPU_SET_IFM_BASE1      = 1,
+  530:     NPU_SET_IFM_BASE2      = 2,
+  531:     NPU_SET_IFM_BASE3      = 3,
+  532:     NPU_SET_IFM_STRIDE_X   = 4,
+  533:     NPU_SET_IFM_STRIDE_Y   = 5,
+  534:     NPU_SET_IFM_STRIDE_C   = 6,
+  535:     NPU_SET_OFM_BASE0      = 16,
+  536:     NPU_SET_OFM_BASE1      = 17,
+  537:     NPU_SET_OFM_BASE2      = 18,
+  538:     NPU_SET_OFM_BASE3      = 19,
+  539:     NPU_SET_OFM_STRIDE_X   = 20,
+  540:     NPU_SET_OFM_STRIDE_Y   = 21,
+  541:     NPU_SET_OFM_STRIDE_C   = 22,
+  542:     NPU_SET_WEIGHT_BASE    = 32,
+  543:     NPU_SET_WEIGHT_LENGTH  = 33,
+  544:     NPU_SET_SCALE_BASE     = 34,
+  545:     NPU_SET_SCALE_LENGTH   = 35,
+  546:     NPU_SET_OFM_SCALE      = 36,
+  547:     NPU_SET_OPA_SCALE      = 37,
+  548:     NPU_SET_OPB_SCALE      = 38,
+  549:     NPU_SET_DMA0_SRC       = 48,
+  550:     NPU_SET_DMA0_DST       = 49,
+  551:     NPU_SET_DMA0_LEN       = 50,
+--- lines 952-982 ---
+  952:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1   = 396,
+  953:     CMD0_OPCODE_NPU_SET_IFM2_IB_START     = 397,
+  954:     CMD0_OPCODE_NPU_SET_IFM2_REGION       = 399,
+  955: };
+  956: 
+  957: enum cmd1_opcode
+  958: {
+  959:     CMD1_OPCODE_NPU_SET_IFM_BASE0      = 0,
+  960:     CMD1_OPCODE_NPU_SET_IFM_BASE1      = 1,
+  961:     CMD1_OPCODE_NPU_SET_IFM_BASE2      = 2,
+  962:     CMD1_OPCODE_NPU_SET_IFM_BASE3      = 3,
+  963:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_X   = 4,
+  964:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y   = 5,
+  965:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_C   = 6,
+  966:     CMD1_OPCODE_NPU_SET_OFM_BASE0      = 16,
+  967:     CMD1_OPCODE_NPU_SET_OFM_BASE1      = 17,
+  968:     CMD1_OPCODE_NPU_SET_OFM_BASE2      = 18,
+  969:     CMD1_OPCODE_NPU_SET_OFM_BASE3      = 19,
+  970:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_X   = 20,
+  971:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y   = 21,
+  972:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_C   = 22,
+  973:     CMD1_OPCODE_NPU_SET_WEIGHT_BASE    = 32,
+  974:     CMD1_OPCODE_NPU_SET_WEIGHT_LENGTH  = 33,
+  975:     CMD1_OPCODE_NPU_SET_SCALE_BASE     = 34,
+  976:     CMD1_OPCODE_NPU_SET_SCALE_LENGTH   = 35,
+  977:     CMD1_OPCODE_NPU_SET_OFM_SCALE      = 36,
+  978:     CMD1_OPCODE_NPU_SET_OPA_SCALE      = 37,
+  979:     CMD1_OPCODE_NPU_SET_OPB_SCALE      = 38,
+  980:     CMD1_OPCODE_NPU_SET_DMA0_SRC       = 48,
+  981:     CMD1_OPCODE_NPU_SET_DMA0_DST       = 49,
+  982:     CMD1_OPCODE_NPU_SET_DMA0_LEN       = 50,
+--- lines 1730-1769 ---
+ 1730:     "CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1",
+ 1731:     "CMD0_OPCODE_NPU_SET_IFM2_IB_START",
+ 1732:     "****",
+ 1733:     "CMD0_OPCODE_NPU_SET_IFM2_REGION",
+ 1734: };
+ 1735: 
+ 1736: static const char *cmd1_opcode_str[] = {
+ 1737:     "CMD1_OPCODE_NPU_SET_IFM_BASE0",
+ 1738:     "CMD1_OPCODE_NPU_SET_IFM_BASE1",
+ 1739:     "CMD1_OPCODE_NPU_SET_IFM_BASE2",
+ 1740:     "CMD1_OPCODE_NPU_SET_IFM_BASE3",
+ 1741:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_X",
+ 1742:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y",
+ 1743:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_C",
+ 1744:     "****",
+ 1745:     "****",
+ 1746:     "****",
+ 1747:     "****",
+ 1748:     "****",
+ 1749:     "****",
+ 1750:     "****",
+ 1751:     "****",
+ 1752:     "****",
+ 1753:     "CMD1_OPCODE_NPU_SET_OFM_BASE0",
+ 1754:     "CMD1_OPCODE_NPU_SET_OFM_BASE1",
+ 1755:     "CMD1_OPCODE_NPU_SET_OFM_BASE2",
+ 1756:     "CMD1_OPCODE_NPU_SET_OFM_BASE3",
+ 1757:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_X",
+ 1758:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y",
+ 1759:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_C",
+ 1760:     "****",
+ 1761:     "****",
+ 1762:     "****",
+ 1763:     "****",
+ 1764:     "****",
+ 1765:     "****",
+ 1766:     "****",
+ 1767:     "****",
+ 1768:     "****",
+ 1769:     "CMD1_OPCODE_NPU_SET_WEIGHT_BASE",
+--- lines 18088-18135 ---
+18088:         {
+18089:             const npu_set_ifm2_region_t &v = *reinterpret_cast<const npu_set_ifm2_region_t *>(in);
+18090:             op                             = "NPU_SET_IFM2_REGION";
+18091:             v.disassemble(fields);
+18092:             break;
+18093:         }
+18094:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18095:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0):
+18096:         {
+18097:             const npu_set_ifm_base0_t &v = *reinterpret_cast<const npu_set_ifm_base0_t *>(in);
+18098:             op                           = "NPU_SET_IFM_BASE0";
+18099:             v.disassemble(fields);
+18100:             break;
+18101:         }
+18102:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18103:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1):
+18104:         {
+18105:             const npu_set_ifm_base1_t &v = *reinterpret_cast<const npu_set_ifm_base1_t *>(in);
+18106:             op                           = "NPU_SET_IFM_BASE1";
+18107:             v.disassemble(fields);
+18108:             break;
+18109:         }
+18110:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18111:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2):
+18112:         {
+18113:             const npu_set_ifm_base2_t &v = *reinterpret_cast<const npu_set_ifm_base2_t *>(in);
+18114:             op                           = "NPU_SET_IFM_BASE2";
+18115:             v.disassemble(fields);
+18116:             break;
+18117:         }
+18118:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18119:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3):
+18120:         {
+18121:             const npu_set_ifm_base3_t &v = *reinterpret_cast<const npu_set_ifm_base3_t *>(in);
+18122:             op                           = "NPU_SET_IFM_BASE3";
+18123:             v.disassemble(fields);
+18124:             break;
+18125:         }
+18126:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18127:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_X):
+18128:         {
+18129:             const npu_set_ifm_stride_x_t &v = *reinterpret_cast<const npu_set_ifm_stride_x_t *>(in);
+18130:             op                              = "NPU_SET_IFM_STRIDE_X";
+18131:             v.disassemble(fields);
+18132:             break;
+18133:         }
+18134:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18135:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_Y):
+--- lines 18144-18191 ---
+18144:         {
+18145:             const npu_set_ifm_stride_c_t &v = *reinterpret_cast<const npu_set_ifm_stride_c_t *>(in);
+18146:             op                              = "NPU_SET_IFM_STRIDE_C";
+18147:             v.disassemble(fields);
+18148:             break;
+18149:         }
+18150:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18151:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0):
+18152:         {
+18153:             const npu_set_ofm_base0_t &v = *reinterpret_cast<const npu_set_ofm_base0_t *>(in);
+18154:             op                           = "NPU_SET_OFM_BASE0";
+18155:             v.disassemble(fields);
+18156:             break;
+18157:         }
+18158:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18159:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1):
+18160:         {
+18161:             const npu_set_ofm_base1_t &v = *reinterpret_cast<const npu_set_ofm_base1_t *>(in);
+18162:             op                           = "NPU_SET_OFM_BASE1";
+18163:             v.disassemble(fields);
+18164:             break;
+18165:         }
+18166:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18167:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2):
+18168:         {
+18169:             const npu_set_ofm_base2_t &v = *reinterpret_cast<const npu_set_ofm_base2_t *>(in);
+18170:             op                           = "NPU_SET_OFM_BASE2";
+18171:             v.disassemble(fields);
+18172:             break;
+18173:         }
+18174:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18175:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3):
+18176:         {
+18177:             const npu_set_ofm_base3_t &v = *reinterpret_cast<const npu_set_ofm_base3_t *>(in);
+18178:             op                           = "NPU_SET_OFM_BASE3";
+18179:             v.disassemble(fields);
+18180:             break;
+18181:         }
+18182:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18183:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_X):
+18184:         {
+18185:             const npu_set_ofm_stride_x_t &v = *reinterpret_cast<const npu_set_ofm_stride_x_t *>(in);
+18186:             op                              = "NPU_SET_OFM_STRIDE_X";
+18187:             v.disassemble(fields);
+18188:             break;
+18189:         }
+18190:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) |
+18191:             static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_Y):
+--- lines 23267-23518 ---
+23267:         {
+23268:             fields.push_back(std::make_pair<std::string, std::string>("region", std::to_string(region)));
+23269:         }
+23270: #endif
+23271: #endif
+23272:     };
+23273:     // IFM Tile 0 address
+23274:     struct npu_set_ifm_base0_t
+23275:     {
+23276: #ifdef __cplusplus
+23277:       private:
+23278: #endif
+23279:         uint32_t opcode : 10; //  opcode
+23280:         uint32_t reserved0 : 4;
+23281:         uint32_t control : 2; //  control
+23282:         uint32_t addr_hi : 8; //  address extension
+23283:         uint32_t reserved1 : 8;
+23284:         uint32_t addr_lo : 32; //  address offset
+23285: #ifdef __cplusplus
+23286:       public:
+23287:         npu_set_ifm_base0_t(uint64_t _addr) :
+23288:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+23289:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23290:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23291:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23292:         {
+23293:         }
+23294:         CONSTEXPR npu_set_ifm_base0_t() :
+23295:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)), reserved0(0),
+23296:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23297:         {
+23298:         }
+23299:         CONSTEXPR bool valid() const
+23300:         {
+23301:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0) && control >= 1 &&
+23302:                    control <= 2;
+23303:         }
+23304:         CONSTEXPR void init()
+23305:         {
+23306:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0);
+23307:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23308:         }
+23309:         operator uint64_t()
+23310:         {
+23311:             uint64_t word;
+23312:             std::memcpy(&word, this, sizeof(word));
+23313:             return word;
+23314:         }
+23315:         CONSTEXPR uint64_t get_addr() const
+23316:         {
+23317:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23318:         }
+23319:         CONSTEXPR npu_set_ifm_base0_t &set_addr(uint64_t value)
+23320:         {
+23321:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23322:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23323:             return *this;
+23324:         }
+23325: #ifdef NPU_DISASSEMBLE
+23326:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23327:         {
+23328:             std::stringstream saddr;
+23329:             saddr << std::hex << "0x" << get_addr();
+23330:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23331:         }
+23332: #endif
+23333: #endif
+23334:     };
+23335:     // IFM Tile 1 address
+23336:     struct npu_set_ifm_base1_t
+23337:     {
+23338: #ifdef __cplusplus
+23339:       private:
+23340: #endif
+23341:         uint32_t opcode : 10; //  opcode
+23342:         uint32_t reserved0 : 4;
+23343:         uint32_t control : 2; //  control
+23344:         uint32_t addr_hi : 8; //  address extension
+23345:         uint32_t reserved1 : 8;
+23346:         uint32_t addr_lo : 32; //  address offset
+23347: #ifdef __cplusplus
+23348:       public:
+23349:         npu_set_ifm_base1_t(uint64_t _addr) :
+23350:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)), reserved0(0),
+23351:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23352:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23353:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23354:         {
+23355:         }
+23356:         CONSTEXPR npu_set_ifm_base1_t() :
+23357:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)), reserved0(0),
+23358:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23359:         {
+23360:         }
+23361:         CONSTEXPR bool valid() const
+23362:         {
+23363:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1) && control >= 1 &&
+23364:                    control <= 2;
+23365:         }
+23366:         CONSTEXPR void init()
+23367:         {
+23368:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1);
+23369:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23370:         }
+23371:         operator uint64_t()
+23372:         {
+23373:             uint64_t word;
+23374:             std::memcpy(&word, this, sizeof(word));
+23375:             return word;
+23376:         }
+23377:         CONSTEXPR uint64_t get_addr() const
+23378:         {
+23379:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23380:         }
+23381:         CONSTEXPR npu_set_ifm_base1_t &set_addr(uint64_t value)
+23382:         {
+23383:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23384:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23385:             return *this;
+23386:         }
+23387: #ifdef NPU_DISASSEMBLE
+23388:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23389:         {
+23390:             std::stringstream saddr;
+23391:             saddr << std::hex << "0x" << get_addr();
+23392:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23393:         }
+23394: #endif
+23395: #endif
+23396:     };
+23397:     // IFM Tile 2 address
+23398:     struct npu_set_ifm_base2_t
+23399:     {
+23400: #ifdef __cplusplus
+23401:       private:
+23402: #endif
+23403:         uint32_t opcode : 10; //  opcode
+23404:         uint32_t reserved0 : 4;
+23405:         uint32_t control : 2; //  control
+23406:         uint32_t addr_hi : 8; //  address extension
+23407:         uint32_t reserved1 : 8;
+23408:         uint32_t addr_lo : 32; //  address offset
+23409: #ifdef __cplusplus
+23410:       public:
+23411:         npu_set_ifm_base2_t(uint64_t _addr) :
+23412:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)), reserved0(0),
+23413:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23414:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23415:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23416:         {
+23417:         }
+23418:         CONSTEXPR npu_set_ifm_base2_t() :
+23419:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)), reserved0(0),
+23420:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23421:         {
+23422:         }
+23423:         CONSTEXPR bool valid() const
+23424:         {
+23425:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2) && control >= 1 &&
+23426:                    control <= 2;
+23427:         }
+23428:         CONSTEXPR void init()
+23429:         {
+23430:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2);
+23431:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23432:         }
+23433:         operator uint64_t()
+23434:         {
+23435:             uint64_t word;
+23436:             std::memcpy(&word, this, sizeof(word));
+23437:             return word;
+23438:         }
+23439:         CONSTEXPR uint64_t get_addr() const
+23440:         {
+23441:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23442:         }
+23443:         CONSTEXPR npu_set_ifm_base2_t &set_addr(uint64_t value)
+23444:         {
+23445:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23446:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23447:             return *this;
+23448:         }
+23449: #ifdef NPU_DISASSEMBLE
+23450:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23451:         {
+23452:             std::stringstream saddr;
+23453:             saddr << std::hex << "0x" << get_addr();
+23454:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23455:         }
+23456: #endif
+23457: #endif
+23458:     };
+23459:     // IFM Tile 3 address
+23460:     struct npu_set_ifm_base3_t
+23461:     {
+23462: #ifdef __cplusplus
+23463:       private:
+23464: #endif
+23465:         uint32_t opcode : 10; //  opcode
+23466:         uint32_t reserved0 : 4;
+23467:         uint32_t control : 2; //  control
+23468:         uint32_t addr_hi : 8; //  address extension
+23469:         uint32_t reserved1 : 8;
+23470:         uint32_t addr_lo : 32; //  address offset
+23471: #ifdef __cplusplus
+23472:       public:
+23473:         npu_set_ifm_base3_t(uint64_t _addr) :
+23474:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)), reserved0(0),
+23475:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23476:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23477:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23478:         {
+23479:         }
+23480:         CONSTEXPR npu_set_ifm_base3_t() :
+23481:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)), reserved0(0),
+23482:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23483:         {
+23484:         }
+23485:         CONSTEXPR bool valid() const
+23486:         {
+23487:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3) && control >= 1 &&
+23488:                    control <= 2;
+23489:         }
+23490:         CONSTEXPR void init()
+23491:         {
+23492:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3);
+23493:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23494:         }
+23495:         operator uint64_t()
+23496:         {
+23497:             uint64_t word;
+23498:             std::memcpy(&word, this, sizeof(word));
+23499:             return word;
+23500:         }
+23501:         CONSTEXPR uint64_t get_addr() const
+23502:         {
+23503:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23504:         }
+23505:         CONSTEXPR npu_set_ifm_base3_t &set_addr(uint64_t value)
+23506:         {
+23507:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23508:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23509:             return *this;
+23510:         }
+23511: #ifdef NPU_DISASSEMBLE
+23512:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23513:         {
+23514:             std::stringstream saddr;
+23515:             saddr << std::hex << "0x" << get_addr();
+23516:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23517:         }
+23518: #endif
+--- lines 23701-23952 ---
+23701:             saddr << std::hex << "0x" << get_addr();
+23702:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23703:         }
+23704: #endif
+23705: #endif
+23706:     };
+23707:     // OFM Tile 0 address
+23708:     struct npu_set_ofm_base0_t
+23709:     {
+23710: #ifdef __cplusplus
+23711:       private:
+23712: #endif
+23713:         uint32_t opcode : 10; //  opcode
+23714:         uint32_t reserved0 : 4;
+23715:         uint32_t control : 2; //  control
+23716:         uint32_t addr_hi : 8; //  address extension
+23717:         uint32_t reserved1 : 8;
+23718:         uint32_t addr_lo : 32; //  address offset
+23719: #ifdef __cplusplus
+23720:       public:
+23721:         npu_set_ofm_base0_t(uint64_t _addr) :
+23722:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23723:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23724:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23725:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23726:         {
+23727:         }
+23728:         CONSTEXPR npu_set_ofm_base0_t() :
+23729:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)), reserved0(0),
+23730:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23731:         {
+23732:         }
+23733:         CONSTEXPR bool valid() const
+23734:         {
+23735:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0) && control >= 1 &&
+23736:                    control <= 2;
+23737:         }
+23738:         CONSTEXPR void init()
+23739:         {
+23740:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0);
+23741:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23742:         }
+23743:         operator uint64_t()
+23744:         {
+23745:             uint64_t word;
+23746:             std::memcpy(&word, this, sizeof(word));
+23747:             return word;
+23748:         }
+23749:         CONSTEXPR uint64_t get_addr() const
+23750:         {
+23751:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23752:         }
+23753:         CONSTEXPR npu_set_ofm_base0_t &set_addr(uint64_t value)
+23754:         {
+23755:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23756:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23757:             return *this;
+23758:         }
+23759: #ifdef NPU_DISASSEMBLE
+23760:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23761:         {
+23762:             std::stringstream saddr;
+23763:             saddr << std::hex << "0x" << get_addr();
+23764:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23765:         }
+23766: #endif
+23767: #endif
+23768:     };
+23769:     // OFM Tile 1 address
+23770:     struct npu_set_ofm_base1_t
+23771:     {
+23772: #ifdef __cplusplus
+23773:       private:
+23774: #endif
+23775:         uint32_t opcode : 10; //  opcode
+23776:         uint32_t reserved0 : 4;
+23777:         uint32_t control : 2; //  control
+23778:         uint32_t addr_hi : 8; //  address extension
+23779:         uint32_t reserved1 : 8;
+23780:         uint32_t addr_lo : 32; //  address offset
+23781: #ifdef __cplusplus
+23782:       public:
+23783:         npu_set_ofm_base1_t(uint64_t _addr) :
+23784:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23785:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23786:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23787:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23788:         {
+23789:         }
+23790:         CONSTEXPR npu_set_ofm_base1_t() :
+23791:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)), reserved0(0),
+23792:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23793:         {
+23794:         }
+23795:         CONSTEXPR bool valid() const
+23796:         {
+23797:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1) && control >= 1 &&
+23798:                    control <= 2;
+23799:         }
+23800:         CONSTEXPR void init()
+23801:         {
+23802:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1);
+23803:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23804:         }
+23805:         operator uint64_t()
+23806:         {
+23807:             uint64_t word;
+23808:             std::memcpy(&word, this, sizeof(word));
+23809:             return word;
+23810:         }
+23811:         CONSTEXPR uint64_t get_addr() const
+23812:         {
+23813:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23814:         }
+23815:         CONSTEXPR npu_set_ofm_base1_t &set_addr(uint64_t value)
+23816:         {
+23817:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23818:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23819:             return *this;
+23820:         }
+23821: #ifdef NPU_DISASSEMBLE
+23822:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23823:         {
+23824:             std::stringstream saddr;
+23825:             saddr << std::hex << "0x" << get_addr();
+23826:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23827:         }
+23828: #endif
+23829: #endif
+23830:     };
+23831:     // OFM Tile 2 address
+23832:     struct npu_set_ofm_base2_t
+23833:     {
+23834: #ifdef __cplusplus
+23835:       private:
+23836: #endif
+23837:         uint32_t opcode : 10; //  opcode
+23838:         uint32_t reserved0 : 4;
+23839:         uint32_t control : 2; //  control
+23840:         uint32_t addr_hi : 8; //  address extension
+23841:         uint32_t reserved1 : 8;
+23842:         uint32_t addr_lo : 32; //  address offset
+23843: #ifdef __cplusplus
+23844:       public:
+23845:         npu_set_ofm_base2_t(uint64_t _addr) :
+23846:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)), reserved0(0),
+23847:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23848:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23849:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23850:         {
+23851:         }
+23852:         CONSTEXPR npu_set_ofm_base2_t() :
+23853:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)), reserved0(0),
+23854:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23855:         {
+23856:         }
+23857:         CONSTEXPR bool valid() const
+23858:         {
+23859:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2) && control >= 1 &&
+23860:                    control <= 2;
+23861:         }
+23862:         CONSTEXPR void init()
+23863:         {
+23864:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2);
+23865:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23866:         }
+23867:         operator uint64_t()
+23868:         {
+23869:             uint64_t word;
+23870:             std::memcpy(&word, this, sizeof(word));
+23871:             return word;
+23872:         }
+23873:         CONSTEXPR uint64_t get_addr() const
+23874:         {
+23875:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23876:         }
+23877:         CONSTEXPR npu_set_ofm_base2_t &set_addr(uint64_t value)
+23878:         {
+23879:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23880:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23881:             return *this;
+23882:         }
+23883: #ifdef NPU_DISASSEMBLE
+23884:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23885:         {
+23886:             std::stringstream saddr;
+23887:             saddr << std::hex << "0x" << get_addr();
+23888:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23889:         }
+23890: #endif
+23891: #endif
+23892:     };
+23893:     // OFM Tile 3 address
+23894:     struct npu_set_ofm_base3_t
+23895:     {
+23896: #ifdef __cplusplus
+23897:       private:
+23898: #endif
+23899:         uint32_t opcode : 10; //  opcode
+23900:         uint32_t reserved0 : 4;
+23901:         uint32_t control : 2; //  control
+23902:         uint32_t addr_hi : 8; //  address extension
+23903:         uint32_t reserved1 : 8;
+23904:         uint32_t addr_lo : 32; //  address offset
+23905: #ifdef __cplusplus
+23906:       public:
+23907:         npu_set_ofm_base3_t(uint64_t _addr) :
+23908:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)), reserved0(0),
+23909:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+23910:             addr_hi(static_cast<uint8_t>((_addr >> 32) & std::numeric_limits<uint64_t>::max())), reserved1(0),
+23911:             addr_lo(static_cast<uint32_t>((_addr)&std::numeric_limits<uint64_t>::max()))
+23912:         {
+23913:         }
+23914:         CONSTEXPR npu_set_ofm_base3_t() :
+23915:             opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)), reserved0(0),
+23916:             control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)), addr_hi(0), reserved1(0), addr_lo(0)
+23917:         {
+23918:         }
+23919:         CONSTEXPR bool valid() const
+23920:         {
+23921:             return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3) && control >= 1 &&
+23922:                    control <= 2;
+23923:         }
+23924:         CONSTEXPR void init()
+23925:         {
+23926:             opcode  = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3);
+23927:             control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+23928:         }
+23929:         operator uint64_t()
+23930:         {
+23931:             uint64_t word;
+23932:             std::memcpy(&word, this, sizeof(word));
+23933:             return word;
+23934:         }
+23935:         CONSTEXPR uint64_t get_addr() const
+23936:         {
+23937:             return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+23938:         }
+23939:         CONSTEXPR npu_set_ofm_base3_t &set_addr(uint64_t value)
+23940:         {
+23941:             addr_lo = static_cast<uint32_t>((value)&std::numeric_limits<uint64_t>::max());
+23942:             addr_hi = static_cast<uint8_t>((value >> 32) & std::numeric_limits<uint64_t>::max());
+23943:             return *this;
+23944:         }
+23945: #ifdef NPU_DISASSEMBLE
+23946:         void disassemble(std::vector<std::pair<std::string, std::string>> &fields) const
+23947:         {
+23948:             std::stringstream saddr;
+23949:             saddr << std::hex << "0x" << get_addr();
+23950:             fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+23951:         }
+23952: #endif
+--- lines 25878-25903 ---
+25878:                                                                                             cmd0_opcode,               \
+25879:                                                                                             NPU_SET_IFM2_IB_START)     \
+25880:                                                                                             SEP FUNC(                  \
+25881:                                                                                                 cmd0_opcode,           \
+25882:                                                                                                 NPU_SET_IFM2_REGION)
+25883: 
+25884: #define EXPAND_CMD1_OPCODE(FUNC, SEP)                                                                                  \
+25885:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE0)                                                                               \
+25886:     SEP FUNC(cmd1_opcode, NPU_SET_IFM_BASE1) SEP FUNC(cmd1_opcode, NPU_SET_IFM_BASE2)                                  \
+25887:         SEP FUNC(cmd1_opcode, NPU_SET_IFM_BASE3) SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_X)                           \
+25888:             SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_Y) SEP FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_C) SEP FUNC(          \
+25889:                 cmd1_opcode, NPU_SET_OFM_BASE0) SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE1)                               \
+25890:                 SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE2) SEP FUNC(cmd1_opcode, NPU_SET_OFM_BASE3) SEP FUNC(            \
+25891:                     cmd1_opcode, NPU_SET_OFM_STRIDE_X) SEP FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_Y)                     \
+25892:                     SEP FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_C) SEP FUNC(cmd1_opcode, NPU_SET_WEIGHT_BASE) SEP FUNC(   \
+25893:                         cmd1_opcode, NPU_SET_WEIGHT_LENGTH) SEP FUNC(cmd1_opcode, NPU_SET_SCALE_BASE)                  \
+25894:                         SEP FUNC(cmd1_opcode, NPU_SET_SCALE_LENGTH) SEP FUNC(cmd1_opcode, NPU_SET_OFM_SCALE)           \
+25895:                             SEP FUNC(cmd1_opcode, NPU_SET_OPA_SCALE) SEP FUNC(cmd1_opcode, NPU_SET_OPB_SCALE)          \
+25896:                                 SEP FUNC(cmd1_opcode, NPU_SET_DMA0_SRC) SEP FUNC(cmd1_opcode, NPU_SET_DMA0_DST)        \
+25897:                                     SEP FUNC(cmd1_opcode, NPU_SET_DMA0_LEN) SEP FUNC(cmd1_opcode, NPU_SET_DMA0_SKIP0)  \
+25898:                                         SEP FUNC(cmd1_opcode, NPU_SET_DMA0_SKIP1) SEP FUNC(                            \
+25899:                                             cmd1_opcode, NPU_SET_IFM2_BASE0) SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE1) \
+25900:                                             SEP FUNC(cmd1_opcode, NPU_SET_IFM2_BASE2) SEP FUNC(cmd1_opcode,            \
+25901:                                                                                                NPU_SET_IFM2_BASE3)     \
+25902:                                                 SEP FUNC(cmd1_opcode, NPU_SET_IFM2_STRIDE_X)                           \
+25903:                                                     SEP FUNC(cmd1_opcode, NPU_SET_IFM2_STRIDE_Y)                       \
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu85_interface.h
+SHA256 = 8a5cbe762158db15651d65b278d71495e27b174ecacc1c7f988413f5dd665f41
+LINES = 24620
+--- lines 611-641 ---
+  611:     NPU_SET_IFM2_HEIGHT0_M1 = 395,
+  612:     NPU_SET_IFM2_HEIGHT1_M1 = 396,
+  613:     NPU_SET_IFM2_REGION = 399,
+  614: };
+  615: 
+  616: enum class cmd1_opcode : uint16_t
+  617: {
+  618:     NPU_SET_IFM_BASE0 = 0,
+  619:     NPU_SET_IFM_BASE1 = 1,
+  620:     NPU_SET_IFM_BASE2 = 2,
+  621:     NPU_SET_IFM_BASE3 = 3,
+  622:     NPU_SET_IFM_STRIDE_X = 4,
+  623:     NPU_SET_IFM_STRIDE_Y = 5,
+  624:     NPU_SET_IFM_STRIDE_C = 6,
+  625:     NPU_SET_OFM_BASE0 = 16,
+  626:     NPU_SET_OFM_BASE1 = 17,
+  627:     NPU_SET_OFM_BASE2 = 18,
+  628:     NPU_SET_OFM_BASE3 = 19,
+  629:     NPU_SET_OFM_STRIDE_X = 20,
+  630:     NPU_SET_OFM_STRIDE_Y = 21,
+  631:     NPU_SET_OFM_STRIDE_C = 22,
+  632:     NPU_SET_WEIGHT_BASE = 32,
+  633:     NPU_SET_WEIGHT_LENGTH = 33,
+  634:     NPU_SET_SCALE_BASE = 34,
+  635:     NPU_SET_SCALE_LENGTH = 35,
+  636:     NPU_SET_OFM_SCALE = 36,
+  637:     NPU_SET_IFM_SCALE = 37,
+  638:     NPU_SET_IFM2_SCALE = 38,
+  639:     NPU_SET_OP_SCALAR = 39,
+  640:     NPU_SET_DMA0_SRC = 48,
+  641:     NPU_SET_DMA0_DST = 49,
+--- lines 1251-1281 ---
+ 1251:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT0_M1 = 395,
+ 1252:     CMD0_OPCODE_NPU_SET_IFM2_HEIGHT1_M1 = 396,
+ 1253:     CMD0_OPCODE_NPU_SET_IFM2_REGION = 399,
+ 1254: };
+ 1255: 
+ 1256: enum cmd1_opcode
+ 1257: {
+ 1258:     CMD1_OPCODE_NPU_SET_IFM_BASE0 = 0,
+ 1259:     CMD1_OPCODE_NPU_SET_IFM_BASE1 = 1,
+ 1260:     CMD1_OPCODE_NPU_SET_IFM_BASE2 = 2,
+ 1261:     CMD1_OPCODE_NPU_SET_IFM_BASE3 = 3,
+ 1262:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_X = 4,
+ 1263:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y = 5,
+ 1264:     CMD1_OPCODE_NPU_SET_IFM_STRIDE_C = 6,
+ 1265:     CMD1_OPCODE_NPU_SET_OFM_BASE0 = 16,
+ 1266:     CMD1_OPCODE_NPU_SET_OFM_BASE1 = 17,
+ 1267:     CMD1_OPCODE_NPU_SET_OFM_BASE2 = 18,
+ 1268:     CMD1_OPCODE_NPU_SET_OFM_BASE3 = 19,
+ 1269:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_X = 20,
+ 1270:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y = 21,
+ 1271:     CMD1_OPCODE_NPU_SET_OFM_STRIDE_C = 22,
+ 1272:     CMD1_OPCODE_NPU_SET_WEIGHT_BASE = 32,
+ 1273:     CMD1_OPCODE_NPU_SET_WEIGHT_LENGTH = 33,
+ 1274:     CMD1_OPCODE_NPU_SET_SCALE_BASE = 34,
+ 1275:     CMD1_OPCODE_NPU_SET_SCALE_LENGTH = 35,
+ 1276:     CMD1_OPCODE_NPU_SET_OFM_SCALE = 36,
+ 1277:     CMD1_OPCODE_NPU_SET_IFM_SCALE = 37,
+ 1278:     CMD1_OPCODE_NPU_SET_IFM2_SCALE = 38,
+ 1279:     CMD1_OPCODE_NPU_SET_OP_SCALAR = 39,
+ 1280:     CMD1_OPCODE_NPU_SET_DMA0_SRC = 48,
+ 1281:     CMD1_OPCODE_NPU_SET_DMA0_DST = 49,
+--- lines 2235-2274 ---
+ 2235:     "****",
+ 2236:     "****",
+ 2237:     "CMD0_OPCODE_NPU_SET_IFM2_REGION",
+ 2238: };
+ 2239: 
+ 2240: static const char* cmd1_opcode_str[] =
+ 2241: {
+ 2242:     "CMD1_OPCODE_NPU_SET_IFM_BASE0",
+ 2243:     "CMD1_OPCODE_NPU_SET_IFM_BASE1",
+ 2244:     "CMD1_OPCODE_NPU_SET_IFM_BASE2",
+ 2245:     "CMD1_OPCODE_NPU_SET_IFM_BASE3",
+ 2246:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_X",
+ 2247:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_Y",
+ 2248:     "CMD1_OPCODE_NPU_SET_IFM_STRIDE_C",
+ 2249:     "****",
+ 2250:     "****",
+ 2251:     "****",
+ 2252:     "****",
+ 2253:     "****",
+ 2254:     "****",
+ 2255:     "****",
+ 2256:     "****",
+ 2257:     "****",
+ 2258:     "CMD1_OPCODE_NPU_SET_OFM_BASE0",
+ 2259:     "CMD1_OPCODE_NPU_SET_OFM_BASE1",
+ 2260:     "CMD1_OPCODE_NPU_SET_OFM_BASE2",
+ 2261:     "CMD1_OPCODE_NPU_SET_OFM_BASE3",
+ 2262:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_X",
+ 2263:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_Y",
+ 2264:     "CMD1_OPCODE_NPU_SET_OFM_STRIDE_C",
+ 2265:     "****",
+ 2266:     "****",
+ 2267:     "****",
+ 2268:     "****",
+ 2269:     "****",
+ 2270:     "****",
+ 2271:     "****",
+ 2272:     "****",
+ 2273:     "****",
+ 2274:     "CMD1_OPCODE_NPU_SET_WEIGHT_BASE",
+--- lines 8343-8363 ---
+ 8343:     {
+ 8344:         word0 = value;
+ 8345:         return *this;
+ 8346:     }
+ 8347: #endif
+ 8348: };
+ 8349: 
+ 8350: // ifm_base0_r - State managed by NPU_SET_IFM_BASE0
+ 8351: struct ifm_base0_r
+ 8352: {
+ 8353: #ifndef __cplusplus
+ 8354:     union
+ 8355:     {
+ 8356:         struct
+ 8357:         {
+ 8358:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8359:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8360:         };
+ 8361:         uint32_t word[2];
+ 8362:     };
+ 8363: #else
+--- lines 8384-8404 ---
+ 8384:     ifm_base0_r copy()
+ 8385:     {
+ 8386:         return *this;
+ 8387:     }
+ 8388: #endif
+ 8389: };
+ 8390: 
+ 8391: // ifm_base1_r - State managed by NPU_SET_IFM_BASE1
+ 8392: struct ifm_base1_r
+ 8393: {
+ 8394: #ifndef __cplusplus
+ 8395:     union
+ 8396:     {
+ 8397:         struct
+ 8398:         {
+ 8399:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8400:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8401:         };
+ 8402:         uint32_t word[2];
+ 8403:     };
+ 8404: #else
+--- lines 8425-8445 ---
+ 8425:     ifm_base1_r copy()
+ 8426:     {
+ 8427:         return *this;
+ 8428:     }
+ 8429: #endif
+ 8430: };
+ 8431: 
+ 8432: // ifm_base2_r - State managed by NPU_SET_IFM_BASE2
+ 8433: struct ifm_base2_r
+ 8434: {
+ 8435: #ifndef __cplusplus
+ 8436:     union
+ 8437:     {
+ 8438:         struct
+ 8439:         {
+ 8440:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8441:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8442:         };
+ 8443:         uint32_t word[2];
+ 8444:     };
+ 8445: #else
+--- lines 8466-8486 ---
+ 8466:     ifm_base2_r copy()
+ 8467:     {
+ 8468:         return *this;
+ 8469:     }
+ 8470: #endif
+ 8471: };
+ 8472: 
+ 8473: // ifm_base3_r - State managed by NPU_SET_IFM_BASE3
+ 8474: struct ifm_base3_r
+ 8475: {
+ 8476: #ifndef __cplusplus
+ 8477:     union
+ 8478:     {
+ 8479:         struct
+ 8480:         {
+ 8481:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8482:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8483:         };
+ 8484:         uint32_t word[2];
+ 8485:     };
+ 8486: #else
+--- lines 8630-8650 ---
+ 8630:     ifm_stride_c_r copy()
+ 8631:     {
+ 8632:         return *this;
+ 8633:     }
+ 8634: #endif
+ 8635: };
+ 8636: 
+ 8637: // ofm_base0_r - State managed by NPU_SET_OFM_BASE0
+ 8638: struct ofm_base0_r
+ 8639: {
+ 8640: #ifndef __cplusplus
+ 8641:     union
+ 8642:     {
+ 8643:         struct
+ 8644:         {
+ 8645:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8646:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8647:         };
+ 8648:         uint32_t word[2];
+ 8649:     };
+ 8650: #else
+--- lines 8671-8691 ---
+ 8671:     ofm_base0_r copy()
+ 8672:     {
+ 8673:         return *this;
+ 8674:     }
+ 8675: #endif
+ 8676: };
+ 8677: 
+ 8678: // ofm_base1_r - State managed by NPU_SET_OFM_BASE1
+ 8679: struct ofm_base1_r
+ 8680: {
+ 8681: #ifndef __cplusplus
+ 8682:     union
+ 8683:     {
+ 8684:         struct
+ 8685:         {
+ 8686:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8687:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8688:         };
+ 8689:         uint32_t word[2];
+ 8690:     };
+ 8691: #else
+--- lines 8712-8732 ---
+ 8712:     ofm_base1_r copy()
+ 8713:     {
+ 8714:         return *this;
+ 8715:     }
+ 8716: #endif
+ 8717: };
+ 8718: 
+ 8719: // ofm_base2_r - State managed by NPU_SET_OFM_BASE2
+ 8720: struct ofm_base2_r
+ 8721: {
+ 8722: #ifndef __cplusplus
+ 8723:     union
+ 8724:     {
+ 8725:         struct
+ 8726:         {
+ 8727:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8728:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8729:         };
+ 8730:         uint32_t word[2];
+ 8731:     };
+ 8732: #else
+--- lines 8753-8773 ---
+ 8753:     ofm_base2_r copy()
+ 8754:     {
+ 8755:         return *this;
+ 8756:     }
+ 8757: #endif
+ 8758: };
+ 8759: 
+ 8760: // ofm_base3_r - State managed by NPU_SET_OFM_BASE3
+ 8761: struct ofm_base3_r
+ 8762: {
+ 8763: #ifndef __cplusplus
+ 8764:     union
+ 8765:     {
+ 8766:         struct
+ 8767:         {
+ 8768:             uint32_t value_LO : 32; // 64-bit register value - LSB
+ 8769:             uint32_t value_HI : 32; // 64-bit register value - MSB
+ 8770:         };
+ 8771:         uint32_t word[2];
+ 8772:     };
+ 8773: #else
+--- lines 14763-14807 ---
+14763:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD0_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd0_opcode::NPU_SET_IFM2_REGION):
+14764:         {
+14765:             const npu_set_ifm2_region_t& v = *reinterpret_cast<const npu_set_ifm2_region_t*>(in);
+14766:             op = "NPU_SET_IFM2_REGION";
+14767:             v.disassemble(fields);
+14768:             break;
+14769:         }
+14770:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0):
+14771:         {
+14772:             const npu_set_ifm_base0_t& v = *reinterpret_cast<const npu_set_ifm_base0_t*>(in);
+14773:             op = "NPU_SET_IFM_BASE0";
+14774:             v.disassemble(fields);
+14775:             break;
+14776:         }
+14777:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1):
+14778:         {
+14779:             const npu_set_ifm_base1_t& v = *reinterpret_cast<const npu_set_ifm_base1_t*>(in);
+14780:             op = "NPU_SET_IFM_BASE1";
+14781:             v.disassemble(fields);
+14782:             break;
+14783:         }
+14784:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2):
+14785:         {
+14786:             const npu_set_ifm_base2_t& v = *reinterpret_cast<const npu_set_ifm_base2_t*>(in);
+14787:             op = "NPU_SET_IFM_BASE2";
+14788:             v.disassemble(fields);
+14789:             break;
+14790:         }
+14791:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3):
+14792:         {
+14793:             const npu_set_ifm_base3_t& v = *reinterpret_cast<const npu_set_ifm_base3_t*>(in);
+14794:             op = "NPU_SET_IFM_BASE3";
+14795:             v.disassemble(fields);
+14796:             break;
+14797:         }
+14798:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_X):
+14799:         {
+14800:             const npu_set_ifm_stride_x_t& v = *reinterpret_cast<const npu_set_ifm_stride_x_t*>(in);
+14801:             op = "NPU_SET_IFM_STRIDE_X";
+14802:             v.disassemble(fields);
+14803:             break;
+14804:         }
+14805:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_Y):
+14806:         {
+14807:             const npu_set_ifm_stride_y_t& v = *reinterpret_cast<const npu_set_ifm_stride_y_t*>(in);
+--- lines 14812-14856 ---
+14812:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_STRIDE_C):
+14813:         {
+14814:             const npu_set_ifm_stride_c_t& v = *reinterpret_cast<const npu_set_ifm_stride_c_t*>(in);
+14815:             op = "NPU_SET_IFM_STRIDE_C";
+14816:             v.disassemble(fields);
+14817:             break;
+14818:         }
+14819:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0):
+14820:         {
+14821:             const npu_set_ofm_base0_t& v = *reinterpret_cast<const npu_set_ofm_base0_t*>(in);
+14822:             op = "NPU_SET_OFM_BASE0";
+14823:             v.disassemble(fields);
+14824:             break;
+14825:         }
+14826:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1):
+14827:         {
+14828:             const npu_set_ofm_base1_t& v = *reinterpret_cast<const npu_set_ofm_base1_t*>(in);
+14829:             op = "NPU_SET_OFM_BASE1";
+14830:             v.disassemble(fields);
+14831:             break;
+14832:         }
+14833:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2):
+14834:         {
+14835:             const npu_set_ofm_base2_t& v = *reinterpret_cast<const npu_set_ofm_base2_t*>(in);
+14836:             op = "NPU_SET_OFM_BASE2";
+14837:             v.disassemble(fields);
+14838:             break;
+14839:         }
+14840:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3):
+14841:         {
+14842:             const npu_set_ofm_base3_t& v = *reinterpret_cast<const npu_set_ofm_base3_t*>(in);
+14843:             op = "NPU_SET_OFM_BASE3";
+14844:             v.disassemble(fields);
+14845:             break;
+14846:         }
+14847:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_X):
+14848:         {
+14849:             const npu_set_ofm_stride_x_t& v = *reinterpret_cast<const npu_set_ofm_stride_x_t*>(in);
+14850:             op = "NPU_SET_OFM_STRIDE_X";
+14851:             v.disassemble(fields);
+14852:             break;
+14853:         }
+14854:         case (static_cast<uint32_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL) << 14) | static_cast<uint32_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_STRIDE_Y):
+14855:         {
+14856:             const npu_set_ofm_stride_y_t& v = *reinterpret_cast<const npu_set_ofm_stride_y_t*>(in);
+--- lines 20417-20679 ---
+20417:     {
+20418:         fields.push_back(std::make_pair<std::string, std::string>("region", std::to_string(region)));
+20419:     }
+20420: #endif
+20421: #endif
+20422: };
+20423: // IFM Tile 0 address
+20424: struct npu_set_ifm_base0_t
+20425: {
+20426: #ifdef __cplusplus
+20427: private:
+20428: #endif
+20429:     uint32_t opcode:10; //  opcode
+20430:     uint32_t reserved0:4;
+20431:     uint32_t control:2; //  control
+20432:     uint32_t addr_hi:8; //  address extension
+20433:     uint32_t reserved1:8;
+20434:     uint32_t addr_lo:32; //  address offset
+20435: #ifdef __cplusplus
+20436: public:
+20437:     npu_set_ifm_base0_t(uint64_t _addr) :
+20438:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)),
+20439:         reserved0(0),
+20440:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20441:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20442:         reserved1(0),
+20443:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20444:     {}
+20445:     CONSTEXPR npu_set_ifm_base0_t() :
+20446:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0)),
+20447:         reserved0(0),
+20448:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20449:         addr_hi(0),
+20450:         reserved1(0),
+20451:         addr_lo(0)
+20452:     {}
+20453:     CONSTEXPR bool valid() const
+20454:     {
+20455:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0) && control >= 1 && control <= 2;
+20456:     }
+20457:     CONSTEXPR void init()
+20458:     {
+20459:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE0); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20460:     }
+20461:     operator uint64_t()
+20462:     {
+20463:         uint64_t word = 0;
+20464:         word |= uint64_t(opcode) << 0;
+20465:         word |= uint64_t(control) << 14;
+20466:         word |= uint64_t(addr_hi) << 16;
+20467:         word |= uint64_t(addr_lo) << 32;
+20468:         return word;
+20469:     }
+20470:     CONSTEXPR uint64_t get_addr() const
+20471:     {
+20472:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20473:     }
+20474:     CONSTEXPR npu_set_ifm_base0_t& set_addr(uint64_t value)
+20475:     {
+20476:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20477:     }
+20478: #ifdef NPU_DISASSEMBLE
+20479:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20480:     {
+20481:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20482:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20483:     }
+20484: #endif
+20485: #endif
+20486: };
+20487: // IFM Tile 1 address
+20488: struct npu_set_ifm_base1_t
+20489: {
+20490: #ifdef __cplusplus
+20491: private:
+20492: #endif
+20493:     uint32_t opcode:10; //  opcode
+20494:     uint32_t reserved0:4;
+20495:     uint32_t control:2; //  control
+20496:     uint32_t addr_hi:8; //  address extension
+20497:     uint32_t reserved1:8;
+20498:     uint32_t addr_lo:32; //  address offset
+20499: #ifdef __cplusplus
+20500: public:
+20501:     npu_set_ifm_base1_t(uint64_t _addr) :
+20502:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)),
+20503:         reserved0(0),
+20504:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20505:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20506:         reserved1(0),
+20507:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20508:     {}
+20509:     CONSTEXPR npu_set_ifm_base1_t() :
+20510:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1)),
+20511:         reserved0(0),
+20512:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20513:         addr_hi(0),
+20514:         reserved1(0),
+20515:         addr_lo(0)
+20516:     {}
+20517:     CONSTEXPR bool valid() const
+20518:     {
+20519:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1) && control >= 1 && control <= 2;
+20520:     }
+20521:     CONSTEXPR void init()
+20522:     {
+20523:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE1); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20524:     }
+20525:     operator uint64_t()
+20526:     {
+20527:         uint64_t word = 0;
+20528:         word |= uint64_t(opcode) << 0;
+20529:         word |= uint64_t(control) << 14;
+20530:         word |= uint64_t(addr_hi) << 16;
+20531:         word |= uint64_t(addr_lo) << 32;
+20532:         return word;
+20533:     }
+20534:     CONSTEXPR uint64_t get_addr() const
+20535:     {
+20536:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20537:     }
+20538:     CONSTEXPR npu_set_ifm_base1_t& set_addr(uint64_t value)
+20539:     {
+20540:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20541:     }
+20542: #ifdef NPU_DISASSEMBLE
+20543:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20544:     {
+20545:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20546:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20547:     }
+20548: #endif
+20549: #endif
+20550: };
+20551: // IFM Tile 2 address
+20552: struct npu_set_ifm_base2_t
+20553: {
+20554: #ifdef __cplusplus
+20555: private:
+20556: #endif
+20557:     uint32_t opcode:10; //  opcode
+20558:     uint32_t reserved0:4;
+20559:     uint32_t control:2; //  control
+20560:     uint32_t addr_hi:8; //  address extension
+20561:     uint32_t reserved1:8;
+20562:     uint32_t addr_lo:32; //  address offset
+20563: #ifdef __cplusplus
+20564: public:
+20565:     npu_set_ifm_base2_t(uint64_t _addr) :
+20566:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)),
+20567:         reserved0(0),
+20568:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20569:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20570:         reserved1(0),
+20571:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20572:     {}
+20573:     CONSTEXPR npu_set_ifm_base2_t() :
+20574:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2)),
+20575:         reserved0(0),
+20576:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20577:         addr_hi(0),
+20578:         reserved1(0),
+20579:         addr_lo(0)
+20580:     {}
+20581:     CONSTEXPR bool valid() const
+20582:     {
+20583:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2) && control >= 1 && control <= 2;
+20584:     }
+20585:     CONSTEXPR void init()
+20586:     {
+20587:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE2); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20588:     }
+20589:     operator uint64_t()
+20590:     {
+20591:         uint64_t word = 0;
+20592:         word |= uint64_t(opcode) << 0;
+20593:         word |= uint64_t(control) << 14;
+20594:         word |= uint64_t(addr_hi) << 16;
+20595:         word |= uint64_t(addr_lo) << 32;
+20596:         return word;
+20597:     }
+20598:     CONSTEXPR uint64_t get_addr() const
+20599:     {
+20600:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20601:     }
+20602:     CONSTEXPR npu_set_ifm_base2_t& set_addr(uint64_t value)
+20603:     {
+20604:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20605:     }
+20606: #ifdef NPU_DISASSEMBLE
+20607:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20608:     {
+20609:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20610:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20611:     }
+20612: #endif
+20613: #endif
+20614: };
+20615: // IFM Tile 3 address
+20616: struct npu_set_ifm_base3_t
+20617: {
+20618: #ifdef __cplusplus
+20619: private:
+20620: #endif
+20621:     uint32_t opcode:10; //  opcode
+20622:     uint32_t reserved0:4;
+20623:     uint32_t control:2; //  control
+20624:     uint32_t addr_hi:8; //  address extension
+20625:     uint32_t reserved1:8;
+20626:     uint32_t addr_lo:32; //  address offset
+20627: #ifdef __cplusplus
+20628: public:
+20629:     npu_set_ifm_base3_t(uint64_t _addr) :
+20630:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)),
+20631:         reserved0(0),
+20632:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20633:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20634:         reserved1(0),
+20635:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20636:     {}
+20637:     CONSTEXPR npu_set_ifm_base3_t() :
+20638:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3)),
+20639:         reserved0(0),
+20640:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20641:         addr_hi(0),
+20642:         reserved1(0),
+20643:         addr_lo(0)
+20644:     {}
+20645:     CONSTEXPR bool valid() const
+20646:     {
+20647:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3) && control >= 1 && control <= 2;
+20648:     }
+20649:     CONSTEXPR void init()
+20650:     {
+20651:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_IFM_BASE3); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20652:     }
+20653:     operator uint64_t()
+20654:     {
+20655:         uint64_t word = 0;
+20656:         word |= uint64_t(opcode) << 0;
+20657:         word |= uint64_t(control) << 14;
+20658:         word |= uint64_t(addr_hi) << 16;
+20659:         word |= uint64_t(addr_lo) << 32;
+20660:         return word;
+20661:     }
+20662:     CONSTEXPR uint64_t get_addr() const
+20663:     {
+20664:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20665:     }
+20666:     CONSTEXPR npu_set_ifm_base3_t& set_addr(uint64_t value)
+20667:     {
+20668:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20669:     }
+20670: #ifdef NPU_DISASSEMBLE
+20671:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20672:     {
+20673:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20674:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20675:     }
+20676: #endif
+20677: #endif
+20678: };
+20679: // IFM byte stride between horizontal values
+--- lines 20865-21127 ---
+20865:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20866:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20867:     }
+20868: #endif
+20869: #endif
+20870: };
+20871: // OFM Tile 0 address
+20872: struct npu_set_ofm_base0_t
+20873: {
+20874: #ifdef __cplusplus
+20875: private:
+20876: #endif
+20877:     uint32_t opcode:10; //  opcode
+20878:     uint32_t reserved0:4;
+20879:     uint32_t control:2; //  control
+20880:     uint32_t addr_hi:8; //  address extension
+20881:     uint32_t reserved1:8;
+20882:     uint32_t addr_lo:32; //  address offset
+20883: #ifdef __cplusplus
+20884: public:
+20885:     npu_set_ofm_base0_t(uint64_t _addr) :
+20886:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)),
+20887:         reserved0(0),
+20888:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20889:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20890:         reserved1(0),
+20891:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20892:     {}
+20893:     CONSTEXPR npu_set_ofm_base0_t() :
+20894:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0)),
+20895:         reserved0(0),
+20896:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20897:         addr_hi(0),
+20898:         reserved1(0),
+20899:         addr_lo(0)
+20900:     {}
+20901:     CONSTEXPR bool valid() const
+20902:     {
+20903:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0) && control >= 1 && control <= 2;
+20904:     }
+20905:     CONSTEXPR void init()
+20906:     {
+20907:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE0); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20908:     }
+20909:     operator uint64_t()
+20910:     {
+20911:         uint64_t word = 0;
+20912:         word |= uint64_t(opcode) << 0;
+20913:         word |= uint64_t(control) << 14;
+20914:         word |= uint64_t(addr_hi) << 16;
+20915:         word |= uint64_t(addr_lo) << 32;
+20916:         return word;
+20917:     }
+20918:     CONSTEXPR uint64_t get_addr() const
+20919:     {
+20920:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20921:     }
+20922:     CONSTEXPR npu_set_ofm_base0_t& set_addr(uint64_t value)
+20923:     {
+20924:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20925:     }
+20926: #ifdef NPU_DISASSEMBLE
+20927:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20928:     {
+20929:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20930:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20931:     }
+20932: #endif
+20933: #endif
+20934: };
+20935: // OFM Tile 1 address
+20936: struct npu_set_ofm_base1_t
+20937: {
+20938: #ifdef __cplusplus
+20939: private:
+20940: #endif
+20941:     uint32_t opcode:10; //  opcode
+20942:     uint32_t reserved0:4;
+20943:     uint32_t control:2; //  control
+20944:     uint32_t addr_hi:8; //  address extension
+20945:     uint32_t reserved1:8;
+20946:     uint32_t addr_lo:32; //  address offset
+20947: #ifdef __cplusplus
+20948: public:
+20949:     npu_set_ofm_base1_t(uint64_t _addr) :
+20950:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)),
+20951:         reserved0(0),
+20952:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20953:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+20954:         reserved1(0),
+20955:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+20956:     {}
+20957:     CONSTEXPR npu_set_ofm_base1_t() :
+20958:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1)),
+20959:         reserved0(0),
+20960:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+20961:         addr_hi(0),
+20962:         reserved1(0),
+20963:         addr_lo(0)
+20964:     {}
+20965:     CONSTEXPR bool valid() const
+20966:     {
+20967:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1) && control >= 1 && control <= 2;
+20968:     }
+20969:     CONSTEXPR void init()
+20970:     {
+20971:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE1); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+20972:     }
+20973:     operator uint64_t()
+20974:     {
+20975:         uint64_t word = 0;
+20976:         word |= uint64_t(opcode) << 0;
+20977:         word |= uint64_t(control) << 14;
+20978:         word |= uint64_t(addr_hi) << 16;
+20979:         word |= uint64_t(addr_lo) << 32;
+20980:         return word;
+20981:     }
+20982:     CONSTEXPR uint64_t get_addr() const
+20983:     {
+20984:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+20985:     }
+20986:     CONSTEXPR npu_set_ofm_base1_t& set_addr(uint64_t value)
+20987:     {
+20988:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+20989:     }
+20990: #ifdef NPU_DISASSEMBLE
+20991:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+20992:     {
+20993:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+20994:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+20995:     }
+20996: #endif
+20997: #endif
+20998: };
+20999: // OFM Tile 2 address
+21000: struct npu_set_ofm_base2_t
+21001: {
+21002: #ifdef __cplusplus
+21003: private:
+21004: #endif
+21005:     uint32_t opcode:10; //  opcode
+21006:     uint32_t reserved0:4;
+21007:     uint32_t control:2; //  control
+21008:     uint32_t addr_hi:8; //  address extension
+21009:     uint32_t reserved1:8;
+21010:     uint32_t addr_lo:32; //  address offset
+21011: #ifdef __cplusplus
+21012: public:
+21013:     npu_set_ofm_base2_t(uint64_t _addr) :
+21014:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)),
+21015:         reserved0(0),
+21016:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+21017:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+21018:         reserved1(0),
+21019:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+21020:     {}
+21021:     CONSTEXPR npu_set_ofm_base2_t() :
+21022:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2)),
+21023:         reserved0(0),
+21024:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+21025:         addr_hi(0),
+21026:         reserved1(0),
+21027:         addr_lo(0)
+21028:     {}
+21029:     CONSTEXPR bool valid() const
+21030:     {
+21031:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2) && control >= 1 && control <= 2;
+21032:     }
+21033:     CONSTEXPR void init()
+21034:     {
+21035:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE2); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+21036:     }
+21037:     operator uint64_t()
+21038:     {
+21039:         uint64_t word = 0;
+21040:         word |= uint64_t(opcode) << 0;
+21041:         word |= uint64_t(control) << 14;
+21042:         word |= uint64_t(addr_hi) << 16;
+21043:         word |= uint64_t(addr_lo) << 32;
+21044:         return word;
+21045:     }
+21046:     CONSTEXPR uint64_t get_addr() const
+21047:     {
+21048:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+21049:     }
+21050:     CONSTEXPR npu_set_ofm_base2_t& set_addr(uint64_t value)
+21051:     {
+21052:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+21053:     }
+21054: #ifdef NPU_DISASSEMBLE
+21055:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+21056:     {
+21057:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+21058:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+21059:     }
+21060: #endif
+21061: #endif
+21062: };
+21063: // OFM Tile 3 address
+21064: struct npu_set_ofm_base3_t
+21065: {
+21066: #ifdef __cplusplus
+21067: private:
+21068: #endif
+21069:     uint32_t opcode:10; //  opcode
+21070:     uint32_t reserved0:4;
+21071:     uint32_t control:2; //  control
+21072:     uint32_t addr_hi:8; //  address extension
+21073:     uint32_t reserved1:8;
+21074:     uint32_t addr_lo:32; //  address offset
+21075: #ifdef __cplusplus
+21076: public:
+21077:     npu_set_ofm_base3_t(uint64_t _addr) :
+21078:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)),
+21079:         reserved0(0),
+21080:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+21081:         addr_hi(static_cast<uint8_t>((_addr >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max()))),
+21082:         reserved1(0),
+21083:         addr_lo(static_cast<uint32_t>((_addr) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())))
+21084:     {}
+21085:     CONSTEXPR npu_set_ofm_base3_t() :
+21086:         opcode(static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3)),
+21087:         reserved0(0),
+21088:         control(static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL)),
+21089:         addr_hi(0),
+21090:         reserved1(0),
+21091:         addr_lo(0)
+21092:     {}
+21093:     CONSTEXPR bool valid() const
+21094:     {
+21095:         return opcode == static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3) && control >= 1 && control <= 2;
+21096:     }
+21097:     CONSTEXPR void init()
+21098:     {
+21099:         opcode = static_cast<uint16_t>(NPU_NAMESPACE::cmd1_opcode::NPU_SET_OFM_BASE3); control = static_cast<uint8_t>(NPU_NAMESPACE::cmd_ctrl::CMD1_CTRL);
+21100:     }
+21101:     operator uint64_t()
+21102:     {
+21103:         uint64_t word = 0;
+21104:         word |= uint64_t(opcode) << 0;
+21105:         word |= uint64_t(control) << 14;
+21106:         word |= uint64_t(addr_hi) << 16;
+21107:         word |= uint64_t(addr_lo) << 32;
+21108:         return word;
+21109:     }
+21110:     CONSTEXPR uint64_t get_addr() const
+21111:     {
+21112:         return (static_cast<uint64_t>(addr_hi) << 32) | addr_lo;
+21113:     }
+21114:     CONSTEXPR npu_set_ofm_base3_t& set_addr(uint64_t value)
+21115:     {
+21116:         addr_lo = static_cast<uint32_t>((value) & static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())); addr_hi = static_cast<uint8_t>((value >> 32) & static_cast<uint64_t>(std::numeric_limits<uint8_t>::max())); return *this;
+21117:     }
+21118: #ifdef NPU_DISASSEMBLE
+21119:     void disassemble(std::vector<std::pair<std::string, std::string>>& fields) const
+21120:     {
+21121:         std::stringstream saddr; saddr << std::hex << "0x" << get_addr();
+21122:         fields.push_back(std::make_pair<std::string, std::string>("addr", saddr.str()));
+21123:     }
+21124: #endif
+21125: #endif
+21126: };
+21127: // OFM byte stride between horizontal values
+--- lines 24231-24261 ---
+24231:     FUNC(cmd0_opcode, NPU_SET_IFM2_ZERO_POINT) SEP \
+24232:     FUNC(cmd0_opcode, NPU_SET_IFM2_WIDTH0_M1) SEP \
+24233:     FUNC(cmd0_opcode, NPU_SET_IFM2_HEIGHT0_M1) SEP \
+24234:     FUNC(cmd0_opcode, NPU_SET_IFM2_HEIGHT1_M1) SEP \
+24235:     FUNC(cmd0_opcode, NPU_SET_IFM2_REGION)
+24236: 
+24237: #define EXPAND_CMD1_OPCODE(FUNC, SEP) \
+24238:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE0) SEP \
+24239:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE1) SEP \
+24240:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE2) SEP \
+24241:     FUNC(cmd1_opcode, NPU_SET_IFM_BASE3) SEP \
+24242:     FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_X) SEP \
+24243:     FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_Y) SEP \
+24244:     FUNC(cmd1_opcode, NPU_SET_IFM_STRIDE_C) SEP \
+24245:     FUNC(cmd1_opcode, NPU_SET_OFM_BASE0) SEP \
+24246:     FUNC(cmd1_opcode, NPU_SET_OFM_BASE1) SEP \
+24247:     FUNC(cmd1_opcode, NPU_SET_OFM_BASE2) SEP \
+24248:     FUNC(cmd1_opcode, NPU_SET_OFM_BASE3) SEP \
+24249:     FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_X) SEP \
+24250:     FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_Y) SEP \
+24251:     FUNC(cmd1_opcode, NPU_SET_OFM_STRIDE_C) SEP \
+24252:     FUNC(cmd1_opcode, NPU_SET_WEIGHT_BASE) SEP \
+24253:     FUNC(cmd1_opcode, NPU_SET_WEIGHT_LENGTH) SEP \
+24254:     FUNC(cmd1_opcode, NPU_SET_SCALE_BASE) SEP \
+24255:     FUNC(cmd1_opcode, NPU_SET_SCALE_LENGTH) SEP \
+24256:     FUNC(cmd1_opcode, NPU_SET_OFM_SCALE) SEP \
+24257:     FUNC(cmd1_opcode, NPU_SET_IFM_SCALE) SEP \
+24258:     FUNC(cmd1_opcode, NPU_SET_IFM2_SCALE) SEP \
+24259:     FUNC(cmd1_opcode, NPU_SET_OP_SCALAR) SEP \
+24260:     FUNC(cmd1_opcode, NPU_SET_DMA0_SRC) SEP \
+24261:     FUNC(cmd1_opcode, NPU_SET_DMA0_DST) SEP \
+
+FILE=/home/user/sdk-alif/modules/hal/ethos_u/src/ethosu_driver.c
+SHA256 = 227f7f247c163427f0531e43f42436eeccb202d2e5545f83af1626db10f5c5a0
+LINES = 808
+--- lines 47-85 ---
+   47: 
+   48: #define UNUSED(x) ((void)x)
+   49: 
+   50: #define BYTES_IN_32_BITS 4
+   51: #define MASK_16_BYTE_ALIGN (0xF)
+   52: #define OPTIMIZER_CONFIG_LENGTH_32_BIT_WORD 2
+   53: #define DRIVER_ACTION_LENGTH_32_BIT_WORD 1
+   54: #define ETHOSU_FOURCC ('1' << 24 | 'P' << 16 | 'O' << 8 | 'C') // "Custom Operator Payload 1"
+   55: 
+   56: #define SCRATCH_BASE_ADDR_INDEX 1
+   57: #define FAST_MEMORY_BASE_ADDR_INDEX 2
+   58: 
+   59: /******************************************************************************
+   60:  * Types
+   61:  ******************************************************************************/
+   62: 
+   63: // Driver actions
+   64: enum DRIVER_ACTION_e
+   65: {
+   66:     RESERVED         = 0,
+   67:     OPTIMIZER_CONFIG = 1,
+   68:     COMMAND_STREAM   = 2,
+   69:     NOP              = 5,
+   70: };
+   71: 
+   72: // Custom operator payload data struct
+   73: struct cop_data_s
+   74: {
+   75:     union
+   76:     {
+   77:         // Driver action data
+   78:         struct
+   79:         {
+   80:             uint8_t driver_action_command; // (valid values in DRIVER_ACTION_e)
+   81:             uint8_t reserved;
+   82: 
+   83:             // Driver action data
+   84:             union
+   85:             {
+--- lines 628-680 ---
+  628:     }
+  629: 
+  630:     // Return inference job status
+  631:     return ret;
+  632: }
+  633: 
+  634: int ethosu_invoke_async(struct ethosu_driver *drv,
+  635:                         const void *custom_data_ptr,
+  636:                         const int custom_data_size,
+  637:                         uint64_t *const base_addr,
+  638:                         const size_t *base_addr_size,
+  639:                         const int num_base_addr,
+  640:                         void *user_arg)
+  641: {
+  642:     assert(custom_data_ptr != NULL);
+  643:     assert(base_addr != NULL);
+  644:     assert(base_addr_size != NULL);
+  645: 
+  646:     const struct cop_data_s *data_ptr = custom_data_ptr;
+  647:     const struct cop_data_s *data_end = (struct cop_data_s *)((ptrdiff_t)custom_data_ptr + custom_data_size);
+  648: 
+  649:     // Make sure an inference is not already running
+  650:     if (drv->job.state != ETHOSU_JOB_IDLE)
+  651:     {
+  652:         LOG_ERR("Inference already running, or waiting to be cleared...");
+  653:         return -1;
+  654:     }
+  655: 
+  656:     drv->job.state            = ETHOSU_JOB_IDLE;
+  657:     drv->job.custom_data_ptr  = custom_data_ptr;
+  658:     drv->job.custom_data_size = custom_data_size;
+  659:     drv->job.base_addr        = base_addr;
+  660:     drv->job.base_addr_size   = base_addr_size;
+  661:     drv->job.num_base_addr    = num_base_addr;
+  662:     drv->job.user_arg         = user_arg;
+  663: 
+  664:     // First word in custom_data_ptr should contain "Custom Operator Payload 1"
+  665:     if (data_ptr->word != ETHOSU_FOURCC)
+  666:     {
+  667:         LOG_ERR("Custom Operator Payload: %" PRIu32 " is not correct, expected %x", data_ptr->word, ETHOSU_FOURCC);
+  668:         goto err;
+  669:     }
+  670: 
+  671:     // Custom data length must be a multiple of 32 bits
+  672:     if ((custom_data_size % BYTES_IN_32_BITS) != 0)
+  673:     {
+  674:         LOG_ERR("custom_data_size=0x%x not a multiple of 4", (unsigned)custom_data_size);
+  675:         goto err;
+  676:     }
+  677: 
+  678:     data_ptr++;
+  679: 
+  680:     // Adjust base address to fast memory area
+--- lines 687-707 ---
+  687:                     base_addr_size[FAST_MEMORY_BASE_ADDR_INDEX]);
+  688:             goto err;
+  689:         }
+  690: 
+  691:         base_addr[FAST_MEMORY_BASE_ADDR_INDEX] = drv->fast_memory;
+  692:     }
+  693: 
+  694:     // Parse Custom Operator Payload data
+  695:     while (data_ptr < data_end)
+  696:     {
+  697:         switch (data_ptr->driver_action_command)
+  698:         {
+  699:         case OPTIMIZER_CONFIG:
+  700:             LOG_DEBUG("OPTIMIZER_CONFIG");
+  701:             struct opt_cfg_s const *opt_cfg_p = (const struct opt_cfg_s *)data_ptr;
+  702: 
+  703:             if (handle_optimizer_config(drv, opt_cfg_p) < 0)
+  704:             {
+  705:                 goto err;
+  706:             }
+  707:             data_ptr += DRIVER_ACTION_LENGTH_32_BIT_WORD + OPTIMIZER_CONFIG_LENGTH_32_BIT_WORD;
+--- lines 732-761 ---
+  732:     return 0;
+  733: err:
+  734:     LOG_ERR("Failed to invoke inference.");
+  735:     ethosu_reset_job(drv);
+  736:     return -1;
+  737: }
+  738: 
+  739: int ethosu_invoke_v3(struct ethosu_driver *drv,
+  740:                      const void *custom_data_ptr,
+  741:                      const int custom_data_size,
+  742:                      uint64_t *const base_addr,
+  743:                      const size_t *base_addr_size,
+  744:                      const int num_base_addr,
+  745:                      void *user_arg)
+  746: {
+  747:     if (ethosu_invoke_async(
+  748:             drv, custom_data_ptr, custom_data_size, base_addr, base_addr_size, num_base_addr, user_arg) < 0)
+  749:     {
+  750:         return -1;
+  751:     }
+  752: 
+  753:     return ethosu_wait(drv, true);
+  754: }
+  755: 
+  756: struct ethosu_driver *ethosu_reserve_driver(void)
+  757: {
+  758:     struct ethosu_driver *drv = NULL;
+  759: 
+  760:     LOG_INFO("Acquiring NPU driver handle");
+  761:     ethosu_semaphore_take(ethosu_semaphore, ETHOSU_SEMAPHORE_WAIT_FOREVER); // This is meant to block until available
+
+FILE=/home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+SHA256 = 51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1
+LINES = 207
+--- lines 160-180 ---
+  160: 
+  161:   const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+  162:   const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+  163:   struct ethosu_driver *drv = ethosu_reserve_driver();
+  164:   const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+  165:   const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+  166:   const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+  167:   result = ethosu_invoke_v3(
+  168:       drv, cms_data, data->cms_data_size, base_addrs,
+  169:       base_addrs_size, num_tensors,
+  170:       GetMicroContext(context)->external_context());
+  171:   const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+  172:   const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+  173:   const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+  174:   const int64_t tcn_v6_release_start_ms = k_uptime_get();
+  175:   ethosu_release_driver(drv);
+  176:   const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+  177:   tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+  178:   tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+  179:   printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+  180:          "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+
+MATCHED_SOURCE_FILES = 6
+
+========== VELA EXECUTABLES ==========
+
+VELA_EXECUTABLE=/home/user/zephyrproject/.py3.12_venv/bin/vela
+5.0.0
+--- Relevant help options ---
+            [--verbose-allocation] [--verbose-high-level-command-stream]
+            [--verbose-register-command-stream] [--verbose-operators]
+            [--cop-format {COP1,COP2}] [--separate-io-regions]
+  --verbose-high-level-command-stream
+  --verbose-register-command-stream
+  --cop-format {COP1,COP2}
+  --separate-io-regions
+
+========== PYTHON VELA DISTRIBUTIONS ==========
+
+PYTHON=/home/user/zephyrproject/.py3.12_venv/bin/python
+DISTRIBUTION: ethos-u-vela 5.0.0
+MODULE: ethosu origin= None locations= ['/home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu']
+MODULE: ethosu.vela origin= /home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela/__init__.py locations= ['/home/user/zephyrproject/.py3.12_venv/lib/python3.12/site-packages/ethosu/vela']
+MODULE: ethos_u_vela origin= None locations= None
+
+PYTHON=/home/user/onnx2tflite_env/bin/python
+MODULE: ethosu origin= None locations= None
+MODULE: ethosu.vela ERROR: No module named 'ethosu'
+MODULE: ethos_u_vela origin= None locations= None
+
+========== SAFETY STATUS ==========
+MODEL_MODIFIED=NO
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_FLASHED=NO
+OSPI1_REPROGRAMMED=NO
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_cop2_driver_compat_20261126_104127.log
+Press ENTER to close this terminal...
