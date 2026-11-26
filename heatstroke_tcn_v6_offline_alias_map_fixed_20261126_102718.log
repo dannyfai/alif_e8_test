@@ -1,0 +1,154 @@
+======================================================
+TCN V6 OFFLINE ALIAS / TENSOR LIFETIME MAP
+Timestamp=20261126_102718
+======================================================
+0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d  /home/user/sdk-alif/beeinventor/PolyU/Heat_Stress_Model_1_v20260514/experiments/tcn_reg_20261120/onnx_qdq_cvf_svf_int8_symmetry_sweep394_20261124_135637_12002/tflite_int8mask_cast_gather_audit_20261124_151459/vela/symmetric394_int8mask_cast_vela.tflite
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795660039.194634   18689 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795660039.194919   18689 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1795660039.224611   18689 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795660039.930782   18689 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795660039.930979   18689 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+MODEL_BYTES = 9684208
+MODEL_SHA256 = 0cd9abb79a559017dfebaf75b11c597f9af10fc97cf8f41385d60dbcf6c1cf1d
+SUBGRAPH[0] tensors=304 operators=197 base=0
+TOTAL_TENSOR_COUNT = 304
+METADATA[0] name='OfflineMemoryAllocation' buffer=86
+OFFLINE_PAYLOAD_BYTES = 1228
+OFFLINE_INT_COUNT = 307
+OFFLINE_HEADER = [0, 1, 304]
+
+========== TARGET TENSORS ==========
+TENSOR31: flat=31 metadata_index=34 offset=184672 bytes=5412 end=190084 shape=(1, 902, 6) dtype=9 name='/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'
+TENSOR54: flat=54 metadata_index=57 offset=184672 bytes=28800 end=213472 shape=(1, 900, 32) dtype=9 name='/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output'
+
+========== OPERATORS USING TARGET TENSORS ==========
+sg=0 op=17 builtin=114 custom=None inputs=[30] outputs=[31]
+sg=0 op=30 builtin=32 custom='ethos-u' inputs=[51, 52, 53, 53, 31] outputs=[54]
+sg=0 op=31 builtin=6 custom=None inputs=[54] outputs=[55]
+
+========== TFLM LIFETIME RECONSTRUCTION ==========
+tensor31: first_created=18 last_used=31
+tensor54: first_created=31 last_used=32
+TENSOR31_TENSOR54_LIFETIMES_OVERLAP = True
+
+========== SAME-START-OFFSET TENSORS ==========
+
+Tensor 31, offset=184672
+sg=0 tid=31 flat=31 offset=184672 size=5412 end=190084 shape=(1, 902, 6) name='/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'
+sg=0 tid=54 flat=54 offset=184672 size=28800 end=213472 shape=(1, 900, 32) name='/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output'
+sg=0 tid=57 flat=57 offset=184672 size=115200 end=299872 shape=(1, 32, 900) name='/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_'
+sg=0 tid=62 flat=62 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.2/Sub_output_0'
+sg=0 tid=77 flat=77 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.2/Add_1_output_0'
+sg=0 tid=115 flat=115 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.3/Mul_11_output_0'
+sg=0 tid=118 flat=118 offset=184672 size=28992 end=213664 shape=(1, 906, 32) name='/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'
+
+Tensor 54, offset=184672
+sg=0 tid=31 flat=31 offset=184672 size=5412 end=190084 shape=(1, 902, 6) name='/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'
+sg=0 tid=54 flat=54 offset=184672 size=28800 end=213472 shape=(1, 900, 32) name='/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output'
+sg=0 tid=57 flat=57 offset=184672 size=115200 end=299872 shape=(1, 32, 900) name='/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_'
+sg=0 tid=62 flat=62 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.2/Sub_output_0'
+sg=0 tid=77 flat=77 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.2/Add_1_output_0'
+sg=0 tid=115 flat=115 offset=184672 size=115200 end=299872 shape=(1, 900, 32) name='/cvf/cvf.3/Mul_11_output_0'
+sg=0 tid=118 flat=118 offset=184672 size=28992 end=213664 shape=(1, 906, 32) name='/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'
+
+========== ADDRESS-RANGE OVERLAPS ==========
+
+Tensor 31 range=[184672,190084) overlaps=35
+  tensor=22 flat=22 range=[174640,196240) shape=(1, 900, 6) name='/Where_1_output_0'
+  tensor=53 flat=53 range=[0,2372448) shape=(2372448,) name='scratch'
+  tensor=54 flat=54 range=[184672,213472) shape=(1, 900, 32) name='/cvf/cvf.1/Conv_output_0_QuantizeLinear_Output'
+  tensor=57 flat=57 range=[184672,299872) shape=(1, 32, 900) name='/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_'
+  tensor=62 flat=62 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.2/Sub_output_0'
+  tensor=77 flat=77 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.2/Add_1_output_0'
+  tensor=115 flat=115 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.3/Mul_11_output_0'
+  tensor=118 flat=118 range=[184672,213664) shape=(1, 906, 32) name='/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'
+  tensor=120 flat=120 range=[126560,241760) shape=(1, 900, 128) name='/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output'
+  tensor=123 flat=123 range=[68448,529248) shape=(1, 128, 900) name='/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_'
+  tensor=128 flat=128 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.6/Sub_output_0'
+  tensor=143 flat=143 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.6/Add_1_output_0'
+  tensor=181 flat=181 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.7/Mul_11_output_0'
+  tensor=184 flat=184 range=[68448,184928) shape=(1, 910, 128) name='/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output'
+  tensor=186 flat=186 range=[184928,190328) shape=(1, 900, 6) name='/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output'
+  tensor=224 flat=224 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=226 flat=226 range=[115200,230400) shape=(1, 900, 32) name='/Relu_output_0_DequantizeLinear_Output'
+  tensor=232 flat=232 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=234 flat=234 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output'
+  tensor=240 flat=240 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=242 flat=242 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output'
+  tensor=248 flat=248 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=250 flat=250 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output'
+  tensor=256 flat=256 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=258 flat=258 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output'
+  tensor=264 flat=264 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=266 flat=266 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output'
+  tensor=272 flat=272 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=274 flat=274 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output'
+  tensor=280 flat=280 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=282 flat=282 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output'
+  tensor=288 flat=288 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=290 flat=290 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output'
+  tensor=296 flat=296 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=298 flat=298 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output'
+
+Tensor 54 range=[184672,213472) overlaps=35
+  tensor=22 flat=22 range=[174640,196240) shape=(1, 900, 6) name='/Where_1_output_0'
+  tensor=31 flat=31 range=[184672,190084) shape=(1, 902, 6) name='/cvf/cvf.0/Pad_output_0_DequantizeLinear_Output'
+  tensor=53 flat=53 range=[0,2372448) shape=(2372448,) name='scratch'
+  tensor=57 flat=57 range=[184672,299872) shape=(1, 32, 900) name='/cvf/cvf.1/Conv_output_0_DequantizeLinear_Output_transposed_'
+  tensor=62 flat=62 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.2/Sub_output_0'
+  tensor=77 flat=77 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.2/Add_1_output_0'
+  tensor=115 flat=115 range=[184672,299872) shape=(1, 900, 32) name='/cvf/cvf.3/Mul_11_output_0'
+  tensor=118 flat=118 range=[184672,213664) shape=(1, 906, 32) name='/cvf/cvf.4/Pad_output_0_DequantizeLinear_Output'
+  tensor=120 flat=120 range=[126560,241760) shape=(1, 900, 128) name='/cvf/cvf.5/Conv_output_0_QuantizeLinear_Output'
+  tensor=123 flat=123 range=[68448,529248) shape=(1, 128, 900) name='/cvf/cvf.5/Conv_output_0_DequantizeLinear_Output_transposed_'
+  tensor=128 flat=128 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.6/Sub_output_0'
+  tensor=143 flat=143 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.6/Add_1_output_0'
+  tensor=181 flat=181 range=[68448,529248) shape=(1, 900, 128) name='/cvf/cvf.7/Mul_11_output_0'
+  tensor=184 flat=184 range=[68448,184928) shape=(1, 910, 128) name='/cvf/cvf.8/Pad_output_0_DequantizeLinear_Output'
+  tensor=186 flat=186 range=[184928,190328) shape=(1, 900, 6) name='/cvf/cvf.8/Conv_output_0_QuantizeLinear_Output'
+  tensor=224 flat=224 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.0/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=226 flat=226 range=[115200,230400) shape=(1, 900, 32) name='/Relu_output_0_DequantizeLinear_Output'
+  tensor=232 flat=232 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.1/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=234 flat=234 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.0/Relu_output_0_DequantizeLinear_Output'
+  tensor=240 flat=240 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.2/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=242 flat=242 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.1/Relu_output_0_DequantizeLinear_Output'
+  tensor=248 flat=248 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.3/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=250 flat=250 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.2/Relu_output_0_DequantizeLinear_Output'
+  tensor=256 flat=256 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.4/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=258 flat=258 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.3/Relu_output_0_DequantizeLinear_Output'
+  tensor=264 flat=264 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.5/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=266 flat=266 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.4/Relu_output_0_DequantizeLinear_Output'
+  tensor=272 flat=272 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.6/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=274 flat=274 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.5/Relu_output_0_DequantizeLinear_Output'
+  tensor=280 flat=280 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.7/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=282 flat=282 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.6/Relu_output_0_DequantizeLinear_Output'
+  tensor=288 flat=288 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.8/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=290 flat=290 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.7/Relu_output_0_DequantizeLinear_Output'
+  tensor=296 flat=296 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.9/layer2/pointwise/Conv_output_0_DequantizeLinear_Output'
+  tensor=298 flat=298 range=[115200,230400) shape=(1, 900, 32) name='/tcn_blocks.8/Relu_output_0_DequantizeLinear_Output'
+
+========== PLAN HIGH-WATER MARK ==========
+MAX_TENSOR_OFFSET_END = 2372448
+ALIGNED_MAX_END_16 = 2372448
+REPORTED_ARENA_CAPACITY = 2621440
+REPORTED_ARENA_USED = 2393072
+REPORTED_ARENA_HEADROOM = 228368
+OUTPUT54_BYTES = 28800
+OUTPUT54_FITS_AFTER_REPORTED_USED = True
+
+OFFLINE_ALIAS_MAP_AUDIT=FINISHED
+
+AUDIT_COMPLETE
+MODEL_MODIFIED=NO
+SDK_MODIFIED=NO
+APP_MODIFIED=NO
+BUILD_PERFORMED=NO
+FLASH_PERFORMED=NO
+OSPI1_REPROGRAMMED=NO
+
+SCRIPT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_offline_alias_map_fixed_20261126_102718.log
+Press ENTER to close this terminal...
