@@ -1,0 +1,363 @@
+IMMEDIATE CAPTURE ANCHOR INSPECTION
+SOURCE=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_timeline_20261127_090219/src/MainLoop.cc
+PATCH_SCRIPT=/tmp/build_tcn_v6_first_ethosu_immediate_capture.sh
+
+=== SOURCE HASH ===
+21c432cf09e9ce7dcffbd67ff20a626a8da242c8a7c3572543692df51b3eaef3  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_timeline_20261127_090219/src/MainLoop.cc
+
+=== SOURCE ANCHOR / CALLBACK MATCHES ===
+46-        reinterpret_cast<const uint8_t*>(actual), actual_bytes);
+47-
+48-    const uint32_t reference_crc = Sample317BoundaryCrc32(
+49-        reinterpret_cast<const uint8_t*>(reference), reference_bytes);
+50-
+51:    uint32_t mismatches = 0;
+52-    uint32_t max_abs_diff = 0;
+53-    uint64_t sum_abs_diff = 0;
+54-
+55-    int32_t actual_min = 127;
+56-    int32_t actual_max = -128;
+--
+63-        const int32_t diff = a - r;
+64-        const uint32_t abs_diff =
+65-            static_cast<uint32_t>(diff < 0 ? -diff : diff);
+66-
+67-        if (diff != 0) {
+68:            ++mismatches;
+69-        }
+70-        if (abs_diff > max_abs_diff) {
+71-            max_abs_diff = abs_diff;
+72-        }
+73-
+--
+86-           label, invocation_index, actual_bytes,
+87-           actual_crc, reference_crc,
+88-           (actual_crc == reference_crc) ? 1U : 0U);
+89-    k_sleep(K_MSEC(45));
+90-
+91:    printk("TCN_V6_FIRST_ETHOS_%s_METRICS: mismatches=%u max_abs_diff=%u mae_milli_code=%u actual_range=[%d,%d] ref_range=[%d,%d]\n",
+92:           label, mismatches, max_abs_diff, mae_milli_code,
+93-           actual_min, actual_max, reference_min, reference_max);
+94-    k_sleep(K_MSEC(45));
+95-}
+96-
+97-}  // namespace
+--
+100-    const int8_t* data,
+101-    uint32_t bytes,
+102-    uint32_t invocation_index,
+103-    uint32_t stage) {
+104-
+105:    if (stage == 0U) {
+106-        printk("TCN_V6_FIRST_ETHOS_INPUT_BEGIN: idx=%u bytes=%u\n",
+107-               invocation_index, bytes);
+108:        k_sleep(K_MSEC(35));
+109-
+110-        Sample317BoundaryReport(
+111-            "INPUT", data, bytes,
+112-            sample317_ethosu_reference::kFirstEthosInput,
+113-            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosInput)),
+114-            invocation_index);
+115-
+116-        printk("TCN_V6_FIRST_ETHOS_INPUT_END\n");
+117:        k_sleep(K_MSEC(35));
+118:    } else if (stage == 1U) {
+119:        printk("TCN_V6_FIRST_ETHOS_OUTPUT_BEGIN: idx=%u bytes=%u\n",
+120-               invocation_index, bytes);
+121:        k_sleep(K_MSEC(35));
+122-
+123-        Sample317BoundaryReport(
+124:            "OUTPUT", data, bytes,
+125-            sample317_ethosu_reference::kFirstEthosOutput,
+126-            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosOutput)),
+127-            invocation_index);
+128-
+129:        // Time/channel localization of the first Ethos-U output mismatch.
+130-        // Tensor 54 is [1, 900, 32] INT8.
+131-        if (bytes == static_cast<uint32_t>(
+132-                sizeof(sample317_ethosu_reference::kFirstEthosOutput))) {
+133-            constexpr uint32_t kRows = 900U;
+134-            constexpr uint32_t kChannels = 32U;
+--
+143-                uint8_t channel;
+144-                int8_t actual;
+145-                int8_t reference;
+146-            };
+147-
+148:            const int8_t* actual = data;
+149-            const int8_t* reference =
+150-                sample317_ethosu_reference::kFirstEthosOutput;
+151-
+152-            uint8_t affected_time_bitmap[kBitmapBytes] = {};
+153-            uint32_t channel_count[kChannels] = {};
+--
+158-            uint32_t window_first[kWindows];
+159-            uint32_t window_last[kWindows] = {};
+160-            MismatchSample first_samples[kFirstSamples] = {};
+161-            uint32_t first_sample_count = 0U;
+162-
+163:            uint32_t total_mismatches = 0U;
+164-            uint32_t affected_rows = 0U;
+165-            uint32_t global_max_abs = 0U;
+166-            uint32_t run_count = 0U;
+167-            uint32_t singleton_runs = 0U;
+168-            uint32_t longest_run = 0U;
+--
+179-                window_first[w] = 0xFFFFFFFFU;
+180-            }
+181-
+182-            for (uint32_t t = 0U; t < kRows; ++t) {
+183-                const uint32_t window = t / kWindowRows;
+184:                uint32_t row_mismatches = 0U;
+185-                uint32_t row_max_abs = 0U;
+186-                uint32_t channel_mask = 0U;
+187-
+188-                for (uint32_t c = 0U; c < kChannels; ++c) {
+189-                    const uint32_t index = t * kChannels + c;
+--
+194-                    if (diff != 0) {
+195-                        const uint32_t abs_diff =
+196-                            static_cast<uint32_t>(diff < 0 ? -diff : diff);
+197-
+198-                        channel_mask |= (1UL << c);
+199:                        ++row_mismatches;
+200-                        ++channel_count[c];
+201-
+202-                        if (abs_diff > channel_max[c])
+203-                            channel_max[c] = abs_diff;
+204-                        if (abs_diff > row_max_abs)
+--
+220-                if (channel_mask != 0U) {
+221-                    affected_time_bitmap[t >> 3U] |=
+222-                        static_cast<uint8_t>(1U << (7U - (t & 7U)));
+223-
+224-                    ++affected_rows;
+225:                    total_mismatches += row_mismatches;
+226:                    window_count[window] += row_mismatches;
+227-                    ++window_rows[window];
+228-
+229-                    if (window_first[window] == 0xFFFFFFFFU)
+230-                        window_first[window] = t;
+231-                    window_last[window] = t;
+--
+280-                    ++saved_run_count;
+281-                }
+282-            }
+283-
+284-            printk("TCN_V6_FIRST_ETHOS_TIMELINE: rows=%u channels=%u "
+285:                   "bytes=%u mismatches=%u affected_rows=%u max_abs=%u "
+286-                   "runs=%u singleton_runs=%u longest_run=%u "
+287-                   "longest_range=%u-%u\n",
+288:                   kRows, kChannels, bytes, total_mismatches, affected_rows,
+289-                   global_max_abs, run_count, singleton_runs, longest_run,
+290-                   longest_run_start, longest_run_end);
+291-
+292-            for (uint32_t base = 0U; base < kChannels; base += 8U) {
+293-                printk("TCN_V6_FIRST_ETHOS_TIMELINE_CHANNELS: base=%u "
+--
+305-                k_sleep(K_MSEC(10));
+306-            }
+307-
+308-            for (uint32_t w = 0U; w < kWindows; ++w) {
+309-                printk("TCN_V6_FIRST_ETHOS_TIMELINE_WINDOW: range=%u-%u "
+310:                       "mismatches=%u affected_rows=%u max_abs=%u "
+311-                       "first=%u last=%u\n",
+312-                       w * kWindowRows, (w + 1U) * kWindowRows - 1U,
+313-                       window_count[w], window_rows[w], window_max[w],
+314-                       window_rows[w] ? window_first[w] : 0U,
+315-                       window_rows[w] ? window_last[w] : 0U);
+--
+359-                       static_cast<int>(sample.reference));
+360-                if ((i % 5U) == 4U)
+361-                    k_sleep(K_MSEC(10));
+362-            }
+363-
+364:            printk("TCN_V6_FIRST_ETHOS_TIMELINE_END: mismatches=%u "
+365-                   "expected_bytes=%u\n",
+366:                   total_mismatches,
+367-                   static_cast<uint32_t>(
+368-                       sizeof(sample317_ethosu_reference::kFirstEthosOutput)));
+369-        } else {
+370-            printk("TCN_V6_FIRST_ETHOS_TIMELINE_SKIP: bytes=%u expected=%u\n",
+371-                   bytes,
+372-                   static_cast<uint32_t>(
+373-                       sizeof(sample317_ethosu_reference::kFirstEthosOutput)));
+374-        }
+375-
+376:        printk("TCN_V6_FIRST_ETHOS_OUTPUT_END\n");
+377:        k_sleep(K_MSEC(35));
+378-    } else {
+379-        printk("TCN_V6_FIRST_ETHOS_INVALID_STAGE=%u\n", stage);
+380:        k_sleep(K_MSEC(35));
+381-    }
+382-}
+383-#include "BufAttributes.hpp"
+384-#include "TcnV6Model.hpp"
+385-#include "sample317_tcn_v6_vectors.hpp"
+--
+466-                   static_cast<int>(kExpectedTypes[i]));
+467-            return false;
+468-        }
+469-
+470-        if (tensor->dims->size != kExpectedRanks[i]) {
+471:            printk("TCN_V6_ERROR: sample317 input %u rank mismatch\n",
+472-                   static_cast<unsigned int>(i));
+473-            return false;
+474-        }
+475-
+476-        for (int d = 0; d < kExpectedRanks[i]; ++d) {
+477-            if (tensor->dims->data[d] != kExpectedDimensions[i][d]) {
+478:                printk("TCN_V6_ERROR: sample317 input %u dim%u mismatch\n",
+479-                       static_cast<unsigned int>(i),
+480-                       static_cast<unsigned int>(d));
+481-                return false;
+482-            }
+483-        }
+--
+516-        output->dims->data[0] != 1 ||
+517-        output->dims->data[1] != 900 ||
+518-        output->dims->data[2] != 6 ||
+519-        output->bytes != kOutputElements * sizeof(float) ||
+520-        output->data.raw == nullptr) {
+521:        printk("TCN_V6_ERROR: output metadata mismatch\n");
+522-        return false;
+523-    }
+524-
+525:    printk("TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u\n",
+526-           static_cast<unsigned int>(output->bytes));
+527-    return true;
+528-}
+529-
+530-void ReportOutput(tflite::MicroInterpreter* interpreter)
+--
+610-        ? std::sqrt(squared_error_sum / static_cast<double>(finite_count)) : 0.0;
+611-
+612-    const double mean_output = finite_count
+613-        ? output_sum / static_cast<double>(finite_count) : 0.0;
+614-
+615:    printk("TCN_V6_OUTPUT_STATS: elements=%u finite=%u nonfinite=%u "
+616-           "min=%f max=%f mean=%f\n",
+617-           static_cast<unsigned int>(kOutputElements),
+618-           static_cast<unsigned int>(finite_count),
+619-           static_cast<unsigned int>(nonfinite_count),
+620-           static_cast<double>(minimum),
+--
+649-               channel_rmse,
+650-               channel_maximum_absolute_error[c]);
+651-    }
+652-
+653-    if (finite_count == kOutputElements && nonfinite_count == 0U) {
+654:        printk("TCN_V6_SAMPLE317_OUTPUTS: ALL_FINITE\n");
+655-    } else {
+656:        printk("TCN_V6_SAMPLE317_OUTPUTS: NONFINITE_ERROR\n");
+657-    }
+658-}
+659-
+660-} // namespace
+661-
+--
+700-        return;
+701-    }
+702-
+703-    if (model.GetNumInputs() != kInputCount ||
+704-        model.GetNumOutputs() != 1U) {
+705:        printk("TCN_V6_ERROR: model interface count mismatch inputs=%u outputs=%u\n",
+706-               static_cast<unsigned int>(model.GetNumInputs()),
+707-               static_cast<unsigned int>(model.GetNumOutputs()));
+708-        return;
+709-    }
+710-
+
+=== PATCH SCRIPT ANCHOR CHECK ===
+166-
+167-path = Path(sys.argv[1])
+168-src = path.read_text()
+169-
+170-branch_start = src.find("} else if (stage == 1U) {")
+171-if branch_start < 0:
+172-    raise SystemExit("OUTPUT_STAGE_BRANCH_NOT_FOUND")
+173-
+174:end_marker = r'printk("TCN_V6_FIRST_ETHOS_OUTPUT_END\n");'
+175-branch_end_pos = src.find(end_marker, branch_start)
+176-
+177-if branch_end_pos < 0:
+178-    raise SystemExit("OUTPUT_STAGE_END_MARKER_NOT_FOUND")
+179-
+180-branch_end = branch_end_pos + len(end_marker)
+181-branch = src[branch_start:branch_end]
+182-
+183-if branch.count("k_sleep(K_MSEC(35));") != 1:
+184-    raise SystemExit(
+185-        "Expected exactly one 35ms sleep in output callback; found "
+186-        + str(branch.count("k_sleep(K_MSEC(35));"))
+187-    )
+188-
+189:if branch.count('const int8_t* actual = data;') != 1:
+190-    raise SystemExit("Timeline actual pointer declaration mismatch")
+191-
+192:if branch.count('"OUTPUT", data, bytes') != 1:
+193-    raise SystemExit("Expected output report call not found")
+194-
+195-immediate_capture = r'''
+196-        // Copy immediately before the existing 35ms sleep.
+197-        // Static storage avoids adding 28.8KB to the thread stack.
+198-        static int8_t tcn_v6_first_ethos_output_snapshot[28800U];
+199-
+200-        const uint32_t tcn_v6_expected_output_bytes =
+--
+228-first_sleep = branch.find("        k_sleep(K_MSEC(35));")
+229-branch = (
+230-    branch[:first_sleep]
+231-    + immediate_capture
+232-    + branch[first_sleep:]
+233-)
+234-
+235-branch = branch.replace(
+236:    '"OUTPUT", data, bytes',
+237:    '"OUTPUT_AFTER_35MS", data, bytes',
+238-    1
+239-)
+240-
+241-stability_code = r'''
+242-        // Compare the live output with the snapshot captured at callback entry.
+243-        if (bytes == tcn_v6_expected_output_bytes) {
+244-            uint32_t changed_bytes = 0U;
+245-            uint32_t first_changed = 0xFFFFFFFFU;
+--
+272-                   "bytes=%u changed_bytes=%u first_changed=%u "
+273-                   "max_change=%u\n",
+274-                   bytes, changed_bytes, first_changed, max_change);
+275-        }
+276-
+277-'''
+278-
+279-timeline_anchor = (
+280:    "        // Time-indexed comparison of the first Ethos-U output mismatch."
+281-)
+282-
+283-if branch.count(timeline_anchor) != 1:
+284:    raise SystemExit("Timeline block insertion anchor mismatch")
+285-
+286-branch = branch.replace(
+287-    timeline_anchor,
+288-    stability_code + timeline_anchor,
+289-    1
+290-)
+291-
+292-branch = branch.replace(
+293:    "const int8_t* actual = data;",
+294-    "const int8_t* actual = tcn_v6_first_ethos_output_snapshot;",
+295-    1
+296-)
+297-
+298-src = src[:branch_start] + branch + src[branch_end:]
+299-path.write_text(src)
+300-
+301-if src.count("TCN_V6_FIRST_ETHOS_IMMEDIATE_BEGIN") != 1:
+
+=== ORIGINAL BASELINE HASHES ===
+21c432cf09e9ce7dcffbd67ff20a626a8da242c8a7c3572543692df51b3eaef3  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_timeline_20261127_090219/src/MainLoop.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+FLASH_PERFORMED=NO
+OSPI1_MODEL_MODIFIED=NO
