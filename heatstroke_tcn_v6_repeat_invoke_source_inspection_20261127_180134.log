@@ -1,0 +1,215 @@
+======================================================
+TCN V6 SAME-BOOT REPEATED INVOKE SOURCE INSPECTION
+Timestamp=20261127_180134
+======================================================
+
+=== BASELINE HASH CHECKS ===
+MAIN_SHA256=a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595
+EXPECTED_MAIN_SHA256=a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595
+KERNEL_SHA256=51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1
+EXPECTED_KERNEL_SHA256=51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1
+BASELINE_HASH_CHECKS=PASS
+
+=== MAINLOOP: INVOKE AND OUTPUT CALL SITES ===
+
+---
+  583:         output->dims->data[0] != 1 ||
+  584:         output->dims->data[1] != 900 ||
+  585:         output->dims->data[2] != 6 ||
+  586:         output->bytes != kOutputElements * sizeof(float) ||
+  587:         output->data.raw == nullptr) {
+  588:         printk("TCN_V6_ERROR: output metadata mismatch\n");
+  589:         return false;
+  590:     }
+  591: 
+  592:     printk("TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u\n",
+  593:            static_cast<unsigned int>(output->bytes));
+  594:     return true;
+  595: }
+  596: 
+  597: void ReportOutput(tflite::MicroInterpreter* interpreter)
+  598: {
+  599:     using namespace sample317_vectors;
+  600: 
+  601:     TfLiteTensor* output = interpreter->output(0);
+  602:     const float* values = reinterpret_cast<const float*>(output->data.raw);
+  603:     const float* reference = kReferenceOutput;
+  604: 
+  605:     size_t finite_count = 0;
+  606:     size_t nonfinite_count = 0;
+  607:     size_t count_gt_1e6 = 0;
+  608:     size_t count_gt_1e5 = 0;
+  609:     size_t count_gt_1e4 = 0;
+  610:     size_t count_gt_1e3 = 0;
+  611: 
+  612:     double absolute_error_sum = 0.0;
+  613:     double squared_error_sum = 0.0;
+  614:     double maximum_absolute_error = 0.0;
+  615:     size_t maximum_error_index = 0;
+
+---
+  779: 
+  780:     if (!ValidateAndPopulateInputs(interpreter) ||
+  781:         !ValidateOutput(interpreter)) {
+  782:         printk("TCN_V6_ERROR: tensor interface validation failed\n");
+  783:         return;
+  784:     }
+  785: 
+  786:     printk("TCN_V6_ETHOSU: model_contains_ethosu=%u\n",
+  787:            model.ContainsEthosUOperator() ? 1U : 0U);
+  788: 
+  789:     printk("TCN_V6_ARENA: used=%u capacity=%u bytes\n",
+  790:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  791:            static_cast<unsigned int>(sizeof(activationBuf)));
+  792: 
+  793:     printk("TCN_V6: invoking sample317 real-input validation\n");
+  794: 
+  795:     const uint64_t start_cycles = k_cycle_get_64();
+  796:     const bool inference_ok = model.RunInference();
+  797:     const uint64_t elapsed_cycles = k_cycle_get_64() - start_cycles;
+  798:     const uint64_t elapsed_us = k_cyc_to_us_floor64(elapsed_cycles);
+  799: 
+  800:     printk("TCN_V6_INFERENCE: success=%u cycles=%llu elapsed_us=%llu\n",
+  801:            inference_ok ? 1U : 0U,
+  802:            static_cast<unsigned long long>(elapsed_cycles),
+  803:            static_cast<unsigned long long>(elapsed_us));
+  804: 
+  805:     if (!inference_ok) {
+  806:         printk("TCN_V6_ERROR: Invoke failed\n");
+  807:         return;
+  808:     }
+  809: 
+  810:     if (!ValidateOutput(interpreter)) {
+  811:         return;
+  812:     }
+  813: 
+  814:     ReportOutput(interpreter);
+  815: 
+  816:     printk("TCN_V6_ARENA_FINAL: used=%u capacity=%u bytes\n",
+  817:            static_cast<unsigned int>(interpreter->arena_used_bytes()),
+  818:            static_cast<unsigned int>(sizeof(activationBuf)));
+  819: 
+  820:     printk("TCN_V6_SAMPLE317_RUN: FINISHED (inspect numerical comparison metrics)\n");
+  821: }
+
+=== APPLICATION SOURCE: MODEL INVOCATION DEFINITIONS ===
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc:494:bool ValidateAndPopulateInputs(tflite::MicroInterpreter* interpreter)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc:572:bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc:597:void ReportOutput(tflite::MicroInterpreter* interpreter)
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc:793:    printk("TCN_V6: invoking sample317 real-input validation\n");
+/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc:814:    ReportOutput(interpreter);
+
+=== ETHOS-U KERNEL: INVOCATION AND CALLBACK-RELEVANT CODE ===
+
+---
+    4: you may not use this file except in compliance with the License.
+    5: You may obtain a copy of the License at
+    6: 
+    7:     http://www.apache.org/licenses/LICENSE-2.0
+    8: 
+    9: Unless required by applicable law or agreed to in writing, software
+   10: distributed under the License is distributed on an "AS IS" BASIS,
+   11: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12: See the License for the specific language governing permissions and
+   13: limitations under the License.
+   14: ==============================================================================*/
+   15: 
+   16: #include <ethosu_driver.h>
+   17: #include <zephyr/kernel.h>
+   18: #include <zephyr/sys/printk.h>
+   19: #include <stdint.h>
+   20: 
+   21: #include "flatbuffers/flexbuffers.h"
+   22: #include "tensorflow/lite/c/common.h"
+   23: #include "tensorflow/lite/micro/kernels/kernel_util.h"
+   24: #include "tensorflow/lite/micro/micro_context.h"
+   25: #include "tensorflow/lite/micro/micro_log.h"
+   26: 
+   27: extern "C" uint32_t tcn_v6_ethosu_irq_count_get(void);
+   28: 
+   29: namespace tflite {
+   30: namespace {
+   31: 
+   32: constexpr uint8_t CO_TYPE_ETHOSU = 1;
+   33: 
+   34: struct OpData {
+
+---
+   56:       context, num_base_addr * sizeof(uint64_t), &data->base_addr_idx));
+   57:   TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
+   58:       context, num_base_addr * sizeof(size_t), &data->base_addr_size_idx));
+   59: 
+   60:   // Get command stream data size.
+   61:   MicroContext* micro_context = GetMicroContext(context);
+   62:   TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+   63:   data->cms_data_size = tensor->bytes;
+   64:   micro_context->DeallocateTempTfLiteTensor(tensor);
+   65:   return kTfLiteOk;
+   66: }
+   67: 
+   68: TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+   69:   // TCN V6 runtime profiling counters.
+   70:   static uint32_t tcn_v6_npu_invocation_index = 0;
+   71:   static uint32_t tcn_v6_npu_cumulative_invoke_ms = 0;
+   72:   static uint32_t tcn_v6_npu_cumulative_irq_delta = 0;
+   73: 
+   74:   TFLITE_DCHECK(node->user_data != nullptr);
+   75:   TFLITE_DCHECK(context != nullptr);
+   76:   TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+   77: 
+   78:   // Get base addresses.
+   79:   TfLiteEvalTensor* tensor;
+   80:   int i = 0;
+   81:   int num_tensors = 0;
+   82:   void* cms_data;
+   83:   uint8_t co_type;
+   84:   int result;
+   85:   const OpData* data = static_cast<const OpData*>(node->user_data);
+   86:   uint64_t* base_addrs = static_cast<uint64_t*>(
+
+---
+  151:   // |         n..m | Output tensors       |
+  152:   // +--------------+----------------------+
+  153:   //
+  154:   // The number of base address will be limited to 8.
+  155:   //
+  156:   // NOTE! The command stream produced by Vela will access the IFM and OFM
+  157:   // buffers using base address 1. This means that it is not possible to point
+  158:   // the input and output tensors outside of the TFLM arena.
+  159:   num_tensors = std::min(num_tensors, 8);
+  160: 
+  161:   const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+  162:   const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+  163:   struct ethosu_driver *drv = ethosu_reserve_driver();
+  164:   const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+  165:   const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+  166:   const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+  167:   result = ethosu_invoke_v3(
+  168:       drv, cms_data, data->cms_data_size, base_addrs,
+  169:       base_addrs_size, num_tensors,
+  170:       GetMicroContext(context)->external_context());
+  171:   const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+  172:   const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+  173:   const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+  174:   const int64_t tcn_v6_release_start_ms = k_uptime_get();
+  175:   ethosu_release_driver(drv);
+  176:   const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+  177:   tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+  178:   tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+  179:   printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+  180:          "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+  181:          "invoke_ms=%u release_ms=%u irq_before=%u "
+  182:          "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+  183:          "cumulative_irq_delta=%u\n",
+  184:          tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+  185:          data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+
+=== CALLBACK SYMBOL STATUS IN BASELINE KERNEL ===
+CALLBACK_SYMBOL_PRESENT=NO
+
+=== FINAL PROTECTED HASHES ===
+a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+SOURCE_INSPECTION=PASS
+NO_SOURCE_FILES_CHANGED=YES
