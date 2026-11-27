@@ -1,0 +1,459 @@
+=== LOCATE TFLMMODEL FILES ===
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+/home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp
+
+=== RUNINFERENCE IMPLEMENTATION ===
+
+=== FULL TFLMMODEL HEADER / IMPLEMENTATION ===
+
+----- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc -----
+/*
+ * SPDX-FileCopyrightText: Copyright 2021-2026 Arm Limited and/or its affiliates
+ * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "mlek/fwk/tflm/TflmModel.hpp"
+#include "mlek/fwk/iface/Model.hpp"
+#include "mlek/fwk/tflm/TflmTensor.hpp"
+#include "mlek/log/log_macros.h"
+
+#include <cinttypes>
+#include <cstring>
+#include <memory>
+#include <string>
+
+namespace arm::app::fwk::tflm {
+namespace {
+/**
+ * @brief   Infer Arm Ethos-U NPU memory mode from Ethos-U operator inputs.
+ * @param[in] model     Pointer the the model object.
+ * @return  Memory mode string if detected, or empty string otherwise.
+ */
+std::string InferNpuMemoryModeFromEthosUOp(const tflite::Model* model)
+{
+    if (!model || !model->subgraphs() || model->subgraphs()->size() == 0 ||
+        !model->operator_codes()) {
+        return {};
+    }
+
+    const tflite::SubGraph* subgraph = model->subgraphs()->Get(0);
+    if (!subgraph || !subgraph->operators()) {
+        return {};
+    }
+
+    int ethos_u_opcode = -1;
+    for (uint32_t i = 0; i < model->operator_codes()->size(); ++i) {
+        const tflite::OperatorCode* opcode = model->operator_codes()->Get(i);
+        if (!opcode || opcode->builtin_code() != tflite::BuiltinOperator_CUSTOM) {
+            continue;
+        }
+        const auto* custom = opcode->custom_code();
+        if (custom && (std::strcmp(custom->c_str(), "ethos-u") == 0)) {
+            ethos_u_opcode = static_cast<int>(i);
+            break;
+        }
+    }
+
+    if (ethos_u_opcode < 0) {
+        return {};
+    }
+
+    for (uint32_t i = 0; i < subgraph->operators()->size(); ++i) {
+        const tflite::Operator* op = subgraph->operators()->Get(i);
+        if (!op || op->opcode_index() != ethos_u_opcode) {
+            continue;
+        }
+        const auto* inputs = op->inputs();
+        if (!inputs || inputs->size() <= 3) {
+            continue;
+        }
+
+        /* Vela places tensor arena at index 2 and fast scratch buffer at index 3. */
+        const int32_t arena_idx = inputs->Get(2);
+        const int32_t scratch_idx = inputs->Get(3);
+        if (arena_idx < 0 || scratch_idx < 0) {
+            continue;
+        }
+
+        const tflite::Tensor* arena = subgraph->tensors()->Get(arena_idx);
+        const tflite::Tensor* scratch = subgraph->tensors()->Get(scratch_idx);
+        if (!arena || !scratch) {
+            continue;
+        }
+
+        const auto arena_shape = arena->shape();
+        const auto scratch_shape = scratch->shape();
+        if (!arena_shape || !scratch_shape || arena_shape->size() < 1 ||
+            scratch_shape->size() < 1 || arena_shape->Get(0) < 1) {
+            continue;
+        }
+
+        if (arena_shape->Get(0) == scratch_shape->Get(0)) {
+            return "Sram_Only/Shared_Sram";
+        }
+        return "Dedicated_Sram";
+    }
+
+    return {};
+}
+} /* anonymous namespace */
+
+TflmModel::TflmModel() {}
+
+/* Initialise the model */
+bool TflmModel::Init(iface::MemoryRegion& computeBuffer,
+                     iface::MemoryRegion& nnModel,
+                     const void* backendData)
+{
+    /* Following tf lite micro example:
+     * Map the model into a usable data structure. This doesn't involve any
+     * copying or parsing, it's a very lightweight operation. */
+    debug("loading model from @ 0x%p\n", nnModel.data);
+    debug("model size: %" PRIu32 " bytes.\n", nnModel.size);
+
+    /* Enable logging before we start interacting with the framework. */
+    EnableTFLMLog();
+
+    this->m_backendData.m_pModel = ::tflite::GetModel(nnModel.data);
+
+    if (this->m_backendData.m_pModel->version() != TFLITE_SCHEMA_VERSION) {
+        printf_err("Model's schema version %" PRIu32 " is not equal "
+                   "to supported version %d.",
+                   this->m_backendData.m_pModel->version(),
+                   TFLITE_SCHEMA_VERSION);
+        return false;
+    }
+
+    this->m_computeBuffer = computeBuffer;
+    this->m_modelBuffer   = nnModel;
+
+    /* Pull in only the operation implementations we need.
+     * This relies on a complete list of all the ops needed by this graph.
+     * An easier approach is to just use the AllOpsResolver, but this will
+     * incur some penalty in code space for op implementations that are not
+     * needed by this graph.
+     * static ::tflite::ops::micro::AllOpsResolver resolver; */
+    /* NOLINTNEXTLINE(runtime-global-variables) */
+    debug("loading op resolver\n");
+
+    this->EnlistOperations();
+
+    /** If backend data has been provided, re-use the allocator */
+    if (backendData) {
+        this->m_backendData.m_pAllocator =
+            reinterpret_cast<const TflmBackendData*>(backendData)->m_pAllocator;
+    }
+
+    /* Create allocator instance, if it doesn't exist */
+    if (!this->m_backendData.m_pAllocator) {
+        /* Create an allocator instance */
+        info("Creating allocator using tensor arena at 0x%p\n", computeBuffer.data);
+
+        this->m_backendData.m_pAllocator =
+            tflite::MicroAllocator::Create(computeBuffer.data, computeBuffer.size);
+
+        if (!this->m_backendData.m_pAllocator) {
+            printf_err("Failed to create allocator\n");
+            return false;
+        }
+        debug("Created new allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+    } else {
+        debug("Using existing allocator @ 0x%p\n", this->m_backendData.m_pAllocator);
+    }
+
+    this->m_backendData.m_pInterpreter = std::make_unique<tflite::MicroInterpreter>(
+        this->m_backendData.m_pModel, this->GetOpResolver(), this->m_backendData.m_pAllocator);
+
+    if (!this->m_backendData.m_pInterpreter) {
+        printf_err("Failed to allocate interpreter\n");
+        return false;
+    }
+
+    /* Allocate memory from the tensor_arena for the model's tensors. */
+    info("Allocating tensors\n");
+    TfLiteStatus allocate_status = this->m_backendData.m_pInterpreter->AllocateTensors();
+
+    if (allocate_status != kTfLiteOk) {
+        printf_err("tensor allocation failed!\n");
+        return false;
+    }
+
+    /* Get information about the memory area to use for the model's input. */
+    this->m_input.resize(this->GetNumInputs());
+    for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+        this->m_input[inIndex] =
+            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->input(inIndex));
+    }
+
+    this->m_output.resize(this->GetNumOutputs());
+    for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+        this->m_output[outIndex] =
+            std::make_shared<TflmTensor>(this->m_backendData.m_pInterpreter->output(outIndex));
+    }
+
+    if (this->m_input.empty() || this->m_output.empty()) {
+        printf_err("failed to get tensors\n");
+        return false;
+    } else {
+        this->m_type = this->m_input[0]->Type(); /* Input 0 should be the main input */
+
+        /* Clear the input & output tensors */
+        for (size_t inIndex = 0; inIndex < this->GetNumInputs(); inIndex++) {
+            std::memset(this->m_input[inIndex]->GetData(), 0, this->m_input[inIndex]->Bytes());
+        }
+        for (size_t outIndex = 0; outIndex < this->GetNumOutputs(); outIndex++) {
+            std::memset(this->m_output[outIndex]->GetData(), 0, this->m_output[outIndex]->Bytes());
+        }
+
+        this->LogInterpreterInfo();
+    }
+
+    this->m_inited = true;
+    return true;
+}
+
+std::shared_ptr<iface::TensorIface> TflmModel::GetInputTensor(size_t index) const
+{
+    if (index < this->GetNumInputs()) {
+        return this->m_input.at(index);
+    }
+    return {};
+}
+
+std::shared_ptr<iface::TensorIface> TflmModel::GetOutputTensor(size_t index) const
+{
+    if (index < this->GetNumOutputs()) {
+        return this->m_output.at(index);
+    }
+    return nullptr;
+}
+
+void TflmModel::LogTensorInfo(std::shared_ptr<iface::TensorIface> tensor)
+{
+    if (!tensor) {
+        printf_err("Invalid tensor\n");
+        assert(tensor);
+        return;
+    }
+
+    debug("\ttensor is assigned to 0x%p\n", tensor.get());
+    info("\ttensor type is %s\n", GetTensorDataTypeName(tensor->Type()));
+    info("\ttensor occupies %zu bytes with dimensions\n", tensor->Bytes());
+    const auto shape = tensor->Shape();
+    for (size_t i = 0; i < shape.size(); ++i) {
+        info("\t\t%zu: %3d\n", i, static_cast<int>(shape[i]));
+    }
+
+    const auto quant = tensor->GetQuantParams();
+    info("Scale = %f\n", quant.scale);
+    info("ZeroPoint = %d\n", quant.offset);
+}
+
+void TflmModel::LogInterpreterInfo()
+{
+    if (!this->m_backendData.m_pInterpreter) {
+        printf_err("Invalid interpreter\n");
+        return;
+    }
+
+    info("Model INPUT tensors: \n");
+    for (auto& input : this->m_input) {
+        this->LogTensorInfo(input);
+    }
+
+    info("Model OUTPUT tensors: \n");
+    for (auto& output : this->m_output) {
+        this->LogTensorInfo(output);
+    }
+
+    info("Activation buffer (a.k.a tensor arena) size used: %zu\n",
+         this->m_backendData.m_pInterpreter->arena_used_bytes());
+
+    /* We expect there to be only one subgraph. */
+    const uint32_t nOperators = tflite::NumSubgraphOperators(this->m_backendData.m_pModel, 0);
+    info("Number of operators: %" PRIu32 "\n", nOperators);
+
+    const tflite::SubGraph* subgraph = this->m_backendData.m_pModel->subgraphs()->Get(0);
+
+    auto* opcodes = this->m_backendData.m_pModel->operator_codes();
+
+    /* For each operator, display registration information. */
+    for (size_t i = 0; i < nOperators; ++i) {
+        const tflite::Operator* op         = subgraph->operators()->Get(i);
+        const tflite::OperatorCode* opcode = opcodes->Get(op->opcode_index());
+        const TFLMRegistration* reg        = nullptr;
+
+        tflite::GetRegistrationFromOpCode(opcode, this->GetOpResolver(), &reg);
+        std::string opName;
+
+        if (reg) {
+            if (tflite::BuiltinOperator_CUSTOM == reg->builtin_code) {
+                opName = std::string(reg->custom_name);
+            } else {
+                opName = std::string(
+                    EnumNameBuiltinOperator(tflite::BuiltinOperator(reg->builtin_code)));
+            }
+        }
+        info("\tOperator %zu: %s\n", i, opName.c_str());
+    }
+
+----- /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.hpp -----
+/*
+ * SPDX-FileCopyrightText: Copyright 2021-2023, 2025 Arm Limited and/or its affiliates
+ * <open-source-office@arm.com> SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MLEK_TFLM_MODEL_HPP
+#define MLEK_TFLM_MODEL_HPP
+
+#include "mlek/fwk/iface/Model.hpp"
+#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp"
+#include <cstdint>
+
+namespace arm::app::fwk::tflm {
+
+/**
+ * Backend data for TensorFlow Lite Micro framework.
+ */
+struct TflmBackendData {
+    const tflite::Model* m_pModel{nullptr};        /**< Tflite model pointer. */
+    tflite::MicroAllocator* m_pAllocator{nullptr}; /**< Tflite micro allocator. */
+
+    /** Tflite interpreter. */
+    std::unique_ptr<tflite::MicroInterpreter> m_pInterpreter{nullptr};
+};
+
+/**
+ * @brief   NN model class wrapping the underlying TensorFlow-Lite-Micro API.
+ */
+class TflmModel : public iface::Model {
+public:
+    /** @brief Constructor. */
+    TflmModel();
+
+    /** @brief Destructor. */
+    virtual ~TflmModel() = default;
+
+    /** @brief  Gets the pointer to the model's input tensor at given input index. */
+    std::shared_ptr<iface::TensorIface> GetInputTensor(size_t index) const override;
+
+    /** @brief  Gets the pointer to the model's output tensor at given output index. */
+    std::shared_ptr<iface::TensorIface> GetOutputTensor(size_t index) const override;
+
+    /** @brief  Gets the model's data type. */
+    iface::TensorType GetType() const override;
+
+    /** @brief  Gets the pointer to the model's input shape. */
+    std::vector<size_t> GetInputShape(size_t index) const override;
+
+    /** @brief  Gets the pointer to the model's output shape at given output index. */
+    std::vector<size_t> GetOutputShape(size_t index) const override;
+
+    /** @brief  Gets the number of input tensors the model has. */
+    size_t GetNumInputs() const override;
+
+    /** @brief  Gets the number of output tensors the model has. */
+    size_t GetNumOutputs() const override;
+
+    /** @brief  Logs the tensor information to stdout. */
+    void LogTensorInfo(std::shared_ptr<iface::TensorIface> tensor) override;
+
+    /** @brief  Logs the interpreter information to stdout. */
+    void LogInterpreterInfo() override;
+
+    /** @brief      Initialise the model class object.
+     *  @return     true if initialisation succeeds, false otherwise.
+     **/
+    bool Init(iface::MemoryRegion& computeBuffer,
+              iface::MemoryRegion& nnModel,
+              const void* backendData = nullptr) override;
+
+    /** @brief  Checks if this object has been initialised. */
+    bool IsInited() const override;
+
+    /** @brief  Checks if the model uses signed data. */
+    bool IsDataSigned() const override;
+
+    /** @brief Checks if the model uses Ethos-U operator */
+    bool ContainsEthosUOperator() const override;
+
+    /** @brief  Runs the inference (invokes the interpreter). */
+    bool RunInference() override;
+
+    /**
+     * @brief   Gets memory region information for the backend's compute buffer.
+     * @return  Const reference to MemoryRegion object.
+     */
+    const iface::MemoryRegion& GetComputeBuffer() const override;
+
+    /**
+     * @brief   Gets memory region information for neural network model.
+     * @return  Const reference to MemoryRegion object.
+     */
+    const iface::MemoryRegion& GetModelBuffer() const override;
+
+    /**
+     * @brief       Gets TensorFlow Lite Micro backend data.
+     * @return      Backend data, with pointers to the model, memory allocator and interpreter.
+     **/
+    const TflmBackendData& GetBackendData() const;
+
+protected:
+    /**
+     * @brief       Gets the op resolver for the model instance.
+     * @return      const reference to a tflite::MicroOpResolver object.
+     **/
+    virtual const tflite::MicroOpResolver& GetOpResolver() = 0;
+
+    /**
+     * @brief       Add all the operators required for the given model.
+     *              Implementation of this should come from the use case.
+     * @return      true is ops are successfully added, false otherwise.
+     **/
+    virtual bool EnlistOperations() = 0;
+
+private:
+    TflmBackendData m_backendData{};
+    bool m_inited{false}; /* Indicates whether this object has been initialised. */
+    iface::MemoryRegion m_computeBuffer{};
+    iface::MemoryRegion m_modelBuffer{};
+
+    std::vector<std::shared_ptr<iface::TensorIface>> m_input{}; /* Model's input tensor pointers. */
+    std::vector<std::shared_ptr<iface::TensorIface>>
+        m_output{};                                       /* Model's output tensor pointers. */
+    iface::TensorType m_type{iface::TensorType::INVALID}; /* Model's data type. */
+};
+} /* namespace arm::app::fwk::tflm */
+
+#endif /* MLEK_TFLM_MODEL_HPP */
+
+=== PROTECTED PROJECT HASHES ===
+a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+FILES_MODIFIED=NO
+FIRMWARE_BUILT=NO
+FLASH_PERFORMED=NO
+OSPI1_MODEL_MODIFIED=NO
