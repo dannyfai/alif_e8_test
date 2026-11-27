@@ -1,0 +1,681 @@
+=== TCN V6 MODEL HEADER ===
+#ifndef TCN_V6_MODEL_HPP
+#define TCN_V6_MODEL_HPP
+
+#include "mlek/fwk/tflm/TflmModel.hpp"
+#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+
+namespace heatstroke_tcn_v6 {
+
+class TcnV6Model final : public arm::app::fwk::tflm::TflmModel {
+public:
+    bool PrepareResolver();
+
+protected:
+    const tflite::MicroOpResolver& GetOpResolver() override;
+    bool EnlistOperations() override;
+
+private:
+    tflite::MicroMutableOpResolver<29> m_resolver;
+    bool m_resolverAttempted{false};
+    bool m_resolverOk{false};
+};
+
+} // namespace heatstroke_tcn_v6
+
+#endif
+
+=== TCN V6 MODEL IMPLEMENTATION ===
+#include "TcnV6Model.hpp"
+
+#include <zephyr/sys/printk.h>
+
+#include "tensorflow/lite/micro/kernels/ethosu.h"
+
+namespace heatstroke_tcn_v6 {
+
+const tflite::MicroOpResolver& TcnV6Model::GetOpResolver()
+{
+    return m_resolver;
+}
+
+bool TcnV6Model::PrepareResolver()
+{
+    return EnlistOperations();
+}
+
+bool TcnV6Model::EnlistOperations()
+{
+    // TflmModel::Init() calls this again. Cache the result so that the
+    // resolver is not populated twice.
+    if (m_resolverAttempted) {
+        return m_resolverOk;
+    }
+
+    m_resolverAttempted = true;
+    bool ok = true;
+
+#define TCN6_ADD_OP(label, expression)                                  \
+    do {                                                                \
+        const TfLiteStatus status = (expression);                       \
+        if (status != kTfLiteOk) {                                      \
+            printk("TCN_V6_RESOLVER: Add%s failed: %d\n",               \
+                   label, static_cast<int>(status));                    \
+            ok = false;                                                 \
+        }                                                               \
+    } while (0)
+
+    // Exactly the 25 built-in operators in the INT8-mask Vela model.
+    TCN6_ADD_OP("Abs",             m_resolver.AddAbs());
+    TCN6_ADD_OP("Add",             m_resolver.AddAdd());
+    TCN6_ADD_OP("BroadcastArgs",   m_resolver.AddBroadcastArgs());
+    TCN6_ADD_OP("BroadcastTo",     m_resolver.AddBroadcastTo());
+    TCN6_ADD_OP("Cast",            m_resolver.AddCast());
+    TCN6_ADD_OP("Concatenation",   m_resolver.AddConcatenation());
+TCN6_ADD_OP("Dequantize",      m_resolver.AddDequantize());
+    TCN6_ADD_OP("Div",             m_resolver.AddDiv());
+    TCN6_ADD_OP("Exp",             m_resolver.AddExp());
+    TCN6_ADD_OP("FullyConnected", m_resolver.AddFullyConnected());
+    TCN6_ADD_OP("Gather",          m_resolver.AddGather());
+    TCN6_ADD_OP("GreaterEqual",    m_resolver.AddGreaterEqual());
+TCN6_ADD_OP("Maximum",         m_resolver.AddMaximum());
+    TCN6_ADD_OP("Mean",            m_resolver.AddMean());
+    TCN6_ADD_OP("MirrorPad",       m_resolver.AddMirrorPad());
+    TCN6_ADD_OP("Mul",             m_resolver.AddMul());
+    TCN6_ADD_OP("Neg",             m_resolver.AddNeg());
+    TCN6_ADD_OP("Quantize",        m_resolver.AddQuantize());
+    TCN6_ADD_OP("Relu",            m_resolver.AddRelu());
+    TCN6_ADD_OP("Reshape",         m_resolver.AddReshape());
+    TCN6_ADD_OP("SelectV2",        m_resolver.AddSelectV2());
+    TCN6_ADD_OP("Sqrt",            m_resolver.AddSqrt());
+    TCN6_ADD_OP("Sub",             m_resolver.AddSub());
+    TCN6_ADD_OP("Sum",             m_resolver.AddSum());
+    TCN6_ADD_OP("Transpose",       m_resolver.AddTranspose());
+
+#undef TCN6_ADD_OP
+
+    // AddEthosU() in this SDK can return kTfLiteOk even when the
+    // underlying Register_ETHOSU() returns nullptr. Check it explicitly.
+    TFLMRegistration* native_ethos_registration =
+        tflite::Register_ETHOSU();
+
+    if (native_ethos_registration == nullptr ||
+        native_ethos_registration->invoke == nullptr) {
+        printk("TCN_V6_RESOLVER: native Ethos-U registration/invoke missing\n");
+        ok = false;
+    } else {
+        const TfLiteStatus status = m_resolver.AddEthosU();
+        if (status != kTfLiteOk) {
+            printk("TCN_V6_RESOLVER: AddEthosU failed: %d\n",
+                   static_cast<int>(status));
+            ok = false;
+        }
+    }
+
+    // Verify that every built-in registration exists and has an invoke.
+    const tflite::BuiltinOperator expected_ops[] = {
+        tflite::BuiltinOperator_ABS,
+        tflite::BuiltinOperator_ADD,
+        tflite::BuiltinOperator_BROADCAST_ARGS,
+        tflite::BuiltinOperator_BROADCAST_TO,
+        tflite::BuiltinOperator_CAST,
+        tflite::BuiltinOperator_CONCATENATION,
+        tflite::BuiltinOperator_DEQUANTIZE,
+        tflite::BuiltinOperator_DIV,
+        tflite::BuiltinOperator_EXP,
+        tflite::BuiltinOperator_FULLY_CONNECTED,
+        tflite::BuiltinOperator_GATHER,
+        tflite::BuiltinOperator_GREATER_EQUAL,
+        tflite::BuiltinOperator_MAXIMUM,
+        tflite::BuiltinOperator_MEAN,
+        tflite::BuiltinOperator_MIRROR_PAD,
+        tflite::BuiltinOperator_MUL,
+        tflite::BuiltinOperator_NEG,
+        tflite::BuiltinOperator_QUANTIZE,
+        tflite::BuiltinOperator_RELU,
+        tflite::BuiltinOperator_RESHAPE,
+        tflite::BuiltinOperator_SELECT_V2,
+        tflite::BuiltinOperator_SQRT,
+        tflite::BuiltinOperator_SUB,
+        tflite::BuiltinOperator_SUM,
+        tflite::BuiltinOperator_TRANSPOSE
+    };
+
+    for (const auto op : expected_ops) {
+        const TFLMRegistration* registration = m_resolver.FindOp(op);
+        if (registration == nullptr || registration->invoke == nullptr) {
+            printk("TCN_V6_RESOLVER: missing builtin registration %d\n",
+                   static_cast<int>(op));
+            ok = false;
+        }
+    }
+
+    const char* ethos_name = tflite::GetString_ETHOSU();
+    const TFLMRegistration* ethos =
+        (ethos_name != nullptr) ? m_resolver.FindOp(ethos_name) : nullptr;
+
+    if (ethos == nullptr || ethos->invoke == nullptr) {
+        printk("TCN_V6_RESOLVER: custom ethos-u registration not found\n");
+        ok = false;
+    }
+
+    m_resolverOk = ok;
+
+    printk("TCN_V6_RESOLVER: builtin_expected=25 custom=ethos-u status=%s\n",
+           m_resolverOk ? "PASS" : "FAIL");
+
+    return m_resolverOk;
+}
+
+} // namespace heatstroke_tcn_v6
+
+=== MLEK RUNINFERENCE DEFINITIONS ===
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-53-    1)  (0.985984) -> Detection box: {x=34,y=40,w=70,h=95}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-54-    */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-55-    expected_results.push_back({arm::app::object_detection::DetectionResult(0.99, 105, 73, 58, 66),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-56-                                arm::app::object_detection::DetectionResult(0.98, 34, 40, 70, 95)});
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-57-    /* Img4
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-58-    0)  (0.993294) -> Detection box: {x=22,y=43,w=39,h=53}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-59-    1)  (0.992021) -> Detection box: {x=63,y=60,w=38,h=45}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-60-    */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-61-    expected_results.push_back({arm::app::object_detection::DetectionResult(0.99, 22, 43, 39, 53),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-62-                                arm::app::object_detection::DetectionResult(0.99, 63, 60, 38, 45)});
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-63-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-64-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc:65:bool RunInference(arm::app::fwk::iface::Model& model, const uint8_t imageData[])
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-66-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-67-    auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-68-    REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-69-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-70-    const size_t copySz = inputTensor->Bytes();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-71-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-72-    arm::app::image::RgbToGrayscale(imageData, inputTensor->GetData<uint8_t>(), copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-73-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-74-    if (model.IsDataSigned()) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-75-        arm::app::image::ConvertUint8ToInt8(inputTensor->GetData(), copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-76-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-77-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc:78:    return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-79-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-80-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-81-template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-82-bool TestInferenceDetectionResults(size_t imageIdx, arm::app::fwk::iface::Model& model, T tolerance)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-83-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-84-    std::vector<arm::app::object_detection::DetectionResult> results;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-85-    uint32_t capturedFrameSize = 0;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-86-    hal_camera_start();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-87-    const uint8_t* image = hal_camera_get_captured_frame(&capturedFrameSize);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-88-    if (!image || !capturedFrameSize) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-89-        return false;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-90-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-91-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-92-    auto inputShape = model.GetInputShape(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-93-    auto nCols      = inputShape[arm::app::fwk::tflm::YoloFastestModel::ms_inputColsIdx];
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-94-    auto nRows      = inputShape[arm::app::fwk::tflm::YoloFastestModel::ms_inputRowsIdx];
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-95-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc:96:    REQUIRE(RunInference(model, image));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-97-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-98-    std::vector output_arr{model.GetOutputTensor(0), model.GetOutputTensor(1)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-99-    for (size_t i = 0; i < output_arr.size(); i++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-100-        REQUIRE(output_arr[i]);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-101-        REQUIRE(output_arr[i]->GetData<T>());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-102-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-103-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-104-    const arm::app::object_detection::PostProcessParams postProcessParams{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-105-        static_cast<int>(nRows),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-106-        static_cast<int>(nCols),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-107-        arm::app::object_detection::originalImageSize,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/object_detection/InferenceTestYoloFastest.cc-108-        arm::app::object_detection::anchor1,
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-26-namespace app {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-27-    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-28-    namespace kws {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-29-        extern uint8_t* GetModelPointer();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-30-        extern size_t GetModelLen();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-31-    } /* namespace kws */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-32-} /* namespace app */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-33-} /* namespace arm */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-35-namespace test {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-36-namespace kws {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-37-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:38:    bool RunInference(arm::app::fwk::iface::Model& model, const int8_t vec[])
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-39-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-40-        auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-41-        REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-42-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-43-        const size_t copySz =
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-44-            inputTensor->Bytes() < IFM_0_DATA_SIZE ? inputTensor->Bytes() : IFM_0_DATA_SIZE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-45-        memcpy(inputTensor->GetData(), vec, copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-46-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:47:        return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-48-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-49-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:50:    bool RunInferenceRandom(arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-51-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-52-        auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-53-        REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-54-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-55-        std::random_device rndDevice;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-56-        std::mt19937 mersenneGen{rndDevice()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-57-        std::uniform_int_distribution<short> dist{-128, 127};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-58-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-59-        auto gen = [&dist, &mersenneGen]() { return dist(mersenneGen); };
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-60-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-61-        std::vector<int8_t> randomAudio(inputTensor->Bytes());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-62-        std::generate(std::begin(randomAudio), std::end(randomAudio), gen);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-63-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:64:        REQUIRE(RunInference(model, randomAudio.data()));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-65-        return true;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-66-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-67-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-68-    template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-69-    void TestInference(const T* input_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-70-                       const T* output_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-71-                       arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-72-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:73:        REQUIRE(RunInference(model, input_goldenFV));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-74-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-75-        auto outputTensor = model.GetOutputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-76-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-77-        REQUIRE(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-78-        REQUIRE(outputTensor->Bytes() == OFM_0_DATA_SIZE);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-79-        auto tensorData = outputTensor->GetData<T>();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-80-        REQUIRE(tensorData);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-81-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-82-        for (size_t i = 0; i < outputTensor->Bytes(); i++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-83-            REQUIRE(static_cast<int>(tensorData[i]) == static_cast<int>((T)output_goldenFV[i]));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-84-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-85-    }
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-87-    TEST_CASE("Running random inference with Tflu and MicroNetKwsModel Int8", "[MicroNetKws]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-88-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-89-        arm::app::fwk::tflm::MicroNetKwsModel model{};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-90-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-91-        REQUIRE_FALSE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-92-        arm::app::fwk::iface::MemoryRegion modelMem{arm::app::kws::GetModelPointer(),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-93-                                                    arm::app::kws::GetModelLen()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-94-        arm::app::fwk::iface::MemoryRegion computeMem{arm::app::tensorArena,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-95-                                                      sizeof(arm::app::tensorArena)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-96-        REQUIRE(model.Init(computeMem, modelMem));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-97-        REQUIRE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-98-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc:99:        REQUIRE(RunInferenceRandom(model));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-100-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-101-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-102-    TEST_CASE("Running inference with Tflu and MicroNetKwsModel Int8", "[MicroNetKws]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-103-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-104-        REQUIRE(NUMBER_OF_IFM_FILES == NUMBER_OF_OFM_FILES);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-105-        for (uint32_t i = 0; i < NUMBER_OF_IFM_FILES; ++i) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-106-            auto input_goldenFV  = reinterpret_cast<const int8_t *>(GetIfmDataArray(i));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-107-            auto output_goldenFV = reinterpret_cast<const int8_t *>(GetOfmDataArray(i));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-108-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-109-            DYNAMIC_SECTION("Executing inference with re-init")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-110-            {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestMicroNetKws.cc-111-                arm::app::fwk::tflm::MicroNetKwsModel model{};
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-26-namespace app {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-27-    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-28-    namespace asr {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-29-        extern uint8_t* GetModelPointer();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-30-        extern size_t GetModelLen();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-31-    } /* namespace asr */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-32-} /* namespace app */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-33-} /* namespace arm */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-35-namespace test {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-36-namespace asr {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-37-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:38:    bool RunInference(arm::app::fwk::iface::Model& model, const int8_t vec[], const size_t copySz)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-39-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-40-        auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-41-        REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-42-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-43-        memcpy(inputTensor->GetData(), vec, copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-44-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:45:        return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-46-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-47-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:48:    bool RunInferenceRandom(arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-49-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-50-        auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-51-        REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-52-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-53-        std::random_device rndDevice;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-54-        std::mt19937 mersenneGen{rndDevice()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-55-        std::uniform_int_distribution<short> dist{-128, 127};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-56-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-57-        auto gen = [&dist, &mersenneGen]() { return dist(mersenneGen); };
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-58-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-59-        std::vector<int8_t> randomAudio(inputTensor->Bytes());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-60-        std::generate(std::begin(randomAudio), std::end(randomAudio), gen);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-61-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:62:        REQUIRE(RunInference(model, randomAudio.data(), inputTensor->Bytes()));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-63-        return true;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-64-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-65-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-66-    TEST_CASE("Running random inference with Tflu and Wav2LetterModel Int8", "[Wav2Letter]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-67-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-68-        arm::app::fwk::tflm::Wav2LetterModel model{};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-69-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-70-        REQUIRE_FALSE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-71-        arm::app::fwk::iface::MemoryRegion modelMem{arm::app::asr::GetModelPointer(),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-72-                                                    arm::app::asr::GetModelLen()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-73-        arm::app::fwk::iface::MemoryRegion computeMem{arm::app::tensorArena,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-74-                                                      sizeof(arm::app::tensorArena)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-75-        REQUIRE(model.Init(computeMem, modelMem));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-76-        REQUIRE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-77-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:78:        REQUIRE(RunInferenceRandom(model));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-79-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-80-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-81-    template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-82-    void TestInference(const T* input_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-83-                       const T* output_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-84-                       arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-85-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-86-        auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-87-        REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-88-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc:89:        REQUIRE(RunInference(model, input_goldenFV, inputTensor->Bytes()));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-90-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-91-        auto outputTensor = model.GetOutputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-92-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-93-        REQUIRE(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-94-        REQUIRE(outputTensor->Bytes() == OFM_0_DATA_SIZE);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-95-        auto tensorData = outputTensor->GetData<T>();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-96-        REQUIRE(tensorData);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-97-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-98-        for (size_t i = 0; i < outputTensor->Bytes(); i++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-99-            REQUIRE(static_cast<int>(tensorData[i]) == static_cast<int>(((T)output_goldenFV[i])));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-100-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/kws_asr/InferenceTestWav2Letter.cc-101-    }
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-25-namespace arm {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-26-namespace app {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-27-    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-28-    namespace img_class {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-29-        extern uint8_t* GetModelPointer();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-30-        extern size_t GetModelLen();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-31-    } /* namespace img_class */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-32-} /* namespace app */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-33-} /* namespace arm */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-35-using namespace test;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-36-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc:37:bool RunInference(arm::app::fwk::iface::Model& model, const int8_t imageData[])
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-38-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-39-    auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-40-    REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-41-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-42-    const size_t copySz =
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-43-        inputTensor->Bytes() < IFM_0_DATA_SIZE ? inputTensor->Bytes() : IFM_0_DATA_SIZE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-44-    memcpy(inputTensor->GetData(), imageData, copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-45-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-46-    if (model.IsDataSigned()) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-47-        arm::app::image::ConvertUint8ToInt8(inputTensor->GetData(), copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-48-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-49-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc:50:    return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-51-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-52-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-53-template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-54-void TestInference(int imageIdx, arm::app::fwk::iface::Model& model, T tolerance)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-55-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-56-    auto image    = reinterpret_cast<const IFM_0_DATA_TYPE *>(GetIfmDataArray(imageIdx));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-57-    auto goldenFV = reinterpret_cast<const OFM_0_DATA_TYPE *>(GetOfmDataArray(imageIdx));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-58-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc:59:    REQUIRE(RunInference(model, image));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-60-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-61-    auto outputTensor = model.GetOutputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-62-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-63-    REQUIRE(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-64-    REQUIRE(outputTensor->Bytes() == OFM_0_DATA_SIZE);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-65-    auto tensorData = outputTensor->GetData<T>();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-66-    REQUIRE(tensorData);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-67-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-68-    for (size_t i = 0; i < outputTensor->Bytes(); i++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-69-        REQUIRE(static_cast<int>(tensorData[i]) ==
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-70-                Approx(static_cast<int>((T)goldenFV[i])).epsilon(tolerance));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/img_class/tflm/InferenceTestMobilenetV2.cc-71-    }
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-13- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-14- * See the License for the specific language governing permissions and
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-15- * limitations under the License.
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-16- */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-17-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-18-#include "mlek/common/ImageUtils.hpp"
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-19-#include "mlek/fwk/tflm/TensorFlowLiteMicro.hpp"
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-20-#include "TestData_vww.hpp"
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-21-#include "mlek/fwk/tflm/VisualWakeWordModel.hpp"
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-22-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-23-#include <catch.hpp>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-24-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc:25:bool RunInference(arm::app::fwk::iface::Model& model, const int8_t* imageData)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-26-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-27-    auto inputTensor = model.GetInputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-28-    REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-29-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-30-    const size_t copySz =
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-31-        inputTensor->Bytes() < IFM_0_DATA_SIZE ? inputTensor->Bytes() : IFM_0_DATA_SIZE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-32-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-33-    memcpy(inputTensor->GetData(), imageData, copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-35-    if (model.IsDataSigned()) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-36-        arm::app::image::ConvertUint8ToInt8(inputTensor->GetData(), copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-37-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-38-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc:39:    return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-40-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-41-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-42-template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-43-void TestInference(int imageIdx, arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-44-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-45-    auto image    = reinterpret_cast<const int8_t *>(test::GetIfmDataArray(imageIdx));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-46-    auto goldenFV = reinterpret_cast<const int8_t *>(test::GetOfmDataArray(imageIdx));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-47-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc:48:    REQUIRE(RunInference(model, image));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-49-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-50-    auto outputTensor = model.GetOutputTensor(0);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-51-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-52-    REQUIRE(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-53-    REQUIRE(outputTensor->Bytes() == OFM_0_DATA_SIZE);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-54-    auto tensorData = tflite::GetTensorData<T>(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-55-    REQUIRE(tensorData);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-56-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-57-    for (size_t i = 0; i < outputTensor->Bytes(); i++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-58-        auto testVal   = static_cast<int>(tensorData[i]);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-59-        auto goldenVal = static_cast<int>(goldenFV[i]);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/vww/InferenceVisualWakeWordModelTests.cc-60-        CHECK(testVal == goldenVal);
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-26-namespace app {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-27-    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-28-    namespace rnn {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-29-        extern uint8_t* GetModelPointer();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-30-        extern size_t GetModelLen();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-31-    } /* namespace rnn */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-32-} /* namespace app */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-33-} /* namespace arm */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-35-namespace test {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-36-namespace noise_reduction {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-37-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:38:    bool RunInference(arm::app::fwk::iface::Model& model,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-39-                      const std::vector<std::vector<int8_t>> inData)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-40-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-41-        for (size_t i = 0; i < model.GetNumInputs(); ++i) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-42-            auto inputTensor = model.GetInputTensor(i);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-43-            REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-44-            memcpy(inputTensor->GetData(), inData[i].data(), inData[i].size());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-45-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-46-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:47:        return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-48-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-49-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:50:    bool RunInferenceRandom(arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-51-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-52-        std::random_device rndDevice;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-53-        std::mt19937 mersenneGen{rndDevice()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-54-        std::uniform_int_distribution<short> dist{-128, 127};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-55-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-56-        auto gen = [&dist, &mersenneGen]() { return dist(mersenneGen); };
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-57-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-58-        std::vector<std::vector<int8_t>> randomInput{NUMBER_OF_IFM_FILES};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-59-        for (size_t i = 0; i < model.GetNumInputs(); ++i) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-60-            auto inputTensor = model.GetInputTensor(i);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-61-            REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-62-            randomInput[i].resize(inputTensor->Bytes());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-63-            std::generate(std::begin(randomInput[i]), std::end(randomInput[i]), gen);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-64-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-65-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:66:        REQUIRE(RunInference(model, randomInput));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-67-        return true;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-68-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-69-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-70-    TEST_CASE("Running random inference with Tflu and RNNoise Int8", "[RNNoise]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-71-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-72-        arm::app::fwk::tflm::RNNoiseModel model; /* Model wrapper object. */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-73-        REQUIRE_FALSE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-74-        arm::app::fwk::iface::MemoryRegion modelMem{arm::app::rnn::GetModelPointer(),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-75-                                                    arm::app::rnn::GetModelLen()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-76-        arm::app::fwk::iface::MemoryRegion computeMem{arm::app::tensorArena,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-77-                                                      sizeof(arm::app::tensorArena)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-78-        REQUIRE(model.Init(computeMem, modelMem));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-79-        REQUIRE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:80:        REQUIRE(RunInferenceRandom(model));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-81-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-82-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-83-    template <typename T>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-84-    void TestInference(const std::vector<std::vector<T>> input_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-85-                       const std::vector<std::vector<T>> output_goldenFV,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-86-                       arm::app::fwk::iface::Model& model)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-87-    {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-88-        for (size_t i = 0; i < model.GetNumInputs(); ++i) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-89-            auto inputTensor = model.GetInputTensor(i);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-90-            REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-91-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-92-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc:93:        REQUIRE(RunInference(model, input_goldenFV));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-94-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-95-        for (size_t i = 0; i < model.GetNumOutputs(); ++i) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-96-            auto outputTensor = model.GetOutputTensor(i);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-97-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-98-            REQUIRE(outputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-99-            auto tensorData = outputTensor->GetData<T>();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-100-            REQUIRE(tensorData);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-101-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-102-            for (size_t j = 0; j < outputTensor->Bytes(); j++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-103-                REQUIRE(static_cast<int>(tensorData[j]) ==
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-104-                        static_cast<int>((output_goldenFV[i][j])));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/InferenceTestRNNoise.cc-105-            }
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-23-#include <random>
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-24-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-25-namespace arm {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-26-namespace app {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-27-    static uint8_t tensorArena[ACTIVATION_BUF_SZ] ACTIVATION_BUF_ATTRIBUTE;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-28-    namespace rnn {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-29-        extern uint8_t* GetModelPointer();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-30-        extern size_t GetModelLen();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-31-    } /* namespace rnn */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-32-} /* namespace app */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-33-} /* namespace arm */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-34-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:35:bool RunInference(arm::app::fwk::iface::Model& model,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-36-                  std::vector<int8_t> vec,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-37-                  const size_t sizeRequired,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-38-                  const size_t dataInputIndex)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-39-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-40-    auto inputTensor = model.GetInputTensor(dataInputIndex);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-41-    REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-42-    size_t copySz = inputTensor->Bytes() < sizeRequired ? inputTensor->Bytes() : sizeRequired;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-43-    const int8_t* vecData = vec.data();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-44-    memcpy(inputTensor->GetData(), vecData, copySz);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:45:    return model.RunInference();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-46-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-47-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-48-void genRandom(size_t bytes, std::vector<int8_t>& randomAudio)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-49-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-50-    randomAudio.resize(bytes);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-51-    std::random_device rndDevice;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-52-    std::mt19937 mersenneGen{rndDevice()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-53-    std::uniform_int_distribution<short> dist {-128, 127};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-54-    auto gen = [&dist, &mersenneGen](){
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-55-        return dist(mersenneGen);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-56-    };
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-57-    std::generate(std::begin(randomAudio), std::end(randomAudio), gen);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-58-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-59-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:60:bool RunInferenceRandom(arm::app::fwk::iface::Model& model, const size_t dataInputIndex)
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-61-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-62-    std::array<size_t, 4> inputSizes = {IFM_0_DATA_SIZE, IFM_1_DATA_SIZE, IFM_2_DATA_SIZE, IFM_3_DATA_SIZE};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-63-    std::vector<int8_t> randomAudio;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-64-    auto inputTensor = model.GetInputTensor(dataInputIndex);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-65-    REQUIRE(inputTensor);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-66-    genRandom(inputTensor->Bytes(), randomAudio);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-67-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:68:    REQUIRE(RunInference(model, randomAudio, inputSizes[dataInputIndex], dataInputIndex));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-69-    return true;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-70-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-71-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-72-TEST_CASE("Running random inference with TensorFlow Lite Micro and RNNoiseModel Int8", "[RNNoise]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-73-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-74-    arm::app::fwk::tflm::RNNoiseModel model; /* Model wrapper object. */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-75-    REQUIRE_FALSE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-76-    arm::app::fwk::iface::MemoryRegion modelMem{arm::app::rnn::GetModelPointer(),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-77-                                                arm::app::rnn::GetModelLen()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-78-    arm::app::fwk::iface::MemoryRegion computeMem{arm::app::tensorArena,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-79-                                                  sizeof(arm::app::tensorArena)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-80-    REQUIRE(model.Init(computeMem, modelMem));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-81-    REQUIRE(model.IsInited());
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-82-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-83-    model.ResetGruState();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-84-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-85-    for (int i = 1; i < 4; i++ ) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-86-        auto inputGruStateTensor = model.GetInputTensor(i);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-87-        auto* inputGruState      = inputGruStateTensor->GetData<int8_t>();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-88-        for (size_t tIndex = 0; tIndex < inputGruStateTensor->Bytes(); tIndex++) {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-89-            REQUIRE(inputGruState[tIndex] == inputGruStateTensor->GetQuantParams().offset);
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-90-        }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-91-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-92-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:93:    REQUIRE(RunInferenceRandom(model, 0));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-94-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-95-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-96-class TestRNNoiseModel : public arm::app::fwk::tflm::RNNoiseModel {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-97-public:
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-98-    bool CopyGruStatesTest() {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-99-        return this->CopyGruStates();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-100-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-101-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-102-    std::vector<std::pair<size_t, size_t>> GetStateMap() {
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-103-        return m_gruStateMap;
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-104-    }
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-105-};
+--
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-130-}
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-131-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-132-TEST_CASE("Test GRU state copy", "[RNNoise]")
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-133-{
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-134-    TestRNNoiseModel model{};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-135-    arm::app::fwk::iface::MemoryRegion modelMem{arm::app::rnn::GetModelPointer(),
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-136-                                                arm::app::rnn::GetModelLen()};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-137-    arm::app::fwk::iface::MemoryRegion computeMem{arm::app::tensorArena,
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-138-                                                  sizeof(arm::app::tensorArena)};
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-139-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-140-    /* Load the model. */
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-141-    REQUIRE(model.Init(computeMem, modelMem));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc:142:    REQUIRE(RunInferenceRandom(model, 0));
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-143-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-144-    auto map = model.GetStateMap();
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-145-
+/home/user/sdk-alif/modules/alif-mlek/tests/use_case/noise_reduction/RNNoiseModelTests.cc-146-    std::vector<std::vector<uint8_t>> oldStates;
+
+=== SOURCE HASHES ===
+a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+FILES_MODIFIED=NO
+FIRMWARE_BUILT=NO
+FLASH_PERFORMED=NO
+OSPI1_MODEL_MODIFIED=NO
