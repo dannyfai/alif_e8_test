@@ -1,0 +1,385 @@
+=== RUNINFERENCE EXACT IMPLEMENTATION ===
+338-    /* check for custom operators */
+339-    for (size_t i = 0; (i < nOperators); ++i) {
+340-        const tflite::Operator* op         = subgraph->operators()->Get(i);
+341-        const tflite::OperatorCode* opcode = opcodes->Get(op->opcode_index());
+342-
+343-        auto builtin_code = tflite::GetBuiltinCode(opcode);
+344-        if ((builtin_code == tflite::BuiltinOperator_CUSTOM) &&
+345-            (nullptr != opcode->custom_code()) &&
+346-            ("ethos-u" == std::string(opcode->custom_code()->c_str()))) {
+347-            return true;
+348-        }
+349-    }
+350-    return false;
+351-}
+352-
+353:bool TflmModel::RunInference()
+354-{
+355-    bool inference_state = false;
+356-    if (this->m_backendData.m_pModel && this->m_backendData.m_pInterpreter) {
+357-        if (kTfLiteOk != this->m_backendData.m_pInterpreter->Invoke()) {
+358-            printf_err("Invoke failed.\n");
+359-        } else {
+360-            inference_state = true;
+361-        }
+362-    } else {
+363-        printf_err("Error: No interpreter!\n");
+364-    }
+365-    return inference_state;
+366-}
+367-
+368-size_t TflmModel::GetNumInputs() const
+369-{
+370-    if (this->m_backendData.m_pModel && this->m_backendData.m_pInterpreter) {
+371-        return this->m_backendData.m_pInterpreter->inputs_size();
+372-    }
+373-    return 0;
+374-}
+375-
+376-size_t TflmModel::GetNumOutputs() const
+377-{
+378-    if (this->m_backendData.m_pModel && this->m_backendData.m_pInterpreter) {
+379-        return this->m_backendData.m_pInterpreter->outputs_size();
+380-    }
+381-    return 0;
+382-}
+383-
+384-iface::TensorType TflmModel::GetType() const
+385-{
+386-    return this->m_type;
+387-}
+388-
+
+=== INPUT REPOPULATION FUNCTION ===
+489-    kTfLiteFloat32,
+490-    kTfLiteFloat32,
+491-    kTfLiteFloat32
+492-};
+493-
+494:bool ValidateAndPopulateInputs(tflite::MicroInterpreter* interpreter)
+495-{
+496-    using namespace sample317_vectors;
+497-
+498-    if (interpreter == nullptr) {
+499-        printk("TCN_V6_ERROR: null interpreter\n");
+500-        return false;
+501-    }
+502-
+503-    const void* source_data[kInputCount] = {
+504-        kXValues,
+505-        kMissingMask,
+506-        kXMark,
+507-        kWorkerFeatures18,
+508-        kCompactValues
+509-    };
+510-
+511-    const size_t expected_bytes[kInputCount] = {
+512-        sizeof(kXValues),
+513-        sizeof(kMissingMask),
+514-        sizeof(kXMark),
+515-        sizeof(kWorkerFeatures18),
+516-        sizeof(kCompactValues)
+517-    };
+518-
+519-    for (size_t i = 0; i < kInputCount; ++i) {
+520-        TfLiteTensor* tensor = interpreter->input(i);
+521-
+522-        if (tensor == nullptr || tensor->dims == nullptr ||
+523-            tensor->data.raw == nullptr) {
+524-            printk("TCN_V6_ERROR: sample317 input %u missing tensor data\n",
+525-                   static_cast<unsigned int>(i));
+526-            return false;
+527-        }
+528-
+529-        if (tensor->type != kExpectedTypes[i]) {
+530-            printk("TCN_V6_ERROR: sample317 input %u type=%d expected=%d\n",
+531-                   static_cast<unsigned int>(i),
+532-                   static_cast<int>(tensor->type),
+533-                   static_cast<int>(kExpectedTypes[i]));
+534-            return false;
+535-        }
+536-
+537-        if (tensor->dims->size != kExpectedRanks[i]) {
+538-            printk("TCN_V6_ERROR: sample317 input %u rank mismatch\n",
+539-                   static_cast<unsigned int>(i));
+540-            return false;
+541-        }
+542-
+543-        for (int d = 0; d < kExpectedRanks[i]; ++d) {
+544-            if (tensor->dims->data[d] != kExpectedDimensions[i][d]) {
+545-                printk("TCN_V6_ERROR: sample317 input %u dim%u mismatch\n",
+546-                       static_cast<unsigned int>(i),
+547-                       static_cast<unsigned int>(d));
+548-                return false;
+549-            }
+550-        }
+551-
+552-        if (tensor->bytes != expected_bytes[i]) {
+553-            printk("TCN_V6_ERROR: sample317 input %u bytes=%u expected=%u\n",
+554-                   static_cast<unsigned int>(i),
+555-                   static_cast<unsigned int>(tensor->bytes),
+556-                   static_cast<unsigned int>(expected_bytes[i]));
+557-            return false;
+558-        }
+559-
+560-        std::memcpy(tensor->data.raw, source_data[i], expected_bytes[i]);
+561-
+562-        printk("TCN_V6_SAMPLE317_INPUT_%u: type=%d bytes=%u populated=1\n",
+563-               static_cast<unsigned int>(i),
+564-               static_cast<int>(tensor->type),
+565-               static_cast<unsigned int>(tensor->bytes));
+566-    }
+567-
+568-    printk("TCN_V6_SAMPLE317_INPUTS: PASS (all five genuine tensors copied)\n");
+569-    return true;
+570-}
+571-
+572-bool ValidateOutput(tflite::MicroInterpreter* interpreter)
+573-{
+574-    if (interpreter == nullptr) {
+575-        return false;
+576-    }
+577-
+578-    TfLiteTensor* output = interpreter->output(0);
+579-
+580-    if (output == nullptr || output->dims == nullptr ||
+581-        output->type != kTfLiteFloat32 ||
+582-        output->dims->size != 3 ||
+583-        output->dims->data[0] != 1 ||
+584-        output->dims->data[1] != 900 ||
+585-        output->dims->data[2] != 6 ||
+586-        output->bytes != kOutputElements * sizeof(float) ||
+587-        output->data.raw == nullptr) {
+588-        printk("TCN_V6_ERROR: output metadata mismatch\n");
+589-        return false;
+590-    }
+591-
+592-    printk("TCN_V6_OUTPUT: type=FP32 shape=[1,900,6] bytes=%u\n",
+593-           static_cast<unsigned int>(output->bytes));
+594-    return true;
+
+=== IMMEDIATE OUTPUT CALLBACK ===
+
+    printk("TCN_V6_FIRST_ETHOS_%s_METRICS: mismatches=%u max_abs_diff=%u mae_milli_code=%u actual_range=[%d,%d] ref_range=[%d,%d]\n",
+           label, mismatches, max_abs_diff, mae_milli_code,
+           actual_min, actual_max, reference_min, reference_max);
+    k_sleep(K_MSEC(45));
+}
+
+}  // namespace
+
+extern "C" void tcn_v6_sample317_ethosu_boundary(
+    const int8_t* data,
+    uint32_t bytes,
+    uint32_t invocation_index,
+    uint32_t stage) {
+
+    if (stage == 0U) {
+        printk("TCN_V6_FIRST_ETHOS_INPUT_BEGIN: idx=%u bytes=%u\n",
+               invocation_index, bytes);
+        k_sleep(K_MSEC(35));
+
+        Sample317BoundaryReport(
+            "INPUT", data, bytes,
+            sample317_ethosu_reference::kFirstEthosInput,
+            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosInput)),
+            invocation_index);
+
+        printk("TCN_V6_FIRST_ETHOS_INPUT_END\n");
+        k_sleep(K_MSEC(35));
+    } else if (stage == 1U) {
+        printk("TCN_V6_FIRST_ETHOS_OUTPUT_BEGIN: idx=%u bytes=%u\n",
+               invocation_index, bytes);
+
+        // Copy immediately before the existing 35ms sleep.
+        // Static storage avoids adding 28.8KB to the thread stack.
+        static int8_t tcn_v6_first_ethos_output_snapshot[28800U];
+
+        const uint32_t tcn_v6_expected_output_bytes =
+            static_cast<uint32_t>(
+                sizeof(sample317_ethosu_reference::kFirstEthosOutput));
+
+        if (bytes == tcn_v6_expected_output_bytes) {
+            for (uint32_t i = 0U; i < bytes; ++i) {
+                tcn_v6_first_ethos_output_snapshot[i] = data[i];
+            }
+
+            printk("TCN_V6_FIRST_ETHOS_IMMEDIATE_BEGIN: idx=%u bytes=%u\n",
+                   invocation_index, bytes);
+
+            Sample317BoundaryReport(
+                "OUTPUT_IMMEDIATE",
+                tcn_v6_first_ethos_output_snapshot,
+                bytes,
+                sample317_ethosu_reference::kFirstEthosOutput,
+                tcn_v6_expected_output_bytes,
+                invocation_index);
+
+            printk("TCN_V6_FIRST_ETHOS_IMMEDIATE_END\n");
+        } else {
+            printk("TCN_V6_FIRST_ETHOS_IMMEDIATE_SKIP: bytes=%u expected=%u\n",
+                   bytes, tcn_v6_expected_output_bytes);
+        }
+
+        k_sleep(K_MSEC(35));
+
+        Sample317BoundaryReport(
+            "OUTPUT_AFTER_35MS", data, bytes,
+            sample317_ethosu_reference::kFirstEthosOutput,
+            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosOutput)),
+            invocation_index);
+
+
+        // Compare the live output with the snapshot captured at callback entry.
+        if (bytes == tcn_v6_expected_output_bytes) {
+            uint32_t changed_bytes = 0U;
+            uint32_t first_changed = 0xFFFFFFFFU;
+            uint32_t max_change = 0U;
+
+            for (uint32_t i = 0U; i < bytes; ++i) {
+                const int delta =
+                    static_cast<int>(data[i]) -
+                    static_cast<int>(
+                        tcn_v6_first_ethos_output_snapshot[i]);
+
+                if (delta != 0) {
+                    ++changed_bytes;
+
+                    if (first_changed == 0xFFFFFFFFU) {
+                        first_changed = i;
+                    }
+
+                    const uint32_t abs_delta =
+                        static_cast<uint32_t>(
+                            delta < 0 ? -delta : delta);
+
+                    if (abs_delta > max_change) {
+                        max_change = abs_delta;
+                    }
+                }
+            }
+
+            printk("TCN_V6_FIRST_ETHOS_BUFFER_STABILITY: "
+                   "bytes=%u changed_bytes=%u first_changed=%u "
+                   "max_change=%u\n",
+                   bytes, changed_bytes, first_changed, max_change);
+        }
+
+        // Time/channel localization of the first Ethos-U output mismatch.
+        // Tensor 54 is [1, 900, 32] INT8.
+        if (bytes == static_cast<uint32_t>(
+                sizeof(sample317_ethosu_reference::kFirstEthosOutput))) {
+            constexpr uint32_t kRows = 900U;
+            constexpr uint32_t kChannels = 32U;
+            constexpr uint32_t kWindowRows = 60U;
+            constexpr uint32_t kWindows = 15U;
+            constexpr uint32_t kBitmapBytes = (kRows + 7U) / 8U;
+            constexpr uint32_t kFirstSamples = 30U;
+
+=== ETHOS-U INVOCATION COUNTER AND CALLBACK ANCHORS ===
+62-  TfLiteTensor* tensor = micro_context->AllocateTempInputTensor(node, 0);
+63-  data->cms_data_size = tensor->bytes;
+64-  micro_context->DeallocateTempTfLiteTensor(tensor);
+65-  return kTfLiteOk;
+66-}
+67-
+68-TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+69-  // TCN V6 runtime profiling counters.
+70:  static uint32_t tcn_v6_npu_invocation_index = 0;
+71-  static uint32_t tcn_v6_npu_cumulative_invoke_ms = 0;
+72-  static uint32_t tcn_v6_npu_cumulative_irq_delta = 0;
+73-
+74-  TFLITE_DCHECK(node->user_data != nullptr);
+75-  TFLITE_DCHECK(context != nullptr);
+76-  TFLITE_DCHECK(context->GetScratchBuffer != nullptr);
+77-
+78-  // Get base addresses.
+79-  TfLiteEvalTensor* tensor;
+80-  int i = 0;
+81-  int num_tensors = 0;
+82-  void* cms_data;
+83-  uint8_t co_type;
+84-  int result;
+85-  const OpData* data = static_cast<const OpData*>(node->user_data);
+86-  uint64_t* base_addrs = static_cast<uint64_t*>(
+87-      context->GetScratchBuffer(context, data->base_addr_idx));
+88-  size_t* base_addrs_size = static_cast<size_t*>(
+89-      context->GetScratchBuffer(context, data->base_addr_size_idx));
+90-
+91-  const uint8_t* custom_data =
+92-      static_cast<uint8_t const*>(node->custom_initial_data);
+93-  auto root = flexbuffers::GetRoot(custom_data, node->custom_initial_data_size);
+94-  co_type = root.AsInt8();
+95-  if (co_type != CO_TYPE_ETHOSU) {
+96-    MicroPrintf("CO_TYPE != ETHOSU");
+97-    return kTfLiteError;
+98-  }
+99-
+100-  // Get command stream data address.
+101-  tensor = context->GetEvalTensor(context, node->inputs->data[0]);
+102-  cms_data = reinterpret_cast<void*>(tensor->data.uint8);
+103-
+104-  // Get addresses to weights/scratch/input data.
+105-  for (i = 1; i < node->inputs->size; ++i) {
+--
+153-  //
+154-  // The number of base address will be limited to 8.
+155-  //
+156-  // NOTE! The command stream produced by Vela will access the IFM and OFM
+157-  // buffers using base address 1. This means that it is not possible to point
+158-  // the input and output tensors outside of the TFLM arena.
+159-  num_tensors = std::min(num_tensors, 8);
+160-
+161:  const uint32_t tcn_v6_call_index = ++tcn_v6_npu_invocation_index;
+162-  const int64_t tcn_v6_reserve_start_ms = k_uptime_get();
+163-  struct ethosu_driver *drv = ethosu_reserve_driver();
+164-  const uint32_t tcn_v6_reserve_ms = (uint32_t)(k_uptime_get() - tcn_v6_reserve_start_ms);
+165-  const uint32_t tcn_v6_irq_before = tcn_v6_ethosu_irq_count_get();
+166-  const int64_t tcn_v6_invoke_start_ms = k_uptime_get();
+167:  result = ethosu_invoke_v3(
+168-      drv, cms_data, data->cms_data_size, base_addrs,
+169-      base_addrs_size, num_tensors,
+170-      GetMicroContext(context)->external_context());
+171-  const uint32_t tcn_v6_invoke_ms = (uint32_t)(k_uptime_get() - tcn_v6_invoke_start_ms);
+172-  const uint32_t tcn_v6_irq_after = tcn_v6_ethosu_irq_count_get();
+173-  const uint32_t tcn_v6_irq_delta = tcn_v6_irq_after - tcn_v6_irq_before;
+174-  const int64_t tcn_v6_release_start_ms = k_uptime_get();
+175-  ethosu_release_driver(drv);
+176-  const uint32_t tcn_v6_release_ms = (uint32_t)(k_uptime_get() - tcn_v6_release_start_ms);
+177-  tcn_v6_npu_cumulative_invoke_ms += tcn_v6_invoke_ms;
+178-  tcn_v6_npu_cumulative_irq_delta += tcn_v6_irq_delta;
+179-  printk("TCN_V6_NPU_PROFILE: idx=%u status=%d drv_valid=%u "
+180-         "cmd_tensor_bytes=%d base_regions=%d reserve_ms=%u "
+181-         "invoke_ms=%u release_ms=%u irq_before=%u "
+182-         "irq_after=%u irq_delta=%u cumulative_invoke_ms=%u "
+183-         "cumulative_irq_delta=%u\n",
+184-         tcn_v6_call_index, result, (drv != nullptr) ? 1u : 0u,
+185-         data->cms_data_size, num_tensors, tcn_v6_reserve_ms,
+186-         tcn_v6_invoke_ms, tcn_v6_release_ms,
+187-         tcn_v6_irq_before, tcn_v6_irq_after,
+188-         tcn_v6_irq_delta, tcn_v6_npu_cumulative_invoke_ms,
+189-         tcn_v6_npu_cumulative_irq_delta);
+190-
+191-  if (-1 == result) {
+192-    return kTfLiteError;
+193-  } else {
+194-    return kTfLiteOk;
+195-  }
+196-}
+197-
+198-}  // namespace
+199-
+200-TFLMRegistration* Register_ETHOSU() {
+201-  static TFLMRegistration r = tflite::micro::RegisterOp(Init, Prepare, Eval);
+202-  return &r;
+
+=== PROTECTED HASHES ===
+a172979034aaafd8d53dc6a2f7397aa7dd7af038d9bc95b163f4d2e7a7288595  /home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_immediate_20261127_153400/src/MainLoop.cc
+68b63c5e117ec9354a475bd90ab1457a8f7f0a4b8f6f6d63169721a8b44c76ce  /home/user/sdk-alif/modules/alif-mlek/source/lib/mlek/fwk/tflm/TflmModel.cc
+51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1  /home/user/sdk-alif/optional/modules/lib/tflite-micro/tensorflow/lite/micro/kernels/ethos_u/ethosu.cc
+
+FILES_MODIFIED=NO
+FIRMWARE_BUILT=NO
+FLASH_PERFORMED=NO
+OSPI1_MODEL_MODIFIED=NO
