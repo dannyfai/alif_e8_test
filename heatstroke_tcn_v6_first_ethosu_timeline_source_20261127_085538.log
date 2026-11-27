@@ -1,0 +1,79 @@
+======================================================
+FIRST ETHOS-U TIME-INDEXED DIAGNOSTIC SOURCE AUDIT
+======================================================
+APP=/home/user/sdk-alif/beeinventor/heatstroke_tcn_v6_first_ethosu_boundary_20261125_091320
+MAINLOOP_SHA256=dd6fc07a081e792775e6336d4d6ab92108691ce849dff1f12b7098896e7a633f
+HEADER_SHA256=6548dc64743944e6bc187bf43b80eb709ceba0afb8279c240ddcabf41d5baed7
+KERNEL_SHA256=51b1debd452026ae12baadba3a219db3106bd14429c4bf223080a47260e9f6d1
+ALL_SOURCE_HASH_CHECKS=PASS
+
+========== CALLBACK SOURCE ==========
+CALLBACK_LINES=99-135
+extern "C" void tcn_v6_sample317_ethosu_boundary(
+    const int8_t* data,
+    uint32_t bytes,
+    uint32_t invocation_index,
+    uint32_t stage) {
+
+    if (stage == 0U) {
+        printk("TCN_V6_FIRST_ETHOS_INPUT_BEGIN: idx=%u bytes=%u\n",
+               invocation_index, bytes);
+        k_sleep(K_MSEC(35));
+
+        Sample317BoundaryReport(
+            "INPUT", data, bytes,
+            sample317_ethosu_reference::kFirstEthosInput,
+            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosInput)),
+            invocation_index);
+
+        printk("TCN_V6_FIRST_ETHOS_INPUT_END\n");
+        k_sleep(K_MSEC(35));
+    } else if (stage == 1U) {
+        printk("TCN_V6_FIRST_ETHOS_OUTPUT_BEGIN: idx=%u bytes=%u\n",
+               invocation_index, bytes);
+        k_sleep(K_MSEC(35));
+
+        Sample317BoundaryReport(
+            "OUTPUT", data, bytes,
+            sample317_ethosu_reference::kFirstEthosOutput,
+            static_cast<uint32_t>(sizeof(sample317_ethosu_reference::kFirstEthosOutput)),
+            invocation_index);
+
+        printk("TCN_V6_FIRST_ETHOS_OUTPUT_END\n");
+        k_sleep(K_MSEC(35));
+    } else {
+        printk("TCN_V6_FIRST_ETHOS_INVALID_STAGE=%u\n", stage);
+        k_sleep(K_MSEC(35));
+    }
+}
+
+========== REFERENCE HEADER DECLARATIONS ==========
+7: alignas(16) inline constexpr int8_t kFirstEthosInput[] = {
+236: alignas(16) inline constexpr int8_t kFirstEthosOutput[] = {
+1439: inline constexpr float kFirstEthosInputScale = 0.0377761945128f;
+1440: inline constexpr float kFirstEthosOutputScale = 0.0136459060013f;
+1441: inline constexpr uint32_t kFirstEthosInputCrc32 = 0x725A35A4U;
+1442: inline constexpr uint32_t kFirstEthosOutputCrc32 = 0x5373101FU;
+1443: inline constexpr size_t kFirstEthosInputCount = sizeof(kFirstEthosInput);
+1444: inline constexpr size_t kFirstEthosOutputCount = sizeof(kFirstEthosOutput);
+
+========== CALLBACK INCLUDE / CALL CONTEXT ==========
+5: #include "sample317_ethosu_first_node_reference_20261125_090938.hpp"
+99: extern "C" void tcn_v6_sample317_ethosu_boundary(
+138: #include "sample317_tcn_v6_vectors.hpp"
+
+SOURCE_INSPECTION=PASS
+======================================================
+AUDIT COMPLETE
+======================================================
+
+TIMELINE_SOURCE_AUDIT_EXIT=0
+LOG=/home/user/sdk-alif/beeinventor/test_heatstroke/log/heatstroke_tcn_v6_first_ethosu_timeline_source_20261127_085538.log
+APP_MODIFIED=NO
+SDK_MODIFIED=NO
+BUILD_PERFORMED=NO
+FIRMWARE_CHANGED=NO
+FLASH_PERFORMED=NO
+OSPI1_MODIFIED=NO
+
+Press ENTER to close this terminal...
